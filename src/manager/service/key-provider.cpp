@@ -10,8 +10,8 @@ using namespace CKM;
 int KeyProvider::s_isInitialized = 0;
 
 KeyProvider::KeyProvider(
-	const RawData &domainKEKInWrapForm, 
-	const RawData &password){
+	const RawBuffer &domainKEKInWrapForm, 
+	const RawBuffer &password){
 
 	LogDebug("Constructor");
 	
@@ -45,7 +45,7 @@ KeyProvider::KeyProvider(
 }
 
 KeyAES KeyProvider::getDomainKEK(){
-	RawData rawData_rawDKEK;
+	RawBuffer rawData_rawDKEK;
 	rawData_rawDKEK.clear();
 
 	rawData_rawDKEK.insert(
@@ -58,8 +58,8 @@ KeyAES KeyProvider::getDomainKEK(){
 //	return KeyAES(rawData_rawDKEK);
 }
 
-RawData KeyProvider::getDomainKEK(const std::string &password){
-	RawData domainKEKInWrapForm;
+RawBuffer KeyProvider::getDomainKEK(const std::string &password){
+	RawBuffer domainKEKInWrapForm;
 	WrappedKeyMaterial *DKEK;
 	DKEK = new WrappedKeyMaterial;
 
@@ -87,14 +87,14 @@ RawData KeyProvider::getDomainKEK(const std::string &password){
 
 
 // API name changed.
-// from KeyAES KeyProvider::decryptDEK(const RawData &encryptedDEKInWrapForm)
-KeyAES KeyProvider::unwrapDEK(const RawData &DEKInWrapForm){
+// from KeyAES KeyProvider::decryptDEK(const RawBuffer &encryptedDEKInWrapForm)
+KeyAES KeyProvider::unwrapDEK(const RawBuffer &DEKInWrapForm){
 
 	if(DEKInWrapForm.size() != sizeof(WrappedKeyMaterial)){
 		throw std::string("buffer doesn't have proper size to store WrappedKeyMaterial in KeyProvider::unwrapDEK");
 	}
 
-	RawData rawData_rawDEK;
+	RawBuffer rawData_rawDEK;
 	rawData_rawDEK.clear();
 	KeyMaterial *rawDEK = new KeyMaterial;
 	WrappedKeyMaterial *DEK = new WrappedKeyMaterial;
@@ -126,8 +126,8 @@ KeyAES KeyProvider::unwrapDEK(const RawData &DEKInWrapForm){
 //	return KeyAES(rawData_rawDEK);
 }
 
-RawData KeyProvider::generateDEK(const std::string &smackLabel){
-	RawData DEKInWrapForm;
+RawBuffer KeyProvider::generateDEK(const std::string &smackLabel){
+	RawBuffer DEKInWrapForm;
 	WrappedKeyMaterial *DEK;
 	DEKInWrapForm.clear();
 	DEK = new WrappedKeyMaterial;
@@ -173,10 +173,10 @@ RawData KeyProvider::generateDEK(const std::string &smackLabel){
 	return DEKInWrapForm;
 }
 
-RawData KeyProvider::reencrypt(
-	const RawData &domainKEKInWrapForm,
-	const RawData &oldPass,
-	const RawData &newPass){
+RawBuffer KeyProvider::reencrypt(
+	const RawBuffer &domainKEKInWrapForm,
+	const RawBuffer &oldPass,
+	const RawBuffer &newPass){
 
 	if(domainKEKInWrapForm.size() != sizeof(WrappedKeyMaterial)){
 		throw std::string("buffer doesn't have proper size to store WrappedKeyMaterial in KeyProvider::reencrypt");
@@ -185,7 +185,7 @@ RawData KeyProvider::reencrypt(
 
 	WrappedKeyMaterial *old_DKEK = new WrappedKeyMaterial;
 	WrappedKeyMaterial *new_DKEK = new WrappedKeyMaterial;
-	RawData rawData_DKEK;
+	RawBuffer rawData_DKEK;
 	rawData_DKEK.clear();
 	memcpy(old_DKEK, domainKEKInWrapForm.data(), sizeof(WrappedKeyMaterial));
 
@@ -218,12 +218,12 @@ RawData KeyProvider::reencrypt(
 }
 
 
-RawData KeyProvider::generateDomainKEK(
+RawBuffer KeyProvider::generateDomainKEK(
 	const std::string &user,
-	const RawData &userPassword){
+	const RawBuffer &userPassword){
 
 	WrappedKeyMaterial *DKEK;
-	RawData domainKEKInWrapForm;
+	RawBuffer domainKEKInWrapForm;
 	DKEK = new WrappedKeyMaterial;
 
 	
