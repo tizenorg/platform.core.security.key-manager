@@ -1,28 +1,133 @@
+/*
+ * ckm-key-provider-dummy-3.0.c
+ *
+ *  Created on: Jun 3, 2014
+ *      Author: tak
+ */
+
+
 #include <string.h>
 #include <stdio.h>
-#include <stdlib.h>
+
+#include <openssl/rand.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/sha.h>
 
 #include <ckm-key-provider.h>
 
+void handleErrors(){
+	//printError
+}
+
+int encryptAes256Gcm(const unsigned char *plaintext, int plaintext_len, const unsigned char *key, const unsigned char *iv, unsigned char *ciphertext, unsigned char *tag){
+
+    EVP_CIPHER_CTX *ctx;
+    int len;
+    int ciphertext_len;
+
+    /* Create and initialise the context */
+    if(!(ctx = EVP_CIPHER_CTX_new())) handleErrors();
+
+    /* Initialise the encryption operation. */
+    if(!EVP_EncryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, NULL, NULL))
+        handleErrors();
+
+    /* Initialise key and IV */
+    if(!EVP_EncryptInit_ex(ctx, NULL, NULL, key, iv)) handleErrors();
+
+    /* Set IV length if default 12 bytes (96 bits) is not appropriate */
+    if(!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, MAX_IV_SIZE, NULL))
+        handleErrors();
+
+    /* Provide the message to be encrypted, and obtain the encrypted output.
+     * EVP_EncryptUpdate can be called multiple times if necessary
+     */
+    if(!EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, plaintext_len))
+        handleErrors();
+    ciphertext_len = len;
+
+    /* Finalise the encryption. Normally ciphertext bytes may be written at
+     * this stage, but this does not occur in GCM mode
+     */
+    if(!EVP_EncryptFinal_ex(ctx, ciphertext + len, &len)) handleErrors();
+    ciphertext_len += len;
+
+    /* Get the tag */
+    if(!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, AES_GCM_TAG_SIZE, tag))
+        handleErrors();
+
+    /* Clean up */
+    EVP_CIPHER_CTX_free(ctx);
+
+    return ciphertext_len;
+}
+
+
+int decryptAes256Gcm(const unsigned char *ciphertext, int ciphertext_len, unsigned char *tag, const unsigned char *key, const unsigned char *iv, unsigned char *plaintext){
+
+    EVP_CIPHER_CTX *ctx;
+    int len;
+    int plaintext_len;
+    int ret;
+
+/* Create and initialise the context */
+    if(!(ctx = EVP_CIPHER_CTX_new())) handleErrors();
+
+    /* Initialise the decryption operation. */
+    if(!EVP_DecryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, NULL, NULL))
+        handleErrors();
+
+    /* Initialise key and IV */
+    if(!EVP_DecryptInit_ex(ctx, NULL, NULL, key, iv)) handleErrors();
+
+    /* Set IV length. Not necessary if this is 12 bytes (96 bits) */
+    if(!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, MAX_IV_SIZE, NULL))
+        handleErrors();
+
+    /* Set expected tag value. Works in OpenSSL 1.0.1d and later */
+    if(!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, AES_GCM_TAG_SIZE, tag))
+        handleErrors();
+
+    /* Provide the message to be decrypted, and obtain the plaintext output.
+     * EVP_DecryptUpdate can be called multiple times if necessary
+     */
+    if(!EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len))
+        handleErrors();
+    plaintext_len = len;
+
+    /* Finalise the decryption. A positive return value indicates success,
+     * anything else is a failure - the plaintext is not trustworthy.
+     */
+    if(!(ret = EVP_DecryptFinal_ex(ctx, plaintext + len, &len)))
+		handleErrors();
+
+    /* Clean up */
+    EVP_CIPHER_CTX_free(ctx);
+
+    if(ret > 0) {
+        /* Success */
+        plaintext_len += len;
+        return plaintext_len;
+    }else{
+        /* Verify failed */
+        return -1;
+    }
+}
+
 int SKMMInitializeLibrary(
-	int InitMode, 
-	char *SKMMHelperModule, 
+	int InitMode,
+	char *SKMMHelperModule,
 	uint8_t RandomSeed[MAX_RANDOM_SEED_LEN]){
-	printf("SKMM Initialized\n");
-	printf("Size of KeyMaterialInfo    : %d\n", sizeof(KeyMaterialInfo));
-	printf("Size of KeyMaterial        : %d\n", sizeof(KeyMaterial));
-	printf("Size of WrappedKeyMaterial : %d\n", sizeof(WrappedKeyMaterial));
 
-	printf("InitMode = %d\n", InitMode);
-	printf("SKMMHelperModule = %s\n", SKMMHelperModule);
-	printf("RandomSeed = %s\n", RandomSeed);
-
+	printf("InitMode         : %d\n", InitMode);
+	printf("SKMMHelperModule : %s\n", SKMMHelperModule);
+	printf("RandomSeed       : %s\n", RandomSeed);
 
 	return SUCCESS;
 }
 
 int SKMMCloseLibrary(void){
-	printf("SKMM Closed\n");
 	return SUCCESS;
 }
 
@@ -37,32 +142,65 @@ int GenerateDomainKEK(
     const uint32_t keyLength,
     const char domain[DOMAIN_NAME_SIZE]){
 
-    uint32_t i;
-    uint8_t _key[MAX_KEY_SIZE];
-    uint8_t xor_operand[MAX_KEY_SIZE];
+    uint8_t salt[PBKDF2_SALT_LEN], key[MAX_KEY_SIZE], iv1[MAX_IV_SIZE];
+	uint8_t tag[AES_GCM_TAG_SIZE];
+    uint8_t PKEK1[MAX_KEY_SIZE];
+    int wrappedKeyLength, domain_len;
+    char *pass_concat_domain;
 
 	if(keyLength > MAX_KEY_SIZE){
 		// keyLength is larger than maximum
 		return ERROR;
 	}
 
-    memcpy(DKEK->keyInfo.label, domain, MAX_LABEL_SIZE);
-	DKEK->keyInfo.keyLength = keyLength;
-    for(i=0; i<keyLength; i++){
-        if(i%2==1) memset(_key+i, 0, 1);
-        else memset(_key+i, 1, 1);
-    }
+	if(!RAND_bytes(salt, PBKDF2_SALT_LEN))
+		return OPENSSL_ENGINE_ERROR;
+	if(!RAND_bytes(key, keyLength))
+		return OPENSSL_ENGINE_ERROR;
+	if(!RAND_bytes(iv1, MAX_IV_SIZE))
+		return OPENSSL_ENGINE_ERROR;
 
-    memset(xor_operand, 0, keyLength);
-	memcpy(xor_operand, password, 
-			strlen(password) < keyLength ? strlen(password) : keyLength);
+	domain_len = strlen(domain) < DOMAIN_NAME_SIZE ?
+		strlen(domain) : DOMAIN_NAME_SIZE-1;
+	pass_concat_domain = (char *)malloc(strlen(password)+domain_len);
+	strncpy(pass_concat_domain, password, strlen(password));
+	pass_concat_domain[strlen(password)] = '\0';
+	strncat(pass_concat_domain, domain, domain_len);
+	pass_concat_domain[strlen(password)+domain_len] = '\0';
 
-    for(i=0; i<keyLength; i++){
-        DKEK->wrappedKey[i] = _key[i] ^ xor_operand[i];
-    }
-    
-    return SUCCESS;
+	if(!PKCS5_PBKDF2_HMAC_SHA1(
+			pass_concat_domain,
+			strlen(pass_concat_domain),
+			salt,
+			PBKDF2_SALT_LEN,
+			PBKDF2_ITERATIONS,
+			MAX_KEY_SIZE,
+			PKEK1)){
+		free(pass_concat_domain);
+		return OPENSSL_ENGINE_ERROR;
+	}
+	free(pass_concat_domain);
 
+	if(0 > (wrappedKeyLength = encryptAes256Gcm(
+			key,
+			keyLength,
+			PKEK1,
+			iv1,
+			DKEK->wrappedKey,
+			tag))){
+
+		return OPENSSL_ENGINE_ERROR;
+	}
+	DKEK->magicCode = (unsigned int)wrappedKeyLength;
+	memcpy(DKEK->keyInfo.iv1, iv1, MAX_IV_SIZE);
+	memcpy(DKEK->keyInfo.salt, salt, PBKDF2_SALT_LEN);
+
+	memcpy(DKEK->keyInfo.label, domain, domain_len);
+	DKEK->keyInfo.label[domain_len] = '\0';
+
+	memcpy(DKEK->keyInfo.iv2, tag, AES_GCM_TAG_SIZE);
+
+	return SUCCESS;
 }
 
 
@@ -73,34 +211,11 @@ int GenerateDomainKEKWithPolicy(
 	const char domain[DOMAIN_NAME_SIZE],
 	uint32_t policy){
 
-    uint32_t i;
-    uint8_t _key[MAX_KEY_SIZE];
-    uint8_t xor_operand[MAX_KEY_SIZE];
-
-	if(keyLength > MAX_KEY_SIZE){
-		// keyLength is larger than maximum
+	if(GenerateDomainKEK(DKEK, password, keyLength, domain))
 		return ERROR;
-	}
 
-    memcpy(DKEK->keyInfo.label, domain, MAX_LABEL_SIZE);
-	DKEK->keyInfo.keyLength = keyLength;
 	DKEK->keyInfo.policy = policy;
-
-    for(i=0; i<keyLength; i++){
-        if(i%2==1) memset(_key+i, 0, 1);
-        else memset(_key+i, 1, 1);
-    }
-
-    memset(xor_operand, 0, keyLength);
-    memcpy(xor_operand, password, 
-            strlen(password) < keyLength ? strlen(password) : keyLength);
-
-    for(i=0; i<keyLength; i++){
-        DKEK->wrappedKey[i] = _key[i] ^ xor_operand[i];
-    }
-    
-    return SUCCESS;
-
+	return SUCCESS;
 }
 
 int UpdateDomainKEK(
@@ -108,7 +223,7 @@ int UpdateDomainKEK(
 	const WrappedKeyMaterial *old_DKEK,
 	const char *old_pw,
 	const char *new_pw){
-	
+
 	KeyMaterial *raw_DKEK;
 	raw_DKEK = (KeyMaterial *)malloc(sizeof(KeyMaterial));
 
@@ -138,19 +253,45 @@ int UnwrapDomainKEK(
 	const WrappedKeyMaterial *DKEK,
 	const char *password){
 
-    uint32_t i;
-    uint8_t xor_operand[MAX_KEY_SIZE];
+	char *pass_concat_domain;
+	uint8_t tag[AES_GCM_TAG_SIZE];
+	uint8_t PKEK1[MAX_KEY_SIZE];
+	int keyLength;
 
-	memset(xor_operand, 0, MAX_KEY_SIZE);
-    memcpy(xor_operand, password, 
-			strlen(password) < MAX_KEY_SIZE ? strlen(password) : MAX_KEY_SIZE);
-	
-    for(i=0; i<DKEK->keyInfo.keyLength; i++){
-        raw_DKEK->key[i] = DKEK->wrappedKey[i] ^ xor_operand[i];
-    }
+	pass_concat_domain = (char *)malloc(strlen(password)+strlen(DKEK->keyInfo.label));
+	strncpy(pass_concat_domain, password, strlen(password));
+	pass_concat_domain[strlen(password)] = '\0';
+	strncat(pass_concat_domain, DKEK->keyInfo.label, strlen(DKEK->keyInfo.label));
+	pass_concat_domain[strlen(password)+strlen(DKEK->keyInfo.label)] = '\0';
+
+	if(!PKCS5_PBKDF2_HMAC_SHA1(
+			pass_concat_domain,
+			strlen(pass_concat_domain),
+			DKEK->keyInfo.salt,
+			PBKDF2_SALT_LEN,
+			PBKDF2_ITERATIONS,
+			MAX_KEY_SIZE,
+			PKEK1)){
+		free(pass_concat_domain);
+		return OPENSSL_ENGINE_ERROR;
+	}
+	free(pass_concat_domain);
+
+
+	memcpy(tag, DKEK->keyInfo.iv2, MAX_IV_SIZE);
+
+
+	if(0 > (keyLength = decryptAes256Gcm(
+			DKEK->wrappedKey,
+			DKEK->magicCode,
+			tag, PKEK1, DKEK->keyInfo.iv1, raw_DKEK->key))){
+
+		return VERIFY_DATA_ERROR;
+	}
+
 	memcpy(&(raw_DKEK->keyInfo), &(DKEK->keyInfo), sizeof(KeyMaterialInfo));
-
-    return SUCCESS;		
+	raw_DKEK->keyInfo.keyLength = (unsigned int)keyLength;
+    return SUCCESS;
 }
 
 int WrapDomainKEK(
@@ -158,19 +299,44 @@ int WrapDomainKEK(
 	const KeyMaterial *raw_DKEK,
 	const char *password){
 
-	uint32_t i;
-	uint8_t xor_operand[MAX_KEY_SIZE];
+	uint8_t tag[AES_GCM_TAG_SIZE];
+    uint8_t PKEK1[MAX_KEY_SIZE];
+    int wrappedKeyLength;
+    char *pass_concat_domain;
 
-	memset(xor_operand, 0, MAX_KEY_SIZE);
-	memcpy(xor_operand, password,
-			strlen(password) < MAX_KEY_SIZE ? strlen(password) : MAX_KEY_SIZE);
+	pass_concat_domain = (char *)malloc(strlen(password)+strlen(raw_DKEK->keyInfo.label));
+    strncpy(pass_concat_domain, password, strlen(password));
+    pass_concat_domain[strlen(password)] = '\0';
+    strncat(pass_concat_domain, raw_DKEK->keyInfo.label, strlen(raw_DKEK->keyInfo.label));
+    pass_concat_domain[strlen(password)+strlen(raw_DKEK->keyInfo.label)] = '\0';
 
-	for(i=0; i<raw_DKEK->keyInfo.keyLength; i++){
-		DKEK->wrappedKey[i] = raw_DKEK->key[i] ^ xor_operand[i];
+	if(!PKCS5_PBKDF2_HMAC_SHA1(
+			pass_concat_domain,
+			strlen(pass_concat_domain),
+			raw_DKEK->keyInfo.salt,
+			PBKDF2_SALT_LEN,
+			PBKDF2_ITERATIONS,
+			MAX_KEY_SIZE,
+			PKEK1)){
+		free(pass_concat_domain);
+		return OPENSSL_ENGINE_ERROR;
 	}
-	
+	free(pass_concat_domain);
+
 	memcpy(&(DKEK->keyInfo), &(raw_DKEK->keyInfo), sizeof(KeyMaterialInfo));
-	
+
+	if(0 > (wrappedKeyLength = encryptAes256Gcm(
+			raw_DKEK->key,
+			raw_DKEK->keyInfo.keyLength,
+			PKEK1,
+			raw_DKEK->keyInfo.iv1,
+			DKEK->wrappedKey,
+			tag)))
+		return OPENSSL_ENGINE_ERROR;
+
+	memcpy(DKEK->keyInfo.iv2, tag, AES_GCM_TAG_SIZE);
+	DKEK->magicCode = (unsigned int)wrappedKeyLength;
+
 	return SUCCESS;
 }
 
@@ -178,29 +344,40 @@ int VerifyDomainKEK(
 	const WrappedKeyMaterial *DKEK,
 	const char *password){
 
-	uint32_t i;
-	uint8_t _key[MAX_KEY_SIZE];
-	uint8_t xor_operand[MAX_KEY_SIZE];
-	uint8_t xor_result[MAX_KEY_SIZE];
+	char *pass_concat_domain;
+	uint8_t tag[AES_GCM_TAG_SIZE];
+	uint8_t PKEK1[MAX_KEY_SIZE];
+	uint8_t key[MAX_KEY_SIZE];
 
-	memset(xor_result, 0, MAX_KEY_SIZE);
-	memset(xor_operand, 0, MAX_KEY_SIZE);
-	memcpy(xor_operand, password,
-			strlen(password) < MAX_KEY_SIZE ? strlen(password) : MAX_KEY_SIZE);
+	pass_concat_domain = (char *)malloc(strlen(password)+strlen(DKEK->keyInfo.label)+1);
+	strncpy(pass_concat_domain, password, strlen(password));
+	pass_concat_domain[strlen(password)] = '\0';
+	strncat(pass_concat_domain, DKEK->keyInfo.label, strlen(DKEK->keyInfo.label));
+	pass_concat_domain[strlen(password)+strlen(DKEK->keyInfo.label)] = '\0';
 
-	for(i=0; i<DKEK->keyInfo.keyLength; i++){
-		xor_result[i] = DKEK->wrappedKey[i] ^ xor_operand[i];
+	if(!PKCS5_PBKDF2_HMAC_SHA1(
+			pass_concat_domain,
+			strlen(pass_concat_domain),
+			DKEK->keyInfo.salt,
+			PBKDF2_SALT_LEN,
+			PBKDF2_ITERATIONS,
+			MAX_KEY_SIZE,
+			PKEK1)){
+		free(pass_concat_domain);
+		return OPENSSL_ENGINE_ERROR;
+	}
+	free(pass_concat_domain);
+
+	memcpy(tag, DKEK->keyInfo.iv2, MAX_IV_SIZE);
+
+	if(0 > decryptAes256Gcm(
+			DKEK->wrappedKey,
+			DKEK->magicCode,
+			tag, PKEK1, DKEK->keyInfo.iv1, key)){
+		return VERIFY_DATA_ERROR;
 	}
 
-	for(i=0; i<DKEK->keyInfo.keyLength; i++){
-        if(i%2==1) memset(_key+i, 0, 1);
-        else memset(_key+i, 1, 1);
-    }
-
-	if(!memcmp(xor_result, _key, DKEK->keyInfo.keyLength))
-		return SUCCESS;
-	else
-		return ERROR;
+    return SUCCESS;
 }
 
 int GenerateDEK(
@@ -208,43 +385,73 @@ int GenerateDEK(
 	const KeyMaterial *raw_DKEK,
 	const char appLabel[APP_LABEL_SIZE],
 	const char context[MAX_CONTEXT_SIZE]){
-	
-	uint32_t i;
-	uint8_t _key[MAX_KEY_SIZE];
-	uint8_t xor_operand[MAX_KEY_SIZE];
-
-	memcpy(DEK->keyInfo.label, appLabel, APP_LABEL_SIZE);
-
-	memcpy(DEK->keyInfo.context, context, MAX_CONTEXT_SIZE);
-	DEK->keyInfo.keyLength = raw_DKEK->keyInfo.keyLength;
 
 
-	for(i=0; i<DEK->keyInfo.keyLength; i++){
-		if(i%2==0) memset(_key+i, 0, 1);
-		else memset(_key+i, 1, 1);
-	}
-	memcpy(xor_operand, raw_DKEK, MAX_KEY_SIZE);
-	for(i=0; i<DEK->keyInfo.keyLength; i++){
-		DEK->wrappedKey[i] = _key[i] ^ xor_operand[i];
-	}
-	
-	return SUCCESS;		
+	uint8_t key[MAX_KEY_SIZE], iv1[MAX_IV_SIZE], tag[AES_GCM_TAG_SIZE];
+    uint8_t PKEK2[MAX_KEY_SIZE];
+    int wrappedKeyLength, appLabel_len, context_len;
+
+	appLabel_len = strlen(appLabel) < APP_LABEL_SIZE ?
+		strlen(appLabel) : APP_LABEL_SIZE-1;
+	context_len = strlen(context) < MAX_CONTEXT_SIZE ?
+		strlen(context) : MAX_CONTEXT_SIZE-1;
+
+	if(!RAND_bytes(key, raw_DKEK->keyInfo.keyLength))
+		return OPENSSL_ENGINE_ERROR;
+	if(!RAND_bytes(iv1, MAX_IV_SIZE))
+		return OPENSSL_ENGINE_ERROR;
+
+	if(!PKCS5_PBKDF2_HMAC_SHA1(
+			appLabel, appLabel_len,
+			raw_DKEK->key, PBKDF2_SALT_LEN,
+			PBKDF2_ITERATIONS,
+			MAX_KEY_SIZE, PKEK2))
+		return OPENSSL_ENGINE_ERROR;
+
+	if(0 > (wrappedKeyLength = encryptAes256Gcm(
+			key, raw_DKEK->keyInfo.keyLength,
+			PKEK2, iv1, 
+			DEK->wrappedKey, tag)))
+		return OPENSSL_ENGINE_ERROR;
+	DEK->magicCode = (unsigned int)wrappedKeyLength;
+
+	memcpy(DEK->keyInfo.iv1, iv1, MAX_IV_SIZE);
+	memcpy(DEK->keyInfo.salt, raw_DKEK->key, PBKDF2_SALT_LEN);
+
+	memcpy(DEK->keyInfo.label, appLabel, appLabel_len);
+	DEK->keyInfo.label[appLabel_len] = '\0';
+	memcpy(DEK->keyInfo.context, context, context_len);
+	DEK->keyInfo.context[context_len] = '\0';
+
+	memcpy(DEK->keyInfo.iv2, tag, AES_GCM_TAG_SIZE);
+
+    return SUCCESS;
 }
 
 int UnwrapDEK(KeyMaterial *raw_DEK,
 	const KeyMaterial *raw_DKEK,
 	const WrappedKeyMaterial *DEK){
 
-	uint32_t i;
-	uint8_t xor_operand[MAX_KEY_SIZE];
-	uint8_t wrapped_key[MAX_KEY_SIZE];
+	uint8_t tag[AES_GCM_TAG_SIZE];
+	uint8_t PKEK2[MAX_KEY_SIZE];
+	int keyLength;
 
-	memcpy(xor_operand, raw_DKEK, MAX_KEY_SIZE);
-	memcpy(wrapped_key, DEK->wrappedKey, MAX_KEY_SIZE);
-	for(i=0; i<raw_DKEK->keyInfo.keyLength; i++){
-		raw_DEK->key[i] = wrapped_key[i] ^ xor_operand[i];
-	}
+	if(!PKCS5_PBKDF2_HMAC_SHA1(
+			DEK->keyInfo.label, strlen(DEK->keyInfo.label),
+			raw_DKEK->key, PBKDF2_SALT_LEN,
+			PBKDF2_ITERATIONS,
+			MAX_KEY_SIZE, PKEK2))
+		return OPENSSL_ENGINE_ERROR;
+	memcpy(tag, DEK->keyInfo.iv2, AES_GCM_TAG_SIZE);
+
+	if(0 > (keyLength = decryptAes256Gcm(
+			DEK->wrappedKey, DEK->magicCode,
+			tag, PKEK2, DEK->keyInfo.iv1,
+			raw_DEK->key)))
+		return VERIFY_DATA_ERROR;
+
 	memcpy(&(raw_DEK->keyInfo), &(DEK->keyInfo), sizeof(KeyMaterialInfo));
-	
+	raw_DEK->keyInfo.keyLength = (unsigned int)keyLength;
+
     return SUCCESS;
 }

@@ -99,7 +99,7 @@ KeyAES KeyProvider::unwrapDEK(const RawBuffer &DEKInWrapForm){
 	KeyMaterial *rawDEK = new KeyMaterial;
 	WrappedKeyMaterial *DEK = new WrappedKeyMaterial;
 
-	memcpy(DEK, DEKInWrapForm.data(), sizeof(KeyMaterial));
+	memcpy(DEK, DEKInWrapForm.data(), sizeof(WrappedKeyMaterial));
 	if(!UnwrapDEK(rawDEK, m_rawDKEK, DEK)){
 		LogDebug("UnwrapDEK SUCCESS");
 		LogDebug("keyInfo.label : " << rawDEK->keyInfo.label);
