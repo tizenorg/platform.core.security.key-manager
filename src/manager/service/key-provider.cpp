@@ -95,19 +95,14 @@ bool KeyProvider::isInitialized() {
     return m_isInitialized;
 }
 
-KeyAES KeyProvider::getDomainKEK(){
+RawBuffer KeyProvider::getDomainKEK(){
     if(!m_isInitialized) {
         ThrowMsg(Exception::InitFailed, "Object not initialized!");
     }
 
-
-    // TODO: rawData_rawDKEK is not safe. Memory it's not overwritten in destructor we should probably pass this key in other way.
-    // [k.tak] rawData_rawDKEK is removed.
-	// It will be modified to return toRawBuffer result value
-	// after key-aes implementation done
-
-    return KeyAES();
-    //return KeyAES(toRawBuffer(*m_rawDKEK));
+    RawBuffer result(m_rawDKEK->key, (m_rawDKEK->key) + m_rawDKEK->keyInfo.keyLength);
+    // TODO secure
+    return result;
 }
 
 RawBuffer KeyProvider::getDomainKEK(const std::string &password){
