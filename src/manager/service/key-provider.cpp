@@ -118,16 +118,16 @@ bool KeyProvider::isInitialized() {
     return m_isInitialized;
 }
 
-RawBuffer KeyProvider::getDomainKEK(){
+RawBuffer KeyProvider::getPureDomainKEK(){
     if(!m_isInitialized) {
         ThrowMsg(Exception::InitFailed, "Object not initialized!");
     }
 
 	// TODO secure
-	return toRawBuffer(*m_rawDKEK);
+	return RawBuffer(m_rawDKEK->key, (m_rawDKEK->key) + m_rawDKEK->keyInfo.keyLength);
 }
 
-RawBuffer KeyProvider::getDomainKEK(const std::string &password){
+RawBuffer KeyProvider::getWrappedDomainKEK(const std::string &password){
     if(!m_isInitialized) {
         ThrowMsg(Exception::InitFailed, "Object not initialized!");
     }
