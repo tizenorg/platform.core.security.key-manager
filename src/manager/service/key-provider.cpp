@@ -147,7 +147,7 @@ RawBuffer KeyProvider::getWrappedDomainKEK(const std::string &password){
 }
 
 
-KeyAES KeyProvider::getPureDEK(const RawBuffer &DEKInWrapForm){
+RawBuffer KeyProvider::getPureDEK(const RawBuffer &DEKInWrapForm){
 	if(!m_isInitialized) {
 		ThrowMsg(Exception::InitFailed, "Object not initialized!");
 	}
@@ -166,20 +166,13 @@ KeyAES KeyProvider::getPureDEK(const RawBuffer &DEKInWrapForm){
 	if(UnwrapDEK(&(kmcDEK.getKeyMaterial()), &(m_kmcDKEK->getKeyMaterial()), &(wkmcDEK.getWrappedKeyMaterial()))){
 		ThrowMsg(Exception::UnwrapFailed,
 			"UnwrapDEK Failed in KeyProvider::getPureDEK");
-		return KeyAES();
 	}
 
 	LogDebug("getPureDEK SUCCESS");
 
-	// TODO: it may not be secure to use RawData here
-	// [k.tak] RawBuffer local variable is removed.
-	// KeyMaterialContainer added. (to destruct KeyMaterial after returning)
-	// It will be modified to return toRawBuffer result value
-	// after key-aes implementation done
-	return KeyAES();
-	//return KeyAES(RawBuffer(
-	//	kmcDEK.getKeyMaterial().key,
-	//	(kmcDEK.getKeyMaterial().key) + kmcDEK.getKeyMaterial().keyInfo.keyLength));
+	return RawBuffer(
+		kmcDEK.getKeyMaterial().key,
+		(kmcDEK.getKeyMaterial().key) + kmcDEK.getKeyMaterial().keyInfo.keyLength);
 }
 
 RawBuffer KeyProvider::generateDEK(const std::string &smackLabel){
