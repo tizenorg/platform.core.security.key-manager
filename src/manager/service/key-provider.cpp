@@ -2,7 +2,6 @@
 #include <ckm/ckm-type.h>
 #include <string.h>
 #include <dpl/log/log.h>
-
 #define KEY_LENGTH 	32
 #define CONTEXT		"SAMPLE_CONTEXT_OF_APP"
 
@@ -10,161 +9,165 @@ namespace {
 
 template<typename T>
 CKM::RawBuffer toRawBuffer(const T &data) {
-    CKM::RawBuffer output;
-    const unsigned char *ptr = reinterpret_cast<const unsigned char*>(&data);
-    output.assign(ptr, ptr + sizeof(T));
-    return output;
+	CKM::RawBuffer output;
+	const unsigned char *ptr = reinterpret_cast<const unsigned char*>(&data);
+	output.assign(ptr, ptr + sizeof(T));
+	return output;
 }
 
 // You cannot use toRawBuffer template with pointers
 template<typename T>
 CKM::RawBuffer toRawBuffer(T *) {
-    class NoPointerAllowed { NoPointerAllowed(){} };
-    NoPointerAllowed a;
-    return CKM::RawBuffer();
+	class NoPointerAllowed { NoPointerAllowed(){} };
+	NoPointerAllowed a;
+	return CKM::RawBuffer();
 }
 
 } // anonymous namespace
 
 using namespace CKM;
 
-class KeyMaterialContainer{
-public:
-    class Exception {
-    public:
-        DECLARE_EXCEPTION_TYPE(CKM::Exception, Base)
-    };
-    KeyMaterialContainer(){
-        keyMaterial = new KeyMaterial;
-    }
-    KeyMaterial& getKeyMaterial(){
-        return *keyMaterial;
-    }
-    ~KeyMaterialContainer(){
-        // overwrite key
-        char *ptr = reinterpret_cast<char*>(keyMaterial);
-        for (size_t size = 0; size < sizeof(KeyMaterial); ++size)
-            ptr[size] = 0;
-        // verification
-        for (size_t size = 0; size < sizeof(KeyMaterial); ++size) {
-            if (0 != ptr[size]) {
-                delete keyMaterial;
-                ThrowMsg(Exception::Base, "KeyMaterial in KeyMaterialContainer "
-                    "was not destroyed!");
-            }
-        }
-        delete keyMaterial;
-    }
-private:
-    KeyMaterial *keyMaterial;
-};
+WrappedKeyMaterialContainer::WrappedKeyMaterialContainer(){
+	wrappedKeyMaterial = new WrappedKeyMaterial;
+	memset(wrappedKeyMaterial, 0, sizeof(WrappedKeyMaterial));
+}
+WrappedKeyMaterialContainer::WrappedKeyMaterialContainer(const unsigned char *data){
+	wrappedKeyMaterial = new WrappedKeyMaterial;
+	memcpy(wrappedKeyMaterial, data, sizeof(WrappedKeyMaterial));
+}
+WrappedKeyMaterial& WrappedKeyMaterialContainer::getWrappedKeyMaterial(){
+	return *wrappedKeyMaterial;
+}
+WrappedKeyMaterialContainer::~WrappedKeyMaterialContainer(){
+	delete wrappedKeyMaterial;
+}
+
+KeyMaterialContainer::KeyMaterialContainer(){
+	keyMaterial = new KeyMaterial;
+	memset(keyMaterial, 0, sizeof(KeyMaterial));
+}
+KeyMaterialContainer::KeyMaterialContainer(const unsigned char *data){
+	keyMaterial = new KeyMaterial;
+	memcpy(keyMaterial, data, sizeof(KeyMaterial));
+}
+KeyMaterial& KeyMaterialContainer::getKeyMaterial(){
+	return *keyMaterial;
+}
+KeyMaterialContainer::~KeyMaterialContainer(){
+	// overwrite key
+	char *ptr = reinterpret_cast<char*>(keyMaterial);
+	for (size_t size = 0; size < sizeof(KeyMaterial); ++size)
+		ptr[size] = 0;
+	// verification
+	for (size_t size = 0; size < sizeof(KeyMaterial); ++size) {
+		if (0 != ptr[size]) {
+			delete keyMaterial;
+			ThrowMsg(Exception::Base, "KeyMaterial in KeyMaterialContainer "
+				"was not destroyed!");
+		}
+	}
+	delete keyMaterial;
+}
 
 bool KeyProvider::s_isInitialized = false;
 
 KeyProvider::KeyProvider()
-  : m_rawDKEK(NULL)
-  , m_isInitialized(false)
-{}
+	: m_kmcDKEK(NULL)
+	, m_isInitialized(false){}
 
 KeyProvider::KeyProvider(
-    const RawBuffer &domainKEKInWrapForm,
-    const std::string &password)
-  : m_rawDKEK(NULL)
-  , m_isInitialized(true)
+	const RawBuffer &domainKEKInWrapForm,
+	const std::string &password)
+	: m_kmcDKEK(new KeyMaterialContainer())
+	, m_isInitialized(true)
 {
-    if (!s_isInitialized) {
-    	ThrowMsg(Exception::InitFailed, "SKMM should be initialized first");
-    }
-    if (!m_isInitialized) {
-        ThrowMsg(Exception::InitFailed, "Object not initialized!. Should not happened");
-    }
-    if (domainKEKInWrapForm.size() != sizeof(WrappedKeyMaterial)) {
-        LogError("input size:" << domainKEKInWrapForm.size()
-          << " Expected: " << sizeof(WrappedKeyMaterial));
-        ThrowMsg(Exception::InputParamError, "buffer doesn't have proper size to store "
-          "WrappedKeyMaterial in KeyProvider Constructor");
-    }
+	if (!s_isInitialized){
+		ThrowMsg(Exception::InitFailed, "SKMM should be initialized first");
+	}
+	if (!m_isInitialized){
+		ThrowMsg(Exception::InitFailed, "Object not initialized!. Should not happened");
+	}
+	if (domainKEKInWrapForm.size() != sizeof(WrappedKeyMaterial)){
+		LogError("input size:" << domainKEKInWrapForm.size()
+			<< " Expected: " << sizeof(WrappedKeyMaterial));
+		ThrowMsg(Exception::InputParamError, "buffer doesn't have proper size to store WrappedKeyMaterial in KeyProvider Constructor");
+	}
+	WrappedKeyMaterialContainer wkmcDKEK = WrappedKeyMaterialContainer(domainKEKInWrapForm.data());
 
-    WrappedKeyMaterial DKEK;
-    m_rawDKEK = new KeyMaterial;
-
-    memcpy(&DKEK, domainKEKInWrapForm.data(), sizeof(WrappedKeyMaterial));
-
-	if(VerifyDomainKEK(&DKEK, password.c_str()))
+	if(VerifyDomainKEK(&(wkmcDKEK.getWrappedKeyMaterial()), password.c_str()))
 		ThrowMsg(Exception::UnwrapFailed, "VerifyDomainKEK failed in KeyProvider Constructor");
-
-	if(UnwrapDomainKEK(m_rawDKEK, &DKEK, password.c_str()))
+	if(UnwrapDomainKEK(&(m_kmcDKEK->getKeyMaterial()), &(wkmcDKEK.getWrappedKeyMaterial()), password.c_str()))
 		ThrowMsg(Exception::UnwrapFailed, "UnwrapDomainKEK failed in KeyProvider Constructor");
+
 }
 
-KeyProvider& KeyProvider::operator=(KeyProvider &&second) {
-    if (this == &second)
-        return *this;
-    m_isInitialized = second.m_isInitialized;
-    m_rawDKEK = second.m_rawDKEK;
-    second.m_isInitialized = false;
-    second.m_rawDKEK = NULL;
-    return *this;
+KeyProvider& KeyProvider::operator=(KeyProvider &&second){
+	if (this == &second)
+		return *this;
+	m_isInitialized = second.m_isInitialized;
+	m_kmcDKEK = second.m_kmcDKEK;
+	second.m_isInitialized = false;
+	second.m_kmcDKEK = NULL;
+	return *this;
 }
 
 KeyProvider::KeyProvider(KeyProvider &&second) {
-    m_isInitialized = second.m_isInitialized;
-    m_rawDKEK = second.m_rawDKEK;
-    second.m_isInitialized = false;
-    second.m_rawDKEK = NULL;
+	m_isInitialized = second.m_isInitialized;
+	m_kmcDKEK = second.m_kmcDKEK;
+	second.m_isInitialized = false;
 }
 
 bool KeyProvider::isInitialized() {
-    return m_isInitialized;
+	return m_isInitialized;
 }
 
 RawBuffer KeyProvider::getPureDomainKEK(){
-    if(!m_isInitialized) {
-        ThrowMsg(Exception::InitFailed, "Object not initialized!");
-    }
+	if(!m_isInitialized){
+		ThrowMsg(Exception::InitFailed, "Object not initialized!");
+	}
 
 	// TODO secure
-	return RawBuffer(m_rawDKEK->key, (m_rawDKEK->key) + m_rawDKEK->keyInfo.keyLength);
+	return RawBuffer(m_kmcDKEK->getKeyMaterial().key, (m_kmcDKEK->getKeyMaterial().key) + m_kmcDKEK->getKeyMaterial().keyInfo.keyLength);
 }
 
 RawBuffer KeyProvider::getWrappedDomainKEK(const std::string &password){
-    if(!m_isInitialized) {
-        ThrowMsg(Exception::InitFailed, "Object not initialized!");
-    }
+	if(!m_isInitialized) {
+		ThrowMsg(Exception::InitFailed, "Object not initialized!");
+	}
 
-    WrappedKeyMaterial DKEK;
-    if (WrapDomainKEK(&DKEK, m_rawDKEK, password.c_str())){
-        ThrowMsg(Exception::InitFailed, "WrapDKEK Failed in KeyProvider::getDomainKEK");
+	WrappedKeyMaterialContainer wkmcDKEK = WrappedKeyMaterialContainer();
+
+	if(WrapDomainKEK(&(wkmcDKEK.getWrappedKeyMaterial()), &(m_kmcDKEK->getKeyMaterial()), password.c_str())){
+		ThrowMsg(Exception::InitFailed, "WrapDKEK Failed in KeyProvider::getDomainKEK");
 		return RawBuffer();
-    }
+	}
 	
 	LogDebug("getDomainKEK(password) Success");
-	return toRawBuffer(DKEK);
+	return toRawBuffer(wkmcDKEK.getWrappedKeyMaterial());
 }
 
 
 KeyAES KeyProvider::getPureDEK(const RawBuffer &DEKInWrapForm){
-    if(!m_isInitialized) {
-        ThrowMsg(Exception::InitFailed, "Object not initialized!");
-    }
+	if(!m_isInitialized) {
+		ThrowMsg(Exception::InitFailed, "Object not initialized!");
+	}
 
-    if(DEKInWrapForm.size() != sizeof(WrappedKeyMaterial)){
-    	LogError("input size:" << DEKInWrapForm.size()
-    	          << " Expected: " << sizeof(WrappedKeyMaterial));
-        ThrowMsg(Exception::InputParamError,
-        		"buffer doesn't have proper size to store "
-        		"WrappedKeyMaterial in KeyProvider::getPureDEK");
-    }
+	if(DEKInWrapForm.size() != sizeof(WrappedKeyMaterial)){
+		LogError("input size:" << DEKInWrapForm.size()
+				  << " Expected: " << sizeof(WrappedKeyMaterial));
+		ThrowMsg(Exception::InputParamError,
+				"buffer doesn't have proper size to store "
+				"WrappedKeyMaterial in KeyProvider::getPureDEK");
+	}
 
-	KeyMaterialContainer keyMaterialContainer = KeyMaterialContainer();
-    WrappedKeyMaterial DEK;
+	KeyMaterialContainer kmcDEK = KeyMaterialContainer();
+	WrappedKeyMaterialContainer wkmcDEK = WrappedKeyMaterialContainer(DEKInWrapForm.data());
 
-    memcpy(&DEK, DEKInWrapForm.data(), sizeof(WrappedKeyMaterial));
-    if(UnwrapDEK(&(keyMaterialContainer.getKeyMaterial()), m_rawDKEK, &DEK)){
+	if(UnwrapDEK(&(kmcDEK.getKeyMaterial()), &(m_kmcDKEK->getKeyMaterial()), &(wkmcDEK.getWrappedKeyMaterial()))){
 		ThrowMsg(Exception::UnwrapFailed,
 			"UnwrapDEK Failed in KeyProvider::getPureDEK");
 		return KeyAES();
-    }
+	}
 
 	LogDebug("getPureDEK SUCCESS");
 
@@ -175,17 +178,16 @@ KeyAES KeyProvider::getPureDEK(const RawBuffer &DEKInWrapForm){
 	// after key-aes implementation done
 	return KeyAES();
 	//return KeyAES(RawBuffer(
-	//	keyMaterialContainer.getKeyMaterial().key,
-	//	(keyMaterialContainer.getKeyMaterial().key)
-	//		+ keyMaterialContainer.getKeyMaterial().keyInfo.keyLength));
+	//	kmcDEK.getKeyMaterial().key,
+	//	(kmcDEK.getKeyMaterial().key) + kmcDEK.getKeyMaterial().keyInfo.keyLength));
 }
 
 RawBuffer KeyProvider::generateDEK(const std::string &smackLabel){
-    if(!m_isInitialized) {
-        ThrowMsg(Exception::InitFailed,
-        		"Object not initialized!");
-    }
-    WrappedKeyMaterial DEK;
+	if(!m_isInitialized) {
+		ThrowMsg(Exception::InitFailed,
+				"Object not initialized!");
+	}
+	WrappedKeyMaterialContainer wkmcDEK = WrappedKeyMaterialContainer();
 	std::string resized_smackLabel;
 
 	if(smackLabel.length() < APP_LABEL_SIZE)
@@ -193,14 +195,14 @@ RawBuffer KeyProvider::generateDEK(const std::string &smackLabel){
 	else
 		resized_smackLabel = smackLabel.substr(0, APP_LABEL_SIZE-1);
 
-	if(GenerateDEK(&DEK, m_rawDKEK, resized_smackLabel.c_str(), CONTEXT)){
+	if(GenerateDEK(&(wkmcDEK.getWrappedKeyMaterial()), &(m_kmcDKEK->getKeyMaterial()), resized_smackLabel.c_str(), CONTEXT)){
 		ThrowMsg(Exception::GenFailed, 
 			"GenerateDEK Failed in KeyProvider::generateDEK");
 		return RawBuffer();
 	}
 
 	LogDebug("GenerateDEK Success");
-	return toRawBuffer(DEK);
+	return toRawBuffer(wkmcDEK.getWrappedKeyMaterial());
 }
 
 RawBuffer KeyProvider::reencrypt(
@@ -208,25 +210,26 @@ RawBuffer KeyProvider::reencrypt(
 	const std::string &oldPass,
 	const std::string &newPass)
 {
-    if(domainKEKInWrapForm.size() != sizeof(WrappedKeyMaterial)){
-    	LogError("input size:" << domainKEKInWrapForm.size()
-    	          << " Expected: " << sizeof(WrappedKeyMaterial));
-    	ThrowMsg(Exception::InputParamError,
-        		"buffer doesn't have proper size to store "
-        		"WrappedKeyMaterial in KeyProvider::reencrypt");
+	if(domainKEKInWrapForm.size() != sizeof(WrappedKeyMaterial)){
+		LogError("input size:" << domainKEKInWrapForm.size()
+				  << " Expected: " << sizeof(WrappedKeyMaterial));
+		ThrowMsg(Exception::InputParamError,
+				"buffer doesn't have proper size to store "
+				"WrappedKeyMaterial in KeyProvider::reencrypt");
 	}
 
-    WrappedKeyMaterial old_DKEK;
-    WrappedKeyMaterial new_DKEK;
-    memcpy(&old_DKEK, domainKEKInWrapForm.data(), sizeof(WrappedKeyMaterial));
+	WrappedKeyMaterialContainer wkmcOldDEK = WrappedKeyMaterialContainer(domainKEKInWrapForm.data());
+	WrappedKeyMaterialContainer wkmcNewDEK = WrappedKeyMaterialContainer();
 
-	if(VerifyDomainKEK(&old_DKEK, oldPass.c_str()))
+	if(VerifyDomainKEK(&(wkmcOldDEK.getWrappedKeyMaterial()), oldPass.c_str()))
 	{
 		ThrowMsg(Exception::UnwrapFailed,
 			"VerifyDomainKEK in KeyProvider::reencrypt Failed");
 		return RawBuffer();
 	}
-	if(UpdateDomainKEK(&new_DKEK, &old_DKEK, 
+	if(UpdateDomainKEK(
+			&(wkmcNewDEK.getWrappedKeyMaterial()),
+			&(wkmcOldDEK.getWrappedKeyMaterial()),
 			oldPass.c_str(), newPass.c_str()))
 	{
 		ThrowMsg(Exception::UnwrapFailed,
@@ -235,33 +238,32 @@ RawBuffer KeyProvider::reencrypt(
 	}
 
 	LogDebug("reencrypt SUCCESS");
-	return toRawBuffer(new_DKEK);
+	return toRawBuffer(wkmcNewDEK.getWrappedKeyMaterial());
 }
 
 
 RawBuffer KeyProvider::generateDomainKEK(
-    const std::string &user,
-    const std::string &userPassword)
+	const std::string &user,
+	const std::string &userPassword)
 {
-    WrappedKeyMaterial DKEK;
+	WrappedKeyMaterialContainer wkmcDKEK = WrappedKeyMaterialContainer();
 
-    if(GenerateDomainKEK(&DKEK, userPassword.c_str(), 
-		KEY_LENGTH, user.c_str()))
+	if(GenerateDomainKEK(&(wkmcDKEK.getWrappedKeyMaterial()), userPassword.c_str(), KEY_LENGTH, user.c_str()))
 	{
 		ThrowMsg(Exception::GenFailed,
 			"GenerateDomainKEK Failed in KeyProvider::generateDomainKEK");
 		return RawBuffer();
-    }
+	}
 
 	LogDebug("generateDomainKEK Success");
-	return toRawBuffer(DKEK);
+	return toRawBuffer(wkmcDKEK.getWrappedKeyMaterial());
 }
 
 int KeyProvider::initializeLibrary(){
-    if(SKMMInitializeLibrary(SKMM_TESTING_MODE, NULL, NULL)){
+	if(SKMMInitializeLibrary(SKMM_TESTING_MODE, NULL, NULL)){
 		ThrowMsg(Exception::InitFailed, "SKMMInitializeLibrary Failed");
 		return ERROR;
-    }
+	}
 
 	LogDebug("initializeLibrary Success");
 	s_isInitialized = true;
@@ -269,10 +271,10 @@ int KeyProvider::initializeLibrary(){
 }
 
 int KeyProvider::closeLibrary(){
-    if(SKMMCloseLibrary()){
+	if(SKMMCloseLibrary()){
 		ThrowMsg(Exception::InitFailed, "SKMMCloseLibrary Failed");
 		return ERROR;
-    }
+	}
 
 	LogDebug("closeLibrary Success");
 	s_isInitialized = false;
@@ -280,20 +282,7 @@ int KeyProvider::closeLibrary(){
 }
 
 KeyProvider::~KeyProvider(){
-    LogDebug("KeyProvider Destructor");
-    if (m_rawDKEK) {
-        // overwrite key
-        char *ptr = reinterpret_cast<char*>(m_rawDKEK);
-        for (size_t size = 0; size < sizeof(KeyMaterial); ++size)
-            ptr[size] = 0;
-        // verification
-        for (size_t size = 0; size < sizeof(KeyMaterial); ++size) {
-            if (0 != ptr[size]) {
-                delete m_rawDKEK;
-                ThrowMsg(Exception::Base, "Key was not destroyed!");
-            }
-        }
-    }
-    delete m_rawDKEK;
+	LogDebug("KeyProvider Destructor");
+	delete m_kmcDKEK;
 }
 
