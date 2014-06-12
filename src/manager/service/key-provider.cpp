@@ -143,7 +143,7 @@ RawBuffer KeyProvider::getWrappedDomainKEK(const std::string &password){
 }
 
 
-KeyAES KeyProvider::unwrapDEK(const RawBuffer &DEKInWrapForm){
+KeyAES KeyProvider::getPureDEK(const RawBuffer &DEKInWrapForm){
     if(!m_isInitialized) {
         ThrowMsg(Exception::InitFailed, "Object not initialized!");
     }
@@ -153,7 +153,7 @@ KeyAES KeyProvider::unwrapDEK(const RawBuffer &DEKInWrapForm){
     	          << " Expected: " << sizeof(WrappedKeyMaterial));
         ThrowMsg(Exception::InputParamError,
         		"buffer doesn't have proper size to store "
-        		"WrappedKeyMaterial in KeyProvider::unwrapDEK");
+        		"WrappedKeyMaterial in KeyProvider::getPureDEK");
     }
 
 	KeyMaterialContainer keyMaterialContainer = KeyMaterialContainer();
@@ -162,11 +162,11 @@ KeyAES KeyProvider::unwrapDEK(const RawBuffer &DEKInWrapForm){
     memcpy(&DEK, DEKInWrapForm.data(), sizeof(WrappedKeyMaterial));
     if(UnwrapDEK(&(keyMaterialContainer.getKeyMaterial()), m_rawDKEK, &DEK)){
 		ThrowMsg(Exception::UnwrapFailed,
-			"UnwrapDEK Failed in KeyProvider::unwrapDEK");
+			"UnwrapDEK Failed in KeyProvider::getPureDEK");
 		return KeyAES();
     }
 
-	LogDebug("unwrapDEK SUCCESS");
+	LogDebug("getPureDEK SUCCESS");
 
 	// TODO: it may not be secure to use RawData here
 	// [k.tak] RawBuffer local variable is removed.
@@ -174,7 +174,10 @@ KeyAES KeyProvider::unwrapDEK(const RawBuffer &DEKInWrapForm){
 	// It will be modified to return toRawBuffer result value
 	// after key-aes implementation done
 	return KeyAES();
-	//return KeyAES(toRawBuffer(keyMaterialContainer.getKeyMaterial()));
+	//return KeyAES(RawBuffer(
+	//	keyMaterialContainer.getKeyMaterial().key,
+	//	(keyMaterialContainer.getKeyMaterial().key)
+	//		+ keyMaterialContainer.getKeyMaterial().keyInfo.keyLength));
 }
 
 RawBuffer KeyProvider::generateDEK(const std::string &smackLabel){
