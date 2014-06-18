@@ -369,7 +369,6 @@ int VerifyDomainKEK(
 			MAX_KEY_SIZE,
 			PKEK1)){
 		free(pass_concat_domain);
-		printf("PKCS5_PBKDF2_HMAC_SHA1 ERROR in VerifyDomainKEK\n");
 		return OPENSSL_ENGINE_ERROR;
 	}
 	free(pass_concat_domain);
@@ -380,7 +379,6 @@ int VerifyDomainKEK(
 			DKEK->wrappedKey,
 			DKEK->keyInfo.keyLength,
 			tag, PKEK1, DKEK->keyInfo.iv1, key)){
-		printf("decryptAes256Gcm ERROR in VerifyDomainKEK\n");
 		return VERIFY_DATA_ERROR;
 	}
 
