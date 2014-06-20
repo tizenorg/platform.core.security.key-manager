@@ -253,7 +253,7 @@ RawBuffer KeyProvider::generateDomainKEK(
 }
 
 int KeyProvider::initializeLibrary(){
-	if(SKMMInitializeLibrary(SKMM_TESTING_MODE, NULL, NULL)){
+	if(SKMMInitializeLibrary(SKMM_DEFAULT_MODE, NULL, NULL)){
 		ThrowMsg(Exception::InitFailed, "SKMMInitializeLibrary Failed");
 		return ERROR;
 	}
