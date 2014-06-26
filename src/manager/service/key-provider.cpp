@@ -73,7 +73,10 @@ bool KeyProvider::s_isInitialized = false;
 
 KeyProvider::KeyProvider()
 	: m_kmcDKEK(NULL)
-	, m_isInitialized(false){}
+	, m_isInitialized(false)
+{
+    LogDebug("Created empty KeyProvider");
+}
 
 KeyProvider::KeyProvider(
 	const RawBuffer &domainKEKInWrapForm,
@@ -102,6 +105,7 @@ KeyProvider::KeyProvider(
 }
 
 KeyProvider& KeyProvider::operator=(KeyProvider &&second){
+    LogDebug("Moving KeyProvider");
 	if (this == &second)
 		return *this;
 	m_isInitialized = second.m_isInitialized;
@@ -112,6 +116,7 @@ KeyProvider& KeyProvider::operator=(KeyProvider &&second){
 }
 
 KeyProvider::KeyProvider(KeyProvider &&second) {
+    LogDebug("Moving KeyProvider");
 	m_isInitialized = second.m_isInitialized;
 	m_kmcDKEK = second.m_kmcDKEK;
 	second.m_isInitialized = false;
