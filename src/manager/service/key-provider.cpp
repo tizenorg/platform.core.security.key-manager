@@ -115,6 +115,7 @@ KeyProvider::KeyProvider(KeyProvider &&second) {
 	m_isInitialized = second.m_isInitialized;
 	m_kmcDKEK = second.m_kmcDKEK;
 	second.m_isInitialized = false;
+    second.m_kmcDKEK = NULL;
 }
 
 bool KeyProvider::isInitialized() {
