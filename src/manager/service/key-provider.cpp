@@ -98,10 +98,9 @@ KeyProvider::KeyProvider(
 	WrappedKeyMaterialContainer wkmcDKEK = WrappedKeyMaterialContainer(domainKEKInWrapForm.data());
 
 	if(VerifyDomainKEK(&(wkmcDKEK.getWrappedKeyMaterial()), password.c_str()))
-		ThrowMsg(Exception::UnwrapFailed, "VerifyDomainKEK failed in KeyProvider Constructor");
+		ThrowMsg(Exception::PassWordError, "VerifyDomainKEK failed in KeyProvider Constructor");
 	if(UnwrapDomainKEK(&(m_kmcDKEK->getKeyMaterial()), &(wkmcDKEK.getWrappedKeyMaterial()), password.c_str()))
 		ThrowMsg(Exception::UnwrapFailed, "UnwrapDomainKEK failed in KeyProvider Constructor");
-
 }
 
 KeyProvider& KeyProvider::operator=(KeyProvider &&second){
@@ -222,8 +221,8 @@ RawBuffer KeyProvider::reencrypt(
 
 	if(VerifyDomainKEK(&(wkmcOldDEK.getWrappedKeyMaterial()), oldPass.c_str()))
 	{
-		ThrowMsg(Exception::UnwrapFailed,
-			"VerifyDomainKEK in KeyProvider::reencrypt Failed");
+		ThrowMsg(Exception::PassWordError,
+			"Incorrect Old Password ");
 		return RawBuffer();
 	}
 	if(UpdateDomainKEK(
