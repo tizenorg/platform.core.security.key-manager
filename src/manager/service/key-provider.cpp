@@ -8,19 +8,19 @@
 namespace {
 
 template<typename T>
-CKM::RawBuffer toRawBuffer(const T &data) {
-	CKM::RawBuffer output;
+CKM::SafeBuffer toSafeBufferConversion(const T &data) {
+	CKM::SafeBuffer output;
 	const unsigned char *ptr = reinterpret_cast<const unsigned char*>(&data);
 	output.assign(ptr, ptr + sizeof(T));
 	return output;
 }
 
-// You cannot use toRawBuffer template with pointers
+// You cannot use toSafeBufferConversion template with pointers
 template<typename T>
-CKM::RawBuffer toRawBuffer(T *) {
+CKM::SafeBuffer toSafeBufferConversion(T *) {
 	class NoPointerAllowed { NoPointerAllowed(){} };
 	NoPointerAllowed a;
-	return CKM::RawBuffer();
+	return CKM::SafeBuffer();
 }
 
 } // anonymous namespace
@@ -79,7 +79,7 @@ KeyProvider::KeyProvider()
 }
 
 KeyProvider::KeyProvider(
-	const RawBuffer &domainKEKInWrapForm,
+	const SafeBuffer &domainKEKInWrapForm,
 	const std::string &password)
 	: m_kmcDKEK(new KeyMaterialContainer())
 	, m_isInitialized(true)
@@ -126,16 +126,16 @@ bool KeyProvider::isInitialized() {
 	return m_isInitialized;
 }
 
-RawBuffer KeyProvider::getPureDomainKEK(){
+SafeBuffer KeyProvider::getPureDomainKEK(){
 	if(!m_isInitialized){
 		ThrowMsg(Exception::InitFailed, "Object not initialized!");
 	}
 
 	// TODO secure
-	return RawBuffer(m_kmcDKEK->getKeyMaterial().key, (m_kmcDKEK->getKeyMaterial().key) + m_kmcDKEK->getKeyMaterial().keyInfo.keyLength);
+	return SafeBuffer(m_kmcDKEK->getKeyMaterial().key, (m_kmcDKEK->getKeyMaterial().key) + m_kmcDKEK->getKeyMaterial().keyInfo.keyLength);
 }
 
-RawBuffer KeyProvider::getWrappedDomainKEK(const std::string &password){
+SafeBuffer KeyProvider::getWrappedDomainKEK(const std::string &password){
 	if(!m_isInitialized) {
 		ThrowMsg(Exception::InitFailed, "Object not initialized!");
 	}
@@ -144,15 +144,15 @@ RawBuffer KeyProvider::getWrappedDomainKEK(const std::string &password){
 
 	if(WrapDomainKEK(&(wkmcDKEK.getWrappedKeyMaterial()), &(m_kmcDKEK->getKeyMaterial()), password.c_str())){
 		ThrowMsg(Exception::InitFailed, "WrapDKEK Failed in KeyProvider::getDomainKEK");
-		return RawBuffer();
+		return SafeBuffer();
 	}
 	
 	LogDebug("getDomainKEK(password) Success");
-	return toRawBuffer(wkmcDKEK.getWrappedKeyMaterial());
+	return toSafeBufferConversion(wkmcDKEK.getWrappedKeyMaterial());
 }
 
 
-RawBuffer KeyProvider::getPureDEK(const RawBuffer &DEKInWrapForm){
+SafeBuffer KeyProvider::getPureDEK(const SafeBuffer &DEKInWrapForm){
 	if(!m_isInitialized) {
 		ThrowMsg(Exception::InitFailed, "Object not initialized!");
 	}
@@ -175,12 +175,12 @@ RawBuffer KeyProvider::getPureDEK(const RawBuffer &DEKInWrapForm){
 
 	LogDebug("getPureDEK SUCCESS");
 
-	return RawBuffer(
+	return SafeBuffer(
 		kmcDEK.getKeyMaterial().key,
 		(kmcDEK.getKeyMaterial().key) + kmcDEK.getKeyMaterial().keyInfo.keyLength);
 }
 
-RawBuffer KeyProvider::generateDEK(const std::string &smackLabel){
+SafeBuffer KeyProvider::generateDEK(const std::string &smackLabel){
 	if(!m_isInitialized) {
 		ThrowMsg(Exception::InitFailed,
 				"Object not initialized!");
@@ -196,15 +196,15 @@ RawBuffer KeyProvider::generateDEK(const std::string &smackLabel){
 	if(GenerateDEK(&(wkmcDEK.getWrappedKeyMaterial()), &(m_kmcDKEK->getKeyMaterial()), resized_smackLabel.c_str(), CONTEXT)){
 		ThrowMsg(Exception::GenFailed, 
 			"GenerateDEK Failed in KeyProvider::generateDEK");
-		return RawBuffer();
+		return SafeBuffer();
 	}
 
 	LogDebug("GenerateDEK Success");
-	return toRawBuffer(wkmcDEK.getWrappedKeyMaterial());
+	return toSafeBufferConversion(wkmcDEK.getWrappedKeyMaterial());
 }
 
-RawBuffer KeyProvider::reencrypt(
-	const RawBuffer &domainKEKInWrapForm,
+SafeBuffer KeyProvider::reencrypt(
+	const SafeBuffer &domainKEKInWrapForm,
 	const std::string &oldPass,
 	const std::string &newPass)
 {
@@ -223,7 +223,7 @@ RawBuffer KeyProvider::reencrypt(
 	{
 		ThrowMsg(Exception::PassWordError,
 			"Incorrect Old Password ");
-		return RawBuffer();
+		return SafeBuffer();
 	}
 	if(UpdateDomainKEK(
 			&(wkmcNewDEK.getWrappedKeyMaterial()),
@@ -232,15 +232,15 @@ RawBuffer KeyProvider::reencrypt(
 	{
 		ThrowMsg(Exception::UnwrapFailed,
 			"UpdateDomainKEK in KeyProvider::reencrypt Failed");
-		return RawBuffer();
+		return SafeBuffer();
 	}
 
 	LogDebug("reencrypt SUCCESS");
-	return toRawBuffer(wkmcNewDEK.getWrappedKeyMaterial());
+	return toSafeBufferConversion(wkmcNewDEK.getWrappedKeyMaterial());
 }
 
 
-RawBuffer KeyProvider::generateDomainKEK(
+SafeBuffer KeyProvider::generateDomainKEK(
 	const std::string &user,
 	const std::string &userPassword)
 {
@@ -250,11 +250,11 @@ RawBuffer KeyProvider::generateDomainKEK(
 	{
 		ThrowMsg(Exception::GenFailed,
 			"GenerateDomainKEK Failed in KeyProvider::generateDomainKEK");
-		return RawBuffer();
+		return SafeBuffer();
 	}
 
 	LogDebug("generateDomainKEK Success");
-	return toRawBuffer(wkmcDKEK.getWrappedKeyMaterial());
+	return toSafeBufferConversion(wkmcDKEK.getWrappedKeyMaterial());
 }
 
 int KeyProvider::initializeLibrary(){
