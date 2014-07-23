@@ -80,7 +80,7 @@ KeyProvider::KeyProvider()
 
 KeyProvider::KeyProvider(
 	const RawBuffer &domainKEKInWrapForm,
-	const std::string &password)
+	const Password &password)
 	: m_kmcDKEK(new KeyMaterialContainer())
 	, m_isInitialized(true)
 {
@@ -135,7 +135,7 @@ RawBuffer KeyProvider::getPureDomainKEK(){
 	return RawBuffer(m_kmcDKEK->getKeyMaterial().key, (m_kmcDKEK->getKeyMaterial().key) + m_kmcDKEK->getKeyMaterial().keyInfo.keyLength);
 }
 
-RawBuffer KeyProvider::getWrappedDomainKEK(const std::string &password){
+RawBuffer KeyProvider::getWrappedDomainKEK(const Password &password){
 	if(!m_isInitialized) {
 		ThrowMsg(Exception::InitFailed, "Object not initialized!");
 	}
@@ -205,8 +205,8 @@ RawBuffer KeyProvider::generateDEK(const std::string &smackLabel){
 
 RawBuffer KeyProvider::reencrypt(
 	const RawBuffer &domainKEKInWrapForm,
-	const std::string &oldPass,
-	const std::string &newPass)
+	const Password &oldPass,
+	const Password &newPass)
 {
 	if(domainKEKInWrapForm.size() != sizeof(WrappedKeyMaterial)){
 		LogError("input size:" << domainKEKInWrapForm.size()
@@ -242,7 +242,7 @@ RawBuffer KeyProvider::reencrypt(
 
 RawBuffer KeyProvider::generateDomainKEK(
 	const std::string &user,
-	const std::string &userPassword)
+	const Password &userPassword)
 {
 	WrappedKeyMaterialContainer wkmcDKEK = WrappedKeyMaterialContainer();
 
