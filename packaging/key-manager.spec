@@ -76,7 +76,6 @@ cp -a %{SOURCE1003} .
     export FFLAGS="$FFLAGS -DTIZEN_DEBUG_ENABLE"
 %endif
 
-
 export LDFLAGS+="-Wl,--rpath=%{_libdir} "
 
 %cmake . -DVERSION=%{version} \
