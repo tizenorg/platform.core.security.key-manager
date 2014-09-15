@@ -76,6 +76,11 @@ cp -a %{SOURCE1003} .
     export FFLAGS="$FFLAGS -DTIZEN_DEBUG_ENABLE"
 %endif
 
+# when in DEBUG mode, do not fortify the source (causes compile error)
+%if %{?build_type:%build_type}%{!?build_type:RELEASE} == "DEBUG"
+    export CFLAGS="$CFLAGS -Wp,-U_FORTIFY_SOURCE"
+    export CXXFLAGS="$CXXFLAGS -Wp,-U_FORTIFY_SOURCE"
+%endif
 
 export LDFLAGS+="-Wl,--rpath=%{_libdir} "
 
