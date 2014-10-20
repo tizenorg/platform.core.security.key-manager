@@ -147,6 +147,10 @@ fi
 
 %postun -n libkey-manager-client -p /sbin/ldconfig
 
+%post -n libkey-manager-common -p /sbin/ldconfig
+
+%postun -n libkey-manager-common -p /sbin/ldconfig
+
 %post -n key-manager-listener
 systemctl daemon-reload
 if [ $1 = 1 ]; then
