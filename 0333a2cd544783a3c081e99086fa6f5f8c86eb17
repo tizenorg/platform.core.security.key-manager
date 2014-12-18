@@ -1,0 +1,9 @@
+Verified+1: José Bollo <jose.bollo@open.eurogiciel.org>
+Code-Review-1: Build Bot <b.bot@partner.samsung.com>
+Code-Review+1: Alexander Kanevskiy <alexander.kanevskiy@intel.com>
+Code-Review+2: Dominig ar Foll <dominig.arfoll@fridu.net>
+Submitted-by: Dominig ar Foll <dominig.arfoll@fridu.net>
+Submitted-at: Thu, 18 Dec 2014 08:41:26 -0800
+Reviewed-on: https://review.tizen.org/gerrit/32362
+Project: platform/core/security/key-manager
+Branch: refs/heads/tizen
