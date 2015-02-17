@@ -22,6 +22,8 @@
 #ifndef CENT_KEY_SERIALIZATION_H
 #define CENT_KEY_SERIALIZATION_H
 
+#include <stdint.h>
+
 #include <string>
 #include <vector>
 #include <list>
@@ -30,7 +32,7 @@
 
 #include <dpl/raw-buffer.h>
 // temporary fix for tizen 2.3
-#include <ckm/ckm-password.h>
+//#include <ckm/ckm-password.h>
 
 namespace CKM {
 // Abstract data stream buffer
@@ -87,22 +89,42 @@ struct Serialization {
         stream.Write(sizeof(*value), value);
     }
 
-    // unsigned int
-    static void Serialize(IStream& stream, const unsigned value)
+    // unsigned int32
+    static void Serialize(IStream& stream, const uint32_t value)
     {
         stream.Write(sizeof(value), &value);
     }
-    static void Serialize(IStream& stream, const unsigned* const value)
+    static void Serialize(IStream& stream, const uint32_t* const value)
     {
         stream.Write(sizeof(*value), value);
     }
 
-    // int
-    static void Serialize(IStream& stream, const int value)
+    // int32
+    static void Serialize(IStream& stream, const int32_t value)
     {
         stream.Write(sizeof(value), &value);
     }
-    static void Serialize(IStream& stream, const int* const value)
+    static void Serialize(IStream& stream, const int32_t* const value)
+    {
+        stream.Write(sizeof(*value), value);
+    }
+
+    // unsigned int64
+    static void Serialize(IStream& stream, const uint64_t value)
+    {
+        stream.Write(sizeof(value), &value);
+    }
+    static void Serialize(IStream& stream, const uint64_t* const value)
+    {
+        stream.Write(sizeof(*value), value);
+    }
+
+    // int64
+    static void Serialize(IStream& stream, const int64_t value)
+    {
+        stream.Write(sizeof(value), &value);
+    }
+    static void Serialize(IStream& stream, const int64_t* const value)
     {
         stream.Write(sizeof(*value), value);
     }
@@ -117,38 +139,17 @@ struct Serialization {
         stream.Write(sizeof(*value), value);
     }
 
-    // time_t
-    static void Serialize(IStream& stream, const time_t value)
-    {
-        stream.Write(sizeof(value), &value);
-    }
-    static void Serialize(IStream& stream, const time_t* const value)
-    {
-        stream.Write(sizeof(*value), value);
-    }
-
     // std::string
-    static void Serialize(IStream& stream, const std::string& str)
+    template <typename T, typename R, typename A>
+    static void Serialize(IStream& stream, const std::basic_string<T,R,A>& str)
     {
         int length = str.size();
         stream.Write(sizeof(length), &length);
         stream.Write(length, str.c_str());
-    }
-    static void Serialize(IStream& stream, const std::string* const str)
-    {
-        int length = str->size();
-        stream.Write(sizeof(length), &length);
-        stream.Write(length, str->c_str());
     }
 
-    // Password
-    static void Serialize(IStream& stream, const Password& str)
-    {
-        int length = str.size();
-        stream.Write(sizeof(length), &length);
-        stream.Write(length, str.c_str());
-    }
-    static void Serialize(IStream& stream, const Password* const str)
+    template<typename T, typename R, typename A>
+    static void Serialize(IStream& stream, const std::basic_string<T,R,A>* const str)
     {
         int length = str->size();
         stream.Write(sizeof(length), &length);
@@ -283,25 +284,47 @@ struct Deserialization {
         stream.Read(sizeof(*value), value);
     }
 
-    // unsigned int
-    static void Deserialize(IStream& stream, unsigned& value)
+    // unsigned int32
+    static void Deserialize(IStream& stream, uint32_t& value)
     {
         stream.Read(sizeof(value), &value);
     }
-    static void Deserialize(IStream& stream, unsigned*& value)
+    static void Deserialize(IStream& stream, uint32_t*& value)
     {
-        value = new unsigned;
+        value = new uint32_t;
         stream.Read(sizeof(*value), value);
     }
 
-    // int
-    static void Deserialize(IStream& stream, int& value)
+    // int32
+    static void Deserialize(IStream& stream, int32_t& value)
     {
         stream.Read(sizeof(value), &value);
     }
-    static void Deserialize(IStream& stream, int*& value)
+    static void Deserialize(IStream& stream, int32_t*& value)
     {
-        value = new int;
+        value = new int32_t;
+        stream.Read(sizeof(*value), value);
+    }
+
+    // unsigned int64
+    static void Deserialize(IStream& stream, uint64_t& value)
+    {
+        stream.Read(sizeof(value), &value);
+    }
+    static void Deserialize(IStream& stream, uint64_t*& value)
+    {
+        value = new uint64_t;
+        stream.Read(sizeof(*value), value);
+    }
+
+    // int64
+    static void Deserialize(IStream& stream, int64_t& value)
+    {
+        stream.Read(sizeof(value), &value);
+    }
+    static void Deserialize(IStream& stream, int64_t*& value)
+    {
+        value = new int64_t;
         stream.Read(sizeof(*value), value);
     }
 
@@ -316,58 +339,27 @@ struct Deserialization {
         stream.Read(sizeof(*value), value);
     }
 
-    // time_t
-    static void Deserialize(IStream& stream, time_t& value)
-    {
-        stream.Read(sizeof(value), &value);
-    }
-    static void Deserialize(IStream& stream, time_t*& value)
-    {
-        value = new time_t;
-        stream.Read(sizeof(*value), value);
-    }
-
-    // std::string
-    static void Deserialize(IStream& stream, std::string& str)
+    template <typename T, typename R, typename A>
+    static void Deserialize(IStream& stream, std::basic_string<T,R,A>& str)
     {
         int length;
         stream.Read(sizeof(length), &length);
-        char * buf = new char[length + 1];
+        T* buf = new T[length + 1];
         stream.Read(length, buf);
         buf[length] = 0;
-        str = std::string(buf);
-        delete[] buf;
-    }
-    static void Deserialize(IStream& stream, std::string*& str)
-    {
-        int length;
-        stream.Read(sizeof(length), &length);
-        char * buf = new char[length + 1];
-        stream.Read(length, buf);
-        buf[length] = 0;
-        str = new std::string(buf);
+        str = std::basic_string<T,R,A>(buf);
         delete[] buf;
     }
 
-    // Password
-    static void Deserialize(IStream& stream, Password& str)
+    template <typename T, typename R, typename A>
+    static void Deserialize(IStream& stream, std::basic_string<T,R,A>*& str)
     {
         int length;
         stream.Read(sizeof(length), &length);
-        char * buf = new char[length + 1];
+        T* buf = new T[length + 1];
         stream.Read(length, buf);
         buf[length] = 0;
-        str = Password(buf);
-        delete[] buf;
-    }
-    static void Deserialize(IStream& stream, Password*& str)
-    {
-        int length;
-        stream.Read(sizeof(length), &length);
-        char * buf = new char[length + 1];
-        stream.Read(length, buf);
-        buf[length] = 0;
-        str = new Password(buf);
+        str = new std::basic_string<T,R,A>(buf);
         delete[] buf;
     }
 
