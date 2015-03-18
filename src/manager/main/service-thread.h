@@ -31,6 +31,7 @@
 #include <mutex>
 #include <thread>
 #include <memory>
+#include <functional>
 #include <condition_variable>
 
 #include <cstdio>
@@ -39,21 +40,11 @@
 
 #include "generic-event.h"
 
-#define DEFINE_THREAD_EVENT(eventType)                                \
-    void Event(const eventType &event) {                              \
-        CKM::ServiceThread<ParentClassName>::              \
-            Event(event,                                              \
-                  this,                                               \
-                  &ParentClassName::EventInternal##eventType);        \
-    }                                                                 \
-    void EventInternal##eventType(const eventType &event)
-
-#define DECLARE_THREAD_EVENT(eventType, methodName)                   \
-    void Event(const eventType &event) {                              \
-        CKM::ServiceThread<ParentClassName>::              \
-            Event(event,                                              \
-                  this,                                               \
-                  &ParentClassName::methodName);                      \
+#define DECLARE_THREAD_EVENT(eventType, methodName)         \
+    void Event(const eventType &event) {                    \
+        ServiceThread<ParentClassName>::CreateEvent([=]() { \
+            this->methodName(event);                        \
+        });                                                 \
     }
 
 namespace CKM {
@@ -62,6 +53,7 @@ template <class Service>
 class ServiceThread {
 public:
     typedef Service ParentClassName;
+    typedef std::function<void(void)> EventDescription;
     enum class State {
         NoThread,
         Work,
@@ -93,24 +85,12 @@ public:
     {
         if (m_state != State::NoThread)
             Join();
-        while (!m_eventQueue.empty()){
-            auto front = m_eventQueue.front();
-            delete front.eventPtr;
-            m_eventQueue.pop();
-        }
     }
 
-    template <class T>
-    void Event(const T &event,
-               Service *servicePtr,
-               void (Service::*serviceFunction)(const T &))
+    void CreateEvent(std::function<void(void)> fun)
     {
         EventDescription description;
-        description.serviceFunctionPtr =
-            reinterpret_cast<void (Service::*)(void*)>(serviceFunction);
-        description.servicePtr = servicePtr;
-        description.eventFunctionPtr = &ServiceThread::EventCall<T>;
-        description.eventPtr = new T(event);
+        description = std::move(fun);
         {
             std::lock_guard<std::mutex> lock(m_eventQueueMutex);
             m_eventQueue.push(description);
@@ -120,27 +100,13 @@ public:
 
 protected:
 
-    struct EventDescription {
-        void (Service::*serviceFunctionPtr)(void *);
-        Service *servicePtr;
-        void (ServiceThread::*eventFunctionPtr)(const EventDescription &event);
-        GenericEvent* eventPtr;
-    };
-
-    template <class T>
-    void EventCall(const EventDescription &desc) {
-        auto fun = reinterpret_cast<void (Service::*)(const T&)>(desc.serviceFunctionPtr);
-        const T& eventLocale = *(static_cast<T*>(desc.eventPtr));
-        (desc.servicePtr->*fun)(eventLocale);
-    }
-
     static void ThreadLoopStatic(ServiceThread *ptr) {
         ptr->ThreadLoop();
     }
 
     void ThreadLoop(){
         for (;;) {
-            EventDescription description = {NULL, NULL, NULL, NULL};
+            EventDescription description;
             {
                 std::unique_lock<std::mutex> ulock(m_eventQueueMutex);
                 if (m_quit)
@@ -153,11 +119,10 @@ protected:
                 }
             }
 
-            if (description.eventPtr != NULL) {
+            if (description) {
                 UNHANDLED_EXCEPTION_HANDLER_BEGIN
                 {
-                    (this->*description.eventFunctionPtr)(description);
-                    delete description.eventPtr;
+                    description();
                 }
                 UNHANDLED_EXCEPTION_HANDLER_END
             }
