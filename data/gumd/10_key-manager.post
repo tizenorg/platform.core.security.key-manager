@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# $1 - user name
+# $2 - uid
+# $3 - gid
+
+# TODO: to be replaced with special binary
+rm -rf /opt/data/ckm/*-$2
