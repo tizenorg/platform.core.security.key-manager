@@ -79,6 +79,19 @@ Requires:   key-manager = %{version}-%{release}
 %description -n key-manager-tests
 Internal test for key-manager implementation.
 
+%package -n key-manager-plugin
+Summary:    CKM login/password module to PAM.
+Group:      Development/Libraries
+BuildRequires: pam-devel
+Requires:   key-manager = %{version}-%{release}
+Requires(post): /sbin/ldconfig
+Requires(postun): /sbin/ldconfig
+
+%description -n key-manager-plugin
+CKM login/password module to PAM.
+It's used to monitor user login/logout and password change events from PAM.
+
+
 %prep
 %setup -q
 cp -a %{SOURCE1001} .
@@ -246,3 +259,7 @@ fi
 %{_datadir}/ckm-db-test/testme_ver1.db
 %{_datadir}/ckm-db-test/testme_ver2.db
 %{_bindir}/ckm_so_loader
+
+%files -n key-manager-plugin
+%defattr(-,root,root,-)
+%{_libdir}/security/pam_ckm_notify.so*
