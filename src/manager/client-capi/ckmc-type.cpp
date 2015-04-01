@@ -33,13 +33,149 @@
 #include <openssl/pkcs12.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
+#include <map>
+#include <fstream>
+
+namespace {
+
+enum ParamType {
+    INTEGER = 0,
+    BUFFER,
+};
+
+const size_t DEFAULT_IV_LEN = 16;
+const size_t DEFAULT_IV_LEN_BITS = 8*DEFAULT_IV_LEN;
+const size_t DEFAULT_KEY_LEN_BITS = 4096;
+
+bool _ckmc_valid_param_type(ParamType type)
+{
+    return (type >= INTEGER && type <= BUFFER);
+}
+
+typedef std::map<ckmc_param_name_e, ParamType> ParamTypeMap;
+
+ParamTypeMap g_paramTypeMap = {
+        { CKMC_PARAM_ALGO_TYPE,     INTEGER },
+
+        { CKMC_PARAM_ED_IV,         BUFFER},
+        { CKMC_PARAM_ED_CTR_LEN,    INTEGER},
+        { CKMC_PARAM_ED_AAD,        BUFFER},
+        { CKMC_PARAM_ED_TAG_LEN,    INTEGER},
+        { CKMC_PARAM_ED_LABEL,      BUFFER},
+
+        { CKMC_PARAM_GEN_KEY_LEN,   INTEGER},
+        { CKMC_PARAM_GEN_EC,        INTEGER},
+
+        { CKMC_PARAM_SV_HASH_ALGO,  INTEGER},
+        { CKMC_PARAM_SV_RSA_PADDING,INTEGER},
+};
+
+void _ckmc_free_buffer_param(ckmc_param_s *param)
+{
+    ckmc_buffer_free(param->buffer);
+    free(param);
+}
+
+void _ckmc_free_int_param(ckmc_param_s *param)
+{
+    free(param);
+}
+
+typedef void(*FreeParamFn)(ckmc_param_s *param);
+
+FreeParamFn g_freeParam[] = { &_ckmc_free_int_param, &_ckmc_free_buffer_param };
+
+template <typename T>
+void _ckmc_set_param_value(ckmc_param_s *param, const T value)
+{
+    param->integer = value;
+}
+
+template <>
+void _ckmc_set_param_value(ckmc_param_s *param, ckmc_raw_buffer_s *buffer)
+{
+    param->buffer = buffer;
+}
+
+template <typename T>
+int _ckmc_add_param(ckmc_param_list_s *previous, ckmc_param_name_e name, T value)
+{
+    if (!previous)
+        return CKMC_ERROR_INVALID_PARAMETER;
+
+    // find the last one
+    while(previous->next)
+        previous = previous->next;
+
+    // last one should be empty
+    if (previous->param)
+        return CKMC_ERROR_INVALID_PARAMETER;
+
+    // setup new param
+    previous->param = static_cast<ckmc_param_s*>(malloc(sizeof(ckmc_param_s)));
+    if (!previous->param)
+        return CKMC_ERROR_OUT_OF_MEMORY;
+    previous->param->name = name;
+    _ckmc_set_param_value(previous->param, value);
+
+    // add placeholder for next param
+    ckmc_param_list_s *last = static_cast<ckmc_param_list_s*>(malloc(sizeof(ckmc_param_list_s)));
+    last->param = NULL;
+    last->next = NULL;
+    previous->next = last;
+    return CKMC_ERROR_NONE;
+}
+
+int _ckmc_random_buffer(ckmc_raw_buffer_s **buffer, size_t len)
+{
+    if(!buffer)
+        return CKMC_ERROR_INVALID_PARAMETER;
+
+    char* data = static_cast<char*>(malloc(len*sizeof(char)));
+    if(!data)
+        return CKMC_ERROR_OUT_OF_MEMORY;
+
+    std::ifstream is("/dev/urandom", std::ifstream::binary);
+    if(!is) {
+        free(data);
+        return CKMC_ERROR_FILE_SYSTEM;
+    }
+
+    is.read(data, len);
+    if (static_cast<std::streamsize>(len) != is.gcount()) {
+        free(data);
+        return CKMC_ERROR_FILE_SYSTEM;
+    }
+
+    return ckmc_buffer_new(reinterpret_cast<unsigned char*>(data), len, buffer);
+}
+
+int _ckmc_load_cert_from_x509(X509 *xCert, ckmc_cert_s **cert)
+{
+    if(xCert == NULL) {
+        return CKMC_ERROR_INVALID_FORMAT;
+    }
+
+    BIO *bcert = BIO_new(BIO_s_mem());
+
+    i2d_X509_bio(bcert, xCert);
+
+    CKM::RawBuffer output(8196);
+    int size = BIO_read(bcert, output.data(), output.size());
+    BIO_free_all(bcert);
+    if (size <= 0) {
+        return CKMC_ERROR_INVALID_FORMAT;
+    }
+    output.resize(size);
+
+    return ckmc_cert_new(output.data(), output.size(), CKMC_FORM_DER, cert);
+}
+
+} // namespace anonymous
 
 
 const char * const ckmc_label_name_separator    = CKM::LABEL_NAME_SEPARATOR;
 const char * const ckmc_label_shared_owner      = CKM::LABEL_SYSTEM_DB;
-
-
-int _ckmc_load_cert_from_x509(X509 *xCert, ckmc_cert_s **cert);
 
 KEY_MANAGER_CAPI
 int ckmc_key_new(unsigned char *raw_key, size_t key_size, ckmc_key_type_e key_type, char *password, ckmc_key_s **ppkey)
@@ -541,24 +677,105 @@ void ckmc_cert_list_all_free(ckmc_cert_list_s *first)
     }
 }
 
-int _ckmc_load_cert_from_x509(X509 *xCert, ckmc_cert_s **cert)
+KEY_MANAGER_CAPI
+int ckmc_param_list_new(ckmc_param_list_s **ppparam_list)
 {
-    if(xCert == NULL) {
-        return CKMC_ERROR_INVALID_FORMAT;
-    }
+    if (!ppparam_list)
+        return CKMC_ERROR_INVALID_PARAMETER;
 
-    BIO *bcert = BIO_new(BIO_s_mem());
-
-    i2d_X509_bio(bcert, xCert);
-
-    CKM::RawBuffer output(8196);
-    int size = BIO_read(bcert, output.data(), output.size());
-    BIO_free_all(bcert);
-    if (size <= 0) {
-        return CKMC_ERROR_INVALID_FORMAT;
-    }
-    output.resize(size);
-
-    return ckmc_cert_new(output.data(), output.size(), CKMC_FORM_DER, cert);
+    *ppparam_list = static_cast<ckmc_param_list_s*>(malloc(sizeof(ckmc_param_list_s)));
+    if (!*ppparam_list)
+        return CKMC_ERROR_OUT_OF_MEMORY;
+    (*ppparam_list)->param = NULL;
+    (*ppparam_list)->next = NULL;
+    return CKMC_ERROR_NONE;
 }
 
+KEY_MANAGER_CAPI
+int ckmc_param_list_add_integer(ckmc_param_list_s *previous,
+                                ckmc_param_name_e name,
+                                uint64_t value)
+{
+    auto it = g_paramTypeMap.find(name);
+    if(it == g_paramTypeMap.end() || it->second != INTEGER)
+        return CKMC_ERROR_INVALID_PARAMETER;
+
+    return _ckmc_add_param(previous, name, value);
+}
+
+KEY_MANAGER_CAPI
+int ckmc_param_list_add_buffer(ckmc_param_list_s *previous,
+                               ckmc_param_name_e name,
+                               ckmc_raw_buffer_s *buffer)
+{
+    auto it = g_paramTypeMap.find(name);
+    if(it == g_paramTypeMap.end() || it->second != BUFFER)
+        return CKMC_ERROR_INVALID_PARAMETER;
+
+    return _ckmc_add_param(previous, name, buffer);
+}
+
+KEY_MANAGER_CAPI
+void ckmc_param_list_free(ckmc_param_list_s *first)
+{
+    while(first) {
+        ckmc_param_list_s *current = first;
+        first = current->next;
+
+        if(!current->param)
+            continue;
+
+        // free the param
+        auto it = g_paramTypeMap.find(current->param->name);
+
+        if(it == g_paramTypeMap.end() || !_ckmc_valid_param_type(it->second))
+            return; // Something went terribly wrong. Better memleak than segfault.
+        g_freeParam[it->second](current->param);
+    }
+}
+
+KEY_MANAGER_CAPI
+int ckmc_generate_params(ckmc_algo_type_e type, ckmc_param_list_s *params)
+{
+    // return error if params are NULL or are not an empty list
+    if(params == NULL || params->param != NULL || params->next != NULL)
+        return CKMC_ERROR_INVALID_PARAMETER;
+
+    ckmc_raw_buffer_s* buffer = NULL;
+    int ret = CKMC_ERROR_NONE;
+    switch(type)
+    {
+    case CKMC_ALGO_AES_CTR:
+        ret = ckmc_param_list_add_integer(params, CKMC_PARAM_ED_CTR_LEN, DEFAULT_IV_LEN_BITS);
+        // no break on purpose
+    case CKMC_ALGO_AES_CBC:
+    case CKMC_ALGO_AES_GCM:
+    case CKMC_ALGO_AES_CFB:
+        if (ret == CKMC_ERROR_NONE)
+            ret = _ckmc_random_buffer(&buffer, DEFAULT_IV_LEN);
+        if (ret == CKMC_ERROR_NONE)
+            ret = ckmc_param_list_add_buffer(params, CKMC_PARAM_ED_IV, buffer);
+        else
+            ckmc_buffer_free(buffer);
+        break;
+    case CKMC_ALGO_RSA_OAEP:
+        break;
+    case CKMC_ALGO_RSA_SV:
+    case CKMC_ALGO_DSA_SV:
+    case CKMC_ALGO_ECDSA_SV:
+        // no hash, no padding by default
+        break;
+    case CKMC_ALGO_RSA_GEN:
+    case CKMC_ALGO_DSA_GEN:
+        ret = ckmc_param_list_add_integer(params, CKMC_PARAM_GEN_KEY_LEN, DEFAULT_KEY_LEN_BITS);
+        break;
+    case CKMC_ALGO_ECDSA_GEN:
+        ret = ckmc_param_list_add_integer(params, CKMC_PARAM_GEN_EC, CKMC_EC_PRIME192V1);
+        break;
+    default:
+        return CKMC_ERROR_INVALID_PARAMETER;
+    }
+    if (ret == CKMC_ERROR_NONE)
+        return ckmc_param_list_add_integer(params, CKMC_PARAM_ALGO_TYPE, type);
+    return ret;
+}
