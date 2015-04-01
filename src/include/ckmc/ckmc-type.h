@@ -209,6 +209,81 @@ typedef struct __ckmc_pkcs12 {
     ckmc_cert_list_s *ca_chain; /**< chain certificates list, may be null */
 } ckmc_pkcs12_s;
 
+/**
+ * @brief Enumeration for crypto algorithm types.
+ * @since_tizen 3.0
+ */
+typedef enum __ckmc_algo_type {
+    CKMC_ALGO_AES_CTR = 0,              /**< AES-CTR algorithm */
+    CKMC_ALGO_AES_CBC,                  /**< AES-CBC algorithm */
+    CKMC_ALGO_AES_GCM,                  /**< AES-GCM algorithm */
+    CKMC_ALGO_AES_CFB,                  /**< AES-CFB algorithm */
+    CKMC_ALGO_RSA_OAEP                  /**< RSA-OAEP algorithm */
+} ckmc_algo_type_e;
+
+/**
+ * @brief The structure for AES CTR algorithm params
+ * @since_tizen 3.0
+ */
+typedef struct __ckmc_algo_param_aes_ctr {
+    unsigned char counter[16];          /**< length bits of counter (rightmost) + nonce */
+    unsigned char length;               /**< length in bits of the counter */
+} ckmc_algo_param_aes_ctr_s;
+
+/**
+ * @brief The structure for AES CBC algorithm params
+ * @since_tizen 3.0
+ */
+typedef struct __ckmc_algo_param_aes_cbc {
+    unsigned char iv[16];               /**< initialization vector */
+} ckmc_algo_param_aes_cbc_s;
+
+/**
+ * @brief The structure for AES GCM algorithm params
+ * @since_tizen 3.0
+ */
+typedef struct __ckmc_algo_param_aes_gcm {
+    unsigned long long iv_length;       /**< length of the initalization vector */
+    unsigned long long aad_length;      /**< length of additional authentication data */
+    const unsigned char* iv;            /**< initialization vector - up to 2^64-1 bytes long */
+    const unsigned char* aad;           /**< optional additional auth data */
+    unsigned char tag_length;           /**< length of the authentication tag in bits:
+                                             32, 64, 96, 104, 112, 120 or 128 (the first tag_length
+                                             bits of the cipher text are the tag*/
+} ckmc_algo_param_aes_gcm_s;
+
+/**
+ * @brief The structure for AES CFB algorithm params
+ * @since_tizen 3.0
+ */
+typedef struct __ckmc_algo_param_aes_cfb {
+    const unsigned char iv[16];         /**< initialization vector */
+} ckmc_algo_param_aes_cfb_s;
+
+/**
+ * @brief The structure for RSA OAEP algorithm params
+ * @since_tizen 3.0
+ */
+typedef struct __ckmc_algo_param_rsa_oaep {
+    unsigned long long label_length;    /**< label length */
+    const unsigned char* label;         /**< optional label to associate with the data */
+} ckmc_algo_param_rsa_oaep_s;
+
+/**
+ * @brief The structure describing encryption/decryption algorithm
+ * @since_tizen 3.0
+ */
+typedef struct __ckmc_encryption_algo {
+    ckmc_algo_type_e type;              /**< algorithm type */
+    union {
+        ckmc_algo_param_aes_ctr_s param_aes_ctr;
+        ckmc_algo_param_aes_cbc_s param_aes_cbc;
+        ckmc_algo_param_aes_gcm_s param_aes_gcm;
+        ckmc_algo_param_aes_cfb_s param_aes_cfb;
+        ckmc_algo_param_rsa_oaep_s param_rsa_oaep;
+    };
+} ckmc_encryption_algo_s;
+
 
 /**
  * @internal
