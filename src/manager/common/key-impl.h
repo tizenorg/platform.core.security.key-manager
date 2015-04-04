@@ -15,7 +15,7 @@
  *
  * @file        key-impl.h
  * @author      Bartlomiej Grzelewski (b.grzelewski@samsung.com)
- * @version     1.0
+ * @version     1.1
  * @brief       Key implementation.
  */
 #pragma once
@@ -27,37 +27,85 @@
 #include <openssl/evp.h>
 #include <symbol-visibility.h>
 
+
 namespace CKM {
+
+class KeyImpl;
+typedef std::shared_ptr<KeyImpl> KeyImplShPtr;
 
 class COMMON_API KeyImpl : public Key {
 public:
-    typedef std::shared_ptr<EVP_PKEY> EvpShPtr;
+    KeyImpl(const RawBuffer &keyBuffer,
+            const KeyType type,
+            const bool isExternalKey = false);
+
+    virtual ~KeyImpl() {}
+
+    bool empty() const;
+
+    KeyType     getType() const;
+    RawBuffer   getBinary() const;
+    bool        isExternalKey() const;
+
+    void        setType(const KeyType type);
+    void        setBinary(const RawBuffer &binary);
+    void        setExternalKey(const bool isExternalKey);
+
+    static void toExternalKey(KeyImpl &pInternalKey, const std::string &externalId);
+    static void toInternalKey(KeyImpl &pExternalKey, const RawBuffer &binary);
+
+protected:
+    KeyType     m_type;
+    RawBuffer   m_binary;
+    bool        m_external;
 
     KeyImpl();
     KeyImpl(const KeyImpl &second);
-    KeyImpl(const RawBuffer& buffer, const Password &password = Password());
-    KeyImpl(EvpShPtr pkey, KeyType type);
-
-    virtual KeyType getType() const;
-    virtual RawBuffer getDER() const;
-    virtual RawBuffer getDERPUB() const;
-    virtual RawBuffer getDERPRV() const;
-    virtual EvpShPtr getEvpShPtr() const;
-    virtual ElipticCurve getCurve() const {
-        // TODO
-        return ElipticCurve::prime192v1;
-    }
-    virtual int getSize() const {
-        // TODO
-        return 0;
-    }
-
-    virtual bool empty() const;
-    virtual ~KeyImpl(){}
-protected:
-    EvpShPtr m_pkey;
-    KeyType m_type;
 };
 
-} // namespace CKM
+class AsymKeyImpl;
+typedef std::shared_ptr<EVP_PKEY> EvpShPtr;
+typedef std::shared_ptr<AsymKeyImpl> AsymKeyImplShPtr;
 
+class COMMON_API AsymKeyImpl : public KeyImpl {
+public:
+    AsymKeyImpl();
+    AsymKeyImpl(const RawBuffer &keyBuffer,
+                const KeyType type,
+                const bool isExternalKey = false);
+    AsymKeyImpl(const RawBuffer &keyBuffer,
+                const Password &password = Password());
+    AsymKeyImpl(EvpShPtr pkey, const KeyType type);
+
+    virtual ~AsymKeyImpl() {}
+
+    virtual EvpShPtr getEvpShPtr() const;
+
+protected:
+    virtual void setBinary(EVP_PKEY *pKey, const KeyType type);
+};
+
+class SymKeyImpl;
+typedef std::shared_ptr<SymKeyImpl> SymKeyImplShPtr;
+
+class COMMON_API SymKeyImpl : public KeyImpl {
+    SymKeyImpl();
+    SymKeyImpl(const RawBuffer &keyBuffer,
+               const KeyType type,
+               const bool isExternalKey = false);
+    virtual ~SymKeyImpl() {};
+};
+
+
+class COMMON_API KeyBuilder {
+public:
+    static KeyImplShPtr create(const RawBuffer &keyBuffer,
+                               const KeyType type,
+                               const bool isExternalKey = false);
+    static KeyImplShPtr createUnparsedKey(const RawBuffer &keyBuffer,
+                                          const KeyType type,
+                                          const Password &password = Password());
+    static AsymKeyImplShPtr create(EvpShPtr pkey, const KeyType type);
+};
+
+}

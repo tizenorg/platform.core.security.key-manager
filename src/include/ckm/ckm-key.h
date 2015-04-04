@@ -28,17 +28,20 @@ namespace CKM {
 class Key;
 typedef std::shared_ptr<Key> KeyShPtr;
 
+
 class KEY_MANAGER_API Key {
 public:
     virtual bool empty() const = 0;
     virtual KeyType getType() const = 0;
-    virtual int getSize() const = 0;
-    virtual ElipticCurve getCurve() const = 0;
-    virtual RawBuffer getDER() const = 0;
+    virtual RawBuffer getBinary() const = 0;
     virtual ~Key(){}
 
+    // KeyType can be extracted only from the binary of an asymmetric key.
+    // Therefore, when the KeyShPtr of a symmetric key is created,
+    // KeyType should be specifed.
     static KeyShPtr create(
         const RawBuffer &rawBuffer,
+        const KeyType type,
         const Password &password = Password());
 };
 

@@ -34,7 +34,7 @@ SET(TEST_MERGED_SOURCES
     ${KEY_MANAGER_TEST_MERGED_SRC}/test_descriptor-set.cpp
     ${KEY_MANAGER_TEST_MERGED_SRC}/test_comm-manager.cpp
     ${KEY_MANAGER_PATH}/service/db-crypto.cpp
-    ${KEY_MANAGER_PATH}/service/key-provider.cpp
+    ${KEY_MANAGER_PATH}/cryptoimpl/default/key-provider.cpp
     ${KEY_MANAGER_PATH}/client-async/descriptor-set.cpp
     ${KEY_MANAGER_PATH}/dpl/core/src/assert.cpp
     ${KEY_MANAGER_PATH}/dpl/core/src/colors.cpp

@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS OBJECTS(exportable INTEGER NOT NULL,
                                    data BLOB NOT NULL,
                                    tag BLOB NOT NULL,
                                    idx INTEGER NOT NULL,
+                                   inExternal INTEGER NOT NULL,
                                    FOREIGN KEY(idx) REFERENCES NAMES(idx) ON DELETE CASCADE,
                                    PRIMARY KEY(idx, dataType));
 

@@ -25,11 +25,12 @@
 #include <ckm/ckm-type.h>
 #include <key-provider.h>
 #include <file-system.h>
-#include <CryptoService.h>
+#include <crypto-service.h>
 #include <ckm-logic.h>
 #include <key-impl.h>
 #include <certificate-config.h>
 #include <certificate-store.h>
+#include <data-adapter.h>
 
 namespace {
 const char * const CERT_SYSTEM_DIR = "/etc/ssl/certs";
@@ -106,6 +107,7 @@ RawBuffer CKMLogic::unlockUserKey(uid_t user, const Password &password) {
             // remove data of removed apps during locked state
             AppLabelVector removedApps = fs.clearRemovedsApps();
             for(auto& appSmackLabel : removedApps) {
+                handle.crypto.removeKey(appSmackLabel);
                 handle.database.deleteKey(appSmackLabel);
             }
         }
@@ -228,6 +230,7 @@ RawBuffer CKMLogic::removeApplicationData(const Label &smackLabel) {
                     fs.addRemovedApp(smackLabel);
                 } else {
                     auto &handle = m_userDataMap[userId];
+                    handle.crypto.removeKey(smackLabel);
                     handle.database.deleteKey(smackLabel);
                 }
             }
@@ -295,8 +298,7 @@ int CKMLogic::checkSaveConditions(
     return CKM_API_SUCCESS;
 }
 
-DB::Row CKMLogic::createEncryptedRow(
-    CryptoLogic &crypto,
+DB::Row CKMLogic::createRow(
     const Name &name,
     const Label &label,
     DataType dataType,
@@ -304,34 +306,36 @@ DB::Row CKMLogic::createEncryptedRow(
     const Policy &policy) const
 {
     DB::Row row = { name, label, policy.extractable, dataType, DBCMAlgType::NONE,
-                  0, RawBuffer(), static_cast<int>(data.size()), data, RawBuffer() };
-
+                  0, RawBuffer(), static_cast<int>(data.size()), data, RawBuffer(), 0 };
+    return row;
+}
+int CKMLogic::encryptRow(
+    CryptoLogic &crypto,
+    DB::Row &row,
+    const Policy &policy) const
+{
     // do not encrypt data with password during cc_mode on
     if(m_accessControl.isCCMode()) {
         crypto.encryptRow("", row);
     } else {
         crypto.encryptRow(policy.password, row);
     }
-    return row;
+    return CKM_API_SUCCESS;
 }
 
 int CKMLogic::verifyBinaryData(DataType dataType, const RawBuffer &input_data) const
 {
     // verify the data integrity
-    if (dataType.isKey())
-    {
-        KeyShPtr output_key = CKM::Key::create(input_data);
-        if(output_key.get() == NULL)
-        {
+    if (dataType.isKey()) {
+        KeyImplShPtr output_key = CKM::KeyBuilder::create(input_data, static_cast<KeyType>(dataType));
+        if (!output_key) {
             LogError("provided binary data is not valid key data");
             return CKM_API_ERROR_INPUT_PARAM;
         }
     }
-    else if (dataType.isCertificate() || dataType.isChainCert())
-    {
+    else if (dataType.isCertificate() || dataType.isChainCert()) {
         CertificateShPtr cert = CKM::Certificate::create(input_data, DataFormat::FORM_DER);
-        if(cert.get() == NULL)
-        {
+        if (!cert) {
             LogError("provided binary data is not valid certificate data");
             return CKM_API_ERROR_INPUT_PARAM;
         }
@@ -390,7 +394,6 @@ RawBuffer CKMLogic::saveData(
 }
 
 int CKMLogic::extractPKCS12Data(
-    CryptoLogic &crypto,
     const Name &name,
     const Label &ownerLabel,
     const PKCS12Serializable &pkcs,
@@ -399,28 +402,28 @@ int CKMLogic::extractPKCS12Data(
     DB::RowVector &output) const
 {
     // private key is mandatory
-    if( !pkcs.getKey() )
+    if (!pkcs.getKey())
         return CKM_API_ERROR_INVALID_FORMAT;
-    Key* keyPtr = pkcs.getKey().get();
+    Key *keyPtr = pkcs.getKey().get();
     DataType keyType = DataType(keyPtr->getType());
-    RawBuffer keyData = keyPtr->getDER();
+    RawBuffer keyData = keyPtr->getBinary();
     int retCode = verifyBinaryData(keyType, keyData);
-    if(retCode != CKM_API_SUCCESS)
+    if (retCode != CKM_API_SUCCESS)
         return retCode;
-    output.push_back(createEncryptedRow(crypto, name, ownerLabel, keyType, keyData, keyPolicy));
+    output.push_back(createRow(name, ownerLabel, keyType, keyPtr->getBinary(), keyPolicy));
 
     // certificate is mandatory
-    if( !pkcs.getCertificate() )
+    if (!pkcs.getCertificate())
         return CKM_API_ERROR_INVALID_FORMAT;
     RawBuffer certData = pkcs.getCertificate().get()->getDER();
     retCode = verifyBinaryData(DataType::CERTIFICATE, certData);
-    if(retCode != CKM_API_SUCCESS)
+    if (retCode != CKM_API_SUCCESS)
         return retCode;
-    output.push_back(createEncryptedRow(crypto, name, ownerLabel, DataType::CERTIFICATE, certData, certPolicy));
+    output.push_back(createRow(name, ownerLabel, DataType::CERTIFICATE, certData, certPolicy));
 
     // CA cert chain
     unsigned int cert_index = 0;
-    for(const auto & ca : pkcs.getCaCertificateShPtrVector())
+    for (const auto &ca : pkcs.getCaCertificateShPtrVector())
     {
         DataType chainDataType = DataType::getChainDatatype(cert_index ++);
         RawBuffer caCertData = ca->getDER();
@@ -428,9 +431,25 @@ int CKMLogic::extractPKCS12Data(
         if(retCode != CKM_API_SUCCESS)
             return retCode;
 
-        output.push_back(createEncryptedRow(crypto, name, ownerLabel, chainDataType, caCertData, certPolicy));
+        output.push_back(createRow(name, ownerLabel, chainDataType, caCertData, certPolicy));
     }
 
+    return CKM_API_SUCCESS;
+}
+
+int CKMLogic::encryptPKCS12Data(
+    CryptoLogic &crypto,
+    DB::RowVector &rows,
+    const Policy &keyPolicy,
+    const Policy &certPolicy)
+{
+    for (auto &i: rows) {
+        if (i.dataType.isKey()) {
+            encryptRow(crypto, i, keyPolicy);
+        } else {
+            encryptRow(crypto, i, certPolicy);
+        }
+    }
     return CKM_API_SUCCESS;
 }
 
@@ -501,7 +520,18 @@ int CKMLogic::removeDataHelper(
         return access_ec;
     }
 
+    DB::RowVector rows;
+    database.getRows(name, ownerLabel, DataType::DB_FIRST, DataType::DB_LAST, rows);
+
     auto erased = database.deleteRow(name, ownerLabel);
+
+    // give a change for handling data to cryptoimpl module
+    DataAdapter dataAdapter;
+    if (dataAdapter.afterDeleteData(rows) != CKM_API_SUCCESS) {
+        LogError("Fail to process afterDeleteData in DataAdapter.");
+        return CKM_API_ERROR_SERVER_ERROR;
+    }
+
     // check if the data existed or not
     if(erased)
         transaction.commit();
@@ -547,17 +577,17 @@ int CKMLogic::readSingleRow(const Name &name,
     {
         // read all key types
         row_optional = database.getRow(name,
-                                         ownerLabel,
-                                         DataType::DB_KEY_FIRST,
-                                         DataType::DB_KEY_LAST);
+                                       ownerLabel,
+                                       DataType::DB_KEY_FIRST,
+                                       DataType::DB_KEY_LAST);
     } else {
         // read anything else
         row_optional = database.getRow(name,
-                                         ownerLabel,
-                                         dataType);
+                                       ownerLabel,
+                                       dataType);
     }
 
-    if(!row_optional) {
+    if (!row_optional) {
         LogError("No row for given name, label and type");
         return CKM_API_ERROR_DB_ALIAS_UNKNOWN;
     } else {
@@ -670,8 +700,15 @@ int CKMLogic::readDataHelper(
         key = handler.keyProvider.getPureDEK(key);
         handler.crypto.pushKey(firstRow.ownerLabel, key);
     }
-    for(auto &row : rows)
+    for (auto &row : rows)
         handler.crypto.decryptRow(password, row);
+
+    // give a change for handling data to cryptoimpl module
+    DataAdapter dataAdapter;
+    if (dataAdapter.afterReadData(rows) != CKM_API_SUCCESS) {
+        LogError("Fail to process afterReadData in DataAdapter.");
+        return CKM_API_ERROR_SERVER_ERROR;
+    }
 
     return CKM_API_SUCCESS;
 }
@@ -721,6 +758,13 @@ int CKMLogic::readDataHelper(
         handler.crypto.pushKey(row.ownerLabel, key);
     }
     handler.crypto.decryptRow(password, row);
+
+    // give a change for handling data to cryptoimpl module
+    DataAdapter dataAdapter;
+    if (dataAdapter.afterReadData(row) != CKM_API_SUCCESS) {
+        LogError("Fail to process afterReadData in DataAdapter.");
+        return CKM_API_ERROR_SERVER_ERROR;
+    }
 
     return CKM_API_SUCCESS;
 }
@@ -774,37 +818,57 @@ int CKMLogic::getPKCS12Helper(
     const Label &label,
     const Password &keyPassword,
     const Password &certPassword,
-    KeyShPtr & privKey,
-    CertificateShPtr & cert,
-    CertificateShPtrVector & caChain)
+    KeyShPtr &priKey,
+    CertificateShPtr &cert,
+    CertificateShPtrVector &caChain)
 {
     int retCode;
 
     // read private key (mandatory)
-    DB::Row privKeyRow;
-    retCode = readDataHelper(true, cred, DataType::DB_KEY_FIRST, name, label, keyPassword, privKeyRow);
-    if(retCode != CKM_API_SUCCESS)
+    DB::Row priKeyRow;
+    retCode = readDataHelper(true,
+                             cred,
+                             DataType::DB_KEY_FIRST,
+                             name,
+                             label,
+                             keyPassword,
+                             priKeyRow);
+    if (retCode != CKM_API_SUCCESS)
         return retCode;
-    privKey = CKM::Key::create(privKeyRow.data);
+    priKey = CKM::KeyBuilder::create(priKeyRow.data,
+                                     static_cast<KeyType>(priKeyRow.dataType),
+                                     priKeyRow.inExternal);
 
     // read certificate (mandatory)
     DB::Row certRow;
-    retCode = readDataHelper(true, cred, DataType::CERTIFICATE, name, label, certPassword, certRow);
-    if(retCode != CKM_API_SUCCESS)
+    retCode = readDataHelper(true,
+                             cred,
+                             DataType::CERTIFICATE,
+                             name,
+                             label,
+                             certPassword,
+                             certRow);
+    if (retCode != CKM_API_SUCCESS)
         return retCode;
     cert = CKM::Certificate::create(certRow.data, DataFormat::FORM_DER);
 
     // read CA cert chain (optional)
     DB::RowVector rawCaChain;
-    retCode = readDataHelper(true, cred, DataType::DB_CHAIN_FIRST, name, label, certPassword, rawCaChain);
-    if(retCode != CKM_API_SUCCESS &&
+    retCode = readDataHelper(true,
+                             cred,
+                             DataType::DB_CHAIN_FIRST,
+                             name,
+                             label,
+                             certPassword,
+                             rawCaChain);
+    if (retCode != CKM_API_SUCCESS &&
        retCode != CKM_API_ERROR_DB_ALIAS_UNKNOWN)
         return retCode;
-    for(auto &rawCaCert : rawCaChain)
+    for (auto &rawCaCert : rawCaChain)
         caChain.push_back(CKM::Certificate::create(rawCaCert.data, DataFormat::FORM_DER));
 
     // if anything found, return it
-    if(privKey || cert || caChain.size()>0)
+    if (priKey || cert || caChain.size() > 0)
         retCode = CKM_API_SUCCESS;
 
     return retCode;
@@ -822,14 +886,21 @@ RawBuffer CKMLogic::getPKCS12(
     PKCS12Serializable output;
 
     try {
-        KeyShPtr privKey;
+        KeyShPtr priKey;
         CertificateShPtr cert;
         CertificateShPtrVector caChain;
-        retCode = getPKCS12Helper(cred, name, label, keyPassword, certPassword, privKey, cert, caChain);
+        retCode = getPKCS12Helper(cred,
+                                  name,
+                                  label,
+                                  keyPassword,
+                                  certPassword,
+                                  priKey,
+                                  cert,
+                                  caChain);
 
         // prepare response
         if(retCode == CKM_API_SUCCESS)
-            output = PKCS12Serializable(privKey, cert, caChain);
+            output = PKCS12Serializable(priKey, cert, caChain);
 
     } catch (const KeyProvider::Exception::Base &e) {
         LogError("KeyProvider failed with error: " << e.GetMessage());
@@ -915,9 +986,19 @@ int CKMLogic::saveDataHelper(
     if(retCode != CKM_API_SUCCESS)
         return retCode;
 
+    // make row
+    DB::Row row = createRow(name, ownerLabel, dataType, data, policy);
+
+    // give a change for handling data to cryptoimpl module
+    DataAdapter dataAdapter;
+    if (dataAdapter.beforeSaveData(row) != CKM_API_SUCCESS) {
+        LogError("Fail to process beforSaveData in DataAdapter.");
+        return CKM_API_ERROR_SERVER_ERROR;
+    }
+
     // save the data
-    DB::Row encryptedRow = createEncryptedRow(handler.crypto, name, ownerLabel, dataType, data, policy);
-    handler.database.saveRow(encryptedRow);
+    encryptRow(handler.crypto, row, policy);
+    handler.database.saveRow(row);
 
     transaction.commit();
     return CKM_API_SUCCESS;
@@ -942,14 +1023,26 @@ int CKMLogic::saveDataHelper(
     if(retCode != CKM_API_SUCCESS)
         return retCode;
 
-    // extract and encrypt the data
-    DB::RowVector encryptedRows;
-    retCode = extractPKCS12Data(handler.crypto, name, ownerLabel, pkcs, keyPolicy, certPolicy, encryptedRows);
+    // extract the data
+    DB::RowVector rows;
+    retCode = extractPKCS12Data(name, ownerLabel, pkcs, keyPolicy, certPolicy, rows);
+    if(retCode != CKM_API_SUCCESS)
+        return retCode;
+
+    // give a change for handling data to cryptoimpl module
+    DataAdapter dataAdapter;
+    if (dataAdapter.beforeSaveData(rows) != CKM_API_SUCCESS) {
+        LogError("Fail to process beforeSaveData in DataAdapter.");
+        return CKM_API_ERROR_SERVER_ERROR;
+    }
+
+    // encrypt the data
+    retCode = encryptPKCS12Data(handler.crypto, rows, keyPolicy, certPolicy);
     if(retCode != CKM_API_SUCCESS)
         return retCode;
 
     // save the data
-    handler.database.saveRows(name, ownerLabel, encryptedRows);
+    handler.database.saveRows(name, ownerLabel, rows);
     transaction.commit();
 
     return CKM_API_SUCCESS;
@@ -970,23 +1063,24 @@ int CKMLogic::createKeyPairHelper(
     if (0 == m_userDataMap.count(cred.uid))
         return CKM_API_ERROR_DB_LOCKED;
 
-    KeyImpl prv, pub;
+    AsymKeyImpl pPrv;
+    AsymKeyImpl pPub;
     int retCode;
     switch(key_type)
     {
         case KeyType::KEY_RSA_PUBLIC:
         case KeyType::KEY_RSA_PRIVATE:
-            retCode = CryptoService::createKeyPairRSA(additional_param, prv, pub);
+            retCode = CryptoService::createKeyPairRSA(additional_param, pPrv, pPub);
             break;
 
         case KeyType::KEY_DSA_PUBLIC:
         case KeyType::KEY_DSA_PRIVATE:
-            retCode = CryptoService::createKeyPairDSA(additional_param, prv, pub);
+            retCode = CryptoService::createKeyPairDSA(additional_param, pPrv, pPub);
             break;
 
         case KeyType::KEY_ECDSA_PUBLIC:
         case KeyType::KEY_ECDSA_PRIVATE:
-            retCode = CryptoService::createKeyPairECDSA(static_cast<ElipticCurve>(additional_param), prv, pub);
+            retCode = CryptoService::createKeyPairECDSA(static_cast<ElipticCurve>(additional_param), pPrv, pPub);
             break;
 
         default:
@@ -1005,8 +1099,8 @@ int CKMLogic::createKeyPairHelper(
     retCode = saveDataHelper(cred,
                              namePrivate,
                              labelPrivate,
-                             DataType(prv.getType()),
-                             prv.getDER(),
+                             DataType(pPrv.getType()),
+                             pPrv.getBinary(),
                              policyPrivate);
     if (CKM_API_SUCCESS != retCode)
         return retCode;
@@ -1014,8 +1108,8 @@ int CKMLogic::createKeyPairHelper(
     retCode = saveDataHelper(cred,
                              namePublic,
                              labelPublic,
-                             DataType(pub.getType()),
-                             pub.getDER(),
+                             DataType(pPub.getType()),
+                             pPub.getBinary(),
                              policyPublic);
     if (CKM_API_SUCCESS != retCode)
         return retCode;
@@ -1268,20 +1362,28 @@ RawBuffer CKMLogic::createSignature(
         const RSAPaddingAlgorithm padding)
 {
     DB::Row row;
-    CryptoService cs;
     RawBuffer signature;
 
     int retCode = CKM_API_SUCCESS;
 
     try {
-        retCode = readDataHelper(false, cred, DataType::DB_KEY_FIRST, privateKeyName, ownerLabel, password, row);
-        if(retCode == CKM_API_SUCCESS)
-        {
-            KeyImpl keyParsed(row.data, Password());
-            if (keyParsed.empty())
+        retCode = readDataHelper(false,
+                                 cred,
+                                 DataType::DB_KEY_FIRST,
+                                 privateKeyName,
+                                 ownerLabel,
+                                 password, row);
+        if (retCode == CKM_API_SUCCESS) {
+
+            AsymKeyImpl priKey(row.data,
+                               static_cast<KeyType>(row.dataType),
+                               row.inExternal);
+            if (priKey.empty())
                 retCode = CKM_API_ERROR_SERVER_ERROR;
+            else if (!row.dataType.isKeyPrivate())
+                retCode = CKM_API_ERROR_INPUT_PARAM;
             else
-                retCode = cs.createSignature(keyParsed, message, hash, padding, signature);
+                retCode = CryptoService::createSignature(priKey, message, hash, padding, signature);
         }
     } catch (const KeyProvider::Exception::Base &e) {
         LogError("KeyProvider failed with message: " << e.GetMessage());
@@ -1322,32 +1424,50 @@ RawBuffer CKMLogic::verifySignature(
 
     try {
         do {
-            CryptoService cs;
             DB::Row row;
-            KeyImpl key;
+            AsymKeyImpl pubKey;
 
             // try certificate first - looking for a public key.
             // in case of PKCS, pub key from certificate will be found first
             // rather than private key from the same PKCS.
-            retCode = readDataHelper(false, cred, DataType::CERTIFICATE, publicKeyOrCertName, ownerLabel, password, row);
+            retCode = readDataHelper(false,
+                                     cred,
+                                     DataType::CERTIFICATE,
+                                     publicKeyOrCertName,
+                                     ownerLabel,
+                                     password,
+                                     row);
             if (retCode == CKM_API_SUCCESS) {
                 CertificateImpl cert(row.data, DataFormat::FORM_DER);
-                key = cert.getKeyImpl();
+                pubKey = cert.getAsymKeyImpl();
             } else if (retCode == CKM_API_ERROR_DB_ALIAS_UNKNOWN) {
-                retCode = readDataHelper(false, cred, DataType::DB_KEY_FIRST, publicKeyOrCertName, ownerLabel, password, row);
-                if (retCode != CKM_API_SUCCESS)
+                if (readDataHelper(false,
+                                   cred,
+                                   DataType::DB_KEY_FIRST,
+                                   publicKeyOrCertName,
+                                   ownerLabel,
+                                   password,
+                                   row) != CKM_API_SUCCESS)
                     break;
-                key = KeyImpl(row.data);
+
+                if (!row.dataType.isKeyPublic()) {
+                    retCode = CKM_API_ERROR_INPUT_PARAM;
+                    break;
+                }
+
+                pubKey = AsymKeyImpl(row.data,
+                                     static_cast<KeyType>(row.dataType),
+                                     row.inExternal);
             } else {
                 break;
             }
 
-            if (key.empty()) {
+            if (pubKey.empty()) {
                 retCode = CKM_API_ERROR_SERVER_ERROR;
                 break;
             }
 
-            retCode = cs.verifySignature(key, message, signature, hash, padding);
+            retCode = CryptoService::verifySignature(pubKey, message, signature, hash, padding);
         } while(0);
     } catch (const CryptoService::Exception::Crypto_internal &e) {
         LogError("KeyProvider failed with message: " << e.GetMessage());

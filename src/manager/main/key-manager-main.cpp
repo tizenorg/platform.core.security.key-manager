@@ -36,7 +36,7 @@
 #include <ocsp-service.h>
 
 #include <key-provider.h>
-#include <CryptoService.h>
+#include <crypto-service.h>
 #include <file-system.h>
 
 #define REGISTER_SOCKET_SERVICE(manager, service) \
