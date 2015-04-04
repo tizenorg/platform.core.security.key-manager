@@ -44,7 +44,8 @@ namespace {
          * increment and update DB_VERSION_CURRENT,
          * then provide migration mechanism!
          */
-        DB_VERSION_CURRENT             = 3
+        DB_VERSION_3                   = 3,
+        DB_VERSION_CURRENT             = 4
     };
 
     const char *SCRIPT_CREATE_SCHEMA                = "create_schema";
@@ -87,17 +88,19 @@ namespace {
             "INSERT INTO OBJECTS("
             "   exportable, dataType,"
             "   algorithmType, encryptionScheme,"
-            "   iv, dataSize, data, tag, idx) "
+            "   iv, dataSize, data, tag, inExternal, idx) "
             "   VALUES(?001, ?002, ?003, ?004, ?005, "
-            "          ?006, ?007, ?008,"
+            "          ?006, ?007, ?008, ?009, "
             "          (SELECT idx FROM NAMES WHERE name=?101 and label=?102)"
             "         );";
 
     const char *DB_CMD_OBJECT_SELECT_BY_NAME_AND_LABEL =
-            "SELECT * FROM [join_name_object_tables] "
+            "SELECT name, label, exportable, datatype, "
+            "        algorithmType, encryptionScheme, iv, "
+            "        dataSize, data, tag, inExternal "
+            " FROM [join_name_object_tables] "
             " WHERE (dataType BETWEEN ?001 AND ?002) "
             " AND name=?101 and label=?102;";
-
 
     const char *DB_CMD_KEY_INSERT =
             "INSERT INTO KEYS(label, key) VALUES (?, ?);";
@@ -422,6 +425,7 @@ namespace DB {
         row.dataSize = selectCommand->GetColumnInteger(7);
         row.data = selectCommand->GetColumnBlob(8);
         row.tag = selectCommand->GetColumnBlob(9);
+        row.inExternal = selectCommand->GetColumnInteger(10);
         return row;
     }
 
@@ -816,6 +820,7 @@ namespace DB {
         insertObjectCommand->BindInteger(6, row.dataSize);
         insertObjectCommand->BindBlob   (7, row.data);
         insertObjectCommand->BindBlob   (8, row.tag);
+        insertObjectCommand->BindInteger(9, static_cast<int>(row.inExternal));
 
         // name table reference
         insertObjectCommand->BindString (101, row.name.c_str());

@@ -88,53 +88,124 @@ CKM::RawBuffer i2d(I2D_CONV fun, EVP_PKEY* pkey) {
 
 } // anonymous namespace
 
+//=============================================
+// Implementations of KeyImpl
+//=============================================
+
 KeyImpl::KeyImpl()
-  : m_pkey(NULL, EVP_PKEY_free)
-  , m_type(KeyType::KEY_NONE)
+  : m_type(KeyType::KEY_NONE)
+  , m_binary(RawBuffer())
+  , m_external(false)
 {}
 
-KeyImpl::KeyImpl(const KeyImpl &second) {
-    m_pkey = second.m_pkey;
-    m_type = second.m_type;
+KeyImpl::KeyImpl(const KeyType& type, const RawBuffer& binary, const bool& isExternalKey)
+  : m_type(type)
+  , m_binary(RawBuffer())
+  , m_external(isExternalKey)
+{
+    m_binary.assign(binary.begin(), binary.end());
 }
 
-KeyImpl::KeyImpl(const RawBuffer &buf, const Password &password)
-  : m_pkey(NULL, EVP_PKEY_free)
-  , m_type(KeyType::KEY_NONE)
+KeyImpl::KeyImpl(const KeyImpl &second)
+  : m_binary(RawBuffer())
+{
+    m_type     = second.m_type;
+    m_external = second.m_external;
+    m_binary.assign(second.m_binary.begin(), second.m_binary.end());
+}
+
+bool KeyImpl::empty() const {
+    return m_binary.empty();
+}
+
+KeyType KeyImpl::getType() const {
+    return m_type;
+}
+
+RawBuffer KeyImpl::getBinary() const {
+    return m_binary;
+}
+
+bool KeyImpl::isExternalKey() const {
+    return m_external;
+}
+
+void KeyImpl::setType(const KeyType& type) {
+    m_type = type;
+}
+
+void KeyImpl::setBinary(const RawBuffer& binary) {
+    m_binary.assign(binary.begin(), binary.end());
+}
+
+void KeyImpl::setExternalKey(const bool& isExternalKey) {
+    m_external = isExternalKey;
+}
+
+
+//=============================================
+// Implementations of AsymKeyImpl
+//=============================================
+
+AsymKeyImpl::AsymKeyImpl()
+  : KeyImpl()
+{}
+
+AsymKeyImpl::AsymKeyImpl(const AsymKeyImpl &second)
+  : KeyImpl(second)
+{}
+
+AsymKeyImpl::AsymKeyImpl(const KeyType& type, const RawBuffer& binary, const bool& isExternalKey)
+  : KeyImpl(type, binary, isExternalKey)
+{}
+
+AsymKeyImpl::AsymKeyImpl(const EvpShPtr &pkey, const KeyType &type)
+  : KeyImpl(type, RawBuffer(), false)
+{
+    RawBuffer der = toBinary(type, pkey.get());
+    m_binary.assign(der.begin(), der.end());
+}
+
+AsymKeyImpl::AsymKeyImpl(const RawBuffer& binary, const Password &password)
+  : KeyImpl()
 {
     bool isPrivate = false;
     EVP_PKEY *pkey = NULL;
     BioUniquePtr bio(BIO_new(BIO_s_mem()), BIO_free_all);
 
     LogDebug("Start to parse key:");
-//    printDER(buf);
+    if(binary.size() == 0) {
+        LogWarning("Fail to convert binary to EVP_PKEY. binary size is 0.");
+        return;
+    }
+//    printDER(binary);
 
-    if (buf[0] != '-') {
-        BIO_write(bio.get(), buf.data(), buf.size());
+    if (binary[0] != '-') {
+        BIO_write(bio.get(), binary.data(), binary.size());
         pkey = d2i_PUBKEY_bio(bio.get(), NULL);
         isPrivate = false;
         LogDebug("Trying d2i_PUBKEY_bio Status: " << (void*)pkey);
     }
 
-    if (!pkey && buf[0] != '-') {
+    if (!pkey && binary[0] != '-') {
         (void)BIO_reset(bio.get());
-        BIO_write(bio.get(), buf.data(), buf.size());
+        BIO_write(bio.get(), binary.data(), binary.size());
         pkey = d2i_PrivateKey_bio(bio.get(), NULL);
         isPrivate = true;
         LogDebug("Trying d2i_PrivateKey_bio Status: " << (void*)pkey);
     }
 
-    if (!pkey && buf[0] == '-') {
+    if (!pkey && binary[0] == '-') {
         (void)BIO_reset(bio.get());
-        BIO_write(bio.get(), buf.data(), buf.size());
+        BIO_write(bio.get(), binary.data(), binary.size());
         pkey = PEM_read_bio_PUBKEY(bio.get(), NULL, passcb, const_cast<Password*>(&password));
         isPrivate = false;
         LogDebug("PEM_read_bio_PUBKEY Status: " << (void*)pkey);
     }
 
-    if (!pkey && buf[0] == '-') {
+    if (!pkey && binary[0] == '-') {
         (void)BIO_reset(bio.get());
-        BIO_write(bio.get(), buf.data(), buf.size());
+        BIO_write(bio.get(), binary.data(), binary.size());
         pkey = PEM_read_bio_PrivateKey(bio.get(), NULL, passcb, const_cast<Password*>(&password));
         isPrivate = true;
         LogDebug("PEM_read_bio_PrivateKey Status: " << (void*)pkey);
@@ -145,8 +216,7 @@ KeyImpl::KeyImpl(const RawBuffer &buf, const Password &password)
         return;
     }
 
-    m_pkey.reset(pkey, EVP_PKEY_free);
-
+    // set Type
     switch(EVP_PKEY_type(pkey->type))
     {
         case EVP_PKEY_RSA:
@@ -161,79 +231,79 @@ KeyImpl::KeyImpl(const RawBuffer &buf, const Password &password)
             m_type = isPrivate ? KeyType::KEY_ECDSA_PRIVATE : KeyType::KEY_ECDSA_PUBLIC;
             break;
     }
-    LogDebug("KeyType is: " << (int)m_type << " isPrivate: " << isPrivate);
+
+    // set Binary
+    RawBuffer der = toBinary(m_type, pkey);
+    m_binary.assign(der.begin(), der.end());
+
+    LogDebug("KeyType is: " << (int)m_type << " isPrivate: " << isPrivate << ", size: " << m_binary.size());
+
+    EVP_PKEY_free(pkey);
 }
 
-KeyImpl::KeyImpl(EvpShPtr pkey, KeyType type) : m_pkey(pkey), m_type(type)
-{
-    int expected_type = EVP_PKEY_NONE;
-    switch(type)
-    {
-        case KeyType::KEY_RSA_PRIVATE:
-        case KeyType::KEY_RSA_PUBLIC:
-            expected_type = EVP_PKEY_RSA;
-            break;
-
-        case KeyType::KEY_DSA_PRIVATE:
-        case KeyType::KEY_DSA_PUBLIC:
-            expected_type = EVP_PKEY_DSA;
-            break;
-
-        case KeyType::KEY_AES:
-            LogError("Error, AES keys are not supported yet.");
-            break;
-
-        case KeyType::KEY_ECDSA_PRIVATE:
-        case KeyType::KEY_ECDSA_PUBLIC:
-            expected_type = EVP_PKEY_EC;
-            break;
-
-        default:
-            LogError("Unknown key type provided.");
-            break;
-    }
-
-    // verify if actual key type matches the expected tpe
-    int given_key_type = EVP_PKEY_type(pkey->type);
-    if(given_key_type==EVP_PKEY_NONE || expected_type!=given_key_type)
-    {
-        m_pkey.reset();
-        m_type = KeyType::KEY_NONE;
-    }
+RawBuffer AsymKeyImpl::getDER() const {
+    return m_binary;
 }
 
-bool KeyImpl::empty() const {
-    return m_pkey.get() == NULL;
-}
+EvpShPtr AsymKeyImpl::getEvpShPtr() const {
+    if(m_external)
+        return EvpShPtr();
 
-KeyImpl::EvpShPtr KeyImpl::getEvpShPtr() const {
-    return m_pkey;
-}
+    EVP_PKEY *pkey = NULL;
+    BioUniquePtr bio(BIO_new(BIO_s_mem()), BIO_free_all);
+    BIO_write(bio.get(), m_binary.data(), m_binary.size());
 
-KeyType KeyImpl::getType() const {
-    return m_type;
-}
-
-RawBuffer KeyImpl::getDERPRV() const {
-    return i2d(i2d_PrivateKey_bio, m_pkey.get());
-}
-
-RawBuffer KeyImpl::getDERPUB() const {
-    return i2d(i2d_PUBKEY_bio, m_pkey.get());
-}
-
-RawBuffer KeyImpl::getDER() const {
     switch(m_type)
     {
         case KeyType::KEY_RSA_PRIVATE:
         case KeyType::KEY_DSA_PRIVATE:
         case KeyType::KEY_ECDSA_PRIVATE:
-            return getDERPRV();
+            pkey = d2i_PrivateKey_bio(bio.get(), NULL);
+            break;
+        case KeyType::KEY_RSA_PUBLIC:
+        case KeyType::KEY_DSA_PUBLIC:
+        case KeyType::KEY_ECDSA_PUBLIC:
+            pkey = d2i_PUBKEY_bio(bio.get(), NULL);
+            break;
+        default:
+            break;
+    }
+    if (!pkey) {
+        LogError("Failed to parse key from key binary");
+        return EvpShPtr();
+    }
+
+    EvpShPtr ptr(pkey, EVP_PKEY_free);
+    return ptr;
+}
+
+RawBuffer AsymKeyImpl::toBinary(const KeyType& type, EVP_PKEY* pkey) {
+    switch(EVP_PKEY_type(pkey->type))
+    {
+        case EVP_PKEY_RSA:
+            if (type != KeyType::KEY_RSA_PRIVATE && type != KeyType::KEY_RSA_PUBLIC)
+                return RawBuffer();
+            break;
+        case EVP_PKEY_DSA:
+            if (type != KeyType::KEY_DSA_PRIVATE && type != KeyType::KEY_DSA_PUBLIC)
+                return RawBuffer();
+            break;
+        case EVP_PKEY_EC:
+            if (type != KeyType::KEY_ECDSA_PRIVATE && type != KeyType::KEY_ECDSA_PUBLIC)
+                return RawBuffer();
+            break;
+    }
+    switch(type)
+    {
+        case KeyType::KEY_RSA_PRIVATE:
+        case KeyType::KEY_DSA_PRIVATE:
+        case KeyType::KEY_ECDSA_PRIVATE:
+            return i2d(i2d_PrivateKey_bio, pkey);
 
         case KeyType::KEY_RSA_PUBLIC:
         case KeyType::KEY_DSA_PUBLIC:
         case KeyType::KEY_ECDSA_PUBLIC:
-            return getDERPUB();
+            return i2d(i2d_PUBKEY_bio, pkey);
 
         default:
             break;
@@ -241,19 +311,164 @@ RawBuffer KeyImpl::getDER() const {
     return RawBuffer();
 }
 
-KeyShPtr Key::create(const RawBuffer &raw, const Password &password) {
+
+//=============================================
+// Implementations of SymKeyImpl
+//=============================================
+
+SymKeyImpl::SymKeyImpl()
+  : KeyImpl()
+{}
+
+SymKeyImpl::SymKeyImpl(const SymKeyImpl &second)
+  : KeyImpl(second)
+{}
+
+SymKeyImpl::SymKeyImpl(const KeyType& type, const RawBuffer& binary, const bool& isExternalKey)
+  : KeyImpl(type, binary, isExternalKey)
+{}
+
+SymKeyImpl::SymKeyImpl(const KeyType& type, const RawBuffer& binary)
+  : KeyImpl(type, binary, false)
+{}
+
+
+//=============================================
+// Implementations of KeyBuilder
+//=============================================
+KeyImplShPtr KeyBuilder::create(const KeyType& type, const RawBuffer &binary, const bool& isExternalKey) {
     try {
-        KeyShPtr output = std::make_shared<KeyImpl>(raw, password);
-        if (output->empty())
-            output.reset();
-        return output;
+        KeyImplShPtr keyImplShPtr;
+
+        AsymKeyImplShPtr asymKeyImplShPtr;
+        SymKeyImplShPtr symKeyImplShPtr;
+
+        switch(type)
+        {
+            case KeyType::KEY_RSA_PRIVATE:
+            case KeyType::KEY_DSA_PRIVATE:
+            case KeyType::KEY_ECDSA_PRIVATE:
+            case KeyType::KEY_RSA_PUBLIC:
+            case KeyType::KEY_DSA_PUBLIC:
+            case KeyType::KEY_ECDSA_PUBLIC:
+                asymKeyImplShPtr = std::make_shared<AsymKeyImpl>(type, binary, isExternalKey);
+                keyImplShPtr = asymKeyImplShPtr;
+                break;
+            case KeyType::KEY_AES:
+                symKeyImplShPtr = std::make_shared<SymKeyImpl>(type, binary, isExternalKey);
+                keyImplShPtr = symKeyImplShPtr;
+                break;
+            default:
+                break;
+        }
+        if(keyImplShPtr.get() !=NULL && keyImplShPtr->empty()){
+            LogWarning("KeyImpl Creation Failed from internal binary. It may be a wrong internal binary.");
+            keyImplShPtr.reset();
+        }
+        return keyImplShPtr;
     } catch (const std::bad_alloc &) {
-        LogDebug("Bad alloc was catch during KeyImpl creation");
+         LogDebug("Bad alloc was catch during AsymKeyImpl creation");
     } catch (...) {
-        LogError("Critical error: Unknown exception was caught during KeyImpl creation");
+         LogError("Critical error: Unknown exception was caught during AsymKeyImpl creation");
     }
-    return KeyShPtr();
+
+    return KeyImplShPtr();
 }
 
-} // namespace CKM
 
+KeyImplShPtr KeyBuilder::create(const KeyType &type,
+                     const RawBuffer &binary,
+                     const Password &password) {
+    try {
+        KeyImplShPtr keyImplShPtr;
+
+        AsymKeyImplShPtr asymKeyImplShPtr;
+        SymKeyImplShPtr symKeyImplShPtr;
+        switch(type)
+        {
+            case KeyType::KEY_RSA_PRIVATE:
+            case KeyType::KEY_DSA_PRIVATE:
+            case KeyType::KEY_ECDSA_PRIVATE:
+            case KeyType::KEY_RSA_PUBLIC:
+            case KeyType::KEY_DSA_PUBLIC:
+            case KeyType::KEY_ECDSA_PUBLIC:
+            case KeyType::KEY_NONE:
+                asymKeyImplShPtr = std::make_shared<AsymKeyImpl>(binary, password);
+                keyImplShPtr = asymKeyImplShPtr;
+                break;
+            case KeyType::KEY_AES:
+                symKeyImplShPtr = std::make_shared<SymKeyImpl>(type, binary);
+                keyImplShPtr = symKeyImplShPtr;
+                break;
+            default:
+                break;
+        }
+        if(keyImplShPtr.get() !=NULL && keyImplShPtr->empty()){
+            LogWarning("KeyImpl Creation Failed from binary. It may be a wrong binary.");
+            keyImplShPtr.reset();
+        }
+        return keyImplShPtr;
+    } catch (const std::bad_alloc &) {
+         LogDebug("Bad alloc was catch during AsymKeyImpl creation");
+    } catch (...) {
+         LogError("Critical error: Unknown exception was caught during AsymKeyImpl creation");
+    }
+
+    return KeyImplShPtr();
+}
+
+AsymKeyImplShPtr KeyBuilder::create(const EvpShPtr &pkey, const KeyType &type) {
+    AsymKeyImplShPtr asymKeyImplShPtr = std::make_shared<AsymKeyImpl>(pkey,type);
+    if(asymKeyImplShPtr.get() != NULL && asymKeyImplShPtr->empty())
+        asymKeyImplShPtr.reset();
+    return asymKeyImplShPtr;
+}
+
+AsymKeyImplShPtr KeyBuilder::createNullAsymKey()
+{
+    return std::make_shared<AsymKeyImpl>();
+}
+
+SymKeyImplShPtr KeyBuilder::createNullSymKey()
+{
+    return std::make_shared<SymKeyImpl>();
+}
+
+KeyImplShPtr KeyBuilder::toKeyImplShPtr(const KeyShPtr& keyShPtr)
+{
+    KeyImplShPtr keyImplShPtr;
+    try {
+        if(keyShPtr.get()  == NULL)
+           return KeyImplShPtr();
+        keyImplShPtr = create(keyShPtr->getType(), keyShPtr->getBinary(), Password());
+    }catch(...) {
+        LogWarning("KeyImplShPtr Creation Failed from KeyShPtr. It may be a wrong KeyShPtr.");
+    }
+    if(keyImplShPtr.get()!= NULL && keyImplShPtr->empty())
+        keyImplShPtr.reset();
+    return keyImplShPtr;
+}
+
+void KeyBuilder::toExternalKey(KeyImplShPtr& pInternalKey, const std::string& externalId)
+{
+    pInternalKey->setExternalKey(true);
+    pInternalKey->setBinary(RawBuffer(externalId.begin(), externalId.end()));    
+}
+
+void KeyBuilder::toInternalKey(KeyImplShPtr& pExternalKey, const RawBuffer& binary)
+{
+    pExternalKey->setExternalKey(false);
+    pExternalKey->setBinary(binary);    
+}
+
+//=============================================
+// Implementations of Key::create
+//=============================================
+KeyShPtr Key::create(const KeyType type,
+                     const RawBuffer &binary,
+                     const Password &password) {
+    return std::dynamic_pointer_cast<Key>(KeyBuilder::create(type, binary, password));
+}
+
+
+}

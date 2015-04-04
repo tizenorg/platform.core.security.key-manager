@@ -41,16 +41,16 @@ ManagerAsync::Impl::~Impl()
 
 void ManagerAsync::Impl::saveKey(const ObserverPtr& observer,
                            const Alias& alias,
-                           const KeyShPtr& key,
+                           const KeyImplShPtr& key,
                            const Policy& policy)
 {
     observerCheck(observer);
-    if (alias.empty() || !key) {
+    if (alias.empty() || !key || key.get() == NULL) {
         observer->ReceivedError(CKM_API_ERROR_INPUT_PARAM);
         return;
     }
     Try {
-        saveBinaryData(observer, alias, DataType(key->getType()), key->getDER(), policy);
+        saveBinaryData(observer, alias, DataType(key->getType()), key->getBinary(), policy);
     } Catch(DataType::Exception::Base) {
         observer->ReceivedError(CKM_API_ERROR_INPUT_PARAM);
     }

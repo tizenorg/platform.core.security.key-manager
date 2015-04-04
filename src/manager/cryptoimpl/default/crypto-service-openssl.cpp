@@ -21,7 +21,8 @@
 #include <ckm/ckm-error.h>
 #include <ckm/ckm-type.h>
 #include <key-impl.h>
-#include <CryptoService.h>
+#include <crypto-service.h>
+#include <crypto-service-openssl.h>
 #include <assert.h>
 #include <dpl/log/log.h>
 
@@ -30,15 +31,15 @@
 
 namespace CKM {
 
-CryptoService::CryptoService(){
+CryptoServiceOpenssl::CryptoServiceOpenssl(){
 }
 
-CryptoService::~CryptoService(){
+CryptoServiceOpenssl::~CryptoServiceOpenssl(){
 }
 
 
 
-int CryptoService::initialize() {
+int CryptoServiceOpenssl::initialize() {
     int hw_rand_ret = 0;
     int u_rand_ret = 0;
 
@@ -64,7 +65,7 @@ int CryptoService::initialize() {
     return CKM_CRYPTO_INIT_SUCCESS;
 }
 
-const EVP_MD *CryptoService::getMdAlgo(const HashAlgorithm hashAlgo) {
+const EVP_MD *CryptoServiceOpenssl::getMdAlgo(const HashAlgorithm hashAlgo) {
     const EVP_MD *md_algo=NULL;
     switch(hashAlgo) {
     case HashAlgorithm::NONE:
@@ -89,7 +90,7 @@ const EVP_MD *CryptoService::getMdAlgo(const HashAlgorithm hashAlgo) {
     return md_algo;
 }
 
-int CryptoService::getRsaPadding(const RSAPaddingAlgorithm padAlgo) {
+int CryptoServiceOpenssl::getRsaPadding(const RSAPaddingAlgorithm padAlgo) {
     int rsa_padding = -1;
     switch(padAlgo) {
     case RSAPaddingAlgorithm::NONE:
@@ -108,9 +109,9 @@ int CryptoService::getRsaPadding(const RSAPaddingAlgorithm padAlgo) {
     return rsa_padding;
 }
 
-int CryptoService::createKeyPairRSA(const int size, // size in bits [1024, 2048, 4096]
-        KeyImpl &createdPrivateKey,  // returned value
-        KeyImpl &createdPublicKey)  // returned value
+int CryptoServiceOpenssl::createKeyPairRSA(const int size, // size in bits [1024, 2048, 4096]
+        AsymKeyImplShPtr &createdPrivateKey,  // returned value
+        AsymKeyImplShPtr &createdPublicKey)  // returned value
 {
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY *pkey = NULL;
@@ -120,18 +121,6 @@ int CryptoService::createKeyPairRSA(const int size, // size in bits [1024, 2048,
     if(size != 1024 && size !=2048 && size != 4096) {
         LogError("Error in RSA input size");
         ThrowMsg(CryptoService::Exception::Crypto_internal, "Error in RSA input size");
-    }
-
-    // check the parameters of functions
-    if(&createdPrivateKey == NULL) {
-        LogError("Error in createdPrivateKey value");
-        ThrowMsg(CryptoService::Exception::Crypto_internal, "Error in createdPrivateKey value");
-    }
-
-    // check the parameters of functions
-    if(&createdPublicKey == NULL) {
-        LogError("Error in createdPrivateKey value");
-        ThrowMsg(CryptoService::Exception::Crypto_internal, "Error in createdPublicKey value");
     }
 
     Try {
@@ -170,10 +159,10 @@ int CryptoService::createKeyPairRSA(const int size, // size in bits [1024, 2048,
         ReThrowMsg(CryptoService::Exception::opensslError,"Error in opensslError function !!");
     }
 
-    KeyImpl::EvpShPtr ptr(pkey, EVP_PKEY_free); // shared ptr will free pkey
+    EvpShPtr ptr(pkey, EVP_PKEY_free); // shared ptr will free pkey
 
-    createdPrivateKey = KeyImpl(ptr, KeyType::KEY_RSA_PRIVATE);
-    createdPublicKey = KeyImpl(ptr, KeyType::KEY_RSA_PUBLIC);
+    createdPrivateKey = KeyBuilder::create(ptr, KeyType::KEY_RSA_PRIVATE);
+    createdPublicKey = KeyBuilder::create(ptr, KeyType::KEY_RSA_PUBLIC);
 
     if(pparam) {
         EVP_PKEY_free(pparam);
@@ -187,9 +176,9 @@ int CryptoService::createKeyPairRSA(const int size, // size in bits [1024, 2048,
 }
 
 
-int CryptoService::createKeyPairDSA(const int size, // size in bits [1024, 2048, 3072, 4096]
-		KeyImpl &createdPrivateKey,  // returned value
-		KeyImpl &createdPublicKey)  // returned value
+int CryptoServiceOpenssl::createKeyPairDSA(const int size, // size in bits [1024, 2048, 3072, 4096]
+		AsymKeyImplShPtr &createdPrivateKey,  // returned value
+		AsymKeyImplShPtr &createdPublicKey)  // returned value
 {
 	EVP_PKEY_CTX *pctx = NULL;
 	EVP_PKEY_CTX *kctx = NULL;
@@ -200,18 +189,6 @@ int CryptoService::createKeyPairDSA(const int size, // size in bits [1024, 2048,
 	if(size != 1024 && size !=2048 && size !=3072 && size != 4096) {
 		LogError("Error in DSA input size");
 		ThrowMsg(CryptoService::Exception::Crypto_internal, "Error in DSA input size");
-	}
-
-	// check the parameters of functions
-	if(&createdPrivateKey == NULL) {
-		LogError("Error in createdPrivateKey value");
-		ThrowMsg(CryptoService::Exception::Crypto_internal, "Error in createdPrivateKey value");
-	}
-
-	// check the parameters of functions
-	if(&createdPublicKey == NULL) {
-		LogError("Error in createdPrivateKey value");
-		ThrowMsg(CryptoService::Exception::Crypto_internal, "Error in createdPublicKey value");
 	}
 
 	Try {
@@ -275,10 +252,10 @@ int CryptoService::createKeyPairDSA(const int size, // size in bits [1024, 2048,
 		ReThrowMsg(CryptoService::Exception::opensslError,"Error in openssl function !!");
 	}
 
-	KeyImpl::EvpShPtr ptr(pkey, EVP_PKEY_free); // shared ptr will free pkey
+	EvpShPtr ptr(pkey, EVP_PKEY_free); // shared ptr will free pkey
 
-	createdPrivateKey = KeyImpl(ptr, KeyType::KEY_DSA_PRIVATE);
-	createdPublicKey = KeyImpl(ptr, KeyType::KEY_DSA_PUBLIC);
+    createdPrivateKey = KeyBuilder::create(ptr, KeyType::KEY_DSA_PRIVATE);
+    createdPublicKey = KeyBuilder::create(ptr, KeyType::KEY_DSA_PUBLIC);
 
 	if(pparam) {
 		EVP_PKEY_free(pparam);
@@ -296,9 +273,9 @@ int CryptoService::createKeyPairDSA(const int size, // size in bits [1024, 2048,
 }
 
 
-int CryptoService::createKeyPairECDSA(ElipticCurve type,
-        KeyImpl &createdPrivateKey,  // returned value
-        KeyImpl &createdPublicKey)  // returned value
+int CryptoServiceOpenssl::createKeyPairECDSA(ElipticCurve type,
+        AsymKeyImplShPtr &createdPrivateKey,  // returned value
+        AsymKeyImplShPtr &createdPublicKey)  // returned value
 {
     int ecCurve = NOT_DEFINED;
     EVP_PKEY_CTX *pctx = NULL;
@@ -319,18 +296,6 @@ int CryptoService::createKeyPairECDSA(ElipticCurve type,
     default:
         LogError("Error in EC type");
         ThrowMsg(CryptoService::Exception::Crypto_internal, "Error in EC type");
-    }
-
-    // check the parameters of functions
-    if(&createdPrivateKey == NULL) {
-        LogError("Error in createdPrivateKey value");
-        ThrowMsg(CryptoService::Exception::Crypto_internal, "Error in createdPrivateKey value");
-    }
-
-    // check the parameters of functions
-    if(&createdPublicKey == NULL) {
-        LogError("Error in createdPrivateKey value");
-        ThrowMsg(CryptoService::Exception::Crypto_internal, "Error in createdPublicKey value");
     }
 
     Try {
@@ -392,10 +357,10 @@ int CryptoService::createKeyPairECDSA(ElipticCurve type,
         ReThrowMsg(CryptoService::Exception::opensslError,"Error in openssl function !!");
     }
 
-    KeyImpl::EvpShPtr ptr(pkey, EVP_PKEY_free); // shared ptr will free pkey
+    EvpShPtr ptr(pkey, EVP_PKEY_free); // shared ptr will free pkey
 
-    createdPrivateKey = KeyImpl(ptr, KeyType::KEY_ECDSA_PRIVATE);
-    createdPublicKey = KeyImpl(ptr, KeyType::KEY_ECDSA_PUBLIC);
+    createdPrivateKey = KeyBuilder::create(ptr, KeyType::KEY_ECDSA_PRIVATE);
+    createdPublicKey = KeyBuilder::create(ptr, KeyType::KEY_ECDSA_PUBLIC);
 
     if(pparam) {
         EVP_PKEY_free(pparam);
@@ -412,7 +377,7 @@ int CryptoService::createKeyPairECDSA(ElipticCurve type,
     return CKM_CRYPTO_CREATEKEY_SUCCESS;
 }
 
-int CryptoService::createSignature(const KeyImpl &privateKey,
+int CryptoServiceOpenssl::createSignature(const AsymKeyImplShPtr &privateKey,
         const RawBuffer &message,
         const HashAlgorithm hashAlgo,
         const RSAPaddingAlgorithm padAlgo,
@@ -425,19 +390,19 @@ int CryptoService::createSignature(const KeyImpl &privateKey,
     md_algo = getMdAlgo(hashAlgo);
 
 
-    if((privateKey.getType() != KeyType::KEY_RSA_PRIVATE) &&
-       (privateKey.getType() != KeyType::KEY_DSA_PRIVATE) &&
-       (privateKey.getType() != KeyType::KEY_ECDSA_PRIVATE))
+    if((privateKey->getType() != KeyType::KEY_RSA_PRIVATE) &&
+       (privateKey->getType() != KeyType::KEY_DSA_PRIVATE) &&
+       (privateKey->getType() != KeyType::KEY_ECDSA_PRIVATE))
     {
         LogError("Error in private key type");
         ThrowMsg(CryptoService::Exception::Crypto_internal, "Error in private key type");
     }
 
-    if(privateKey.getType()==KeyType::KEY_RSA_PRIVATE) {
+    if(privateKey->getType()==KeyType::KEY_RSA_PRIVATE) {
         rsa_padding = getRsaPadding(padAlgo);
     }
 
-    auto shrPKey = privateKey.getEvpShPtr();
+    auto shrPKey = privateKey->getEvpShPtr();
     if (NULL == shrPKey.get()) {
         LogError("Error in EVP_PKEY_keygen function");
         ThrowMsg(CryptoService::Exception::opensslError, "Error in EVP_PKEY_keygen function");
@@ -452,7 +417,7 @@ int CryptoService::createSignature(const KeyImpl &privateKey,
     return retCode;
 }
 
-int CryptoService::signMessage(EVP_PKEY *privKey,
+int CryptoServiceOpenssl::signMessage(EVP_PKEY *privKey,
         const RawBuffer &message,
         const int rsa_padding,
         RawBuffer &signature)
@@ -512,7 +477,7 @@ int CryptoService::signMessage(EVP_PKEY *privKey,
     return retCode;
 }
 
-int CryptoService::digestSignMessage(EVP_PKEY *privKey,
+int CryptoServiceOpenssl::digestSignMessage(EVP_PKEY *privKey,
         const RawBuffer &message,
         const EVP_MD *md_algo,
         const int rsa_padding,
@@ -581,7 +546,7 @@ int CryptoService::digestSignMessage(EVP_PKEY *privKey,
     return CKM_API_SUCCESS;
 }
 
-int CryptoService::verifySignature(const KeyImpl &publicKey,
+int CryptoServiceOpenssl::verifySignature(const AsymKeyImplShPtr &publicKey,
         const RawBuffer &message,
         const RawBuffer &signature,
         const HashAlgorithm hashAlgo,
@@ -594,19 +559,19 @@ int CryptoService::verifySignature(const KeyImpl &publicKey,
     md_algo = getMdAlgo(hashAlgo);
 
 
-    if((publicKey.getType() != KeyType::KEY_RSA_PUBLIC) &&
-       (publicKey.getType() != KeyType::KEY_DSA_PUBLIC) &&
-       (publicKey.getType() != KeyType::KEY_ECDSA_PUBLIC))
+    if((publicKey->getType() != KeyType::KEY_RSA_PUBLIC) &&
+       (publicKey->getType() != KeyType::KEY_DSA_PUBLIC) &&
+       (publicKey->getType() != KeyType::KEY_ECDSA_PUBLIC))
     {
         LogError("Error in private key type");
         ThrowMsg(CryptoService::Exception::Crypto_internal, "Error in private key type");
     }
 
-    if(publicKey.getType()==KeyType::KEY_RSA_PUBLIC) {
+    if(publicKey->getType()==KeyType::KEY_RSA_PUBLIC) {
         rsa_padding = getRsaPadding(padAlgo);
     }
 
-    auto shrPKey = publicKey.getEvpShPtr();
+    auto shrPKey = publicKey->getEvpShPtr();
     if (NULL == shrPKey.get()) {
         LogError("Error in getEvpShPtr function");
         ThrowMsg(CryptoService::Exception::opensslError, "Error in getEvpShPtr function");
@@ -621,7 +586,7 @@ int CryptoService::verifySignature(const KeyImpl &publicKey,
     return retCode;
 }
 
-int CryptoService::verifyMessage(EVP_PKEY *pubKey,
+int CryptoServiceOpenssl::verifyMessage(EVP_PKEY *pubKey,
         const RawBuffer &message,
         const RawBuffer &signature,
         const int rsa_padding)
@@ -668,7 +633,7 @@ int CryptoService::verifyMessage(EVP_PKEY *pubKey,
     return ret;
 }
 
-int CryptoService::digestVerifyMessage(EVP_PKEY *pubKey,
+int CryptoServiceOpenssl::digestVerifyMessage(EVP_PKEY *pubKey,
         const RawBuffer &message,
         const RawBuffer &signature,
         const EVP_MD *md_algo,

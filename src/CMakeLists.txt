@@ -26,14 +26,16 @@ SET(KEY_MANAGER_SOURCES
     ${KEY_MANAGER_PATH}/service/access-control.cpp
     ${KEY_MANAGER_PATH}/service/ckm-service.cpp
     ${KEY_MANAGER_PATH}/service/ckm-logic.cpp
-    ${KEY_MANAGER_PATH}/service/key-provider.cpp
     ${KEY_MANAGER_PATH}/service/ocsp.cpp
     ${KEY_MANAGER_PATH}/service/crypto-logic.cpp
-    ${KEY_MANAGER_PATH}/service/CryptoService.cpp
     ${KEY_MANAGER_PATH}/service/file-system.cpp
     ${KEY_MANAGER_PATH}/service/db-crypto.cpp
     ${KEY_MANAGER_PATH}/service/ocsp-service.cpp
     ${KEY_MANAGER_PATH}/service/ocsp-logic.cpp
+    ${KEY_MANAGER_PATH}/cryptoimpl/default/crypto-service.cpp
+    ${KEY_MANAGER_PATH}/cryptoimpl/default/crypto-service-openssl.cpp
+    ${KEY_MANAGER_PATH}/cryptoimpl/default/data-adapter.cpp
+    ${KEY_MANAGER_PATH}/cryptoimpl/default/key-provider.cpp
     ${KEY_MANAGER_PATH}/dpl/core/src/assert.cpp
     ${KEY_MANAGER_PATH}/dpl/db/src/sql_connection.cpp
     ${KEY_MANAGER_PATH}/dpl/db/src/naive_synchronization_object.cpp
@@ -56,6 +58,7 @@ INCLUDE_DIRECTORIES(
     ${KEY_MANAGER_PATH}/common
     ${KEY_MANAGER_PATH}/service
     ${KEY_MANAGER_PATH}/sqlcipher
+    ${KEY_MANAGER_PATH}/cryptoimpl/default
     ${KEY_MANAGER_PATH}/dpl/core/include
     ${KEY_MANAGER_PATH}/dpl/log/include
     ${KEY_MANAGER_PATH}/dpl/db/include
