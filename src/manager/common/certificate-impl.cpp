@@ -131,25 +131,25 @@ bool CertificateImpl::empty() const {
     return m_x509 == NULL;
 }
 
-KeyImpl::EvpShPtr CertificateImpl::getEvpShPtr() const {
-    return KeyImpl::EvpShPtr(X509_get_pubkey(m_x509), EVP_PKEY_free);
+EvpShPtr CertificateImpl::getEvpShPtr() const {
+    return EvpShPtr(X509_get_pubkey(m_x509), EVP_PKEY_free);
 }
 
-KeyImpl CertificateImpl::getKeyImpl() const {
-    KeyImpl::EvpShPtr evp(X509_get_pubkey(m_x509), EVP_PKEY_free);
-    switch(EVP_PKEY_type(evp->type))
+AsymKeyImpl CertificateImpl::getAsymKeyImpl() const {
+    EvpShPtr evp(X509_get_pubkey(m_x509), EVP_PKEY_free);
+    switch (EVP_PKEY_type(evp->type))
     {
         case EVP_PKEY_RSA:
-            return KeyImpl(evp, KeyType::KEY_RSA_PUBLIC);
+            return AsymKeyImpl(evp, KeyType::KEY_RSA_PUBLIC);
         case EVP_PKEY_DSA:
-            return KeyImpl(evp, KeyType::KEY_DSA_PUBLIC);
+            return AsymKeyImpl(evp, KeyType::KEY_DSA_PUBLIC);
         case EVP_PKEY_EC:
-            return KeyImpl(evp, KeyType::KEY_ECDSA_PUBLIC);
+            return AsymKeyImpl(evp, KeyType::KEY_ECDSA_PUBLIC);
         default:
             LogError("Unsupported key type in certificate.");
             break;
     }
-    return KeyImpl();
+    return AsymKeyImpl();
 }
 
 X509_NAME *getX509Name(X509 *x509, CertificateFieldId type) {

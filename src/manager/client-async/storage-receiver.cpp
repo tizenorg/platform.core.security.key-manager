@@ -115,7 +115,7 @@ void StorageReceiver::parseGetCommand()
 
     DataType type(dataType);
     if (type.isKey())
-        m_observer->ReceivedKey(KeyImpl(rawData));
+        m_observer->ReceivedKey(std::move(*(KeyBuilder::create(rawData, static_cast<KeyType>(type)))));
     else if (type.isCertificate())
         m_observer->ReceivedCertificate(CertificateImpl(rawData, DataFormat::FORM_DER));
     else if (type.isBinaryData())

@@ -39,6 +39,7 @@ struct Row {
     int dataSize;               // size of information without hash and padding
     RawBuffer data;
     RawBuffer tag;              // tag for Aes Gcm algorithm
+    int inExternal;            // when true, the real data is stored out of key-manager db
 };
 typedef std::vector<Row> RowVector;
 

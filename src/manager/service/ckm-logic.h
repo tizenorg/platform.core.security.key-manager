@@ -210,12 +210,16 @@ private:
         const PolicySerializable &keyPolicy,
         const PolicySerializable &certPolicy);
 
-    DB::Row createEncryptedRow(
-        CryptoLogic &crypto,
+    DB::Row createRow(
         const Name &name,
         const Label &label,
         DataType dataType,
         const RawBuffer &data,
+        const Policy &policy) const;
+
+    int encryptRow(
+        CryptoLogic &crypto,
+        DB::Row &row,
         const Policy &policy) const;
 
     int getPKCS12Helper(
@@ -229,13 +233,18 @@ private:
         CertificateShPtrVector & caChain);
 
     int extractPKCS12Data(
-        CryptoLogic &crypto,
         const Name &name,
         const Label &ownerLabel,
         const PKCS12Serializable &pkcs,
         const PolicySerializable &keyPolicy,
         const PolicySerializable &certPolicy,
         DB::RowVector &output) const;
+
+    int encryptPKCS12Data(
+        CryptoLogic &crypto,
+        DB::RowVector &rows,
+        const Policy &keyPolicy,
+        const Policy &certPolicy);
 
     int removeDataHelper(
         const Credentials &cred,
