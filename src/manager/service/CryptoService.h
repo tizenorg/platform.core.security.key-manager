@@ -51,24 +51,24 @@ public:
     static int initialize();
 
     static int createKeyPairRSA(const int size,      // size in bits [1024, 2048, 4096]
-                        KeyImpl &createdPrivateKey,  // returned value ==> Key &createdPrivateKey,
-                        KeyImpl &createdPublicKey);  // returned value ==> Key &createdPublicKey
+                        AsymKeyImpl &createdPrivateKey,  // returned value ==> Key &createdPrivateKey,
+                        AsymKeyImpl &createdPublicKey);  // returned value ==> Key &createdPublicKey
 
     static int createKeyPairDSA(const int size,      // size in bits [1024, 2048, 3072, 4096]
-                        KeyImpl &createdPrivateKey,  // returned value ==> Key &createdPrivateKey,
-                        KeyImpl &createdPublicKey);  // returned value ==> Key &createdPublicKey
+                        AsymKeyImpl &createdPrivateKey,  // returned value ==> Key &createdPrivateKey,
+                        AsymKeyImpl &createdPublicKey);  // returned value ==> Key &createdPublicKey
 
     static int createKeyPairECDSA(ElipticCurve type1,
-                        KeyImpl &createdPrivateKey,  // returned value
-                        KeyImpl &createdPublicKey);  // returned value
+                        AsymKeyImpl &createdPrivateKey,  // returned value
+                        AsymKeyImpl &createdPublicKey);  // returned value
 
-    int createSignature(const KeyImpl &privateKey,
+    int createSignature(const AsymKeyImpl &privateKey,
                         const RawBuffer &message,
                         const HashAlgorithm hashAlgo,
                         const RSAPaddingAlgorithm padAlgo,
                         RawBuffer &signature);
 
-    int verifySignature(const KeyImpl &publicKey,
+    int verifySignature(const AsymKeyImpl &publicKey,
                         const RawBuffer &message,
                         const RawBuffer &signature,
                         const HashAlgorithm hashAlgo,

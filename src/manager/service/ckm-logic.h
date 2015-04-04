@@ -145,7 +145,7 @@ public:
     RawBuffer  createSignature(
         const Credentials &cred,
         int commandId,
-        const Name &privateKeyName,
+        const Name &priKeyName,
         const Label & ownerLabel,
         const Password &password,           // password for private_key
         const RawBuffer &message,
@@ -155,7 +155,7 @@ public:
     RawBuffer verifySignature(
         const Credentials &cred,
         int commandId,
-        const Name &publicKeyOrCertName,
+        const Name &pubKeyOrCertName,
         const Label &label,
         const Password &password,           // password for public_key (optional)
         const RawBuffer &message,
@@ -283,7 +283,7 @@ private:
 
     int createKeyPairHelper(
         const Credentials &cred,
-        const KeyType key_type,
+        const KeyType keyType,
         const int additional_param,
         const Name &namePrivate,
         const Label &labelPrivate,

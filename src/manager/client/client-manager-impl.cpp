@@ -86,7 +86,9 @@ int getCertChain(
 } // namespace anonymous
 
 ManagerImpl::ManagerImpl()
-  : m_counter(0), m_storageConnection(SERVICE_SOCKET_CKM_STORAGE), m_ocspConnection(SERVICE_SOCKET_OCSP)
+  : m_counter(0)
+  , m_storageConnection(SERVICE_SOCKET_CKM_STORAGE)
+  , m_ocspConnection(SERVICE_SOCKET_OCSP)
 {
     initCryptoLib();
 }
@@ -130,15 +132,15 @@ int ManagerImpl::saveBinaryData(
     });
 }
 
-int ManagerImpl::saveKey(const Alias &alias, const KeyShPtr &key, const Policy &policy) {
-    if (key.get() == NULL)
+int ManagerImpl::saveKey(
+    const Alias &alias,
+    const KeyShPtr &key,
+    const Policy &policy)
+{
+    if (!key)
         return CKM_API_ERROR_INPUT_PARAM;
-    Try {
-        return saveBinaryData(alias, DataType(key->getType()), key->getDER(), policy);
-    } Catch (DataType::Exception::Base) {
-        LogError("Error in key conversion. Could not convert KeyType::NONE to DBDataType!");
-    }
-    return CKM_API_ERROR_INPUT_PARAM;
+
+    return saveBinaryData(alias, DataType(key->getType()), key->getBinary(), policy);
 }
 
 int ManagerImpl::saveCertificate(
@@ -146,7 +148,7 @@ int ManagerImpl::saveCertificate(
     const CertificateShPtr &cert,
     const Policy &policy)
 {
-    if (cert.get() == NULL)
+    if (!cert)
         return CKM_API_ERROR_INPUT_PARAM;
     return saveBinaryData(alias, DataType::CERTIFICATE, cert->getDER(), policy);
 }
@@ -164,7 +166,7 @@ int ManagerImpl::savePKCS12(
     const Policy &keyPolicy,
     const Policy &certPolicy)
 {
-    if (alias.empty() || pkcs.get()==NULL)
+    if (alias.empty() || !pkcs)
         return CKM_API_ERROR_INPUT_PARAM;
 
     int my_counter = ++m_counter;
@@ -200,7 +202,10 @@ int ManagerImpl::getPKCS12(const Alias &alias, PKCS12ShPtr &pkcs)
     return getPKCS12(alias, Password(), Password(), pkcs);
 }
 
-int ManagerImpl::getPKCS12(const Alias &alias, const Password &keyPass, const Password &certPass, PKCS12ShPtr &pkcs)
+int ManagerImpl::getPKCS12(const Alias &alias,
+                           const Password &keyPass,
+                           const Password &certPass,
+                           PKCS12ShPtr &pkcs)
 {
     if (alias.empty())
         return CKM_API_ERROR_INPUT_PARAM;
@@ -305,7 +310,8 @@ int ManagerImpl::getBinaryData(
     });
 }
 
-int ManagerImpl::getKey(const Alias &alias, const Password &password, KeyShPtr &key) {
+int ManagerImpl::getKey(const Alias &alias, const Password &password, KeyShPtr &key)
+{
     DataType recvDataType;
     RawBuffer rawData;
 
@@ -319,10 +325,10 @@ int ManagerImpl::getKey(const Alias &alias, const Password &password, KeyShPtr &
     if (retCode != CKM_API_SUCCESS)
         return retCode;
 
-    KeyShPtr keyParsed(new KeyImpl(rawData));
+    KeyShPtr keyParsed(new KeyImpl(rawData, static_cast<KeyType>(recvDataType)));
 
     if (keyParsed->empty()) {
-        LogDebug("Key empty - failed to parse!");
+        LogError("Key empty - failed to parse!");
         return CKM_API_ERROR_BAD_RESPONSE;
     }
 
