@@ -50,7 +50,7 @@ PKCS12Serializable::PKCS12Serializable(IStream &stream)
         RawBuffer keyData;
         Deserialization::Deserialize(stream, keyType);
         Deserialization::Deserialize(stream, keyData);
-        m_pkey = CKM::Key::create(keyData);
+        m_pkey = CKM::KeyBuilder::create(keyData);
     }
 
     // cert
@@ -72,7 +72,7 @@ PKCS12Serializable::PKCS12Serializable(IStream &stream)
         m_ca.push_back(CKM::Certificate::create(CAcertData, DataFormat::FORM_DER));
     }
 }
-PKCS12Serializable::PKCS12Serializable(const KeyShPtr &privKey, const CertificateShPtr &cert, const CertificateShPtrVector &chainCerts)
+PKCS12Serializable::PKCS12Serializable(const KeyImplShPtr &privKey, const CertificateShPtr &cert, const CertificateShPtrVector &chainCerts)
 {
     m_pkey = privKey;
     m_cert = cert;
@@ -82,7 +82,7 @@ PKCS12Serializable::PKCS12Serializable(const KeyShPtr &privKey, const Certificat
 void PKCS12Serializable::Serialize(IStream &stream) const
 {
     // key
-    Key *keyPtr = getKey().get();
+    KeyImpl *keyPtr = getKeyImpl().get();
     bool isAnyKeyPresent = (getKey().get()!=NULL);
 
     // logics if PKCS is correct or not is on the service side.
@@ -92,7 +92,7 @@ void PKCS12Serializable::Serialize(IStream &stream) const
     Serialization::Serialize(stream, static_cast<size_t>(isAnyKeyPresent?1:0));
     if(keyPtr) {
         Serialization::Serialize(stream, DataType(keyPtr->getType()));
-        Serialization::Serialize(stream, keyPtr->getDER());
+        Serialization::Serialize(stream, keyPtr->getInternalBinary());
     }
 
     bool isAnyCertPresent = (getCertificate().get()!=NULL);

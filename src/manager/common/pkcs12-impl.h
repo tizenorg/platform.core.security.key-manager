@@ -24,6 +24,7 @@
 
 #include <ckm/ckm-pkcs12.h>
 #include <symbol-visibility.h>
+#include <key-impl.h>
 
 namespace CKM {
 
@@ -34,19 +35,20 @@ public:
     PKCS12Impl(PKCS12Impl &&);
     PKCS12Impl(const PKCS12Impl &);
     PKCS12Impl(const RawBuffer &, const Password &);
-    PKCS12Impl(const KeyShPtr &, const CertificateShPtr &, const CertificateShPtrVector &);
+    PKCS12Impl(const KeyImplShPtr &, const CertificateShPtr &, const CertificateShPtrVector &);
 
     PKCS12Impl& operator=(const PKCS12Impl &);
     PKCS12Impl& operator=(PKCS12Impl &&) = delete;
 
     virtual KeyShPtr getKey() const;
+    virtual KeyImplShPtr getKeyImpl() const;
     virtual CertificateShPtr getCertificate() const;
     virtual CertificateShPtrVector getCaCertificateShPtrVector() const;
     virtual bool empty() const;
 
     virtual ~PKCS12Impl();
 protected:
-    KeyShPtr m_pkey;
+    KeyImplShPtr m_pkey;
     CertificateShPtr m_cert;
     CertificateShPtrVector m_ca;
 };

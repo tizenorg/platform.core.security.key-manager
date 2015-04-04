@@ -263,7 +263,7 @@ struct COMMON_API PKCS12Serializable : public PKCS12Impl, ISerializable {
     explicit PKCS12Serializable(const PKCS12 &);
     explicit PKCS12Serializable(IStream &);
     PKCS12Serializable(
-            const KeyShPtr &privKey,
+            const KeyImplShPtr &privKey,
             const CertificateShPtr &cert,
             const CertificateShPtrVector &chainCerts);
     void Serialize(IStream &) const;

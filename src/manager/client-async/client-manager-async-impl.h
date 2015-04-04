@@ -41,7 +41,7 @@ public:
     void saveKey(
             const ObserverPtr& observer,
             const Alias& alias,
-            const KeyShPtr& key,
+            const KeyImplShPtr& key,
             const Policy& policy);
     void saveCertificate(
             const ObserverPtr& observer,

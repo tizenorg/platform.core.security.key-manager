@@ -61,7 +61,8 @@ void ManagerAsync::saveKey(const ObserverPtr& observer,
                            const KeyShPtr& key,
                            const Policy& policy)
 {
-    m_impl->saveKey(observer, alias, key, policy);
+    KeyImplShPtr keyImplShPtr = KeyBuilder::toKeyImplShPtr(key);
+    m_impl->saveKey(observer, alias, keyImplShPtr, policy);
 }
 
 void ManagerAsync::saveCertificate(const ObserverPtr& observer,

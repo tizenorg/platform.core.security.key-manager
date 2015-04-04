@@ -45,8 +45,8 @@ public:
     virtual bool empty() const;
     virtual X509* getX509() const;
 
-    KeyImpl::EvpShPtr getEvpShPtr() const;
-    KeyImpl getKeyImpl() const;
+    EvpShPtr getEvpShPtr() const;
+    KeyImplShPtr getKeyImpl() const;
 
     std::string getOneLine(CertificateFieldId type) const;
     std::string getField(CertificateFieldId type, int fieldNid) const;

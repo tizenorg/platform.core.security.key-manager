@@ -38,7 +38,7 @@ typedef std::unique_ptr<BIO, std::function<void(BIO*)>> BioUniquePtr;
 
 } // anonymous namespace
 
-PKCS12Impl::PKCS12Impl(const KeyShPtr &key, const CertificateShPtr &cert, const CertificateShPtrVector &caChain)
+PKCS12Impl::PKCS12Impl(const KeyImplShPtr &key, const CertificateShPtr &cert, const CertificateShPtrVector &caChain)
     : m_pkey(key),
       m_cert(cert),
       m_ca(caChain)
@@ -82,19 +82,19 @@ PKCS12Impl::PKCS12Impl(const RawBuffer &buffer, const Password &password)
     }
 
     if (pkey) {
-        KeyImpl::EvpShPtr ptr(pkey, EVP_PKEY_free);
+        EvpShPtr ptr(pkey, EVP_PKEY_free);
         switch(EVP_PKEY_type(pkey->type))
         {
             case EVP_PKEY_RSA:
-                m_pkey = std::make_shared<KeyImpl>(ptr, KeyType::KEY_RSA_PRIVATE);
+                m_pkey = KeyBuilder::create(ptr, KeyType::KEY_RSA_PRIVATE);
                 break;
 
             case EVP_PKEY_DSA:
-                m_pkey = std::make_shared<KeyImpl>(ptr, KeyType::KEY_DSA_PRIVATE);
+                m_pkey = KeyBuilder::create(ptr, KeyType::KEY_DSA_PRIVATE);
                 break;
 
             case EVP_PKEY_EC:
-                m_pkey = std::make_shared<KeyImpl>(ptr, KeyType::KEY_ECDSA_PRIVATE);
+                m_pkey = KeyBuilder::create(ptr, KeyType::KEY_ECDSA_PRIVATE);
                 break;
 
             default:
@@ -119,7 +119,7 @@ PKCS12Impl::PKCS12Impl(const RawBuffer &buffer, const Password &password)
 }
 
 PKCS12Impl::PKCS12Impl(const PKCS12 &other)
-    : m_pkey(other.getKey()),
+    : m_pkey((dynamic_cast<const PKCS12Impl&>(other)).getKeyImpl()),
       m_cert(other.getCertificate()),
       m_ca(other.getCaCertificateShPtrVector())
 {
@@ -133,7 +133,7 @@ PKCS12Impl::PKCS12Impl(PKCS12Impl &&other)
 }
 
 PKCS12Impl::PKCS12Impl(const PKCS12Impl &other)
-    : m_pkey(other.getKey()),
+    : m_pkey(other.getKeyImpl()),
       m_cert(other.getCertificate()),
       m_ca(other.getCaCertificateShPtrVector())
 {
@@ -143,7 +143,7 @@ PKCS12Impl& PKCS12Impl::operator=(const PKCS12Impl &other)
 {
     if(this != &other)
     {
-        m_pkey = other.getKey();
+        m_pkey = other.getKeyImpl();
         m_cert = other.getCertificate();
         m_ca = other.getCaCertificateShPtrVector();
     }
@@ -151,6 +151,10 @@ PKCS12Impl& PKCS12Impl::operator=(const PKCS12Impl &other)
 }
 
 KeyShPtr PKCS12Impl::getKey() const {
+    return m_pkey;
+}
+
+KeyImplShPtr PKCS12Impl::getKeyImpl() const {
     return m_pkey;
 }
 
@@ -171,7 +175,7 @@ PKCS12Impl::~PKCS12Impl()
 
 PKCS12ShPtr PKCS12::create(const RawBuffer &rawBuffer, const Password &password) {
     try {
-        auto output = std::make_shared<PKCS12Impl>(rawBuffer, password);
+        auto output = std::dynamic_pointer_cast<PKCS12>(std::make_shared<PKCS12Impl>(rawBuffer, password));
         if (output->empty())
             output.reset();
         return output;

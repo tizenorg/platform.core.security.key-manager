@@ -100,6 +100,7 @@ int ManagerImpl::saveBinaryData(
 {
     int my_counter = ++m_counter;
 
+
     return try_catch([&] {
         if (alias.empty() || rawData.empty())
             return CKM_API_ERROR_INPUT_PARAM;
@@ -131,12 +132,17 @@ int ManagerImpl::saveBinaryData(
 }
 
 int ManagerImpl::saveKey(const Alias &alias, const KeyShPtr &key, const Policy &policy) {
-    if (key.get() == NULL)
-        return CKM_API_ERROR_INPUT_PARAM;
-    Try {
-        return saveBinaryData(alias, DataType(key->getType()), key->getDER(), policy);
-    } Catch (DataType::Exception::Base) {
+    try {
+        KeyImplShPtr pKeyImpl = KeyBuilder::toKeyImplShPtr(key);
+        if(pKeyImpl.get() == NULL) {
+            return CKM_API_ERROR_INPUT_PARAM;
+        }
+        return saveBinaryData(alias, DataType(key->getType()), 
+                pKeyImpl->getInternalBinary(), policy);
+    } catch (DataType::Exception::Base &) {
         LogError("Error in key conversion. Could not convert KeyType::NONE to DBDataType!");
+    } catch (...) {
+        LogError("Critical error: Unknown exception was caught during KeyImpl creation");
     }
     return CKM_API_ERROR_INPUT_PARAM;
 }
@@ -319,7 +325,7 @@ int ManagerImpl::getKey(const Alias &alias, const Password &password, KeyShPtr &
     if (retCode != CKM_API_SUCCESS)
         return retCode;
 
-    KeyShPtr keyParsed(new KeyImpl(rawData));
+    KeyImplShPtr keyParsed = KeyBuilder::create(rawData);
 
     if (keyParsed->empty()) {
         LogDebug("Key empty - failed to parse!");

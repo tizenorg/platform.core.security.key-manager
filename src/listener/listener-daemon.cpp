@@ -94,12 +94,9 @@ void packageUninstalledEventCallback(
     (void) error;
     (void) userData;
 
-    if (eventType != PACKAGE_MANAGER_EVENT_TYPE_UNINSTALL ||
-            eventState != PACKAGE_MANAGER_EVENT_STATE_STARTED ||
-            package == NULL) {
-        SLOG(LOG_DEBUG, CKM_LISTENER_TAG, "PackageUninstalled Callback error of Invalid Param");
-    }
-    else {
+    if (eventType == PACKAGE_MANAGER_EVENT_TYPE_UNINSTALL
+             && eventState == PACKAGE_MANAGER_EVENT_STATE_COMPLETED
+             && package != NULL) {
         SLOG(LOG_DEBUG, CKM_LISTENER_TAG, "PackageUninstalled Callback. Uninstalation of: %s", package);
         auto control = CKM::Control::create();
         int ret = 0;

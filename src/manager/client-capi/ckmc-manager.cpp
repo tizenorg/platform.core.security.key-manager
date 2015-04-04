@@ -22,6 +22,7 @@
 
 #include <ckm/ckm-type.h>
 #include <ckm/ckm-manager.h>
+#include <ckm/ckm-password.h>
 #include <ckmc/ckmc-type.h>
 #include <ckmc/ckmc-manager.h>
 #include <ckmc/ckmc-error.h>
@@ -42,14 +43,15 @@ CKM::Password _tostring(const char *str)
     return CKM::Password(str);
 }
 
-CKM::KeyShPtr _toCkmKey(const ckmc_key_s *key)
+CKM::KeyImplShPtr _toCkmKey(const ckmc_key_s *key)
 {
     if(key)
     {
         CKM::RawBuffer buffer(key->raw_key, key->raw_key + key->key_size);
-        return CKM::Key::create(buffer, _tostring(key->password));
+        CKM::KeyType type = static_cast<CKM::KeyType>(static_cast<int>(key->key_type));
+        return CKM::KeyBuilder::create(type, buffer, _tostring(key->password));
     }
-    return CKM::KeyShPtr();
+    return CKM::KeyImplShPtr();
 }
 
 CKM::CertificateShPtr _toCkmCertificate(const ckmc_cert_s *cert)
@@ -134,7 +136,8 @@ int ckmc_save_key(const char *alias, const ckmc_key_s key, const ckmc_policy_s p
             return CKMC_ERROR_INVALID_PARAMETER;
     }
     CKM::RawBuffer buffer(key.raw_key, key.raw_key + key.key_size);
-    CKM::KeyShPtr ckmKey = CKM::Key::create(buffer, _tostring(key.password));
+    CKM::KeyType type = static_cast<CKM::KeyType>(static_cast<int>(key.key_type));
+    CKM::KeyShPtr ckmKey = CKM::Key::create(type, buffer, _tostring(key.password));
 
     if(ckmKey.get() == NULL) {
         return CKMC_ERROR_INVALID_FORMAT;
@@ -168,7 +171,7 @@ int ckmc_get_key(const char *alias, const char *password, ckmc_key_s **key)
         return to_ckmc_error(ret);
     }
 
-    CKM::RawBuffer buffer = ckmKey->getDER();
+    CKM::RawBuffer buffer = ckmKey->getBinary();
     ckmc_key_type_e keyType = static_cast<ckmc_key_type_e>(static_cast<int>(ckmKey->getType()));
 
     ret = ckmc_key_new( buffer.data(), buffer.size(), keyType, NULL, key);
@@ -314,7 +317,7 @@ int ckmc_get_cert_alias_list(ckmc_alias_list_s** alias_list) {
 KEY_MANAGER_CAPI
 int ckmc_save_pkcs12(const char *alias, const ckmc_pkcs12_s *ppkcs, const ckmc_policy_s key_policy, const ckmc_policy_s cert_policy)
 {
-    CKM::KeyShPtr private_key;
+    CKM::KeyImplShPtr private_key;
     CKM::CertificateShPtr cert;
     CKM::CertificateShPtrVector ca_cert_list;
 
@@ -375,7 +378,7 @@ int ckmc_get_pkcs12(const char *alias, const char *key_password, const char *cer
     auto pkcsKey = pkcs->getKey();
     if(pkcsKey)
     {
-        CKM::RawBuffer buffer = pkcsKey->getDER();
+        CKM::RawBuffer buffer = pkcsKey->getBinary();
         ckmc_key_type_e keyType = static_cast<ckmc_key_type_e>(pkcsKey->getType());
         ret = ckmc_key_new(buffer.data(), buffer.size(), keyType, NULL, &private_key);
         if(ret != CKMC_ERROR_NONE)
@@ -646,6 +649,9 @@ int ckmc_get_cert_chain(const ckmc_cert_s *cert, const ckmc_cert_list_s *untrust
     }
 
     CKM::CertificateShPtr ckmCert = _toCkmCertificate(cert);
+    if(ckmCert.get() == NULL) {
+        return CKMC_ERROR_INVALID_FORMAT;
+    }
 
     CKM::CertificateShPtrVector ckmUntrustedCerts = _toCkmCertificateVector(untrustedcerts);
 
