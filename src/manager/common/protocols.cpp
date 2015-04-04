@@ -24,7 +24,9 @@
 
 #include <protocols.h>
 
+#include <key-impl.h>
 #include <dpl/serialization.h>
+#include <dpl/log/log.h>
 
 namespace CKM {
 
@@ -48,18 +50,17 @@ PKCS12Serializable::PKCS12Serializable(IStream &stream)
     if(numKeys > 0) {
         int keyType;
         RawBuffer keyData;
-        Deserialization::Deserialize(stream, keyType);
         Deserialization::Deserialize(stream, keyData);
-        m_pkey = CKM::Key::create(keyData);
+        Deserialization::Deserialize(stream, keyType);
+        m_pkey = Key::create(keyData, static_cast<KeyType>(keyType));
     }
-
     // cert
     size_t numCerts;
     Deserialization::Deserialize(stream, numCerts);
     if(numCerts > 0) {
         RawBuffer certData;
         Deserialization::Deserialize(stream, certData);
-        m_cert = CKM::Certificate::create(certData, DataFormat::FORM_DER);
+        m_cert = Certificate::create(certData, DataFormat::FORM_DER);
     }
 
     // CA chain
@@ -69,15 +70,15 @@ PKCS12Serializable::PKCS12Serializable(IStream &stream)
     {
         RawBuffer CAcertData;
         Deserialization::Deserialize(stream, CAcertData);
-        m_ca.push_back(CKM::Certificate::create(CAcertData, DataFormat::FORM_DER));
+        m_ca.push_back(Certificate::create(CAcertData, DataFormat::FORM_DER));
     }
 }
-PKCS12Serializable::PKCS12Serializable(const KeyShPtr &privKey, const CertificateShPtr &cert, const CertificateShPtrVector &chainCerts)
-{
-    m_pkey = privKey;
-    m_cert = cert;
-    m_ca = chainCerts;
-}
+
+PKCS12Serializable::PKCS12Serializable(const KeyShPtr &priKey,
+                                       const CertificateShPtr &cert,
+                                       const CertificateShPtrVector &chainCerts)
+  : PKCS12Impl(priKey, cert, chainCerts)
+{}
 
 void PKCS12Serializable::Serialize(IStream &stream) const
 {
@@ -91,8 +92,8 @@ void PKCS12Serializable::Serialize(IStream &stream) const
     // throw an error and close the connection).
     Serialization::Serialize(stream, static_cast<size_t>(isAnyKeyPresent?1:0));
     if(keyPtr) {
+        Serialization::Serialize(stream, keyPtr->getBinary());
         Serialization::Serialize(stream, DataType(keyPtr->getType()));
-        Serialization::Serialize(stream, keyPtr->getDER());
     }
 
     bool isAnyCertPresent = (getCertificate().get()!=NULL);
@@ -103,7 +104,7 @@ void PKCS12Serializable::Serialize(IStream &stream) const
 
     // CA chain
     Serialization::Serialize(stream, getCaCertificateShPtrVector().size());
-    for(auto it : getCaCertificateShPtrVector())
+    for(auto it: getCaCertificateShPtrVector())
         Serialization::Serialize(stream, it->getDER());
 };
 

@@ -109,8 +109,8 @@ int CryptoService::getRsaPadding(const RSAPaddingAlgorithm padAlgo) {
 }
 
 int CryptoService::createKeyPairRSA(const int size, // size in bits [1024, 2048, 4096]
-        KeyImpl &createdPrivateKey,  // returned value
-        KeyImpl &createdPublicKey)  // returned value
+        AsymKeyImpl &createdPrivateKey,  // returned value
+        AsymKeyImpl &createdPublicKey)  // returned value
 {
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY *pkey = NULL;
@@ -170,10 +170,10 @@ int CryptoService::createKeyPairRSA(const int size, // size in bits [1024, 2048,
         ReThrowMsg(CryptoService::Exception::opensslError,"Error in opensslError function !!");
     }
 
-    KeyImpl::EvpShPtr ptr(pkey, EVP_PKEY_free); // shared ptr will free pkey
+    EvpShPtr ptr(pkey, EVP_PKEY_free); // shared ptr will free pkey
 
-    createdPrivateKey = KeyImpl(ptr, KeyType::KEY_RSA_PRIVATE);
-    createdPublicKey = KeyImpl(ptr, KeyType::KEY_RSA_PUBLIC);
+    createdPrivateKey = AsymKeyImpl(ptr, KeyType::KEY_RSA_PRIVATE);
+    createdPublicKey = AsymKeyImpl(ptr, KeyType::KEY_RSA_PUBLIC);
 
     if(pparam) {
         EVP_PKEY_free(pparam);
@@ -188,8 +188,8 @@ int CryptoService::createKeyPairRSA(const int size, // size in bits [1024, 2048,
 
 
 int CryptoService::createKeyPairDSA(const int size, // size in bits [1024, 2048, 3072, 4096]
-		KeyImpl &createdPrivateKey,  // returned value
-		KeyImpl &createdPublicKey)  // returned value
+		AsymKeyImpl &createdPrivateKey,  // returned value
+		AsymKeyImpl &createdPublicKey)  // returned value
 {
 	EVP_PKEY_CTX *pctx = NULL;
 	EVP_PKEY_CTX *kctx = NULL;
@@ -275,10 +275,10 @@ int CryptoService::createKeyPairDSA(const int size, // size in bits [1024, 2048,
 		ReThrowMsg(CryptoService::Exception::opensslError,"Error in openssl function !!");
 	}
 
-	KeyImpl::EvpShPtr ptr(pkey, EVP_PKEY_free); // shared ptr will free pkey
+	EvpShPtr ptr(pkey, EVP_PKEY_free); // shared ptr will free pkey
 
-	createdPrivateKey = KeyImpl(ptr, KeyType::KEY_DSA_PRIVATE);
-	createdPublicKey = KeyImpl(ptr, KeyType::KEY_DSA_PUBLIC);
+	createdPrivateKey = AsymKeyImpl(ptr, KeyType::KEY_DSA_PRIVATE);
+	createdPublicKey = AsymKeyImpl(ptr, KeyType::KEY_DSA_PUBLIC);
 
 	if(pparam) {
 		EVP_PKEY_free(pparam);
@@ -297,8 +297,8 @@ int CryptoService::createKeyPairDSA(const int size, // size in bits [1024, 2048,
 
 
 int CryptoService::createKeyPairECDSA(ElipticCurve type,
-        KeyImpl &createdPrivateKey,  // returned value
-        KeyImpl &createdPublicKey)  // returned value
+        AsymKeyImpl &createdPrivateKey,  // returned value
+        AsymKeyImpl &createdPublicKey)  // returned value
 {
     int ecCurve = NOT_DEFINED;
     EVP_PKEY_CTX *pctx = NULL;
@@ -392,10 +392,10 @@ int CryptoService::createKeyPairECDSA(ElipticCurve type,
         ReThrowMsg(CryptoService::Exception::opensslError,"Error in openssl function !!");
     }
 
-    KeyImpl::EvpShPtr ptr(pkey, EVP_PKEY_free); // shared ptr will free pkey
+    EvpShPtr ptr(pkey, EVP_PKEY_free); // shared ptr will free pkey
 
-    createdPrivateKey = KeyImpl(ptr, KeyType::KEY_ECDSA_PRIVATE);
-    createdPublicKey = KeyImpl(ptr, KeyType::KEY_ECDSA_PUBLIC);
+    createdPrivateKey = AsymKeyImpl(ptr, KeyType::KEY_ECDSA_PRIVATE);
+    createdPublicKey = AsymKeyImpl(ptr, KeyType::KEY_ECDSA_PUBLIC);
 
     if(pparam) {
         EVP_PKEY_free(pparam);
@@ -412,7 +412,7 @@ int CryptoService::createKeyPairECDSA(ElipticCurve type,
     return CKM_CRYPTO_CREATEKEY_SUCCESS;
 }
 
-int CryptoService::createSignature(const KeyImpl &privateKey,
+int CryptoService::createSignature(const AsymKeyImpl &privateKey,
         const RawBuffer &message,
         const HashAlgorithm hashAlgo,
         const RSAPaddingAlgorithm padAlgo,
@@ -581,7 +581,7 @@ int CryptoService::digestSignMessage(EVP_PKEY *privKey,
     return CKM_API_SUCCESS;
 }
 
-int CryptoService::verifySignature(const KeyImpl &publicKey,
+int CryptoService::verifySignature(const AsymKeyImpl &publicKey,
         const RawBuffer &message,
         const RawBuffer &signature,
         const HashAlgorithm hashAlgo,

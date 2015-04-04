@@ -145,7 +145,7 @@ public:
     RawBuffer  createSignature(
         const Credentials &cred,
         int commandId,
-        const Name &privateKeyName,
+        const Name &priKeyName,
         const Label & ownerLabel,
         const Password &password,           // password for private_key
         const RawBuffer &message,
@@ -155,7 +155,7 @@ public:
     RawBuffer verifySignature(
         const Credentials &cred,
         int commandId,
-        const Name &publicKeyOrCertName,
+        const Name &pubKeyOrCertName,
         const Label &label,
         const Password &password,           // password for public_key (optional)
         const RawBuffer &message,
@@ -218,6 +218,11 @@ private:
         const RawBuffer &data,
         const Policy &policy) const;
 
+    int encryptRow(
+        CryptoLogic &crypto,
+        DB::Row &row,
+        const Policy &policy) const;
+
     int getPKCS12Helper(
         const Credentials &cred,
         const Name &name,
@@ -236,6 +241,12 @@ private:
         const PolicySerializable &keyPolicy,
         const PolicySerializable &certPolicy,
         DB::RowVector &output) const;
+
+    int encryptPKCS12Data(
+        CryptoLogic &crypto,
+        DB::RowVector &rows,
+        const Policy &keyPolicy,
+        const Policy &certPolicy);
 
     int removeDataHelper(
         const Credentials &cred,
@@ -283,7 +294,7 @@ private:
 
     int createKeyPairHelper(
         const Credentials &cred,
-        const KeyType key_type,
+        const KeyType keyType,
         const int additional_param,
         const Name &namePrivate,
         const Label &labelPrivate,
