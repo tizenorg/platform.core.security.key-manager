@@ -34,6 +34,7 @@
 #include <file-lock.h>
 #include <access-control.h>
 #include <certificate-impl.h>
+#include <sys/types.h>
 
 namespace CKM {
 
@@ -176,6 +177,16 @@ public:
 
 private:
 
+    // select private/system database depending on asking uid and owner label.
+    // output: effective effective credentials and label
+    int selectDatabase(const Credentials &incoming_cred,
+                       const Label       &incoming_label,
+                       Credentials       &output_cred,
+                       Label             &output_label);
+
+    int unlockDatabaseHelper(uid_t            user,
+                             const Password & password);
+
     void loadDKEKFile(
         uid_t user,
         const Password &password);
@@ -256,6 +267,7 @@ private:
         DB::RowVector &output);
 
     int checkDataPermissionsHelper(
+        const Credentials &cred,
         const Name &name,
         const Label &ownerLabel,
         const Label &accessorLabel,
@@ -319,6 +331,10 @@ private:
         const Label &accessorLabel,
         const PermissionMask permissionMask);
 
+    int getDataListHelper(
+        const Credentials &cred,
+        const DataType dataType,
+        LabelNameVector &labelNameVector);
 
     std::map<uid_t, UserData> m_userDataMap;
     AccessControl m_accessControl;
