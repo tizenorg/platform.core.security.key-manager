@@ -32,7 +32,9 @@
 #include <certificate-store.h>
 
 namespace {
-const char * const CERT_SYSTEM_DIR = "/etc/ssl/certs";
+const char * const CERT_SYSTEM_DIR  = "/etc/ssl/certs";
+const uid_t        SYSTEM_DB_UID    = 0;
+const char * const SYSTEM_DB_PASSWD = "cAtRugU7";
 
 bool isLabelValid(const CKM::Label &label) {
     // TODO: copy code from libprivilege control (for check smack label)
@@ -46,7 +48,6 @@ bool isNameValid(const CKM::Name &name) {
         return false;
     return true;
 }
-
 } // anonymous namespace
 
 namespace CKM {
@@ -82,27 +83,31 @@ void CKMLogic::saveDKEKFile(uid_t user, const Password &password) {
     fs.saveDKEK(handle.keyProvider.getWrappedDomainKEK(password));
 }
 
-RawBuffer CKMLogic::unlockUserKey(uid_t user, const Password &password) {
+int CKMLogic::unlockDatabaseHelper(uid_t user, const Password & password)
+{
     int retCode = CKM_API_SUCCESS;
+    try
+    {
+        auto &handle = m_userDataMap[user];
 
-    try {
-        if (0 == m_userDataMap.count(user) || !(m_userDataMap[user].keyProvider.isInitialized())) {
-            auto &handle = m_userDataMap[user];
-            FileSystem fs(user);
+        FileSystem fs(user);
+        loadDKEKFile(user, password);
 
-            loadDKEKFile(user, password);
+        auto wrappedDatabaseDEK = fs.getDBDEK();
+        if (wrappedDatabaseDEK.empty())
+        {
+            wrappedDatabaseDEK = handle.keyProvider.generateDEK(
+                    std::to_string(user));
+            fs.saveDBDEK(wrappedDatabaseDEK);
+        }
 
-            auto wrappedDatabaseDEK = fs.getDBDEK();
+        RawBuffer key = handle.keyProvider.getPureDEK(wrappedDatabaseDEK);
 
-            if (wrappedDatabaseDEK.empty()) {
-                wrappedDatabaseDEK = handle.keyProvider.generateDEK(std::to_string(user));
-                fs.saveDBDEK(wrappedDatabaseDEK);
-            }
+        handle.database = DB::Crypto(fs.getDBPath(), key);
+        handle.crypto = CryptoLogic();
 
-            RawBuffer key = handle.keyProvider.getPureDEK(wrappedDatabaseDEK);
-            handle.database = DB::Crypto(fs.getDBPath(), key);
-            handle.crypto = CryptoLogic();
-
+        if ( !m_accessControl.isSystemService(user) )
+        {
             // remove data of removed apps during locked state
             AppLabelVector removedApps = fs.clearRemovedsApps();
             for(auto& appSmackLabel : removedApps) {
@@ -125,11 +130,77 @@ RawBuffer CKMLogic::unlockUserKey(uid_t user, const Password &password) {
         LogError("CKM::Exception: " << e.GetMessage());
         retCode = CKM_API_ERROR_SERVER_ERROR;
     }
+    return retCode;
+}
 
-    if(retCode != CKM_API_SUCCESS) {
-        // When not successful, UserData in m_userDataMap should be erased.
-        // Because other operations make decision based on the existence of UserData in m_userDataMap.
-        m_userDataMap.erase(user);
+int CKMLogic::unlockSystemDB()
+{
+    int retCode = CKM_API_SUCCESS;
+    if (0 == m_userDataMap.count(SYSTEM_DB_UID))
+    {
+        // open and initialize system database
+        retCode = unlockDatabaseHelper(SYSTEM_DB_UID, SYSTEM_DB_PASSWD);
+        if (CKM_API_SUCCESS != retCode)
+            m_userDataMap.erase(SYSTEM_DB_UID);
+    }
+    return retCode;
+}
+
+int CKMLogic::selectDatabase(const Credentials &incoming_cred,
+                             const Label &incoming_label,
+                             Credentials &output_cred,
+                             Label &output_label)
+{
+    output_cred = incoming_cred;
+    output_label = incoming_label;
+
+    // if user trying to access system service - check:
+    //    * if user database is unlocked [mandatory]
+    //    * if not - proceed with regular user database
+    //    * if explicit system database label given -> switch to system DB
+    if ( !m_accessControl.isSystemService(incoming_cred) )
+    {
+        if (0 == m_userDataMap.count(incoming_cred.clientUid)) {
+            return CKM_API_ERROR_DB_LOCKED;
+        }
+
+        if (0 != incoming_label.compare(LABEL_SYSTEM_DB)) {
+            return CKM_API_SUCCESS;
+        }
+    }
+
+    // system database selected, modify the dbUid and label
+    output_cred.dbUid = SYSTEM_DB_UID;
+    output_label = LABEL_SYSTEM_DB;
+
+    // open the system database
+    return unlockSystemDB();
+}
+
+RawBuffer CKMLogic::unlockUserKey(uid_t user, const Password &password)
+{
+    int retCode = CKM_API_SUCCESS;
+
+    if( !m_accessControl.isSystemService(user) )
+    {
+        // if key not present in the memory, do the unlock
+        if (0 == m_userDataMap.count(user) ||
+            !(m_userDataMap[user].keyProvider.isInitialized()))
+        {
+            retCode = unlockDatabaseHelper(user, password);
+        }
+
+        if (retCode != CKM_API_SUCCESS)
+        {
+            // When not successful, UserData in m_userDataMap should be erased.
+            // Because other operations make decision based on the existence of UserData in m_userDataMap.
+            m_userDataMap.erase(user);
+        }
+    }
+    else
+    {
+        // do not allow lock/unlock operations for system users
+        retCode = CKM_API_ERROR_INPUT_PARAM;
     }
 
     return MessageBuffer::Serialize(retCode).Pop();
@@ -140,10 +211,19 @@ RawBuffer CKMLogic::updateCCMode() {
     return MessageBuffer::Serialize(CKM_API_SUCCESS).Pop();
 }
 
-RawBuffer CKMLogic::lockUserKey(uid_t user) {
+RawBuffer CKMLogic::lockUserKey(uid_t user)
+{
     int retCode = CKM_API_SUCCESS;
-    // TODO try catch for all errors that should be supported by error code
-    m_userDataMap.erase(user);
+    if( !m_accessControl.isSystemService(user) )
+    {
+        // TODO try catch for all errors that should be supported by error code
+        m_userDataMap.erase(user);
+    }
+    else
+    {
+        // do not allow lock/unlock operations for system users
+        retCode = CKM_API_ERROR_INPUT_PARAM;
+    }
 
     return MessageBuffer::Serialize(retCode).Pop();
 
@@ -151,6 +231,10 @@ RawBuffer CKMLogic::lockUserKey(uid_t user) {
 
 RawBuffer CKMLogic::removeUserData(uid_t user) {
     int retCode = CKM_API_SUCCESS;
+
+    if (m_accessControl.isSystemService(user))
+        user = SYSTEM_DB_UID;
+
     // TODO try catch for all errors that should be supported by error code
     m_userDataMap.erase(user);
 
@@ -263,33 +347,33 @@ int CKMLogic::checkSaveConditions(
     }
 
     // check if allowed to save using ownerLabel
-    int access_ec = m_accessControl.canSave(ownerLabel, cred.smackLabel);
-    if(access_ec != CKM_API_SUCCESS)
+    int access_ec = m_accessControl.canSave(cred, ownerLabel);
+    if( access_ec != CKM_API_SUCCESS)
     {
         LogWarning("label " << cred.smackLabel << " can not save rows using label " << ownerLabel);
         return access_ec;
     }
 
     // check if not a duplicate
-    if( handler.database.isNameLabelPresent(name, cred.smackLabel) )
+    if( handler.database.isNameLabelPresent(name, ownerLabel))
         return CKM_API_ERROR_DB_ALIAS_EXISTS;
 
     // encryption section
-    if (!handler.crypto.haveKey(cred.smackLabel)) {
+    if (!handler.crypto.haveKey(ownerLabel))
+    {
         RawBuffer got_key;
-        auto key_optional = handler.database.getKey(cred.smackLabel);
+        auto key_optional = handler.database.getKey(ownerLabel);
         if(!key_optional) {
-            LogDebug("No Key in database found. Generating new one for label: "
-                    << cred.smackLabel);
-            got_key = handler.keyProvider.generateDEK(cred.smackLabel);
-            handler.database.saveKey(cred.smackLabel, got_key);
+            LogDebug("No Key in database found. Generating new one for label: " << ownerLabel);
+            got_key = handler.keyProvider.generateDEK(ownerLabel);
+            handler.database.saveKey(ownerLabel, got_key);
         } else {
             LogDebug("Key from DB");
             got_key = *key_optional;
         }
 
         got_key = handler.keyProvider.getPureDEK(got_key);
-        handler.crypto.pushKey(cred.smackLabel, got_key);
+        handler.crypto.pushKey(ownerLabel, got_key);
     }
 
     return CKM_API_SUCCESS;
@@ -349,37 +433,33 @@ RawBuffer CKMLogic::saveData(
     DataType dataType,
     const PolicySerializable &policy)
 {
-    int retCode;
-    if (0 == m_userDataMap.count(cred.uid))
-        retCode = CKM_API_ERROR_DB_LOCKED;
-    else
-    {
-        try {
-            // check if data is correct
-            retCode = verifyBinaryData(dataType, data);
-            if(retCode == CKM_API_SUCCESS)
-            {
-                retCode = saveDataHelper(cred, name, label, dataType, data, policy);
-            }
-        } catch (const KeyProvider::Exception::Base &e) {
-            LogError("KeyProvider failed with message: " << e.GetMessage());
-            retCode = CKM_API_ERROR_SERVER_ERROR;
-        } catch (const CryptoLogic::Exception::Base &e) {
-            LogError("CryptoLogic failed with message: " << e.GetMessage());
-            retCode = CKM_API_ERROR_SERVER_ERROR;
-        } catch (const DB::Crypto::Exception::InternalError &e) {
-            LogError("DB::Crypto failed with message: " << e.GetMessage());
-            retCode = CKM_API_ERROR_DB_ERROR;
-        } catch (const DB::Crypto::Exception::TransactionError &e) {
-            LogError("DB::Crypto transaction failed with message " << e.GetMessage());
-            retCode = CKM_API_ERROR_DB_ERROR;
-        } catch (const FileSystem::Exception::Base &e) {
-            LogError("Error in FileSystem " << e.GetMessage());
-            retCode = CKM_API_ERROR_FILE_SYSTEM;
-        } catch (const CKM::Exception &e) {
-            LogError("CKM::Exception: " << e.GetMessage());
-            retCode = CKM_API_ERROR_SERVER_ERROR;
+    int retCode = CKM_API_ERROR_UNKNOWN;
+
+    try {
+        // check if data is correct
+        retCode = verifyBinaryData(dataType, data);
+        if(retCode == CKM_API_SUCCESS)
+        {
+            retCode = saveDataHelper(cred, name, label, dataType, data, policy);
         }
+    } catch (const KeyProvider::Exception::Base &e) {
+        LogError("KeyProvider failed with message: " << e.GetMessage());
+        retCode = CKM_API_ERROR_SERVER_ERROR;
+    } catch (const CryptoLogic::Exception::Base &e) {
+        LogError("CryptoLogic failed with message: " << e.GetMessage());
+        retCode = CKM_API_ERROR_SERVER_ERROR;
+    } catch (const DB::Crypto::Exception::InternalError &e) {
+        LogError("DB::Crypto failed with message: " << e.GetMessage());
+        retCode = CKM_API_ERROR_DB_ERROR;
+    } catch (const DB::Crypto::Exception::TransactionError &e) {
+        LogError("DB::Crypto transaction failed with message " << e.GetMessage());
+        retCode = CKM_API_ERROR_DB_ERROR;
+    } catch (const FileSystem::Exception::Base &e) {
+        LogError("Error in FileSystem " << e.GetMessage());
+        retCode = CKM_API_ERROR_FILE_SYSTEM;
+    } catch (const CKM::Exception &e) {
+        LogError("CKM::Exception: " << e.GetMessage());
+        retCode = CKM_API_ERROR_SERVER_ERROR;
     }
 
     auto response = MessageBuffer::Serialize(static_cast<int>(LogicCommand::SAVE),
@@ -443,29 +523,24 @@ RawBuffer CKMLogic::savePKCS12(
     const PolicySerializable &keyPolicy,
     const PolicySerializable &certPolicy)
 {
-    int retCode;
-    if (0 == m_userDataMap.count(cred.uid))
-        retCode = CKM_API_ERROR_DB_LOCKED;
-    else
-    {
-        try {
-            retCode = saveDataHelper(cred, name, label, pkcs, keyPolicy, certPolicy);
-        } catch (const KeyProvider::Exception::Base &e) {
-            LogError("KeyProvider failed with message: " << e.GetMessage());
-            retCode = CKM_API_ERROR_SERVER_ERROR;
-        } catch (const CryptoLogic::Exception::Base &e) {
-            LogError("CryptoLogic failed with message: " << e.GetMessage());
-            retCode = CKM_API_ERROR_SERVER_ERROR;
-        } catch (const DB::Crypto::Exception::InternalError &e) {
-            LogError("DB::Crypto failed with message: " << e.GetMessage());
-            retCode = CKM_API_ERROR_DB_ERROR;
-        } catch (const DB::Crypto::Exception::TransactionError &e) {
-            LogError("DB::Crypto transaction failed with message " << e.GetMessage());
-            retCode = CKM_API_ERROR_DB_ERROR;
-        } catch (const CKM::Exception &e) {
-            LogError("CKM::Exception: " << e.GetMessage());
-            retCode = CKM_API_ERROR_SERVER_ERROR;
-        }
+    int retCode = CKM_API_ERROR_UNKNOWN;
+    try {
+        retCode = saveDataHelper(cred, name, label, pkcs, keyPolicy, certPolicy);
+    } catch (const KeyProvider::Exception::Base &e) {
+        LogError("KeyProvider failed with message: " << e.GetMessage());
+        retCode = CKM_API_ERROR_SERVER_ERROR;
+    } catch (const CryptoLogic::Exception::Base &e) {
+        LogError("CryptoLogic failed with message: " << e.GetMessage());
+        retCode = CKM_API_ERROR_SERVER_ERROR;
+    } catch (const DB::Crypto::Exception::InternalError &e) {
+        LogError("DB::Crypto failed with message: " << e.GetMessage());
+        retCode = CKM_API_ERROR_DB_ERROR;
+    } catch (const DB::Crypto::Exception::TransactionError &e) {
+        LogError("DB::Crypto transaction failed with message " << e.GetMessage());
+        retCode = CKM_API_ERROR_DB_ERROR;
+    } catch (const CKM::Exception &e) {
+        LogError("CKM::Exception: " << e.GetMessage());
+        retCode = CKM_API_ERROR_SERVER_ERROR;
     }
 
     auto response = MessageBuffer::Serialize(static_cast<int>(LogicCommand::SAVE_PKCS12),
@@ -480,28 +555,40 @@ int CKMLogic::removeDataHelper(
         const Name &name,
         const Label &ownerLabel)
 {
-    if (0 == m_userDataMap.count(cred.uid))
+    Credentials effCred;
+    Label effLabel;
+
+    int retCode = selectDatabase(cred, ownerLabel, effCred, effLabel);
+    if (CKM_API_SUCCESS != retCode)
+        return retCode;
+
+    // use client label if not explicitly provided
+    if(effLabel.empty())
+        effLabel = effCred.smackLabel;
+
+    if (0 == m_userDataMap.count(effCred.dbUid))
         return CKM_API_ERROR_DB_LOCKED;
 
-    if (!isNameValid(name) || !isLabelValid(ownerLabel)) {
+    if (!isNameValid(name) || !isLabelValid(effLabel)) {
         LogError("Invalid label or name format");
         return CKM_API_ERROR_INPUT_PARAM;
     }
 
-    auto &database = m_userDataMap[cred.uid].database;
+    auto &database = m_userDataMap[effCred.dbUid].database;
     DB::Crypto::Transaction transaction(&database);
 
     // read and check permissions
     PermissionMaskOptional permissionRowOpt =
-            database.getPermissionRow(name, ownerLabel, cred.smackLabel);
-    int access_ec = m_accessControl.canDelete(PermissionForLabel(cred.smackLabel, permissionRowOpt));
+            database.getPermissionRow(name, effLabel, effCred.smackLabel);
+    int access_ec = m_accessControl.canDelete(effCred,
+                        PermissionForLabel(effCred.smackLabel, permissionRowOpt));
     if(access_ec != CKM_API_SUCCESS)
     {
         LogWarning("access control check result: " << access_ec);
         return access_ec;
     }
 
-    auto erased = database.deleteRow(name, ownerLabel);
+    auto erased = database.deleteRow(name, effLabel);
     // check if the data existed or not
     if(erased)
         transaction.commit();
@@ -519,13 +606,14 @@ RawBuffer CKMLogic::removeData(
     const Name &name,
     const Label &label)
 {
-    int retCode;
-    Try {
-        // use client label if not explicitly provided
-        const Label &ownerLabel = label.empty() ? cred.smackLabel : label;
+    int retCode = CKM_API_ERROR_UNKNOWN;
 
-        retCode = removeDataHelper(cred, name, ownerLabel);
-    } Catch (CKM::Exception) {
+    Try
+    {
+        retCode = removeDataHelper(cred, name, label);
+    }
+    Catch (CKM::Exception)
+    {
         LogError("Error in deleting row!");
         retCode = CKM_API_ERROR_DB_ERROR;
     }
@@ -609,7 +697,8 @@ int CKMLogic::readMultiRow(const Name &name,
     return CKM_API_SUCCESS;
 }
 
-int CKMLogic::checkDataPermissionsHelper(const Name &name,
+int CKMLogic::checkDataPermissionsHelper(const Credentials &cred,
+                                         const Name &name,
                                          const Label &ownerLabel,
                                          const Label &accessorLabel,
                                          const DB::Row &row,
@@ -620,8 +709,8 @@ int CKMLogic::checkDataPermissionsHelper(const Name &name,
             database.getPermissionRow(name, ownerLabel, accessorLabel);
 
     if(exportFlag)
-        return m_accessControl.canExport(row, PermissionForLabel(accessorLabel, permissionRowOpt));
-    return m_accessControl.canRead(PermissionForLabel(accessorLabel, permissionRowOpt));
+        return m_accessControl.canExport(cred, row, PermissionForLabel(accessorLabel, permissionRowOpt));
+    return m_accessControl.canRead(cred, PermissionForLabel(accessorLabel, permissionRowOpt));
 }
 
 int CKMLogic::readDataHelper(
@@ -633,30 +722,37 @@ int CKMLogic::readDataHelper(
     const Password &password,
     DB::RowVector &rows)
 {
-    if (0 == m_userDataMap.count(cred.uid))
+    Credentials effCred;
+    Label effLabel;
+
+    int retCode = selectDatabase(cred, label, effCred, effLabel);
+    if (CKM_API_SUCCESS != retCode)
+        return retCode;
+
+    if (0 == m_userDataMap.count(effCred.dbUid))
         return CKM_API_ERROR_DB_LOCKED;
 
     // use client label if not explicitly provided
-    const Label &ownerLabel = label.empty() ? cred.smackLabel : label;
+    const Label &ownerLabel = effLabel.empty() ? effCred.smackLabel : effLabel;
 
     if (!isNameValid(name) || !isLabelValid(ownerLabel))
         return CKM_API_ERROR_INPUT_PARAM;
 
-    auto &handler = m_userDataMap[cred.uid];
+    auto &handler = m_userDataMap[effCred.dbUid];
 
     // read rows
     DB::Crypto::Transaction transaction(&handler.database);
-    int ec = readMultiRow(name, ownerLabel, dataType, handler.database, rows);
-    if(CKM_API_SUCCESS != ec)
-        return ec;
+    retCode = readMultiRow(name, ownerLabel, dataType, handler.database, rows);
+    if(CKM_API_SUCCESS != retCode)
+        return retCode;
 
     // all read rows belong to the same owner
     DB::Row & firstRow = rows.at(0);
 
     // check access rights
-    ec = checkDataPermissionsHelper(name, ownerLabel, cred.smackLabel, firstRow, exportFlag, handler.database);
-    if(CKM_API_SUCCESS != ec)
-        return ec;
+    retCode = checkDataPermissionsHelper(effCred, name, ownerLabel, effCred.smackLabel, firstRow, exportFlag, handler.database);
+    if(CKM_API_SUCCESS != retCode)
+        return retCode;
 
     // decrypt row
     if (!handler.crypto.haveKey(firstRow.ownerLabel)) {
@@ -685,28 +781,34 @@ int CKMLogic::readDataHelper(
     const Password &password,
     DB::Row &row)
 {
-    if (0 == m_userDataMap.count(cred.uid))
+    Credentials effCred;
+    Label effLabel;
+
+    int retCode = selectDatabase(cred, label, effCred, effLabel);
+    if (CKM_API_SUCCESS != retCode)
+        return retCode;
+
+    if (0 == m_userDataMap.count(effCred.dbUid))
         return CKM_API_ERROR_DB_LOCKED;
 
     // use client label if not explicitly provided
-    const Label &ownerLabel = label.empty() ? cred.smackLabel : label;
+    const Label &ownerLabel = effLabel.empty() ? effCred.smackLabel : effLabel;
 
     if (!isNameValid(name) || !isLabelValid(ownerLabel))
         return CKM_API_ERROR_INPUT_PARAM;
 
-    auto &handler = m_userDataMap[cred.uid];
+    auto &handler = m_userDataMap[effCred.dbUid];
 
     // read row
     DB::Crypto::Transaction transaction(&handler.database);
-    int ec = readSingleRow(name, ownerLabel, dataType, handler.database, row);
-    if(CKM_API_SUCCESS != ec)
-        return ec;
-
+    retCode = readSingleRow(name, ownerLabel, dataType, handler.database, row);
+    if(CKM_API_SUCCESS != retCode)
+        return retCode;
 
     // check access rights
-    ec = checkDataPermissionsHelper(name, ownerLabel, cred.smackLabel, row, exportFlag, handler.database);
-    if(CKM_API_SUCCESS != ec)
-        return ec;
+    retCode = checkDataPermissionsHelper(effCred, name, ownerLabel, effCred.smackLabel, row, exportFlag, handler.database);
+    if(CKM_API_SUCCESS != retCode)
+        return retCode;
 
     // decrypt row
     if (!handler.crypto.haveKey(row.ownerLabel)) {
@@ -733,24 +835,35 @@ RawBuffer CKMLogic::getData(
     const Label &label,
     const Password &password)
 {
-    int retCode = CKM_API_SUCCESS;
+    int retCode = CKM_API_ERROR_UNKNOWN;
     DB::Row row;
 
-    try {
+    try
+    {
         retCode = readDataHelper(true, cred, dataType, name, label, password, row);
-    } catch (const KeyProvider::Exception::Base &e) {
+    }
+    catch (const KeyProvider::Exception::Base &e)
+    {
         LogError("KeyProvider failed with error: " << e.GetMessage());
         retCode = CKM_API_ERROR_SERVER_ERROR;
-    } catch (const CryptoLogic::Exception::DecryptDBRowError &e) {
+    }
+    catch (const CryptoLogic::Exception::DecryptDBRowError &e)
+    {
         LogError("CryptoLogic failed with message: " << e.GetMessage());
         retCode = CKM_API_ERROR_AUTHENTICATION_FAILED;
-    } catch (const CryptoLogic::Exception::Base &e) {
+    }
+    catch (const CryptoLogic::Exception::Base &e)
+    {
         LogError("CryptoLogic failed with message: " << e.GetMessage());
         retCode = CKM_API_ERROR_SERVER_ERROR;
-    } catch (const DB::Crypto::Exception::Base &e) {
+    }
+    catch (const DB::Crypto::Exception::Base &e)
+    {
         LogError("DB::Crypto failed with message: " << e.GetMessage());
         retCode = CKM_API_ERROR_DB_ERROR;
-    } catch (const CKM::Exception &e) {
+    }
+    catch (const CKM::Exception &e)
+    {
         LogError("CKM::Exception: " << e.GetMessage());
         retCode = CKM_API_ERROR_SERVER_ERROR;
     }
@@ -818,9 +931,9 @@ RawBuffer CKMLogic::getPKCS12(
         const Password &keyPassword,
         const Password &certPassword)
 {
-    int retCode;
-    PKCS12Serializable output;
+    int retCode = CKM_API_ERROR_UNKNOWN;
 
+    PKCS12Serializable output;
     try {
         KeyShPtr privKey;
         CertificateShPtr cert;
@@ -840,13 +953,13 @@ RawBuffer CKMLogic::getPKCS12(
     } catch (const CryptoLogic::Exception::Base &e) {
         LogError("CryptoLogic failed with message: " << e.GetMessage());
         retCode = CKM_API_ERROR_SERVER_ERROR;
-    } catch (const DB::Crypto::Exception::Base &e) {
-        LogError("DB::Crypto failed with message: " << e.GetMessage());
-        retCode = CKM_API_ERROR_DB_ERROR;
-    } catch (const CKM::Exception &e) {
-        LogError("CKM::Exception: " << e.GetMessage());
-        retCode = CKM_API_ERROR_SERVER_ERROR;
-    }
+        } catch (const DB::Crypto::Exception::Base &e) {
+            LogError("DB::Crypto failed with message: " << e.GetMessage());
+            retCode = CKM_API_ERROR_DB_ERROR;
+        } catch (const CKM::Exception &e) {
+            LogError("CKM::Exception: " << e.GetMessage());
+            retCode = CKM_API_ERROR_SERVER_ERROR;
+        }
 
     auto response = MessageBuffer::Serialize(static_cast<int>(LogicCommand::GET_PKCS12),
                                              commandId,
@@ -855,16 +968,14 @@ RawBuffer CKMLogic::getPKCS12(
     return response.Pop();
 }
 
-RawBuffer CKMLogic::getDataList(
-    const Credentials &cred,
-    int commandId,
-    DataType dataType)
+int CKMLogic::getDataListHelper(const Credentials &cred,
+                                const DataType dataType,
+                                LabelNameVector &labelNameVector)
 {
-    int retCode = CKM_API_SUCCESS;
-    LabelNameVector labelNameVector;
-
-    if (0 < m_userDataMap.count(cred.uid)) {
-        auto &database = m_userDataMap[cred.uid].database;
+    int retCode = CKM_API_ERROR_DB_LOCKED;
+    if (0 < m_userDataMap.count(cred.dbUid))
+    {
+        auto &database = m_userDataMap[cred.dbUid].database;
 
         Try {
             if (dataType.isKey()) {
@@ -879,13 +990,53 @@ RawBuffer CKMLogic::getDataList(
                                    labelNameVector,
                                    dataType);
             }
+            retCode = CKM_API_SUCCESS;
         }
         Catch (CKM::Exception) {
             LogError("Failed to get names");
             retCode = CKM_API_ERROR_DB_ERROR;
         }
-    } else {
-        retCode = CKM_API_ERROR_DB_LOCKED;
+    }
+    return retCode;
+}
+
+RawBuffer CKMLogic::getDataList(
+    const Credentials &cred,
+    int commandId,
+    DataType dataType)
+{
+    LabelNameVector labelNameVector;
+
+    int retCode = unlockSystemDB();
+    if (CKM_API_SUCCESS == retCode)
+    {
+        // system database
+        if (m_accessControl.isSystemService(cred))
+        {
+            // lookup system DB
+            retCode = getDataListHelper(Credentials(SYSTEM_DB_UID,
+                                                    SYSTEM_DB_UID,
+                                                    LABEL_SYSTEM_DB),
+                                        dataType,
+                                        labelNameVector);
+        }
+        else
+        {
+            // user - lookup system, then client DB
+            retCode = getDataListHelper(Credentials(cred.clientUid,
+                                                    SYSTEM_DB_UID,
+                                                    cred.smackLabel),
+                                        dataType,
+                                        labelNameVector);
+
+            // private database
+            if(retCode == CKM_API_SUCCESS)
+            {
+                retCode = getDataListHelper(cred,
+                                            dataType,
+                                            labelNameVector);
+            }
+        }
     }
 
     auto response = MessageBuffer::Serialize(static_cast<int>(LogicCommand::GET_LIST),
@@ -904,14 +1055,21 @@ int CKMLogic::saveDataHelper(
     const RawBuffer &data,
     const PolicySerializable &policy)
 {
-    auto &handler = m_userDataMap[cred.uid];
+    Credentials effCred;
+    Label effLabel;
+
+    int retCode = selectDatabase(cred, label, effCred, effLabel);
+    if(CKM_API_SUCCESS != retCode)
+        return retCode;
+
+    auto &handler = m_userDataMap[effCred.dbUid];
 
     // use client label if not explicitly provided
-    const Label &ownerLabel = label.empty() ? cred.smackLabel : label;
+    const Label &ownerLabel = effLabel.empty() ? effCred.smackLabel : effLabel;
 
     // check if save is possible
     DB::Crypto::Transaction transaction(&handler.database);
-    int retCode = checkSaveConditions(cred, handler, name, ownerLabel);
+    retCode = checkSaveConditions(effCred, handler, name, ownerLabel);
     if(retCode != CKM_API_SUCCESS)
         return retCode;
 
@@ -931,14 +1089,21 @@ int CKMLogic::saveDataHelper(
     const PolicySerializable &keyPolicy,
     const PolicySerializable &certPolicy)
 {
-    auto &handler = m_userDataMap[cred.uid];
+    Credentials effCred;
+    Label effLabel;
+
+    int retCode = selectDatabase(cred, label, effCred, effLabel);
+    if(CKM_API_SUCCESS != retCode)
+        return retCode;
+
+    auto &handler = m_userDataMap[effCred.dbUid];
 
     // use client label if not explicitly provided
-    const Label &ownerLabel = label.empty() ? cred.smackLabel : label;
+    const Label &ownerLabel = effLabel.empty() ? effCred.smackLabel : effLabel;
 
     // check if save is possible
     DB::Crypto::Transaction transaction(&handler.database);
-    int retCode = checkSaveConditions(cred, handler, name, ownerLabel);
+    retCode = checkSaveConditions(effCred, handler, name, ownerLabel);
     if(retCode != CKM_API_SUCCESS)
         return retCode;
 
@@ -967,11 +1132,22 @@ int CKMLogic::createKeyPairHelper(
     const PolicySerializable &policyPrivate,
     const PolicySerializable &policyPublic)
 {
-    if (0 == m_userDataMap.count(cred.uid))
+    Credentials effCred;
+    Label effPrivLabel, effPubLabel = labelPublic;
+
+    int retCode = selectDatabase(cred, labelPrivate, effCred, effPrivLabel);
+    if (CKM_API_SUCCESS != retCode)
+        return retCode;
+
+    // if label change happened - accessing system DB
+    // make pub label of system DB too
+    if( 0 != labelPrivate.compare(effPrivLabel))
+        effPubLabel = effPrivLabel;
+
+    if (0 == m_userDataMap.count(effCred.dbUid))
         return CKM_API_ERROR_DB_LOCKED;
 
     KeyImpl prv, pub;
-    int retCode;
     switch(key_type)
     {
         case KeyType::KEY_RSA_PUBLIC:
@@ -999,21 +1175,21 @@ int CKMLogic::createKeyPairHelper(
         return CKM_API_ERROR_SERVER_ERROR; // TODO error code
     }
 
-    auto &database = m_userDataMap[cred.uid].database;
+    auto &database = m_userDataMap[effCred.dbUid].database;
     DB::Crypto::Transaction transaction(&database);
 
-    retCode = saveDataHelper(cred,
+    retCode = saveDataHelper(effCred,
                              namePrivate,
-                             labelPrivate,
+                             effPrivLabel,
                              DataType(prv.getType()),
                              prv.getDER(),
                              policyPrivate);
     if (CKM_API_SUCCESS != retCode)
         return retCode;
 
-    retCode = saveDataHelper(cred,
+    retCode = saveDataHelper(effCred,
                              namePublic,
-                             labelPublic,
+                             effPubLabel,
                              DataType(pub.getType()),
                              pub.getDER(),
                              policyPublic);
@@ -1037,7 +1213,7 @@ RawBuffer CKMLogic::createKeyPair(
     const PolicySerializable &policyPrivate,
     const PolicySerializable &policyPublic)
 {
-    int retCode = CKM_API_SUCCESS;
+    int retCode = CKM_API_ERROR_UNKNOWN;
 
     KeyType key_type = KeyType::KEY_NONE;
     switch(protocol_cmd)
@@ -1090,14 +1266,21 @@ int CKMLogic::readCertificateHelper(
 {
     DB::Row row;
     for (auto &i: labelNameVector) {
-        int ec = readDataHelper(false, cred, DataType::CERTIFICATE, i.second, i.first, Password(), row);
+
+        Credentials effCred;
+        Label effLabel;
+        int ec = selectDatabase(cred, i.first, effCred, effLabel);
+        if (ec != CKM_API_SUCCESS)
+            return ec;
+
+        ec = readDataHelper(false, effCred, DataType::CERTIFICATE, i.second, effLabel, Password(), row);
         if (ec != CKM_API_SUCCESS)
             return ec;
         certVector.push_back(CertificateImpl(row.data, DataFormat::FORM_DER));
 
         // try to read chain certificates (if present)
         DB::RowVector rawCaChain;
-        ec = readDataHelper(false, cred, DataType::DB_CHAIN_FIRST, i.second, i.first, CKM::Password(), rawCaChain);
+        ec = readDataHelper(false, effCred, DataType::DB_CHAIN_FIRST, i.second, effLabel, CKM::Password(), rawCaChain);
         if(ec != CKM_API_SUCCESS && ec != CKM_API_ERROR_DB_ALIAS_UNKNOWN)
             return ec;
         for(auto &rawCaCert : rawCaChain)
@@ -1225,8 +1408,9 @@ RawBuffer CKMLogic::getCertificateChain(
     bool useTrustedSystemCertificates)
 {
     int retCode = CKM_API_ERROR_UNKNOWN;
-    CertificateImpl cert(certificate, DataFormat::FORM_DER);
     RawBufferVector chainRawVector;
+
+    CertificateImpl cert(certificate, DataFormat::FORM_DER);
     try {
         retCode = getCertificateChainHelper(cred,
                                             cert,
@@ -1270,8 +1454,7 @@ RawBuffer CKMLogic::createSignature(
     DB::Row row;
     CryptoService cs;
     RawBuffer signature;
-
-    int retCode = CKM_API_SUCCESS;
+    int retCode = CKM_API_ERROR_UNKNOWN;
 
     try {
         retCode = readDataHelper(false, cred, DataType::DB_KEY_FIRST, privateKeyName, ownerLabel, password, row);
@@ -1319,7 +1502,6 @@ RawBuffer CKMLogic::verifySignature(
         const RSAPaddingAlgorithm padding)
 {
     int retCode = CKM_API_ERROR_VERIFICATION_FAILED;
-
     try {
         do {
             CryptoService cs;
@@ -1385,12 +1567,19 @@ int CKMLogic::setPermissionHelper(
         const Label &accessorLabel,             // who will get the access
         const PermissionMask permissionMask)
 {
+    Credentials effCred;
+    Label effLabel;
+
+    int retCode = selectDatabase(cred, label, effCred, effLabel);
+    if(retCode != CKM_API_SUCCESS)
+        return retCode;
+
     // we don't know the client
-    if (cred.smackLabel.empty() || !isLabelValid(cred.smackLabel))
+    if (effCred.smackLabel.empty() || !isLabelValid(effCred.smackLabel))
         return CKM_API_ERROR_INPUT_PARAM;
 
     // use client label if not explicitly provided
-    const Label& ownerLabel = label.empty() ? cred.smackLabel : label;
+    const Label& ownerLabel = effLabel.empty() ? effCred.smackLabel : effLabel;
 
     // verify name and label are correct
     if (!isNameValid(name) || !isLabelValid(ownerLabel) || !isLabelValid(accessorLabel))
@@ -1400,15 +1589,20 @@ int CKMLogic::setPermissionHelper(
     if (ownerLabel==accessorLabel)
         return CKM_API_ERROR_INPUT_PARAM;
 
-    // can the client modify permissions to owner's row?
-    int access_ec = m_accessControl.canModify(ownerLabel, cred.smackLabel);
-    if(access_ec != CKM_API_SUCCESS)
-        return access_ec;
+    // system database does not support write/remove permissions
+    if ((0 == ownerLabel.compare(LABEL_SYSTEM_DB)) &&
+        (permissionMask & Permission::REMOVE))
+        return CKM_API_ERROR_INPUT_PARAM;
 
-    if (0 == m_userDataMap.count(cred.uid))
+    // can the client modify permissions to owner's row?
+    retCode = m_accessControl.canModify(effCred, ownerLabel);
+    if(retCode != CKM_API_SUCCESS)
+        return retCode;
+
+    if (0 == m_userDataMap.count(effCred.dbUid))
         return CKM_API_ERROR_DB_LOCKED;
 
-    auto &database = m_userDataMap[cred.uid].database;
+    auto &database = m_userDataMap[effCred.dbUid].database;
     DB::Crypto::Transaction transaction(&database);
 
     if( !database.isNameLabelPresent(name, ownerLabel) )
@@ -1437,7 +1631,7 @@ RawBuffer CKMLogic::setPermission(
         const Label &accessorLabel,
         const PermissionMask permissionMask)
 {
-    int retCode;
+    int retCode = CKM_API_ERROR_UNKNOWN;
     Try {
         retCode = setPermissionHelper(cred, name, label, accessorLabel, permissionMask);
     } Catch (CKM::Exception) {
