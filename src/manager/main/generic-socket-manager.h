@@ -45,7 +45,18 @@ namespace CKM {
 typedef int InterfaceID;
 
 struct Credentials {
-    uid_t uid;
+    Credentials() {
+        clientUid = dbUid = 0;
+    }
+    Credentials(uid_t socketUid, const Label & socketLabel)
+        : Credentials(socketUid, socketUid, socketLabel) {}
+    Credentials(uid_t socketUid, uid_t dbUid, const Label & socketLabel) {
+        clientUid = socketUid;
+        this->dbUid = dbUid;
+        smackLabel = socketLabel;
+    }
+    uid_t clientUid;
+    uid_t dbUid;           // if accessing other user DB, i.e. system DB
     Label smackLabel;
 };
 
