@@ -1,0 +1,9 @@
+Code-Review+1: Jacek Bukarewicz <j.bukarewicz@samsung.com>
+Code-Review+2: Krzysztof Jackiewicz <k.jackiewicz@samsung.com>
+Verified+1: Krzysztof Jackiewicz <k.jackiewicz@samsung.com>
+Code-Review+1: Build Bot <b.bot@partner.samsung.com>
+Submitted-by: Krzysztof Jackiewicz <k.jackiewicz@samsung.com>
+Submitted-at: Wed, 22 Apr 2015 08:32:01 -0700
+Reviewed-on: https://review.tizen.org/gerrit/38587
+Project: platform/core/security/key-manager
+Branch: refs/heads/tizen
