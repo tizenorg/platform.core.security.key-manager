@@ -18,6 +18,7 @@ BuildRequires: pkgconfig(libsmack)
 BuildRequires: pkgconfig(libsystemd-daemon)
 BuildRequires: pkgconfig(vconf)
 BuildRequires: pkgconfig(libsystemd-journal)
+BuildRequires: libxml2-devel
 BuildRequires: boost-devel
 Requires: libkey-manager-common = %{version}-%{release}
 %{?systemd_requires}
@@ -73,6 +74,7 @@ Central Key Manager package (client-devel)
 %package -n key-manager-tests
 Summary:    Internal test for key-manager
 Group:      Development
+BuildRequires: libxml2-devel
 Requires:   boost-test
 Requires:   key-manager = %{version}-%{release}
 
@@ -132,6 +134,12 @@ cp data/scripts/*.sql %{buildroot}/usr/share/ckm/scripts
 mkdir -p %{buildroot}/usr/share/ckm-db-test
 cp tests/testme_ver1.db %{buildroot}/usr/share/ckm-db-test/
 cp tests/testme_ver2.db %{buildroot}/usr/share/ckm-db-test/
+cp tests/XML_1_okay.xml %{buildroot}/usr/share/ckm-db-test/
+cp tests/XML_1_okay.xsd %{buildroot}/usr/share/ckm-db-test/
+cp tests/XML_1_wrong.xml %{buildroot}/usr/share/ckm-db-test/
+cp tests/XML_1_wrong.xsd %{buildroot}/usr/share/ckm-db-test/
+cp tests/XML_2_structure.xml %{buildroot}/usr/share/ckm-db-test/
+cp tests/XML_3_structure.xml %{buildroot}/usr/share/ckm-db-test/
 mkdir -p %{buildroot}/etc/gumd/userdel.d/
 cp data/gumd/10_key-manager.post %{buildroot}/etc/gumd/userdel.d/
 
@@ -263,6 +271,12 @@ fi
 %{_bindir}/ckm-tests-internal
 %{_datadir}/ckm-db-test/testme_ver1.db
 %{_datadir}/ckm-db-test/testme_ver2.db
+%{_datadir}/ckm-db-test/XML_1_okay.xml
+%{_datadir}/ckm-db-test/XML_1_okay.xsd
+%{_datadir}/ckm-db-test/XML_1_wrong.xml
+%{_datadir}/ckm-db-test/XML_1_wrong.xsd
+%{_datadir}/ckm-db-test/XML_2_structure.xml
+%{_datadir}/ckm-db-test/XML_3_structure.xml
 %{_bindir}/ckm_so_loader
 
 %files -n key-manager-pam-plugin
