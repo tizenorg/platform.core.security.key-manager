@@ -23,6 +23,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 #include <ckm/ckm-raw-buffer.h>
 #include <ckm/ckm-password.h>
@@ -104,6 +105,69 @@ enum Permission: int {
 };
 
 const char * ErrorToString(int error);
+
+// algorithm parameters
+enum class ParamName : int {
+    // encryption & decryption
+    ED_IV = 1,
+    ED_CTR,
+    ED_CTR_LEN,
+    ED_AAD,
+    ED_TAG_LEN,
+    ED_LABEL,
+
+    // key generation
+    GEN_KEY_LEN = 101,
+    GEN_EC,             // elliptic curve (ElipticCurve)
+
+    // sign & verify
+    SV_HASH_ALGO = 201, // hash algorithm (HashAlgorithm)
+    SV_RSA_PADDING,     // RSA padding (RSAPaddingAlgorithm)
+};
+
+// algorithm types
+enum class AlgoType : int {
+    AES_CTR = 1,
+    AES_CBC,
+    AES_GCM,
+    AES_CFB,
+    RSA_OAEP,
+    RSA,
+    DSA,
+    ECDSA,
+};
+
+class KEY_MANAGER_API BaseParam {
+public:
+    virtual int getBuffer(RawBuffer&) const;
+    virtual int getInt(unsigned long long&) const;
+    virtual ~BaseParam() {}
+
+protected:
+    BaseParam() {}
+};
+
+class KEY_MANAGER_API BufferParam : public BaseParam {
+public:
+    explicit BufferParam(const RawBuffer& value) : m_buffer(value) {}
+    int getBuffer(RawBuffer& buffer) const;
+private:
+    RawBuffer m_buffer;
+};
+
+class KEY_MANAGER_API IntParam : public BaseParam {
+public:
+    explicit IntParam(unsigned long long value) : m_int(value) {}
+    int getInt(unsigned long long& value) const;
+private:
+    unsigned long long m_int;
+};
+
+// cryptographic algorithm description
+struct CryptoAlgorithm {
+    AlgoType type;
+    std::map<ParamName, BaseParam> params;
+};
 
 } // namespace CKM
 
