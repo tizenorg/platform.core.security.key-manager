@@ -46,6 +46,7 @@ struct UserData {
 
 class CKMLogic {
 public:
+    static const uid_t SYSTEM_DB_UID;
     class Exception
     {
     public:
@@ -76,6 +77,14 @@ public:
 
     RawBuffer removeApplicationData(
         const Label &smackLabel);
+
+    int saveData(
+        const Credentials &cred,
+        const Name &name,
+        const Label &label,
+        const RawBuffer &data,
+        DataType dataType,
+        const PolicySerializable &policy);
 
     RawBuffer saveData(
         const Credentials &cred,
@@ -181,6 +190,13 @@ public:
         const Label &label,
         const Label &accessor_label,
         const PermissionMask permissionMask);
+
+    int setPermissionHelper(
+            const Credentials &cred,
+            const Name &name,
+            const Label &ownerLabel,
+            const Label &accessorLabel,
+            const PermissionMask permissionMask);
 
 private:
 
@@ -330,13 +346,6 @@ private:
         const LabelNameVector &trusted,
         bool useTrustedSystemCertificates,
         RawBufferVector &chainRawVector);
-
-    int setPermissionHelper(
-        const Credentials &cred,
-        const Name &name,
-        const Label &ownerLabel,
-        const Label &accessorLabel,
-        const PermissionMask permissionMask);
 
     int getDataListHelper(
         const Credentials &cred,
