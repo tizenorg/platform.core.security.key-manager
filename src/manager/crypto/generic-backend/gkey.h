@@ -29,11 +29,6 @@
 namespace CKM {
 namespace Crypto {
 
-/* TODO remove class definition */
-struct CryptoAlgorithm {
-    int i;
-};
-
 class GKey {
 protected:
     GKey(){}
