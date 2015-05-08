@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(XmlParserTest_wrong_argument)
     // no listeners
     BOOST_REQUIRE(Parser::ErrorCode::ERROR_INVALID_ARGUMENT == parser.Parse());
 
-    BOOST_REQUIRE(Parser::ErrorCode::SUCCESS == parser.RegisterElementCb("Key", dummyStartCallback, dummyEndCallback));
+    BOOST_REQUIRE(Parser::ErrorCode::PARSE_SUCCESS == parser.RegisterElementCb("Key", dummyStartCallback, dummyEndCallback));
     BOOST_REQUIRE(Parser::ErrorCode::ERROR_XML_PARSE_FAILED == parser.Parse());
 }
 
@@ -97,8 +97,12 @@ BOOST_AUTO_TEST_CASE(XmlParserTest_XML1_correct_parse_incorrect_callbacks)
     XML::Parser parser(format_test_path(XML_1_okay).c_str());
     BOOST_REQUIRE(0 == parser.Validate(format_test_path(XSD_1_okay).c_str()));
 
-    BOOST_REQUIRE(Parser::ErrorCode::SUCCESS == parser.RegisterElementCb("Data", NULL, NULL));
-    BOOST_REQUIRE(Parser::ErrorCode::SUCCESS == parser.Parse());
+    BOOST_REQUIRE(Parser::ErrorCode::PARSE_SUCCESS == parser.RegisterElementCb("Data", NULL, NULL));
+    BOOST_REQUIRE(Parser::ErrorCode::PARSE_SUCCESS == parser.Parse());
+
+    BOOST_REQUIRE(Parser::ErrorCode::PARSE_SUCCESS == parser.RegisterElementCb("Key", dummyStartCallback, NULL));
+    BOOST_REQUIRE(Parser::ErrorCode::PARSE_SUCCESS == parser.RegisterElementCb("Cert", NULL, dummyEndCallback));
+    BOOST_REQUIRE(Parser::ErrorCode::PARSE_SUCCESS == parser.Parse());
 }
 
 BOOST_AUTO_TEST_CASE(XmlParserTest_XML1_correct_parse)
@@ -106,11 +110,11 @@ BOOST_AUTO_TEST_CASE(XmlParserTest_XML1_correct_parse)
     XML::Parser parser(format_test_path(XML_1_okay).c_str());
     BOOST_REQUIRE(0 == parser.Validate(format_test_path(XSD_1_okay).c_str()));
 
-    BOOST_REQUIRE(Parser::ErrorCode::SUCCESS == parser.RegisterElementCb("Key", dummyStartCallback, NULL));
-    BOOST_REQUIRE(Parser::ErrorCode::SUCCESS == parser.RegisterElementCb("Cert", NULL, dummyEndCallback));
+    BOOST_REQUIRE(Parser::ErrorCode::PARSE_SUCCESS == parser.RegisterElementCb("Key", dummyStartCallback, NULL));
+    BOOST_REQUIRE(Parser::ErrorCode::PARSE_SUCCESS == parser.RegisterElementCb("Cert", NULL, dummyEndCallback));
     startCallbackFlag = false;
     endCallbackFlag = false;
-    BOOST_REQUIRE(Parser::ErrorCode::SUCCESS == parser.Parse());
+    BOOST_REQUIRE(Parser::ErrorCode::PARSE_SUCCESS == parser.Parse());
     BOOST_REQUIRE(startCallbackFlag == true);
     BOOST_REQUIRE(endCallbackFlag == true);
 }
