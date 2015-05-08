@@ -69,7 +69,7 @@ public:
     {
         public:
             virtual ~ElementHandler() {}
-            virtual void Start(const Attributes &) = 0;
+            virtual void Start(const Attributes & attrs) = 0;
             virtual void Characters(const std::string & data) = 0;
             virtual void End() = 0;
     };
