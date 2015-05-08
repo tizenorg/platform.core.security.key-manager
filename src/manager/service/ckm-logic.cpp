@@ -29,13 +29,18 @@
 #include <key-impl.h>
 #include <certificate-config.h>
 #include <certificate-store.h>
+#include <dirent.h>
+#include <algorithm>
+#include <InitialValuesFile.h>
 
 #include <sw-backend/crypto-service.h>
 
 namespace {
-const char * const CERT_SYSTEM_DIR  = "/etc/ssl/certs";
-const uid_t        SYSTEM_DB_UID    = 0;
-const char * const SYSTEM_DB_PASSWD = "cAtRugU7";
+const char * const CERT_SYSTEM_DIR          = "/etc/ssl/certs";
+const char * const INIT_VALUES_DIR          = "/opt/data/ckm/initial_values/";
+const char * const INIT_VALUES_XSD          = "/opt/data/ckm/initial_values/initial_values.xsd";
+const char * const INIT_VALUES_FILE_SUFFIX  = ".xml";
+const char * const SYSTEM_DB_PASSWD         = "cAtRugU7";
 
 bool isLabelValid(const CKM::Label &label) {
     // TODO: copy code from libprivilege control (for check smack label)
@@ -53,11 +58,50 @@ bool isNameValid(const CKM::Name &name) {
 
 namespace CKM {
 
+const uid_t CKMLogic::SYSTEM_DB_UID = 0;
+
 CKMLogic::CKMLogic()
 {
     CertificateConfig::addSystemCertificateDir(CERT_SYSTEM_DIR);
 
     m_accessControl.updateCCMode();
+
+    // make initial file list
+    std::vector<std::string> filesToParse;
+    DIR *dp = opendir(INIT_VALUES_DIR);
+    if(dp)
+    {
+        struct dirent *entry;
+        while ((entry = readdir(dp)))
+        {
+            std::string filename = std::string(entry->d_name);
+
+            // check if XML file
+            std::string lowercaseFilename = filename;
+            std::transform(lowercaseFilename.begin(), lowercaseFilename.end(), lowercaseFilename.begin(), ::tolower);
+            if(lowercaseFilename.find(INIT_VALUES_FILE_SUFFIX) == std::string::npos)
+                continue;
+
+            filesToParse.push_back(std::string(INIT_VALUES_DIR) + filename);
+        }
+        closedir(dp);
+    }
+
+    // parse
+    for(const auto & file : filesToParse)
+    {
+        InitialValues::InitialValuesFile xmlFile(file.c_str(), *this);
+        int rc = xmlFile.Validate(INIT_VALUES_XSD);
+        if(rc == XML::Parser::PARSE_SUCCESS)
+        {
+            rc = xmlFile.Parse();
+            if(rc != XML::Parser::PARSE_SUCCESS)
+                LogError("invalid initial values file: " << file << ", parsing code: " << rc);
+        }
+        else
+            LogError("invalid initial values file: " << file << ", validation code: " << rc);
+        unlink(file.c_str());
+    }
 }
 
 CKMLogic::~CKMLogic(){}
@@ -426,9 +470,8 @@ int CKMLogic::verifyBinaryData(DataType dataType, const RawBuffer &input_data) c
     return CKM_API_SUCCESS;
 }
 
-RawBuffer CKMLogic::saveData(
+int CKMLogic::verifyAndSaveDataHelper(
     const Credentials &cred,
-    int commandId,
     const Name &name,
     const Label &label,
     const RawBuffer &data,
@@ -466,7 +509,19 @@ RawBuffer CKMLogic::saveData(
         LogError("CKM::Exception: " << e.GetMessage());
         retCode = CKM_API_ERROR_SERVER_ERROR;
     }
+    return retCode;
+}
 
+RawBuffer CKMLogic::saveData(
+    const Credentials &cred,
+    int commandId,
+    const Name &name,
+    const Label &label,
+    const RawBuffer &data,
+    DataType dataType,
+    const PolicySerializable &policy)
+{
+    int retCode = verifyAndSaveDataHelper(cred, name, label, data, dataType, policy);
     auto response = MessageBuffer::Serialize(static_cast<int>(LogicCommand::SAVE),
                                              commandId,
                                              retCode,
