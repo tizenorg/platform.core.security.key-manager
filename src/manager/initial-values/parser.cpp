@@ -27,29 +27,11 @@
 #include <libxml/valid.h>
 #include <libxml/xmlschemas.h>
 #include <parser.h>
+#include <xml-utils.h>
 #include <dpl/log/log.h>
 
 using namespace XML;
 
-namespace
-{
-const char * const WHITESPACE = " \n\r\t";
-std::string trim_left(const std::string& s)
-{
-    size_t startpos = s.find_first_not_of(WHITESPACE);
-    return (startpos == std::string::npos) ? "" : s.substr(startpos);
-}
-
-std::string trim_right(const std::string& s)
-{
-    size_t endpos = s.find_last_not_of(WHITESPACE);
-    return (endpos == std::string::npos) ? "" : s.substr(0, endpos+1);
-}
-std::string trim(const std::string& s)
-{
-    return trim_right(trim_left(s));
-}
-}
 
 Parser::Parser(const char *XML_filename)
     : m_errorCb(0)
@@ -105,7 +87,7 @@ int Parser::Validate(const char *XSD_schema)
         retCode = ERROR_XML_VALIDATION_FAILED;
     }
     else
-        retCode = SUCCESS;
+        retCode = PARSE_SUCCESS;
 
     if(parserCtxt)
         xmlSchemaFreeParserCtxt(parserCtxt);
@@ -125,7 +107,7 @@ int Parser::Parse()
         retCode = ERROR_XML_PARSE_FAILED;
     }
     else
-        retCode = SUCCESS;
+        retCode = PARSE_SUCCESS;
 
     return retCode;
 }
@@ -137,7 +119,7 @@ int Parser::RegisterErrorCb(const ErrorCb newCb)
         return ERROR_CALLBACK_PRESENT;
     }
     m_errorCb = newCb;
-    return SUCCESS;
+    return PARSE_SUCCESS;
 }
 
 int Parser::RegisterElementCb(const char * elementName,
@@ -155,7 +137,7 @@ int Parser::RegisterElementCb(const char * elementName,
     }
 
     m_elementListenerMap[key] = {startCb, endCb};
-    return SUCCESS;
+    return PARSE_SUCCESS;
 }
 
 void Parser::StartElement(const xmlChar *name,

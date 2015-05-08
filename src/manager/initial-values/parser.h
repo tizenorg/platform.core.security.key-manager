@@ -39,15 +39,16 @@ class Parser
 {
 public:
     enum ErrorCode {
-        SUCCESS                        =   0,
+        PARSE_SUCCESS                  =   0,
         ERROR_UNKNOWN                  =   -1000,
         ERROR_XML_VALIDATION_FAILED    =   -1001,
         ERROR_XSD_PARSE_FAILED         =   -1002,
         ERROR_XML_PARSE_FAILED         =   -1003,
         ERROR_INVALID_ARGUMENT         =   -1004,
         ERROR_CALLBACK_PRESENT         =   -1005,
-        ERROR_INTERNAL                 =   -1006,
-        ERROR_NO_MEMORY                =   -1007
+        ERROR_INVALID_VERSION          =   -1006,
+        ERROR_INTERNAL                 =   -1007,
+        ERROR_NO_MEMORY                =   -1008
     };
 
     explicit Parser(const char *XML_filename);
@@ -69,7 +70,7 @@ public:
     {
         public:
             virtual ~ElementHandler() {}
-            virtual void Start(const Attributes &) = 0;
+            virtual void Start(const Attributes & attrs) = 0;
             virtual void Characters(const std::string & data) = 0;
             virtual void End() = 0;
     };
