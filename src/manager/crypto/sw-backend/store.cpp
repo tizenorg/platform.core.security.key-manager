@@ -30,7 +30,8 @@ namespace CKM {
 namespace Crypto {
 namespace SW {
 
-Id Store::getBackendId() const { return Id::OpenSSL; }
+/* TODO design backend identification mechanism */
+BackendId Store::getBackendId() const { return 0; }
 
 GKeyShPtr Store::getKey(const Token &token) {
     if (token.backendId != getBackendId()) {
@@ -38,31 +39,22 @@ GKeyShPtr Store::getKey(const Token &token) {
         ThrowMsg(Exception::WrongBackend, "Decider choose wrong backend!");
     }
 
-    switch (token.keyType) {
-    case KeyType::KEY_RSA_PUBLIC:
-    case KeyType::KEY_RSA_PRIVATE:
-    case KeyType::KEY_DSA_PUBLIC:
-    case KeyType::KEY_DSA_PRIVATE:
-    case KeyType::KEY_ECDSA_PUBLIC:
-    case KeyType::KEY_ECDSA_PRIVATE:
-         return std::make_shared<AKey>(token.buffer, token.keyType);
-    case KeyType::KEY_AES:
-         return std::make_shared<SKey>(token.buffer, token.keyType);
-    default:
-         LogDebug(
-            "This type of key is not supported by openssl backend: " << (int)token.keyType);
-         ThrowMsg(Exception::KeyNotSupported,
-            "This type of key is not supported by openssl backend: " << (int)token.keyType);
+    if (token.dataType.isKeyPrivate() || token.dataType.isKeyPublic()) {
+         return std::make_shared<AKey>(token.data, token.dataType);
     }
 
+    if (token.dataType == DataType(DataType::KEY_AES)) {
+         return std::make_shared<SKey>(token.data, token.dataType);
+    }
+
+    LogDebug(
+        "This type of data is not supported by openssl backend: " << (int)token.dataType);
+    ThrowMsg(Exception::KeyNotSupported,
+        "This type of data is not supported by openssl backend: " << (int)token.dataType);
 }
 
-Token Store::import(KeyType keyType, const RawBuffer &buffer) {
-    Token token;
-    token.buffer = buffer;
-    token.keyType = keyType;
-    token.backendId = getBackendId();
-    return token;
+Token Store::import(DataType dataType, const RawBuffer &buffer) {
+    return Token(getBackendId(), dataType, buffer);
 }
 
 } // namespace SW
