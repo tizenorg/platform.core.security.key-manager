@@ -24,9 +24,8 @@
 
 #include <generic-backend/exception.h>
 #include <generic-backend/gkey.h>
-#include <generic-backend/id.h>
-#include <generic-backend/token.h>
 #include <ckm/ckm-type.h>
+#include <token.h>
 
 namespace CKM {
 namespace Crypto {
@@ -35,11 +34,11 @@ class GStore {
 protected:
     GStore(){}
 public:
-    virtual Id getBackendId() const { Throw(Exception::OperationNotSupported); }
+    virtual BackendId getBackendId() const = 0;
     virtual GKeyShPtr getKey(const Token &) { Throw(Exception::OperationNotSupported); }
     virtual TokenPair generateAKey(const CryptoAlgorithm &) { Throw(Exception::OperationNotSupported); }
     virtual Token generateSKey(const CryptoAlgorithm &) { Throw(Exception::OperationNotSupported); }
-    virtual Token import(KeyType, const RawBuffer &) { Throw(Exception::OperationNotSupported); }
+    virtual Token import(DataType, const RawBuffer &) { Throw(Exception::OperationNotSupported); }
     virtual void destroy(const Token &) { Throw(Exception::OperationNotSupported); }
     virtual ~GStore() {}
 };
