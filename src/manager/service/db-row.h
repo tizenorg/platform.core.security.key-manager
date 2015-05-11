@@ -25,23 +25,41 @@
 #include <ckm/ckm-type.h>
 #include <protocols.h>
 
+#include <token.h>
+
 namespace CKM {
 namespace DB {
 
-struct Row {
+struct Row : public CKM::Token {
+    Row() = default;
+
+    Row(const Name &pName,
+        const Label &pLabel,
+        int pExportable,
+        DataType pDataType,
+        const RawBuffer &pData,
+        int pDataSize,
+        BackendId pBackendId = 0)
+      : Token(pBackendId, pDataType, pData)
+      , name(pName)
+      , ownerLabel(pLabel)
+      , exportable(pExportable)
+      , algorithmType(DBCMAlgType::NONE)
+      , encryptionScheme(0)
+      , dataSize(pDataSize)
+    {}
+
     Name name;
     Label ownerLabel;
     int exportable;
-    DataType dataType;        // cert/key/data
     DBCMAlgType algorithmType;  // Algorithm type used for row data encryption
     int encryptionScheme;       // for example: (ENCR_BASE64 | ENCR_PASSWORD)
     RawBuffer iv;               // encoded in base64
     int dataSize;               // size of information without hash and padding
-    RawBuffer data;
     RawBuffer tag;              // tag for Aes Gcm algorithm
 };
-typedef std::vector<Row> RowVector;
 
+typedef std::vector<Row> RowVector;
 
 } // namespace DB
 } // namespace CKM
