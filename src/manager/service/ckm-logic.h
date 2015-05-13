@@ -35,6 +35,8 @@
 #include <access-control.h>
 #include <certificate-impl.h>
 
+#include <platform/decider.h>
+
 namespace CKM {
 
 struct UserData {
@@ -322,6 +324,7 @@ private:
 
     std::map<uid_t, UserData> m_userDataMap;
     AccessControl m_accessControl;
+    Crypto::Decider m_decider;
     //FileLock m_lock;
 };
 
