@@ -423,7 +423,7 @@ namespace DB {
         row.dataSize = selectCommand->GetColumnInteger(7);
         row.data = selectCommand->GetColumnBlob(8);
         row.tag = selectCommand->GetColumnBlob(9);
-        row.backendId = static_cast<CryptoBackend>(selectCommand->GetColumnInteger(10));
+        row.backendId = static_cast<CryptoBackend>(selectCommand->GetColumnInteger(11));
         return row;
     }
 
