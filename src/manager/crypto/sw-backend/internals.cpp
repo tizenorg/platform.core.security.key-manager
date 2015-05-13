@@ -433,8 +433,14 @@ RawBuffer sign(EVP_PKEY *pkey,
     int rsa_padding = NOT_DEFINED;
     const EVP_MD *md_algo = NULL;
 
-    (void) alg;
-//    md_algo = getMdAlgo(hashAlgo);
+    uint64_t algoTmp = static_cast<uint64_t>(HashAlgorithm::NONE);
+    alg.m_params.at(ParamName::SV_HASH_ALGO)->getInt(algoTmp);
+    md_algo = getMdAlgo(static_cast<HashAlgorithm>(algoTmp));
+
+    algoTmp = static_cast<uint64_t>(RSAPaddingAlgorithm::NONE);
+    alg.m_params.at(ParamName::SV_RSA_PADDING)->getInt(algoTmp);
+    rsa_padding = getRsaPadding(static_cast<RSAPaddingAlgorithm>(algoTmp));
+
 //
 //    if((privateKey.getType() != KeyType::KEY_RSA_PRIVATE) &&
 //       (privateKey.getType() != KeyType::KEY_DSA_PRIVATE) &&
@@ -508,8 +514,8 @@ RawBuffer signMessage(EVP_PKEY *privKey,
         return sig;
     }
 
-    LogError("Error in EVP_PKEY_sign function");
-    ThrowMsg(Crypto::Exception::InternalError, "Error in EVP_PKEY_sign function");
+    LogError("Error in EVP_PKEY_sign function. Input param error.");
+    ThrowMsg(Crypto::Exception::InputParam, "Error in EVP_PKEY_sign function. Input param error.");
 }
 
 RawBuffer digestSignMessage(EVP_PKEY *privKey,
@@ -577,8 +583,13 @@ int verify(EVP_PKEY *pkey,
     int rsa_padding = NOT_DEFINED;
     const EVP_MD *md_algo = NULL;
 
-    (void)alg;
-//    md_algo = getMdAlgo(hashAlgo);
+    uint64_t algoTmp = 0;
+    alg.m_params.at(ParamName::SV_HASH_ALGO)->getInt(algoTmp);
+    md_algo = getMdAlgo(static_cast<HashAlgorithm>(algoTmp));
+
+    alg.m_params.at(ParamName::SV_RSA_PADDING)->getInt(algoTmp);
+    rsa_padding = getRsaPadding(static_cast<RSAPaddingAlgorithm>(algoTmp));
+
 //
 //    if((publicKey.getType() != KeyType::KEY_RSA_PUBLIC) &&
 //       (publicKey.getType() != KeyType::KEY_DSA_PUBLIC) &&
