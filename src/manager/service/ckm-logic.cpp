@@ -30,6 +30,7 @@
 #include <certificate-config.h>
 #include <certificate-store.h>
 
+#include <generic-backend/exception.h>
 #include <sw-backend/crypto-service.h>
 
 namespace {
@@ -1270,6 +1271,9 @@ RawBuffer CKMLogic::createSignature(
     DB::Row row;
     Crypto::SW::CryptoService cs;
     RawBuffer signature;
+    CryptoAlgorithm params;
+    params.m_params.emplace(ParamName::SV_HASH_ALGO, IntParam::create(static_cast<int>(hash)));
+    params.m_params.emplace(ParamName::SV_RSA_PADDING, IntParam::create(static_cast<int>(padding)));
 
     int retCode = CKM_API_SUCCESS;
 
@@ -1277,11 +1281,13 @@ RawBuffer CKMLogic::createSignature(
         retCode = readDataHelper(false, cred, DataType::DB_KEY_FIRST, privateKeyName, ownerLabel, password, row);
         if(retCode == CKM_API_SUCCESS)
         {
-            KeyImpl keyParsed(row.data, Password());
-            if (keyParsed.empty())
-                retCode = CKM_API_ERROR_SERVER_ERROR;
-            else
-                retCode = cs.createSignature(keyParsed, message, hash, padding, signature);
+            signature = m_decider.getStore(row)->getKey(row)->sign(params, message);
+
+//            KeyImpl keyParsed(row.data, Password());
+//            if (keyParsed.empty())
+//                retCode = CKM_API_ERROR_SERVER_ERROR;
+//            else
+//                retCode = cs.createSignature(keyParsed, message, hash, padding, signature);
         }
     } catch (const KeyProvider::Exception::Base &e) {
         LogError("KeyProvider failed with message: " << e.GetMessage());
@@ -1295,6 +1301,12 @@ RawBuffer CKMLogic::createSignature(
     } catch (const DB::Crypto::Exception::Base &e) {
         LogError("DB::Crypto failed with message: " << e.GetMessage());
         retCode = CKM_API_ERROR_DB_ERROR;
+    } catch (const CKM::Crypto::Exception::InputParam &e) {
+        LogError("CKM::Crypto failed with message: " << e.GetMessage());
+        retCode = CKM_API_ERROR_INPUT_PARAM;
+    } catch (const CKM::Crypto::Exception::Base &e) {
+        LogError("CKM::Crypto failed with message: " << e.GetMessage());
+        retCode = CKM_API_ERROR_SERVER_ERROR;
     } catch (const CKM::Exception &e) {
         LogError("Unknown CKM::Exception: " << e.GetMessage());
         retCode = CKM_API_ERROR_SERVER_ERROR;
@@ -1326,28 +1338,41 @@ RawBuffer CKMLogic::verifySignature(
             DB::Row row;
             KeyImpl key;
 
+            CryptoAlgorithm params;
+            params.m_params.emplace(ParamName::SV_HASH_ALGO, IntParam::create(static_cast<int>(hash)));
+            params.m_params.emplace(ParamName::SV_RSA_PADDING, IntParam::create(static_cast<int>(padding)));
+
             // try certificate first - looking for a public key.
             // in case of PKCS, pub key from certificate will be found first
             // rather than private key from the same PKCS.
             retCode = readDataHelper(false, cred, DataType::CERTIFICATE, publicKeyOrCertName, ownerLabel, password, row);
-            if (retCode == CKM_API_SUCCESS) {
-                CertificateImpl cert(row.data, DataFormat::FORM_DER);
-                key = cert.getKeyImpl();
-            } else if (retCode == CKM_API_ERROR_DB_ALIAS_UNKNOWN) {
+            if (retCode == CKM_API_ERROR_DB_ALIAS_UNKNOWN) {
                 retCode = readDataHelper(false, cred, DataType::DB_KEY_FIRST, publicKeyOrCertName, ownerLabel, password, row);
-                if (retCode != CKM_API_SUCCESS)
-                    break;
-                key = KeyImpl(row.data);
-            } else {
-                break;
             }
 
-            if (key.empty()) {
-                retCode = CKM_API_ERROR_SERVER_ERROR;
-                break;
+            if (retCode == CKM_API_SUCCESS) {
+                retCode = m_decider.getStore(row)->getKey(row)->verify(params, message, signature);
             }
 
-            retCode = cs.verifySignature(key, message, signature, hash, padding);
+
+//            if (retCode == CKM_API_SUCCESS) {
+//                CertificateImpl cert(row.data, DataFormat::FORM_DER);
+//                key = cert.getKeyImpl();
+//            } else if (retCode == CKM_API_ERROR_DB_ALIAS_UNKNOWN) {
+//                retCode = readDataHelper(false, cred, DataType::DB_KEY_FIRST, publicKeyOrCertName, ownerLabel, password, row);
+//                if (retCode != CKM_API_SUCCESS)
+//                    break;
+//                key = KeyImpl(row.data);
+//            } else {
+//                break;
+//            }
+//
+//            if (key.empty()) {
+//                retCode = CKM_API_ERROR_SERVER_ERROR;
+//                break;
+//            }
+//
+//            retCode = cs.verifySignature(key, message, signature, hash, padding);
         } while(0);
     } catch (const Crypto::SW::CryptoService::Exception::Crypto_internal &e) {
         LogError("KeyProvider failed with message: " << e.GetMessage());

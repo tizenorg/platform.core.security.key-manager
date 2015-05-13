@@ -47,6 +47,10 @@ GKeyShPtr Store::getKey(const Token &token) {
          return std::make_shared<SKey>(token.data, token.dataType);
     }
 
+    if (token.dataType.isCertificate()) {
+        return std::make_shared<Cert>(token.data, token.dataType);
+    }
+
     LogDebug(
         "This type of data is not supported by openssl backend: " << (int)token.dataType);
     ThrowMsg(Exception::KeyNotSupported,
