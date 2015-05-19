@@ -38,6 +38,10 @@ namespace Crypto {
 namespace SW {
 namespace Internals {
 
+// During initialization, FIPS_MODE and the entropy source are set.
+// And system certificates are loaded in the memory during initialization.
+//    FIPS_MODE - ON, OFF(Default)
+//    antropy source - /dev/random,/dev/urandom(Default)
 int initialize();
 
 void createKeyPairRSA(const int size,
