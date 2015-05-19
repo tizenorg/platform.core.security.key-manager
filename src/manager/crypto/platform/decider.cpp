@@ -30,16 +30,16 @@ namespace CKM {
 namespace Crypto {
 
 Decider::Decider()
-  : m_store(new SW::Store(CryptoBackend::OpenSSL))
+  : m_swStore(new SW::Store(CryptoBackend::OpenSSL))
 {}
 
-GStoreShPtr Decider::getStore(const Token &) {
+GStore& Decider::getStore(const Token &) {
     // This the place where we should choose backend bases on token information.
-    if (!m_store) {
+    if (!m_swStore) {
         LogError("No backend available.");
         ThrowMsg(CKM::Crypto::Exception::Base, "No backend available.");
     }
-    return m_store;
+    return *m_swStore;
 };
 
 CryptoBackend Decider::chooseCryptoBackend(DataType, const Policy &) const {

@@ -35,12 +35,12 @@ namespace Crypto {
 class Decider {
 public:
     Decider();
-    GStoreShPtr getStore(const Token &token);
+    GStore& getStore(const Token &token);
     CryptoBackend chooseCryptoBackend(DataType data, const Policy &policy) const;
 
     virtual ~Decider(){}
 private:
-    GStoreShPtr m_store;
+    std::unique_ptr<GStore> m_swStore;
 };
 
 } // Crypto

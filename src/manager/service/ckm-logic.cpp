@@ -1427,7 +1427,7 @@ RawBuffer CKMLogic::createSignature(
     try {
         retCode = readDataHelper(false, cred, DataType::DB_KEY_FIRST, privateKeyName, ownerLabel, password, row);
         if(retCode == CKM_API_SUCCESS) {
-            signature = m_decider.getStore(row)->getKey(row)->sign(cryptoAlg, message);
+            signature = m_decider.getStore(row).getKey(row)->sign(cryptoAlg, message);
         }
     } catch (const KeyProvider::Exception::Base &e) {
         LogError("KeyProvider failed with message: " << e.GetMessage());
@@ -1492,7 +1492,7 @@ RawBuffer CKMLogic::verifySignature(
         }
 
         if (retCode == CKM_API_SUCCESS) {
-            retCode = m_decider.getStore(row)->getKey(row)->verify(params, message, signature);
+            retCode = m_decider.getStore(row).getKey(row)->verify(params, message, signature);
         }
     } catch (const Crypto::SW::CryptoService::Exception::Crypto_internal &e) {
         LogError("KeyProvider failed with message: " << e.GetMessage());
