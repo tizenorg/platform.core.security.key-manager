@@ -129,10 +129,10 @@ cp LICENSE %{buildroot}/usr/share/license/%{name}
 cp LICENSE %{buildroot}/usr/share/license/libkey-manager-client
 cp LICENSE %{buildroot}/usr/share/license/libkey-manager-control-client
 mkdir -p %{buildroot}/opt/data/ckm/initial_values
-cp doc/initial_values.xsd %{buildroot}/opt/data/ckm/initial_values
 mkdir -p %{buildroot}/etc/security/
 mkdir -p %{buildroot}/usr/share/ckm/scripts
 cp data/scripts/*.sql %{buildroot}/usr/share/ckm/scripts
+cp doc/initial_values.xsd %{buildroot}/usr/share/ckm
 mkdir -p %{buildroot}/usr/share/ckm-db-test
 cp tests/testme_ver1.db %{buildroot}/usr/share/ckm-db-test/
 cp tests/testme_ver2.db %{buildroot}/usr/share/ckm-db-test/
@@ -224,7 +224,8 @@ fi
 %{_unitdir}/central-key-manager-api-ocsp.socket
 %{_datadir}/license/%{name}
 %{_datadir}/ckm/scripts/*.sql
-/opt/data/ckm/initial_values/initial_values.xsd
+/opt/data/ckm/initial_values/
+/usr/share/ckm/initial_values.xsd
 %{_datadir}/
 %attr(444, root, root) %{_datadir}/ckm/scripts/*.sql
 /etc/opt/upgrade/230.key-manager-migrate-dkek.patch.sh
