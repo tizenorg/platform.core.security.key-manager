@@ -36,6 +36,7 @@ class Decider {
 public:
     Decider();
     GStore& getStore(const Token &token);
+    GStore& getStore(DataType data, const Policy &policy);
     CryptoBackend chooseCryptoBackend(DataType data, const Policy &policy) const;
 
     virtual ~Decider(){}
