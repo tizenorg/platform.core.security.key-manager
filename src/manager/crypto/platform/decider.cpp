@@ -54,6 +54,10 @@ GStore& Decider::getStore(CryptoBackend cryptoBackend) {
              "Backend not available. BackendId: " << (int)cryptoBackend);
 }
 
+GStore& Decider::getStore(DataType data, const Policy &policy) {
+    return getStore(chooseCryptoBackend(data, policy));
+}
+
 CryptoBackend Decider::chooseCryptoBackend(DataType dataType, const Policy &policy) const {
 // The list of items that MUST be support by OpenSSL
     if (dataType.isCertificate())
