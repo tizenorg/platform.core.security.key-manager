@@ -20,6 +20,7 @@
  */
 #include <exception>
 #include <fstream>
+#include <utility>
 
 #include <openssl/x509_vfy.h>
 #include <openssl/evp.h>
@@ -52,6 +53,39 @@
 namespace {
 typedef std::unique_ptr<EVP_MD_CTX, std::function<void(EVP_MD_CTX*)>> EvpMdCtxUPtr;
 typedef std::unique_ptr<EVP_PKEY_CTX, std::function<void(EVP_PKEY_CTX*)>> EvpPkeyCtxUPtr;
+
+typedef std::unique_ptr<BIO, std::function<void(BIO*)>> BioUniquePtr;
+typedef int(*I2D_CONV)(BIO*, EVP_PKEY*);
+CKM::RawBuffer i2d(I2D_CONV fun, EVP_PKEY* pkey) {
+    BioUniquePtr bio(BIO_new(BIO_s_mem()), BIO_free_all);
+
+    if (NULL == pkey) {
+        LogDebug("You are trying to read empty key!");
+        return CKM::RawBuffer();
+    }
+
+    if (NULL == bio.get()) {
+        LogError("Error in memory allocation! Function: BIO_new.");
+        return CKM::RawBuffer();
+    }
+
+    if (1 != fun(bio.get(), pkey)) {
+        LogError("Error in conversion EVP_PKEY to der");
+        return CKM::RawBuffer();
+    }
+
+    CKM::RawBuffer output(8196);
+
+    int size = BIO_read(bio.get(), output.data(), output.size());
+
+    if (size <= 0) {
+        LogError("Error in BIO_read: " << size);
+        return CKM::RawBuffer();
+    }
+
+    output.resize(size);
+    return output;
+}
 } // anonymous namespace
 
 namespace CKM {
@@ -129,30 +163,16 @@ int getRsaPadding(const RSAPaddingAlgorithm padAlgo) {
     return rsa_padding;
 }
 
-void createKeyPairRSA(const int size, // size in bits [1024, 2048, 4096]
-        KeyImpl &createdPrivateKey,  // returned value
-        KeyImpl &createdPublicKey)  // returned value
+TokenPair createKeyPairRSA(CryptoBackend backendId, const int size)
 {
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY *pparam = NULL;
 
     // check the parameters of functions
-    if(size != 1024 && size !=2048 && size != 4096) {
+    if(size!=1024 && size !=2048 && size != 4096) {
         LogError("Error in RSA input size");
         ThrowMsg(Crypto::Exception::InternalError, "Error in RSA input size");
-    }
-
-    // check the parameters of functions
-    if(&createdPrivateKey == NULL) {
-        LogError("Error in createdPrivateKey value");
-        ThrowMsg(Crypto::Exception::InternalError, "Error in createdPrivateKey value");
-    }
-
-    // check the parameters of functions
-    if(&createdPublicKey == NULL) {
-        LogError("Error in createdPrivateKey value");
-        ThrowMsg(Crypto::Exception::InternalError, "Error in createdPublicKey value");
     }
 
     Try {
@@ -176,39 +196,30 @@ void createKeyPairRSA(const int size, // size in bits [1024, 2048, 4096]
             ThrowMsg(Crypto::Exception::InternalError, "Error in EVP_PKEY_keygen function !!");
         }
     } Catch(Crypto::Exception::InternalError) {
-        if(pkey) {
+        if(pkey)
             EVP_PKEY_free(pkey);
-        }
-
-        if(pparam) {
+        if(pparam)
             EVP_PKEY_free(pparam);
-        }
-
-        if(ctx) {
+        if(ctx)
             EVP_PKEY_CTX_free(ctx);
-        }
-
         ReThrowMsg(Crypto::Exception::InternalError,"Error in opensslError function !!");
     }
 
-    KeyImpl::EvpShPtr ptr(pkey, EVP_PKEY_free); // shared ptr will free pkey
+    TokenPair retval = std::make_pair<Token, Token>(Token(backendId, DataType(KeyType::KEY_RSA_PRIVATE), i2d(i2d_PrivateKey_bio, pkey)),
+                                                    Token(backendId, DataType(KeyType::KEY_RSA_PUBLIC), i2d(i2d_PUBKEY_bio, pkey)));
 
-    createdPrivateKey = KeyImpl(ptr, KeyType::KEY_RSA_PRIVATE);
-    createdPublicKey = KeyImpl(ptr, KeyType::KEY_RSA_PUBLIC);
-
-    if(pparam) {
+    if(pkey)
+        EVP_PKEY_free(pkey);
+    if(pparam)
         EVP_PKEY_free(pparam);
-    }
-
-    if(ctx) {
+    if(ctx)
         EVP_PKEY_CTX_free(ctx);
-    }
+
+    return retval;
 }
 
 
-void createKeyPairDSA(const int size, // size in bits [1024, 2048, 3072, 4096]
-        KeyImpl &createdPrivateKey,  // returned value
-        KeyImpl &createdPublicKey)  // returned value
+TokenPair createKeyPairDSA(CryptoBackend backendId, const int size)
 {
 	EVP_PKEY_CTX *pctx = NULL;
 	EVP_PKEY_CTX *kctx = NULL;
@@ -219,18 +230,6 @@ void createKeyPairDSA(const int size, // size in bits [1024, 2048, 3072, 4096]
 	if(size != 1024 && size !=2048 && size !=3072 && size != 4096) {
 		LogError("Error in DSA input size");
 		ThrowMsg(Exception::InternalError, "Error in DSA input size");
-	}
-
-	// check the parameters of functions
-	if(&createdPrivateKey == NULL) {
-		LogError("Error in createdPrivateKey value");
-		ThrowMsg(Exception::InternalError, "Error in createdPrivateKey value");
-	}
-
-	// check the parameters of functions
-	if(&createdPublicKey == NULL) {
-		LogError("Error in createdPrivateKey value");
-		ThrowMsg(Exception::InternalError, "Error in createdPublicKey value");
 	}
 
 	Try {
@@ -275,46 +274,32 @@ void createKeyPairDSA(const int size, // size in bits [1024, 2048, 3072, 4096]
 	}
 	Catch(Crypto::Exception::InternalError)
 	{
-		if(pkey) {
+		if(pkey)
 			EVP_PKEY_free(pkey);
-		}
-
-		if(pparam) {
+		if(pparam)
 			EVP_PKEY_free(pparam);
-		}
-
-		if(pctx) {
+		if(pctx)
 			EVP_PKEY_CTX_free(pctx);
-		}
-
-		if(kctx) {
+		if(kctx)
 			EVP_PKEY_CTX_free(kctx);
-		}
-
 		ReThrowMsg(Crypto::Exception::InternalError,"Error in openssl function !!");
 	}
 
-	KeyImpl::EvpShPtr ptr(pkey, EVP_PKEY_free); // shared ptr will free pkey
-
-	createdPrivateKey = KeyImpl(ptr, KeyType::KEY_DSA_PRIVATE);
-	createdPublicKey = KeyImpl(ptr, KeyType::KEY_DSA_PUBLIC);
-
-	if(pparam) {
+	TokenPair retval = std::make_pair<Token, Token>(Token(backendId, DataType(KeyType::KEY_DSA_PRIVATE), i2d(i2d_PrivateKey_bio, pkey)),
+                                                    Token(backendId, DataType(KeyType::KEY_DSA_PUBLIC), i2d(i2d_PUBKEY_bio, pkey)));
+    if(pkey)
+        EVP_PKEY_free(pkey);
+	if(pparam)
 		EVP_PKEY_free(pparam);
-	}
-
-	if(pctx) {
+	if(pctx)
 		EVP_PKEY_CTX_free(pctx);
-	}
-
-	if(kctx) {
+	if(kctx)
 		EVP_PKEY_CTX_free(kctx);
-	}
+
+	return retval;
 }
 
-void createKeyPairECDSA(ElipticCurve type,
-        KeyImpl &createdPrivateKey,  // returned value
-        KeyImpl &createdPublicKey)  // returned value
+TokenPair createKeyPairECDSA(CryptoBackend backendId, ElipticCurve type)
 {
     int ecCurve = NOT_DEFINED;
     EVP_PKEY_CTX *pctx = NULL;
@@ -335,18 +320,6 @@ void createKeyPairECDSA(ElipticCurve type,
     default:
         LogError("Error in EC type");
         ThrowMsg(Exception::InternalError, "Error in EC type");
-    }
-
-    // check the parameters of functions
-    if(&createdPrivateKey == NULL) {
-        LogError("Error in createdPrivateKey value");
-        ThrowMsg(Exception::InternalError, "Error in createdPrivateKey value");
-    }
-
-    // check the parameters of functions
-    if(&createdPublicKey == NULL) {
-        LogError("Error in createdPrivateKey value");
-        ThrowMsg(Exception::InternalError, "Error in createdPublicKey value");
     }
 
     Try {
@@ -389,41 +362,28 @@ void createKeyPairECDSA(ElipticCurve type,
             ThrowMsg(Crypto::Exception::InternalError, "Error in EVP_PKEY_keygen function");
         }
     } Catch(Crypto::Exception::InternalError) {
-        if(pkey) {
+        if(pkey)
             EVP_PKEY_free(pkey);
-        }
-
-        if(pparam) {
+        if(pparam)
             EVP_PKEY_free(pparam);
-        }
-
-        if(pctx) {
+        if(pctx)
             EVP_PKEY_CTX_free(pctx);
-        }
-
-        if(kctx) {
+        if(kctx)
             EVP_PKEY_CTX_free(kctx);
-        }
-
         ReThrowMsg(Crypto::Exception::InternalError,"Error in openssl function !!");
     }
 
-    KeyImpl::EvpShPtr ptr(pkey, EVP_PKEY_free); // shared ptr will free pkey
-
-    createdPrivateKey = KeyImpl(ptr, KeyType::KEY_ECDSA_PRIVATE);
-    createdPublicKey = KeyImpl(ptr, KeyType::KEY_ECDSA_PUBLIC);
-
-    if(pparam) {
+    TokenPair retval = std::make_pair<Token, Token>(Token(backendId, DataType(KeyType::KEY_ECDSA_PRIVATE), i2d(i2d_PrivateKey_bio, pkey)),
+                                                    Token(backendId, DataType(KeyType::KEY_ECDSA_PUBLIC), i2d(i2d_PUBKEY_bio, pkey)));
+    if(pkey)
+        EVP_PKEY_free(pkey);
+    if(pparam)
         EVP_PKEY_free(pparam);
-    }
-
-    if(pctx) {
+    if(pctx)
         EVP_PKEY_CTX_free(pctx);
-    }
-
-    if(kctx) {
+    if(kctx)
         EVP_PKEY_CTX_free(kctx);
-    }
+    return retval;
 }
 
 RawBuffer sign(EVP_PKEY *pkey,
