@@ -26,6 +26,7 @@
 #include <ckmc/ckmc-manager.h>
 #include <ckmc/ckmc-error.h>
 #include <ckmc-type-converter.h>
+#include <ckmc-params.h>
 #include <client-common.h>
 #include <iostream>
 #include <string.h>
@@ -115,6 +116,61 @@ ckmc_cert_list_s *_toNewCkmCertList(const CKM::CertificateShPtrVector &certVecto
         }
     }
     return start;
+}
+
+typedef int (CKM::Manager::*cryptoFn)(const CKM::CryptoAlgorithm &algo,
+                                      const CKM::Alias &keyAlias,
+                                      const CKM::Password &password,
+                                      const CKM::RawBuffer& plain,
+                                      CKM::RawBuffer& encrypted);
+
+int _cryptoOperation(cryptoFn operation,
+                     const ckmc_param_list_s *params,
+                     const char *key_alias,
+                     const char *password,
+                     const ckmc_raw_buffer_s in,
+                     ckmc_raw_buffer_s **ppout)
+{
+    if(!params || !key_alias || !ppout)
+        return CKMC_ERROR_INVALID_PARAMETER;
+
+    // params
+    CKM::CryptoAlgorithm ca;
+    while(params && params->param)
+    {
+        const ckmc_param_s* p = params->param;
+        try {
+            if (getParamType(p->name) == BUFFER) {
+                if (!p->buffer || !p->buffer->data || p->buffer->size <= 0)
+                    return CKMC_ERROR_INVALID_PARAMETER;
+                CKM::RawBuffer buffer(p->buffer->data, p->buffer->data + p->buffer->size);
+                ca.addParam(static_cast<CKM::ParamName>(p->name), buffer);
+            }
+            else
+                ca.addParam(static_cast<CKM::ParamName>(p->name), p->integer);
+        } catch(const std::out_of_range&) {
+            // unsupported param name
+            return CKMC_ERROR_INVALID_PARAMETER;
+        }
+        params = params->next;
+    }
+
+    // password
+    CKM::Password pass;
+    if (password)
+        pass = password;
+
+    // buffers
+    CKM::RawBuffer inBuffer(in.data, in.data + in.size);
+    CKM::RawBuffer outBuffer;
+
+    // operation
+    CKM::ManagerShPtr mgr = CKM::Manager::create();
+    int ret = ((*mgr).*operation)(ca, key_alias, pass, inBuffer, outBuffer);
+    if (ret != CKM_API_SUCCESS)
+        return to_ckmc_error(ret);
+
+    return ckmc_buffer_new(outBuffer.data(), outBuffer.size(), ppout);
 }
 
 }
@@ -818,23 +874,31 @@ int ckmc_remove_alias(const char *alias)
 }
 
 KEY_MANAGER_CAPI
-int ckmc_encrypt_data(const ckmc_param_list_s */*params*/,
-                      const char */*key_alias*/,
-                      const char */*password*/,
-                      const ckmc_raw_buffer_s /*decrypted*/,
-                      ckmc_raw_buffer_s **/*ppencrypted*/)
+int ckmc_encrypt_data(const ckmc_param_list_s *params,
+                      const char *key_alias,
+                      const char *password,
+                      const ckmc_raw_buffer_s decrypted,
+                      ckmc_raw_buffer_s **ppencrypted)
 {
-    // TODO implement it
-    return CKMC_ERROR_UNKNOWN;
+    return _cryptoOperation(&CKM::Manager::encrypt,
+                            params,
+                            key_alias,
+                            password,
+                            decrypted,
+                            ppencrypted);
 }
 
 KEY_MANAGER_CAPI
-int ckmc_decrypt_data(const ckmc_param_list_s */*params*/,
-                      const char */*key_alias*/,
-                      const char */*password*/,
-                      const ckmc_raw_buffer_s /* encrypted*/,
-                      ckmc_raw_buffer_s **/*ppdecrypted*/)
+int ckmc_decrypt_data(const ckmc_param_list_s *params,
+                      const char *key_alias,
+                      const char *password,
+                      const ckmc_raw_buffer_s encrypted,
+                      ckmc_raw_buffer_s **ppdecrypted)
 {
-    // TODO implement it
-    return CKMC_ERROR_UNKNOWN;
+    return _cryptoOperation(&CKM::Manager::decrypt,
+                            params,
+                            key_alias,
+                            password,
+                            encrypted,
+                            ppdecrypted);
 }
