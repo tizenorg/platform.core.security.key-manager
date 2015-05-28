@@ -28,47 +28,20 @@
 #include <ckmc/ckmc-type.h>
 #include <ckmc/ckmc-error.h>
 #include <ckmc-type-converter.h>
+#include <ckmc-params.h>
 #include <protocols.h>
 #include <openssl/x509v3.h>
 #include <openssl/pkcs12.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
-#include <map>
 #include <fstream>
+#include <stdexcept>
 
 namespace {
-
-enum ParamType {
-    INTEGER = 0,
-    BUFFER,
-};
 
 const size_t DEFAULT_IV_LEN = 16;
 const size_t DEFAULT_IV_LEN_BITS = 8*DEFAULT_IV_LEN;
 const size_t DEFAULT_KEY_LEN_BITS = 4096;
-
-bool _ckmc_valid_param_type(ParamType type)
-{
-    return (type >= INTEGER && type <= BUFFER);
-}
-
-typedef std::map<ckmc_param_name_e, ParamType> ParamTypeMap;
-
-ParamTypeMap g_paramTypeMap = {
-        { CKMC_PARAM_ALGO_TYPE,     INTEGER },
-
-        { CKMC_PARAM_ED_IV,         BUFFER},
-        { CKMC_PARAM_ED_CTR_LEN,    INTEGER},
-        { CKMC_PARAM_ED_AAD,        BUFFER},
-        { CKMC_PARAM_ED_TAG_LEN,    INTEGER},
-        { CKMC_PARAM_ED_LABEL,      BUFFER},
-
-        { CKMC_PARAM_GEN_KEY_LEN,   INTEGER},
-        { CKMC_PARAM_GEN_EC,        INTEGER},
-
-        { CKMC_PARAM_SV_HASH_ALGO,  INTEGER},
-        { CKMC_PARAM_SV_RSA_PADDING,INTEGER},
-};
 
 void _ckmc_free_buffer_param(ckmc_param_s *param)
 {
@@ -696,11 +669,14 @@ int ckmc_param_list_add_integer(ckmc_param_list_s *previous,
                                 ckmc_param_name_e name,
                                 uint64_t value)
 {
-    auto it = g_paramTypeMap.find(name);
-    if(it == g_paramTypeMap.end() || it->second != INTEGER)
+    try {
+        ParamType type = getParamType(name);
+        if (type != INTEGER)
+            return CKMC_ERROR_INVALID_PARAMETER;
+        return _ckmc_add_param(previous, name, value);
+    } catch (const std::out_of_range&) {
         return CKMC_ERROR_INVALID_PARAMETER;
-
-    return _ckmc_add_param(previous, name, value);
+    }
 }
 
 KEY_MANAGER_CAPI
@@ -708,11 +684,14 @@ int ckmc_param_list_add_buffer(ckmc_param_list_s *previous,
                                ckmc_param_name_e name,
                                ckmc_raw_buffer_s *buffer)
 {
-    auto it = g_paramTypeMap.find(name);
-    if(it == g_paramTypeMap.end() || it->second != BUFFER)
+    try {
+        ParamType type = getParamType(name);
+        if (type != BUFFER)
+            return CKMC_ERROR_INVALID_PARAMETER;
+        return _ckmc_add_param(previous, name, buffer);
+    } catch (const std::out_of_range&) {
         return CKMC_ERROR_INVALID_PARAMETER;
-
-    return _ckmc_add_param(previous, name, buffer);
+    }
 }
 
 KEY_MANAGER_CAPI
@@ -725,12 +704,14 @@ void ckmc_param_list_free(ckmc_param_list_s *first)
         if(!current->param)
             continue;
 
-        // free the param
-        auto it = g_paramTypeMap.find(current->param->name);
+        try {
+            ParamType type = getParamType(current->param->name);
 
-        if(it == g_paramTypeMap.end() || !_ckmc_valid_param_type(it->second))
-            return; // Something went terribly wrong. Better memleak than segfault.
-        g_freeParam[it->second](current->param);
+            // free the param
+            g_freeParam[type](current->param);
+        } catch (const std::out_of_range&) {
+            // Ignore unsupported param name. Better memleak than segfault.
+        }
     }
 }
 
