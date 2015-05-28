@@ -165,13 +165,16 @@ public:
             const AliasVector& trustedCertificates,
             bool useSystemTrustedCertificates);
 
-    void createSignature(
-            const ObserverPtr& observer,
-            const Alias& privateKeyAlias,
-            const Password& password,           // password for private_key
-            const RawBuffer& message,
-            const HashAlgorithm hash,
-            const RSAPaddingAlgorithm padding);
+    // deprecated
+//    void createSignature(
+//            const ObserverPtr& observer,
+//            const Alias& privateKeyAlias,
+//            const Password& password,           // password for private_key
+//            const RawBuffer& message,
+//            const HashAlgorithm hash,
+//            const RSAPaddingAlgorithm padding);
+
+    // deprecated
     void verifySignature(
             const ObserverPtr& observer,
             const Alias& publicKeyOrCertAlias,
@@ -180,6 +183,13 @@ public:
             const RawBuffer& signature,
             const HashAlgorithm hash,
             const RSAPaddingAlgorithm padding);
+
+    void createSignature(
+            const ObserverPtr& observer,
+            const Alias& privateKeyAlias,
+            const Password& password,           // password for private_key
+            const RawBuffer& message,
+            const CryptoAlgorithm &cAlgorithm);
 
     // This function will check all certificates in chain except Root CA.
     // This function will delegate task to service. You may use this even

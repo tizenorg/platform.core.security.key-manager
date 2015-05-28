@@ -28,10 +28,10 @@
 
 namespace CKM {
 
-class ManagerImpl : public Manager {
+class Manager::Impl {
 public:
-    ManagerImpl();
-    virtual ~ManagerImpl(){}
+    Impl();
+    virtual ~Impl(){}
 
     int saveKey(const Alias &alias, const KeyShPtr &key, const Policy &policy);
     int getKey(const Alias &alias, const Password &password, KeyShPtr &key);
@@ -95,6 +95,7 @@ public:
         bool useTrustedSystemCertificates,
         CertificateShPtrVector &certificateChainVector);
 
+    // Deprecated
     int createSignature(
         const Alias &privateKeyAlias,
         const Password &password,           // password for private_key
@@ -103,6 +104,7 @@ public:
         const RSAPaddingAlgorithm padding,
         RawBuffer &signature);
 
+    // Deprecated
     int verifySignature(
         const Alias &publicKeyOrCertAlias,
         const Password &password,           // password for public_key (optional)
@@ -110,6 +112,20 @@ public:
         const RawBuffer &signature,
         const HashAlgorithm hash,
         const RSAPaddingAlgorithm padding);
+
+    int createSignature(
+        const Alias &privateKeyAlias,
+        const Password &password,           // password for private_key
+        const RawBuffer &message,
+        const CryptoAlgorithm &cAlgorithm,
+        RawBuffer &signature);
+
+    int verifySignature(
+        const Alias &publicKeyOrCertAlias,
+        const Password &password,           // password for public_key (optional)
+        const RawBuffer &message,
+        const RawBuffer &signature,
+        const CryptoAlgorithm &cAlgorithm);
 
     int ocspCheck(const CertificateShPtrVector &certificateChain, int &ocspCheck);
 

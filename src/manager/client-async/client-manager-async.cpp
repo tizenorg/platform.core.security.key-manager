@@ -223,14 +223,26 @@ void ManagerAsync::getCertificateChain(const ObserverPtr& observer,
                          useSystemTrustedCertificates);
 }
 
+//void ManagerAsync::createSignature(const ObserverPtr& observer,
+//                                   const Alias& privateKeyAlias,
+//                                   const Password& password,
+//                                   const RawBuffer& message,
+//                                   const HashAlgorithm hash,
+//                                   const RSAPaddingAlgorithm padding)
+//{
+//    CryptoAlgorithm cAlgorithm;
+//    cAlgorithm.addParam(ParamName::SV_HASH_ALGO, hash);
+//    cAlgorithm.addParam(ParamName::SV_RSA_PADDING, padding);
+//    m_impl->createSignature(observer, privateKeyAlias, password, message, cAlgorithm);
+//}
+
 void ManagerAsync::createSignature(const ObserverPtr& observer,
                                    const Alias& privateKeyAlias,
                                    const Password& password,
                                    const RawBuffer& message,
-                                   const HashAlgorithm hash,
-                                   const RSAPaddingAlgorithm padding)
+                                   const CryptoAlgorithm &cAlgorithm)
 {
-    m_impl->createSignature(observer, privateKeyAlias, password, message, hash, padding);
+    m_impl->createSignature(observer, privateKeyAlias, password, message, cAlgorithm);
 }
 
 void ManagerAsync::verifySignature(const ObserverPtr& observer,

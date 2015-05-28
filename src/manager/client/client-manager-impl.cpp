@@ -86,7 +86,7 @@ int getCertChain(
 
 } // namespace anonymous
 
-ManagerImpl::ManagerImpl()
+Manager::Impl::Impl()
   : m_counter(0),
     m_storageConnection(SERVICE_SOCKET_CKM_STORAGE),
     m_ocspConnection(SERVICE_SOCKET_OCSP),
@@ -96,7 +96,7 @@ ManagerImpl::ManagerImpl()
 }
 
 
-int ManagerImpl::saveBinaryData(
+int Manager::Impl::saveBinaryData(
     const Alias &alias,
     DataType dataType,
     const RawBuffer &rawData,
@@ -134,7 +134,7 @@ int ManagerImpl::saveBinaryData(
     });
 }
 
-int ManagerImpl::saveKey(const Alias &alias, const KeyShPtr &key, const Policy &policy) {
+int Manager::Impl::saveKey(const Alias &alias, const KeyShPtr &key, const Policy &policy) {
     if (key.get() == NULL)
         return CKM_API_ERROR_INPUT_PARAM;
     Try {
@@ -145,7 +145,7 @@ int ManagerImpl::saveKey(const Alias &alias, const KeyShPtr &key, const Policy &
     return CKM_API_ERROR_INPUT_PARAM;
 }
 
-int ManagerImpl::saveCertificate(
+int Manager::Impl::saveCertificate(
     const Alias &alias,
     const CertificateShPtr &cert,
     const Policy &policy)
@@ -155,14 +155,14 @@ int ManagerImpl::saveCertificate(
     return saveBinaryData(alias, DataType::CERTIFICATE, cert->getDER(), policy);
 }
 
-int ManagerImpl::saveData(const Alias &alias, const RawBuffer &rawData, const Policy &policy) {
+int Manager::Impl::saveData(const Alias &alias, const RawBuffer &rawData, const Policy &policy) {
     if (!policy.extractable)
         return CKM_API_ERROR_INPUT_PARAM;
     return saveBinaryData(alias, DataType::BINARY_DATA, rawData, policy);
 }
 
 
-int ManagerImpl::savePKCS12(
+int Manager::Impl::savePKCS12(
     const Alias & alias,
     const PKCS12ShPtr &pkcs,
     const Policy &keyPolicy,
@@ -199,12 +199,12 @@ int ManagerImpl::savePKCS12(
     });
 }
 
-int ManagerImpl::getPKCS12(const Alias &alias, PKCS12ShPtr &pkcs)
+int Manager::Impl::getPKCS12(const Alias &alias, PKCS12ShPtr &pkcs)
 {
     return getPKCS12(alias, Password(), Password(), pkcs);
 }
 
-int ManagerImpl::getPKCS12(const Alias &alias, const Password &keyPass, const Password &certPass, PKCS12ShPtr &pkcs)
+int Manager::Impl::getPKCS12(const Alias &alias, const Password &keyPass, const Password &certPass, PKCS12ShPtr &pkcs)
 {
     if (alias.empty())
         return CKM_API_ERROR_INPUT_PARAM;
@@ -240,7 +240,7 @@ int ManagerImpl::getPKCS12(const Alias &alias, const Password &keyPass, const Pa
 }
 
 
-int ManagerImpl::removeAlias(const Alias &alias)
+int Manager::Impl::removeAlias(const Alias &alias)
 {
     if (alias.empty())
         return CKM_API_ERROR_INPUT_PARAM;
@@ -270,7 +270,7 @@ int ManagerImpl::removeAlias(const Alias &alias)
     });
 }
 
-int ManagerImpl::getBinaryData(
+int Manager::Impl::getBinaryData(
     const Alias &alias,
     DataType sendDataType,
     const Password &password,
@@ -309,7 +309,7 @@ int ManagerImpl::getBinaryData(
     });
 }
 
-int ManagerImpl::getKey(const Alias &alias, const Password &password, KeyShPtr &key) {
+int Manager::Impl::getKey(const Alias &alias, const Password &password, KeyShPtr &key) {
     DataType recvDataType;
     RawBuffer rawData;
 
@@ -339,7 +339,7 @@ int ManagerImpl::getKey(const Alias &alias, const Password &password, KeyShPtr &
     return CKM_API_SUCCESS;
 }
 
-int ManagerImpl::getCertificate(const Alias &alias, const Password &password, CertificateShPtr &cert)
+int Manager::Impl::getCertificate(const Alias &alias, const Password &password, CertificateShPtr &cert)
 {
     DataType recvDataType;
     RawBuffer rawData;
@@ -367,7 +367,7 @@ int ManagerImpl::getCertificate(const Alias &alias, const Password &password, Ce
     return CKM_API_SUCCESS;
 }
 
-int ManagerImpl::getData(const Alias &alias, const Password &password, RawBuffer &rawData)
+int Manager::Impl::getData(const Alias &alias, const Password &password, RawBuffer &rawData)
 {
     DataType recvDataType = DataType::BINARY_DATA;
 
@@ -387,7 +387,7 @@ int ManagerImpl::getData(const Alias &alias, const Password &password, RawBuffer
     return CKM_API_SUCCESS;
 }
 
-int ManagerImpl::getBinaryDataAliasVector(DataType dataType, AliasVector &aliasVector)
+int Manager::Impl::getBinaryDataAliasVector(DataType dataType, AliasVector &aliasVector)
 {
     int my_counter = ++m_counter;
 
@@ -417,21 +417,21 @@ int ManagerImpl::getBinaryDataAliasVector(DataType dataType, AliasVector &aliasV
     });
 }
 
-int ManagerImpl::getKeyAliasVector(AliasVector &aliasVector) {
+int Manager::Impl::getKeyAliasVector(AliasVector &aliasVector) {
     // in fact datatype has no meaning here - if not certificate or binary data
     // then manager decides to list all between DB_KEY_FIRST and DB_KEY_LAST
     return getBinaryDataAliasVector(DataType::DB_KEY_LAST, aliasVector);
 }
 
-int ManagerImpl::getCertificateAliasVector(AliasVector &aliasVector) {
+int Manager::Impl::getCertificateAliasVector(AliasVector &aliasVector) {
     return getBinaryDataAliasVector(DataType::CERTIFICATE, aliasVector);
 }
 
-int ManagerImpl::getDataAliasVector(AliasVector &aliasVector) {
+int Manager::Impl::getDataAliasVector(AliasVector &aliasVector) {
     return getBinaryDataAliasVector(DataType::BINARY_DATA, aliasVector);
 }
 
-int ManagerImpl::createKeyPairRSA(
+int Manager::Impl::createKeyPairRSA(
     const int size,
     const Alias &privateKeyAlias,
     const Alias &publicKeyAlias,
@@ -441,7 +441,7 @@ int ManagerImpl::createKeyPairRSA(
     return this->createKeyPair(CKM::KeyType::KEY_RSA_PUBLIC, size, privateKeyAlias, publicKeyAlias, policyPrivateKey, policyPublicKey);
 }
 
-int ManagerImpl::createKeyPairDSA(
+int Manager::Impl::createKeyPairDSA(
     const int size,
     const Alias &privateKeyAlias,
     const Alias &publicKeyAlias,
@@ -451,7 +451,7 @@ int ManagerImpl::createKeyPairDSA(
     return this->createKeyPair(CKM::KeyType::KEY_DSA_PUBLIC, size, privateKeyAlias, publicKeyAlias, policyPrivateKey, policyPublicKey);
 }
 
-int ManagerImpl::createKeyPairECDSA(
+int Manager::Impl::createKeyPairECDSA(
     ElipticCurve type,
     const Alias &privateKeyAlias,
     const Alias &publicKeyAlias,
@@ -461,7 +461,7 @@ int ManagerImpl::createKeyPairECDSA(
     return this->createKeyPair(CKM::KeyType::KEY_ECDSA_PUBLIC, static_cast<int>(type), privateKeyAlias, publicKeyAlias, policyPrivateKey, policyPublicKey);
 }
 
-int ManagerImpl::createKeyAES(
+int Manager::Impl::createKeyAES(
     const int size,
     const Alias &keyAlias,
     const Policy &policyKey)
@@ -496,7 +496,7 @@ int ManagerImpl::createKeyAES(
 }
 
 
-int ManagerImpl::createKeyPair(
+int Manager::Impl::createKeyPair(
     const KeyType key_type,
     const int     additional_param,
     const Alias  &privateKeyAlias,
@@ -563,7 +563,7 @@ int ManagerImpl::createKeyPair(
     });
 }
 
-int ManagerImpl::getCertificateChain(
+int Manager::Impl::getCertificateChain(
     const CertificateShPtr &certificate,
     const CertificateShPtrVector &untrustedCertificates,
     const CertificateShPtrVector &trustedCertificates,
@@ -594,7 +594,7 @@ int ManagerImpl::getCertificateChain(
             certificateChainVector);
 }
 
-int ManagerImpl::getCertificateChain(
+int Manager::Impl::getCertificateChain(
     const CertificateShPtr &certificate,
     const AliasVector &untrustedCertificates,
     const AliasVector &trustedCertificates,
@@ -627,12 +627,11 @@ int ManagerImpl::getCertificateChain(
             certificateChainVector);
 }
 
-int ManagerImpl::createSignature(
+int Manager::Impl::createSignature(
     const Alias &privateKeyAlias,
     const Password &password,           // password for private_key
     const RawBuffer &message,
-    const HashAlgorithm hash,
-    const RSAPaddingAlgorithm padding,
+    const CryptoAlgorithm &cAlgorithm,
     RawBuffer &signature)
 {
     int my_counter = ++m_counter;
@@ -647,8 +646,7 @@ int ManagerImpl::createSignature(
                                              helper.getLabel(),
                                              password,
                                              message,
-                                             static_cast<int>(hash),
-                                             static_cast<int>(padding));
+                                             CryptoAlgorithmSerializable(cAlgorithm));
 
         int retCode = m_storageConnection.processRequest(send.Pop(), recv);
         if (CKM_API_SUCCESS != retCode)
@@ -668,7 +666,7 @@ int ManagerImpl::createSignature(
     });
 }
 
-int ManagerImpl::verifySignature(
+int Manager::Impl::verifySignature(
     const Alias &publicKeyOrCertAlias,
     const Password &password,           // password for public_key (optional)
     const RawBuffer &message,
@@ -709,7 +707,7 @@ int ManagerImpl::verifySignature(
     });
 }
 
-int ManagerImpl::ocspCheck(const CertificateShPtrVector &certChain, int &ocspStatus)
+int Manager::Impl::ocspCheck(const CertificateShPtrVector &certChain, int &ocspStatus)
 {
     return try_catch([&] {
         int my_counter = ++m_counter;
@@ -741,7 +739,7 @@ int ManagerImpl::ocspCheck(const CertificateShPtrVector &certChain, int &ocspSta
     });
 }
 
-int ManagerImpl::setPermission(const Alias &alias,
+int Manager::Impl::setPermission(const Alias &alias,
                                const Label &accessor,
                                PermissionMask permissionMask)
 {
@@ -773,7 +771,7 @@ int ManagerImpl::setPermission(const Alias &alias,
     });
 }
 
-int ManagerImpl::crypt(EncryptionCommand command,
+int Manager::Impl::crypt(EncryptionCommand command,
           const CryptoAlgorithm &algo,
           const Alias &keyAlias,
           const Password &password,
@@ -810,7 +808,7 @@ int ManagerImpl::crypt(EncryptionCommand command,
     });
 }
 
-int ManagerImpl::encrypt(const CryptoAlgorithm &algo,
+int Manager::Impl::encrypt(const CryptoAlgorithm &algo,
             const Alias &keyAlias,
             const Password &password,
             const RawBuffer& plain,
@@ -819,7 +817,7 @@ int ManagerImpl::encrypt(const CryptoAlgorithm &algo,
     return crypt(EncryptionCommand::ENCRYPT, algo, keyAlias, password, plain, encrypted);
 }
 
-int ManagerImpl::decrypt(const CryptoAlgorithm &algo,
+int Manager::Impl::decrypt(const CryptoAlgorithm &algo,
                          const Alias &keyAlias,
                          const Password &password,
                          const RawBuffer& encrypted,
@@ -828,13 +826,37 @@ int ManagerImpl::decrypt(const CryptoAlgorithm &algo,
     return crypt(EncryptionCommand::DECRYPT, algo, keyAlias, password, encrypted, decrypted);
 }
 
+// Deprecated
+int Manager::Impl::createSignature(
+    const Alias &privateKeyAlias,
+    const Password &password,           // password for private_key
+    const RawBuffer &message,
+    const HashAlgorithm hash,
+    const RSAPaddingAlgorithm padding,
+    RawBuffer &signature)
+{
+    CryptoAlgorithm cAlgorithm;
+    cAlgorithm.setParam(ParamName::SV_HASH_ALGO, hash);
+    cAlgorithm.setParam(ParamName::SV_RSA_PADDING, padding);
+    return createSignature(privateKeyAlias, password, message, cAlgorithm, signature);
+}
+
+// Deprecated
+//int verifySignature(
+//        const Alias &publicKeyOrCertAlias,
+//        const Password &password,           // password for public_key (optional)
+//        const RawBuffer &message,
+//        const RawBuffer &signature,
+//        const HashAlgorithm hash,
+//        const RSAPaddingAlgorithm padding) = 0;
+
 ManagerShPtr Manager::create() {
     try {
-        return std::make_shared<ManagerImpl>();
+        return std::make_shared<Manager>();
     } catch (const std::bad_alloc &) {
-        LogDebug("Bad alloc was caught during ManagerImpl creation.");
+        LogDebug("Bad alloc was caught during Manager::Impl creation.");
     } catch (...) {
-        LogError("Critical error: Unknown exception was caught during ManagerImpl creation!");
+        LogError("Critical error: Unknown exception was caught during Manager::Impl creation!");
     }
     return ManagerShPtr();
 }

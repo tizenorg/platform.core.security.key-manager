@@ -187,8 +187,7 @@ void ManagerAsync::Impl::createSignature(const ObserverPtr& observer,
                                          const Alias& privateKeyAlias,
                                          const Password& password,
                                          const RawBuffer& message,
-                                         const HashAlgorithm hash,
-                                         const RSAPaddingAlgorithm padding)
+                                         const CryptoAlgorithm &cAlgorithm)
 {
     observerCheck(observer);
     if (privateKeyAlias.empty() || message.empty()) {
@@ -204,8 +203,7 @@ void ManagerAsync::Impl::createSignature(const ObserverPtr& observer,
                       helper.getLabel(),
                       password,
                       message,
-                      static_cast<int>(hash),
-                      static_cast<int>(padding));
+                      CryptoAlgorithmSerializable(cAlgorithm));
     }, [&observer](int error) {observer->ReceivedError(error);});
 }
 

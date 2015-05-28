@@ -392,12 +392,12 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer, b
         {
             Password password;        // password for private_key
             RawBuffer message;
-            int padding = 0, hash = 0;
-            buffer.Deserialize(name, label, password, message, hash, padding);
 
             if (!allowed)
                 return disallowed(command, msgID, RawBuffer());
 
+            CryptoAlgorithmSerializable cAlgorithm;
+            buffer.Deserialize(name, label, password, message, cAlgorithm);
             return m_logic->createSignature(
                   cred,
                   msgID,
@@ -405,8 +405,7 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer, b
                   label,
                   password,           // password for private_key
                   message,
-                  static_cast<HashAlgorithm>(hash),
-                  static_cast<RSAPaddingAlgorithm>(padding));
+                  cAlgorithm);
         }
         case LogicCommand::VERIFY_SIGNATURE:
         {
