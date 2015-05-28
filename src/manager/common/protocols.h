@@ -39,6 +39,7 @@ COMMON_API extern char const * const SERVICE_SOCKET_ECHO;
 COMMON_API extern char const * const SERVICE_SOCKET_CKM_CONTROL;
 COMMON_API extern char const * const SERVICE_SOCKET_CKM_STORAGE;
 COMMON_API extern char const * const SERVICE_SOCKET_OCSP;
+COMMON_API extern char const * const SERVICE_SOCKET_ENCRYPTION;
 
 enum class ControlCommand : int {
     UNLOCK_USER_KEY,
@@ -66,7 +67,9 @@ enum class LogicCommand : int {
     CREATE_KEY_PAIR_DSA,
     SET_PERMISSION,
     SAVE_PKCS12,
-    GET_PKCS12
+    GET_PKCS12,
+    ENCRYPT,
+    DECRYPT
     // for backward compatibility append new at the end
 };
 
