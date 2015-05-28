@@ -109,6 +109,7 @@ public:
         bool useTrustedSystemCertificates,
         CertificateShPtrVector &certificateChainVector) = 0;
 
+    // Deprecated
     virtual int createSignature(
         const Alias &privateKeyAlias,
         const Password &password,           // password for private_key
@@ -117,6 +118,7 @@ public:
         const RSAPaddingAlgorithm padding,
         RawBuffer &signature) = 0;
 
+    // Deprecated
     virtual int verifySignature(
         const Alias &publicKeyOrCertAlias,
         const Password &password,           // password for public_key (optional)
@@ -132,6 +134,19 @@ public:
 
     virtual int setPermission(const Alias &alias, const Label &accessor, PermissionMask permissionMask) = 0;
 
+    virtual int createSignature(
+        const Alias &privateKeyAlias,
+        const Password &password,           // password for private_key
+        const RawBuffer &message,
+        const CryptoAlgorithm &cAlgorithm,
+        RawBuffer &signature) = 0;
+
+//    virtual int verifySignature(
+//        const Alias &publicKeyOrCertAlias,
+//        const Password &password,           // password for public_key (optional)
+//        const RawBuffer &message,
+//        const RawBuffer &signature,
+//        const CryptoAlgorithm &cAlgorithm) = 0;
 
     static ManagerShPtr create();
 //    static ManagerShPtr getManager(int uid); // TODO

@@ -579,8 +579,7 @@ int ManagerImpl::createSignature(
     const Alias &privateKeyAlias,
     const Password &password,           // password for private_key
     const RawBuffer &message,
-    const HashAlgorithm hash,
-    const RSAPaddingAlgorithm padding,
+    const CryptoAlgorithm &cAlgorithm,
     RawBuffer &signature)
 {
     int my_counter = ++m_counter;
@@ -595,8 +594,7 @@ int ManagerImpl::createSignature(
                                              helper.getLabel(),
                                              password,
                                              message,
-                                             static_cast<int>(hash),
-                                             static_cast<int>(padding));
+                                             CryptoAlgorithmSerializable(cAlgorithm));
 
         int retCode = m_storageConnection.processRequest(send.Pop(), recv);
         if (CKM_API_SUCCESS != retCode)
@@ -716,6 +714,30 @@ int ManagerImpl::setPermission(const Alias &alias,
         return retCode;
     });
 }
+
+// Deprecated
+int ManagerImpl::createSignature(
+    const Alias &privateKeyAlias,
+    const Password &password,           // password for private_key
+    const RawBuffer &message,
+    const HashAlgorithm hash,
+    const RSAPaddingAlgorithm padding,
+    RawBuffer &signature)
+{
+    CryptoAlgorithm cAlgorithm;
+    cAlgorithm.addParam(ParamName::SV_HASH_ALGO, hash);
+    cAlgorithm.addParam(ParamName::SV_RSA_PADDING, padding);
+    return createSignature(privateKeyAlias, password, message, cAlgorithm, signature);
+}
+
+// Deprecated
+//int verifySignature(
+//        const Alias &publicKeyOrCertAlias,
+//        const Password &password,           // password for public_key (optional)
+//        const RawBuffer &message,
+//        const RawBuffer &signature,
+//        const HashAlgorithm hash,
+//        const RSAPaddingAlgorithm padding) = 0;
 
 ManagerShPtr Manager::create() {
     try {

@@ -1481,14 +1481,13 @@ RawBuffer CKMLogic::createSignature(
         const Label & ownerLabel,
         const Password &password,           // password for private_key
         const RawBuffer &message,
-        const HashAlgorithm hash,
-        const RSAPaddingAlgorithm padding)
+        const CryptoAlgorithm &cryptoAlg)
 {
     DB::Row row;
     RawBuffer signature;
-    CryptoAlgorithm cryptoAlg;
-    cryptoAlg.addParam(ParamName::SV_HASH_ALGO, hash);
-    cryptoAlg.addParam(ParamName::SV_RSA_PADDING, padding);
+//    CryptoAlgorithm cryptoAlg;
+//    cryptoAlg.addParam(ParamName::SV_HASH_ALGO, hash);
+//    cryptoAlg.addParam(ParamName::SV_RSA_PADDING, padding);
 
     int retCode = CKM_API_SUCCESS;
 

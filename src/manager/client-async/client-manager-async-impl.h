@@ -65,8 +65,7 @@ public:
             const Alias& privateKeyAlias,
             const Password& password,
             const RawBuffer& message,
-            const HashAlgorithm hash,
-            const RSAPaddingAlgorithm padding);
+            const CryptoAlgorithm& cAlgorithm);
     void verifySignature(
             const ObserverPtr& observer,
             const Alias& publicKeyOrCertAlias,
