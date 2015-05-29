@@ -153,6 +153,13 @@ protected:
         const Policy &policyPrivateKey,
         const Policy &policyPublicKey);
 
+    int crypt(const CryptoAlgorithm &algo,
+              const Alias &keyAlias,
+              const Password &password,
+              const RawBuffer& input,
+              RawBuffer& output,
+              EncryptionCommand command);
+
     int m_counter;
     CKM::ServiceConnection m_storageConnection;
     CKM::ServiceConnection m_ocspConnection;
