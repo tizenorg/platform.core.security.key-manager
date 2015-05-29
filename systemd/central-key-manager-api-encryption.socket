@@ -1,7 +1,7 @@
 [Socket]
-ListenStream=/tmp/.central-key-manager-api-encryption.sock
+ListenStream=/tmp/.central-key-manager-api-storage.sock
 SocketMode=0777
-SmackLabelIPIn=key-manager::api-encryption
+SmackLabelIPIn=key-manager::api-storage
 SmackLabelIPOut=@
 
 Service=central-key-manager.service
