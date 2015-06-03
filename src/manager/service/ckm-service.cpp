@@ -350,6 +350,24 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
                 accessorLabel,
                 permissionMask);
         }
+        case LogicCommand::CREATE_KEY_AES:
+        {
+            int size = 0;
+            Name keyName;
+            Label keyLabel;
+            PolicySerializable policyKey;
+            buffer.Deserialize(size,
+                               policyKey,
+                               keyName,
+                               keyLabel);
+            return m_logic->createKeyAES(
+                cred,
+                msgID,
+                size,
+                keyName,
+                keyLabel,
+                policyKey);
+        }
         default:
             Throw(Exception::BrokenProtocol);
     }
