@@ -67,7 +67,8 @@ enum class LogicCommand : int {
     CREATE_KEY_PAIR_DSA,
     SET_PERMISSION,
     SAVE_PKCS12,
-    GET_PKCS12
+    GET_PKCS12,
+    CREATE_KEY_AES
     // for backward compatibility append new at the end
 };
 

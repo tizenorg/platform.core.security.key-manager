@@ -206,7 +206,7 @@ TokenPair createKeyPairDSA(CryptoBackend backendId, const int size)
     // check the parameters of functions
     if(size!=1024 && size!=2048 && size!=3072 && size!=4096) {
         LogError("Error in DSA input size");
-        ThrowMsg(Exception::InputParam, "Error in DSA input size");
+        ThrowMsg(Crypto::Exception::InputParam, "Error in DSA input size");
     }
 
     /* Create the context for generating the parameters */
@@ -276,7 +276,7 @@ TokenPair createKeyPairECDSA(CryptoBackend backendId, ElipticCurve type)
         break;
     default:
         LogError("Error in EC type");
-        ThrowMsg(Exception::InputParam, "Error in EC type");
+        ThrowMsg(Crypto::Exception::InputParam, "Error in EC type");
     }
 
     /* Create the context for generating the parameters */
@@ -326,6 +326,23 @@ TokenPair createKeyPairECDSA(CryptoBackend backendId, ElipticCurve type)
 
     return std::make_pair<Token, Token>(Token(backendId, DataType(KeyType::KEY_ECDSA_PRIVATE), i2d(i2d_PrivateKey_bio, pkey.get())),
                                         Token(backendId, DataType(KeyType::KEY_ECDSA_PUBLIC), i2d(i2d_PUBKEY_bio, pkey.get())));
+}
+
+Token createKeyAES(CryptoBackend backendId, const int size)
+{
+    // check the parameters of functions
+    if(size!=128 && size!=192 && size!=256) {
+        LogError("Error in AES input size");
+        ThrowMsg(Crypto::Exception::InputParam, "Error in AES input size");
+    }
+
+    uint8_t key[256];
+    if (!RAND_bytes(key, size)) {
+        LogError("Error in AES key generation");
+        ThrowMsg(Crypto::Exception::InternalError, "Error in AES key generation");
+    }
+
+    return Token(backendId, DataType(KeyType::KEY_AES), CKM::RawBuffer(key, key+size));
 }
 
 RawBuffer sign(EVP_PKEY *pkey,

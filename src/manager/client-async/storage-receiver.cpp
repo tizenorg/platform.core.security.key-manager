@@ -93,6 +93,9 @@ void StorageReceiver::parseResponse()
     case LogicCommand::SET_PERMISSION:
         parseRetCode(&ManagerAsync::Observer::ReceivedSetPermission);
         break;
+    case LogicCommand::CREATE_KEY_AES:
+        parseRetCode(&ManagerAsync::Observer::ReceivedCreateKeyAES);
+        break;
 
     default:
         LogError("Unknown command id: " << command);
