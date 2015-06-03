@@ -342,6 +342,24 @@ int CryptoService::createKeyPairECDSA(ElipticCurve type,
     return CKM_CRYPTO_CREATEKEY_SUCCESS;
 }
 
+int CryptoService::createKeyAES(const int size, KeyAESImpl &createdKey)
+{
+    // check the parameters of functions
+    if(&createdKey == NULL) {
+        LogError("Error in createdKey value");
+        ThrowMsg(CryptoService::Exception::Crypto_internal, "Error in createdKey value");
+    }
+
+    uint8_t key[size];
+    if (!RAND_bytes(key, size)) {
+        LogError("Error in AES key generation");
+        ThrowMsg(CryptoService::Exception::Crypto_internal, "Error in AES key generation");
+    }
+
+    createdKey = KeyAESImpl(CKM::RawBuffer(key, key+size));
+    return CKM_CRYPTO_CREATEKEY_SUCCESS;
+}
+
 } // namespace SW
 } // namespace Crypto
 } // namespace CKM
