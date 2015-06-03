@@ -85,6 +85,8 @@ public:
     bool operator==(const DataType &second) const;
 
     bool isKey() const;
+    bool isAKey() const;
+    bool isSKey() const;
     bool isChainCert() const;
     bool isKeyPrivate() const;
     bool isKeyPublic() const;
