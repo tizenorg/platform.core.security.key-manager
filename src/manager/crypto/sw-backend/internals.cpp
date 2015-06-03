@@ -328,6 +328,23 @@ TokenPair createKeyPairECDSA(CryptoBackend backendId, ElipticCurve type)
                                         Token(backendId, DataType(KeyType::KEY_ECDSA_PUBLIC), i2d(i2d_PUBKEY_bio, pkey.get())));
 }
 
+Token createKeyAES(CryptoBackend backendId, const int size)
+{
+    // check the parameters of functions
+    if(size!=128 && size!=192 && size!=256) {
+        LogError("Error in AES input size");
+        ThrowMsg(Exception::InputParam, "Error in AES input size");
+    }
+
+    uint8_t key[size];
+    if (!RAND_bytes(key, size)) {
+        LogError("Error in AES key generation");
+        ThrowMsg(Crypto::Exception::InternalError, "Error in AES key generation");
+    }
+
+    return Token(backendId, DataType(KeyType::KEY_AES), CKM::RawBuffer(key, key+size));
+}
+
 RawBuffer sign(EVP_PKEY *pkey,
     const CryptoAlgorithm &alg,
     const RawBuffer &message)
