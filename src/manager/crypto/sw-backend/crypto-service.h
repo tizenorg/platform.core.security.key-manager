@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <key-impl.h>
+#include <key-aes-impl.h>
 #include <certificate-impl.h>
 #include <ckm/ckm-type.h>
 #include <vector>
@@ -57,6 +58,9 @@ public:
     static int createKeyPairECDSA(ElipticCurve type1,
                         KeyImpl &createdPrivateKey,  // returned value
                         KeyImpl &createdPublicKey);  // returned value
+
+    static int createKeyAES(const int size,
+                        KeyAESImpl &createdKey);     // returned value
 
 private:
 
