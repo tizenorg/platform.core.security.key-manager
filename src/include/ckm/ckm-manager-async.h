@@ -64,6 +64,7 @@ public:
         virtual void ReceivedCertificateAliasVector(AliasVector &&) {}
         virtual void ReceivedDataAliasVector(AliasVector &&) {}
 
+        virtual void ReceivedCreateKeyAES() {}
         virtual void ReceivedCreateKeyPair() {}
 
         virtual void ReceivedGetCertificateChain(CertificateShPtrVector &&) {}
