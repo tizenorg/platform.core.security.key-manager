@@ -1178,20 +1178,20 @@ int CKMLogic::createKeyPairHelper(
     {
         case KeyType::KEY_RSA_PUBLIC:
         case KeyType::KEY_RSA_PRIVATE:
-            keyGenAlgorithm.addParam(ParamName::ALGO_TYPE, AlgoType::RSA_GEN);
-            keyGenAlgorithm.addParam(ParamName::GEN_KEY_LEN, additional_param);
+            keyGenAlgorithm.setParam(ParamName::ALGO_TYPE, AlgoType::RSA_GEN);
+            keyGenAlgorithm.setParam(ParamName::GEN_KEY_LEN, additional_param);
             break;
 
         case KeyType::KEY_DSA_PUBLIC:
         case KeyType::KEY_DSA_PRIVATE:
-            keyGenAlgorithm.addParam(ParamName::ALGO_TYPE, AlgoType::DSA_GEN);
-            keyGenAlgorithm.addParam(ParamName::GEN_KEY_LEN, additional_param);
+            keyGenAlgorithm.setParam(ParamName::ALGO_TYPE, AlgoType::DSA_GEN);
+            keyGenAlgorithm.setParam(ParamName::GEN_KEY_LEN, additional_param);
             break;
 
         case KeyType::KEY_ECDSA_PUBLIC:
         case KeyType::KEY_ECDSA_PRIVATE:
-            keyGenAlgorithm.addParam(ParamName::ALGO_TYPE, AlgoType::ECDSA_GEN);
-            keyGenAlgorithm.addParam(ParamName::GEN_EC, additional_param);
+            keyGenAlgorithm.setParam(ParamName::ALGO_TYPE, AlgoType::ECDSA_GEN);
+            keyGenAlgorithm.setParam(ParamName::GEN_EC, additional_param);
             break;
 
         default:
@@ -1493,8 +1493,8 @@ RawBuffer CKMLogic::createSignature(
     DB::Row row;
     RawBuffer signature;
     CryptoAlgorithm cryptoAlg;
-    cryptoAlg.addParam(ParamName::SV_HASH_ALGO, hash);
-    cryptoAlg.addParam(ParamName::SV_RSA_PADDING, padding);
+    cryptoAlg.setParam(ParamName::SV_HASH_ALGO, hash);
+    cryptoAlg.setParam(ParamName::SV_RSA_PADDING, padding);
 
     int retCode = CKM_API_SUCCESS;
 
@@ -1553,8 +1553,8 @@ RawBuffer CKMLogic::verifySignature(
         DB::Row row;
 
         CryptoAlgorithm params;
-        params.addParam(ParamName::SV_HASH_ALGO, hash);
-        params.addParam(ParamName::SV_RSA_PADDING, padding);
+        params.setParam(ParamName::SV_HASH_ALGO, hash);
+        params.setParam(ParamName::SV_RSA_PADDING, padding);
 
         // try certificate first - looking for a public key.
         // in case of PKCS, pub key from certificate will be found first
