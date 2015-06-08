@@ -61,6 +61,8 @@ bool CryptoAlgorithm::getParam(ParamName name, RawBuffer& value) const
 template <>
 bool CryptoAlgorithm::addParam(ParamName name, const RawBuffer& value)
 {
+    if (name <= ParamName::FIRST || name >= ParamName::LAST)
+        return false;
     return m_params.emplace(name, BufferParam::create(value)).second;
 }
 

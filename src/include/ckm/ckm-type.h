@@ -112,6 +112,8 @@ const char * ErrorToString(int error);
 
 // algorithm parameters
 enum class ParamName : int {
+    FIRST = 0,
+
     ALGO_TYPE = 1,      // If there's no such param, the service will try to deduce the algorithm
                         // type from the key.
 
@@ -129,6 +131,9 @@ enum class ParamName : int {
     // sign & verify
     SV_HASH_ALGO = 301, // hash algorithm (HashAlgorithm)
     SV_RSA_PADDING,     // RSA padding (RSAPaddingAlgorithm)
+
+    // do not add anything after this
+    LAST = 400
 };
 
 // algorithm types (ALGO_TYPE param)
@@ -212,6 +217,8 @@ bool CryptoAlgorithm::getParam(ParamName name, RawBuffer& value) const;
 
 template <typename T>
 bool CryptoAlgorithm::addParam(ParamName name, const T& value) {
+    if (name <= ParamName::FIRST || name >= ParamName::LAST)
+        return false;
     return m_params.emplace(name, IntParam::create(static_cast<uint64_t>(value))).second;
 }
 
