@@ -75,7 +75,7 @@ EvpShPtr AKey::getEvpShPtr() {
 
     if (!pkey) {
         LogError("Failed to parse key");
-        ThrowMsg(Exception::InternalError, "Failed to parse key");
+        ThrowErr(CKM::Ex::InternalError, "Failed to parse key");
     }
 
     m_evp.reset(pkey, EVP_PKEY_free);
@@ -93,7 +93,7 @@ EvpShPtr Cert::getEvpShPtr() {
 
     if (!x509) {
         LogError("Failed to parse certificate.");
-        ThrowMsg(Exception::InternalError, "Failed to parse certificate.");
+        ThrowErr(CKM::Ex::InternalError, "Failed to parse certificate.");
     }
 
     m_evp.reset(X509_get_pubkey(x509), EVP_PKEY_free);

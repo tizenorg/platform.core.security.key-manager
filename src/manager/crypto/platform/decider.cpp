@@ -49,9 +49,8 @@ GStore& Decider::getStore(CryptoBackend cryptoBackend) {
     if (gStore)
         return *gStore;
 
-    LogError("Backend not available. BackendId: " << (int)cryptoBackend);
-    ThrowMsg(CKM::Crypto::Exception::Base,
-             "Backend not available. BackendId: " << (int)cryptoBackend);
+    ThrowErr(CKM::Crypto::Exception::InternalError,
+             "Backend not available. BackendId: ", (int)cryptoBackend);
 }
 
 GStore& Decider::getStore(DataType data, bool exportable) {
