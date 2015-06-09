@@ -38,20 +38,20 @@ namespace CKM {
  * throw my_exception("Function foo has failed. Status: ", status, " error code: ", error);
  */
 
-std::string stringify() {
+inline std::string stringify() {
     return std::string();
 }
 
-void concatenate(std::ostringstream&) {}
+inline void concatenate(std::ostringstream&) {}
 
 template <typename T, typename... Args>
-void concatenate(std::ostringstream& stream, const T& arg1, const Args&... args) {
+inline void concatenate(std::ostringstream& stream, const T& arg1, const Args&... args) {
     stream << arg1;
     concatenate(stream, args...);
 }
 
 template <typename T, typename... Args>
-std::string stringify(const T& arg1, const Args&... args){
+inline std::string stringify(const T& arg1, const Args&... args){
     std::ostringstream stream;
     concatenate(stream, arg1, args...);
     return stream.str();

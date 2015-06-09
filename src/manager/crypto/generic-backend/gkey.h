@@ -34,23 +34,23 @@ protected:
     GKey(){}
 public:
     virtual RawBuffer getBinary() {
-        Throw(Exception::OperationNotSupported);
+        ThrowErr(Exception::OperationNotSupported);
     }
 
     virtual RawBuffer encrypt(const CryptoAlgorithm &, const RawBuffer &) {
-        Throw(Exception::OperationNotSupported);
+        ThrowErr(Exception::OperationNotSupported);
     }
 
     virtual RawBuffer decrypt(const CryptoAlgorithm &, const RawBuffer &) {
-        Throw(Exception::OperationNotSupported);
+        ThrowErr(Exception::OperationNotSupported);
     }
 
     virtual RawBuffer sign(const CryptoAlgorithm &, const RawBuffer &) {
-        Throw(Exception::OperationNotSupported);
+        ThrowErr(Exception::OperationNotSupported);
     }
 
     virtual int verify(const CryptoAlgorithm &, const RawBuffer &, const RawBuffer &) {
-        Throw(Exception::OperationNotSupported);
+        ThrowErr(Exception::OperationNotSupported);
     }
 
     virtual ~GKey () {}
