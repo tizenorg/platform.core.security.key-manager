@@ -224,9 +224,8 @@ void CryptoLogic::encryptRow(const Password &password, DB::Row &row)
     } catch(const CKM::Base64Decoder::Exception::Base &e) {
         LogDebug("Base64Encoder error: " << e.GetMessage());
         ThrowMsg(Exception::Base64DecoderError, e.GetMessage());
-    } catch(const CKM::Crypto::Exception::Base &e) {
-        LogDebug("Crypto error: " << e.GetMessage());
-        ThrowMsg(Exception::EncryptDBRowError, e.GetMessage());
+    } catch(const CKM::Ex::Exception &e) {
+        ThrowMsg(Exception::EncryptDBRowError, e.message());
     }
 }
 
@@ -284,9 +283,8 @@ void CryptoLogic::decryptRow(const Password &password, DB::Row &row)
     } catch(const CKM::Base64Decoder::Exception::Base &e) {
         LogDebug("Base64Encoder error: " << e.GetMessage());
         ThrowMsg(Exception::Base64DecoderError, e.GetMessage());
-    } catch(const CKM::Crypto::Exception::Base &e) {
-        LogDebug("Crypto error: " << e.GetMessage());
-        ThrowMsg(Exception::DecryptDBRowError, e.GetMessage());
+    } catch(const CKM::Ex::Exception &e) {
+        ThrowMsg(Exception::DecryptDBRowError, e.message());
     }
 }
 

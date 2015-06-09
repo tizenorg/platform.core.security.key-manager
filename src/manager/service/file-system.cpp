@@ -37,6 +37,7 @@
 #include <dpl/fstream_accessors.h>
 #include <dpl/log/log.h>
 
+#include <exception.h>
 #include <file-system.h>
 
 namespace {
@@ -89,9 +90,8 @@ RawBuffer FileSystem::loadFile(const std::string &path) const {
 
     if (is.fail()) {
         auto description = GetErrnoString(errno);
-        LogError("Error opening file: " << path << " Reason: " << description);
-        ThrowMsg(Exception::OpenFailed,
-                 "Error opening file: " << path << " Reason: " << description);
+        ThrowErr(Ex::FileSystemFailed,
+                 "Error opening file: ", path, " Reason: ", description);
     }
 
     std::istreambuf_iterator<char> begin(is),end;
@@ -122,7 +122,7 @@ void FileSystem::saveFile(const std::string &path, const RawBuffer &buffer) cons
     os.close();
 
     if (os.fail())
-        ThrowMsg(Exception::SaveFailed, "Failed to save file: " << path);
+        ThrowErr(Ex::FileSystemFailed, "Failed to save file: ", path);
 }
 
 void FileSystem::saveDKEK(const RawBuffer &buffer) const {
@@ -141,9 +141,8 @@ void FileSystem::addRemovedApp(const std::string &smackLabel) const
     outfile.close();
     if (outfile.fail()) {
         auto desc = GetErrnoString(errno);
-        LogError("Could not update file: " << getRemovedAppsPath() << " Reason: " << desc);
-        ThrowMsg(Exception::SaveFailed,
-                 "Could not update file: " << getRemovedAppsPath() << " Reason: " << desc);
+        ThrowErr(Ex::FileSystemFailed,
+                 "Could not update file: ", getRemovedAppsPath(), " Reason: ", desc);
     }
 }
 
