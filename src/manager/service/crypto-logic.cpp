@@ -61,7 +61,7 @@ bool CryptoLogic::haveKey(const Label &smackLabel)
 }
 
 void CryptoLogic::pushKey(const Label &smackLabel,
-                            const RawBuffer &applicationKey)
+                          const RawBuffer &applicationKey)
 {
     if (smackLabel.length() == 0) {
         ThrowMsg(Exception::InternalError, "Empty smack label.");
@@ -73,7 +73,9 @@ void CryptoLogic::pushKey(const Label &smackLabel,
         ThrowMsg(Exception::InternalError, "Application key for " << smackLabel
                  << "label already exists.");
     }
-    m_keyMap[smackLabel] = applicationKey;
+
+    Crypto::GStore & store = m_decider.getStore(DataType::KEY_AES, false);
+    m_keyMap[smackLabel] = store.getKey(store.import(DataType::KEY_AES, applicationKey));
 }
 
 void CryptoLogic::removeKey(const Label &smackLabel)
@@ -144,7 +146,7 @@ RawBuffer CryptoLogic::decryptDataAesGcm(
     return result;
 }
 
-RawBuffer CryptoLogic::passwordToKey(
+Crypto::GKeyShPtr CryptoLogic::passwordToKey(
     const Password &password,
     const RawBuffer &salt,
     size_t keySize) const
@@ -162,7 +164,9 @@ RawBuffer CryptoLogic::passwordToKey(
     {
         ThrowMsg(Exception::InternalError, "PCKS5_PKKDF_HMAC_SHA1 failed.");
     }
-    return result;
+
+    Crypto::GStore & store = m_decider.getStore(DataType::KEY_AES, false);
+    return store.getKey(store.import(DataType::KEY_AES, result));
 }
 
 RawBuffer CryptoLogic::generateRandIV() const {
@@ -180,7 +184,6 @@ void CryptoLogic::encryptRow(const Password &password, DB::Row &row)
 {
     try {
         DB::Row crow = row;
-        RawBuffer key;
         RawBuffer result1;
         RawBuffer result2;
 
@@ -200,16 +203,16 @@ void CryptoLogic::encryptRow(const Password &password, DB::Row &row)
             crow.iv = generateRandIV();
         }
 
-        key = m_keyMap[row.ownerLabel];
+        Crypto::GKeyShPtr key = m_keyMap[row.ownerLabel];
         crow.encryptionScheme = ENCR_APPKEY;
 
-        auto dataPair = encryptDataAesGcm(crow.data, key, crow.iv);
+        auto dataPair = encryptDataAesGcm(crow.data, key->getBinary(), crow.iv);
         crow.data = dataPair.first;
         crow.tag = dataPair.second;
 
         if (!password.empty()) {
             key = passwordToKey(password, crow.iv, AES_CBC_KEY_SIZE);
-            crow.data = encryptDataAesCbc(crow.data, key, crow.iv);
+            crow.data = encryptDataAesCbc(crow.data, key->getBinary(), crow.iv);
             crow.encryptionScheme |= ENCR_PASSWORD;
         }
 
@@ -234,7 +237,6 @@ void CryptoLogic::decryptRow(const Password &password, DB::Row &row)
 {
     try {
         DB::Row crow = row;
-        RawBuffer key;
         RawBuffer digest, dataDigest;
 
         if (row.algorithmType != DBCMAlgType::AES_GCM_256) {
@@ -257,14 +259,15 @@ void CryptoLogic::decryptRow(const Password &password, DB::Row &row)
             decBase64(crow.data);
         }
 
+        Crypto::GKeyShPtr key;
         if (crow.encryptionScheme & ENCR_PASSWORD) {
             key = passwordToKey(password, crow.iv, AES_CBC_KEY_SIZE);
-            crow.data = decryptDataAesCbc(crow.data, key, crow.iv);
+            crow.data = decryptDataAesCbc(crow.data, key->getBinary(), crow.iv);
         }
 
         if (crow.encryptionScheme & ENCR_APPKEY) {
             key = m_keyMap[crow.ownerLabel];
-            crow.data = decryptDataAesGcm(crow.data, key, crow.iv, crow.tag);
+            crow.data = decryptDataAesGcm(crow.data, key->getBinary(), crow.iv, crow.tag);
         }
 
         if (static_cast<int>(crow.data.size()) < crow.dataSize) {

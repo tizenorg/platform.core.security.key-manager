@@ -39,11 +39,19 @@ namespace SW {
 
 typedef std::unique_ptr<BIO, std::function<void(BIO*)>> BioUniquePtr;
 
+RawBuffer SKey::getBinary() const {
+    return m_key;
+}
+
 RawBuffer AKey::sign(
     const CryptoAlgorithm &alg,
     const RawBuffer &message)
 {
     return Internals::sign(getEvpShPtr().get(), alg, message);
+}
+
+RawBuffer AKey::getBinary() const {
+    return m_key;
 }
 
 int AKey::verify(const CryptoAlgorithm &alg, const RawBuffer &message, const RawBuffer &sign) {

@@ -25,6 +25,8 @@
 #include <ckm/ckm-type.h>
 #include <db-crypto.h>
 #include <dpl/exception.h>
+#include <generic-backend/gkey.h>
+#include <platform/decider.h>
 
 namespace CKM {
 
@@ -57,16 +59,17 @@ public:
     void removeKey(const Label &smackLabel);
 
 private:
-	static const int ENCR_BASE64 =   1 << 0;
-	static const int ENCR_APPKEY =   1 << 1;
-	static const int ENCR_PASSWORD = 1 << 2;
+    static const int ENCR_BASE64 =   1 << 0;
+    static const int ENCR_APPKEY =   1 << 1;
+    static const int ENCR_PASSWORD = 1 << 2;
 
-	std::map<Label, RawBuffer> m_keyMap;
+    std::map<Label, Crypto::GKeyShPtr> m_keyMap;
+    Crypto::Decider m_decider;
 
     RawBuffer generateRandIV() const;
-    RawBuffer passwordToKey(const Password &password,
-                            const RawBuffer &salt,
-                            size_t keySize) const;
+    Crypto::GKeyShPtr passwordToKey(const Password &password,
+                                    const RawBuffer &salt,
+                                    size_t keySize) const;
 
     RawBuffer encryptDataAesCbc(
         const RawBuffer &data,
