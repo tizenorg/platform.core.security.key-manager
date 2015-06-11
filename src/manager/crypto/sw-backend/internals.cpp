@@ -40,6 +40,7 @@
 
 #include <generic-backend/exception.h>
 #include <sw-backend/internals.h>
+#include <sw-backend/crypto.h>
 
 #define OPENSSL_SUCCESS 1       // DO NOTCHANGE THIS VALUE
 #define OPENSSL_FAIL    0       // DO NOTCHANGE THIS VALUE
@@ -344,6 +345,160 @@ Token createKeyAES(CryptoBackend backendId, const int sizeBits)
     }
 
     return Token(backendId, DataType(KeyType::KEY_AES), CKM::RawBuffer(key, key+sizeBytes));
+}
+
+RawBuffer encryptDataAesCbc(
+    const RawBuffer &data,
+    const RawBuffer &key,
+    const RawBuffer &iv)
+{
+    Crypto::SW::Cipher::AesCbcEncryption enc(key, iv);
+    RawBuffer result = enc.Append(data);
+    RawBuffer tmp = enc.Finalize();
+    std::copy(tmp.begin(), tmp.end(), std::back_inserter(result));
+    return result;
+}
+
+RawBuffer encryptDataAesGcm(
+    const RawBuffer &data,
+    const RawBuffer &key,
+    const RawBuffer &iv)
+{
+    RawBuffer tag(AES_GCM_TAG_SIZE);
+    Crypto::SW::Cipher::AesGcmEncryption enc(key, iv);
+    RawBuffer result = enc.Append(data);
+    RawBuffer tmp = enc.Finalize();
+    std::copy(tmp.begin(), tmp.end(), std::back_inserter(result));
+    if (0 == enc.Control(EVP_CTRL_GCM_GET_TAG, AES_GCM_TAG_SIZE, tag.data())) {
+        LogError("Error in AES control function. Get tag failed.");
+        ThrowMsg(Crypto::Exception::InternalError, "Error in AES control function. Get tag failed.");
+    }
+    std::copy(tag.begin(), tag.end(), std::back_inserter(result));
+    return result;
+}
+
+RawBuffer decryptDataAesCbc(
+    const RawBuffer &data,
+    const RawBuffer &key,
+    const RawBuffer &iv)
+{
+    Crypto::SW::Cipher::AesCbcDecryption dec(key, iv);
+    RawBuffer result = dec.Append(data);
+    RawBuffer tmp = dec.Finalize();
+    std::copy(tmp.begin(), tmp.end(), std::back_inserter(result));
+    return result;
+}
+
+RawBuffer decryptDataAesGcm(
+    const RawBuffer &data,
+    const RawBuffer &key,
+    const RawBuffer &iv,
+    const RawBuffer &tag)
+{
+    Crypto::SW::Cipher::AesGcmDecryption dec(key, iv);
+    if (tag.size() < AES_GCM_TAG_SIZE) {
+        LogError("Error in decryptDataAesGcm. Tag is too short.");
+        ThrowMsg(Crypto::Exception::InternalError, "Error in decryptDataAesGcm. Tag is too short");
+    }
+    void *ptr = (void*)tag.data();
+    if (0 == dec.Control(EVP_CTRL_GCM_SET_TAG, AES_GCM_TAG_SIZE, ptr)) {
+        LogError("Error in aes control function. Set tag failed.");
+        ThrowMsg(Crypto::Exception::InternalError, "Error in AES control function. Set tag failed.");
+    }
+    RawBuffer result = dec.Append(data);
+    RawBuffer tmp = dec.Finalize();
+    std::copy(tmp.begin(), tmp.end(), std::back_inserter(result));
+    return result;
+}
+
+RawBuffer symmetricEncrypt(const RawBuffer &key,
+                           const CryptoAlgorithm &alg,
+                           const RawBuffer &data)
+{
+    AlgoType keyType = AlgoType::AES_CTR;
+    if(false == alg.getParam(ParamName::ALGO_TYPE, keyType))
+        ThrowMsg(Crypto::Exception::InputParam, "symmetric enc error: mandatory parameter ALGO_TYPE not specified");
+
+    RawBuffer cipher;
+    switch(keyType)
+    {
+        case AlgoType::AES_CTR:
+            // TODO
+            Throw(Crypto::Exception::OperationNotSupported);
+            break;
+        case AlgoType::AES_CBC:
+        {
+            RawBuffer iv;
+            if(false == alg.getParam(ParamName::ED_IV, iv))
+                ThrowMsg(Crypto::Exception::InputParam, "symmetric enc error: mandatory parameter ED_IV not specified");
+            cipher = encryptDataAesCbc(data, key, iv);
+            break;
+        }
+        case AlgoType::AES_GCM:
+        {
+            RawBuffer iv;
+            if(false == alg.getParam(ParamName::ED_IV, iv))
+                ThrowMsg(Crypto::Exception::InputParam, "symmetric enc error: mandatory parameter ED_IV not specified");
+            cipher = encryptDataAesGcm(data, key, iv);
+            break;
+        }
+        case AlgoType::AES_CFB:
+            // TODO
+            Throw(Crypto::Exception::OperationNotSupported);
+            break;
+
+        default:
+            ThrowMsg(Crypto::Exception::InputParam, "symmetric enc error: algorithm not recognized");
+            break;
+    }
+    return cipher;
+}
+RawBuffer symmetricDecrypt(const RawBuffer &key,
+                           const CryptoAlgorithm &alg,
+                           const RawBuffer &cipher)
+{
+    AlgoType keyType = AlgoType::AES_CTR;
+    if(false == alg.getParam(ParamName::ALGO_TYPE, keyType))
+        ThrowMsg(Crypto::Exception::InputParam, "symmetric dec error: mandatory parameter ALGO_TYPE not specified");
+
+    RawBuffer plain;
+    switch(keyType)
+    {
+        case AlgoType::AES_CTR:
+            // TODO
+            Throw(Crypto::Exception::OperationNotSupported);
+            break;
+        case AlgoType::AES_CBC:
+        {
+            RawBuffer iv;
+            if(false == alg.getParam(ParamName::ED_IV, iv))
+                ThrowMsg(Crypto::Exception::InputParam, "symmetric dec error: mandatory parameter ED_IV not specified");
+            plain = decryptDataAesCbc(cipher, key, iv);
+            break;
+        }
+        case AlgoType::AES_GCM:
+        {
+            RawBuffer iv;
+            if(false == alg.getParam(ParamName::ED_IV, iv))
+                ThrowMsg(Crypto::Exception::InputParam, "symmetric dec error: mandatory parameter ED_IV not specified");
+            int tagLen;
+            if(false == alg.getParam(ParamName::ED_TAG_LEN, tagLen))
+                ThrowMsg(Crypto::Exception::InputParam, "symmetric dec error: mandatory parameter ED_TAG_LEN not specified");
+            RawBuffer rawCipher = RawBuffer(cipher.begin(), cipher.end() - tagLen);
+            RawBuffer tag = RawBuffer(cipher.end() - tagLen, cipher.end());
+            plain = decryptDataAesGcm(rawCipher, key, iv, tag);
+            break;
+        }
+        case AlgoType::AES_CFB:
+            // TODO
+            Throw(Crypto::Exception::OperationNotSupported);
+            break;
+
+        default:
+            ThrowMsg(Crypto::Exception::InputParam, "symmetric dec error: algorithm not recognized");
+            break;
+    }
+    return plain;
 }
 
 RawBuffer sign(EVP_PKEY *pkey,

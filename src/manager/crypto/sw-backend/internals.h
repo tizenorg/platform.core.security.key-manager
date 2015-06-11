@@ -50,6 +50,13 @@ TokenPair createKeyPairDSA(CryptoBackend backendId, const int size);
 TokenPair createKeyPairECDSA(CryptoBackend backendId, ElipticCurve type1);
 Token     createKeyAES(CryptoBackend backendId, const int sizeBits);
 
+RawBuffer symmetricEncrypt(const RawBuffer &key,
+                           const CryptoAlgorithm &alg,
+                           const RawBuffer &data);
+RawBuffer symmetricDecrypt(const RawBuffer &key,
+                           const CryptoAlgorithm &alg,
+                           const RawBuffer &cipher);
+
 RawBuffer sign(EVP_PKEY *pkey,
     const CryptoAlgorithm &alg,
     const RawBuffer &message);
