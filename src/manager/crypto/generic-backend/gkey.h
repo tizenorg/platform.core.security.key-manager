@@ -33,7 +33,7 @@ class GKey {
 protected:
     GKey(){}
 public:
-    virtual RawBuffer getBinary() {
+    virtual RawBuffer getBinary() const {
         Throw(Exception::OperationNotSupported);
     }
 

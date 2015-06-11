@@ -42,16 +42,23 @@
 
 namespace CKM {
 
-CryptoLogic::CryptoLogic(){}
+CryptoLogic::CryptoLogic() {
+    m_algorithmGcm.setParam(ParamName::ALGO_TYPE, AlgoType::AES_GCM);
+    m_algorithmCbc.setParam(ParamName::ALGO_TYPE, AlgoType::AES_CBC);
+}
 
 CryptoLogic::CryptoLogic(CryptoLogic &&second) {
     m_keyMap = std::move(second.m_keyMap);
+    m_algorithmGcm = std::move(second.m_algorithmGcm);
+    m_algorithmCbc = std::move(second.m_algorithmCbc);
 }
 
 CryptoLogic& CryptoLogic::operator=(CryptoLogic &&second) {
     if (this == &second)
         return *this;
     m_keyMap = std::move(second.m_keyMap);
+    m_algorithmGcm = std::move(second.m_algorithmGcm);
+    m_algorithmCbc = std::move(second.m_algorithmCbc);
     return *this;
 }
 
@@ -61,7 +68,7 @@ bool CryptoLogic::haveKey(const Label &smackLabel)
 }
 
 void CryptoLogic::pushKey(const Label &smackLabel,
-                            const RawBuffer &applicationKey)
+                          const RawBuffer &applicationKey)
 {
     if (smackLabel.length() == 0) {
         ThrowMsg(Exception::InternalError, "Empty smack label.");
@@ -73,7 +80,9 @@ void CryptoLogic::pushKey(const Label &smackLabel,
         ThrowMsg(Exception::InternalError, "Application key for " << smackLabel
                  << "label already exists.");
     }
-    m_keyMap[smackLabel] = applicationKey;
+
+    Crypto::GStore & store = m_decider.getStore(DataType::KEY_AES, false);
+    m_keyMap[smackLabel] = store.getKey(store.import(DataType::KEY_AES, applicationKey));
 }
 
 void CryptoLogic::removeKey(const Label &smackLabel)
@@ -81,70 +90,7 @@ void CryptoLogic::removeKey(const Label &smackLabel)
     m_keyMap.erase(smackLabel);
 }
 
-RawBuffer CryptoLogic::encryptDataAesCbc(
-    const RawBuffer &data,
-    const RawBuffer &key,
-    const RawBuffer &iv) const
-{
-    Crypto::SW::Cipher::AesCbcEncryption enc(key, iv);
-    RawBuffer result = enc.Append(data);
-    RawBuffer tmp = enc.Finalize();
-    std::copy(tmp.begin(), tmp.end(), std::back_inserter(result));
-    return result;
-}
-
-RawBuffer CryptoLogic::decryptDataAesCbc(
-    const RawBuffer &data,
-    const RawBuffer &key,
-    const RawBuffer &iv) const
-{
-    Crypto::SW::Cipher::AesCbcDecryption dec(key, iv);
-    RawBuffer result = dec.Append(data);
-    RawBuffer tmp = dec.Finalize();
-    std::copy(tmp.begin(), tmp.end(), std::back_inserter(result));
-    return result;
-}
-
-std::pair<RawBuffer,RawBuffer> CryptoLogic::encryptDataAesGcm(
-    const RawBuffer &data,
-    const RawBuffer &key,
-    const RawBuffer &iv) const
-{
-    RawBuffer tag(AES_GCM_TAG_SIZE);
-    Crypto::SW::Cipher::AesGcmEncryption enc(key, iv);
-    RawBuffer result = enc.Append(data);
-    RawBuffer tmp = enc.Finalize();
-    std::copy(tmp.begin(), tmp.end(), std::back_inserter(result));
-    if (0 == enc.Control(EVP_CTRL_GCM_GET_TAG, AES_GCM_TAG_SIZE, tag.data())) {
-        LogError("Error in aes control function. Get tag failed.");
-        ThrowMsg(Exception::EncryptDBRowError, "Error in aes control function. Get tag failed.");
-    }
-    return std::make_pair(result, tag);
-}
-
-RawBuffer CryptoLogic::decryptDataAesGcm(
-    const RawBuffer &data,
-    const RawBuffer &key,
-    const RawBuffer &iv,
-    const RawBuffer &tag) const
-{
-    Crypto::SW::Cipher::AesGcmDecryption dec(key, iv);
-    if (tag.size() < AES_GCM_TAG_SIZE) {
-        LogError("Error in decryptDataAesGcm. Tag is too short.");
-        ThrowMsg(Exception::DecryptDBRowError, "Error in decryptDataAesGcm. Tag is too short");
-    }
-    void *ptr = (void*)tag.data();
-    if (0 == dec.Control(EVP_CTRL_GCM_SET_TAG, AES_GCM_TAG_SIZE, ptr)) {
-        LogError("Error in aes control function. Set tag failed.");
-        ThrowMsg(Exception::DecryptDBRowError, "Error in aes control function. Set tag failed.");
-    }
-    RawBuffer result = dec.Append(data);
-    RawBuffer tmp = dec.Finalize();
-    std::copy(tmp.begin(), tmp.end(), std::back_inserter(result));
-    return result;
-}
-
-RawBuffer CryptoLogic::passwordToKey(
+Crypto::GKeyShPtr CryptoLogic::passwordToKey(
     const Password &password,
     const RawBuffer &salt,
     size_t keySize) const
@@ -162,7 +108,9 @@ RawBuffer CryptoLogic::passwordToKey(
     {
         ThrowMsg(Exception::InternalError, "PCKS5_PKKDF_HMAC_SHA1 failed.");
     }
-    return result;
+
+    Crypto::GStore & store = m_decider.getStore(DataType::KEY_AES, false);
+    return store.getKey(store.import(DataType::KEY_AES, result));
 }
 
 RawBuffer CryptoLogic::generateRandIV() const {
@@ -180,7 +128,6 @@ void CryptoLogic::encryptRow(const Password &password, DB::Row &row)
 {
     try {
         DB::Row crow = row;
-        RawBuffer key;
         RawBuffer result1;
         RawBuffer result2;
 
@@ -200,16 +147,14 @@ void CryptoLogic::encryptRow(const Password &password, DB::Row &row)
             crow.iv = generateRandIV();
         }
 
-        key = m_keyMap[row.ownerLabel];
         crow.encryptionScheme = ENCR_APPKEY;
-
-        auto dataPair = encryptDataAesGcm(crow.data, key, crow.iv);
-        crow.data = dataPair.first;
-        crow.tag = dataPair.second;
-
+        m_algorithmGcm.setParam(ParamName::ED_IV, crow.iv);
+        RawBuffer encrypted = m_keyMap[row.ownerLabel]->encrypt(m_algorithmGcm, crow.data);
+        crow.data = RawBuffer(encrypted.begin(), encrypted.end() - AES_GCM_TAG_SIZE);
+        crow.tag = RawBuffer(encrypted.end() - AES_GCM_TAG_SIZE, encrypted.end());
         if (!password.empty()) {
-            key = passwordToKey(password, crow.iv, AES_CBC_KEY_SIZE);
-            crow.data = encryptDataAesCbc(crow.data, key, crow.iv);
+            m_algorithmCbc.setParam(ParamName::ED_IV, crow.iv);
+            crow.data = passwordToKey(password, crow.iv, AES_CBC_KEY_SIZE)->encrypt(m_algorithmCbc, crow.data);
             crow.encryptionScheme |= ENCR_PASSWORD;
         }
 
@@ -234,7 +179,6 @@ void CryptoLogic::decryptRow(const Password &password, DB::Row &row)
 {
     try {
         DB::Row crow = row;
-        RawBuffer key;
         RawBuffer digest, dataDigest;
 
         if (row.algorithmType != DBCMAlgType::AES_GCM_256) {
@@ -256,15 +200,16 @@ void CryptoLogic::decryptRow(const Password &password, DB::Row &row)
         if (crow.encryptionScheme & ENCR_BASE64) {
             decBase64(crow.data);
         }
-
         if (crow.encryptionScheme & ENCR_PASSWORD) {
-            key = passwordToKey(password, crow.iv, AES_CBC_KEY_SIZE);
-            crow.data = decryptDataAesCbc(crow.data, key, crow.iv);
+            m_algorithmCbc.setParam(ParamName::ED_IV, crow.iv);
+            crow.data = passwordToKey(password, crow.iv, AES_CBC_KEY_SIZE)->decrypt(m_algorithmCbc, crow.data);
         }
 
         if (crow.encryptionScheme & ENCR_APPKEY) {
-            key = m_keyMap[crow.ownerLabel];
-            crow.data = decryptDataAesGcm(crow.data, key, crow.iv, crow.tag);
+            m_algorithmGcm.setParam(ParamName::ED_IV, crow.iv);
+            m_algorithmGcm.setParam(ParamName::ED_TAG_LEN, crow.tag.size());
+            std::copy(crow.tag.begin(), crow.tag.end(), std::back_inserter(crow.data));
+            crow.data = m_keyMap[crow.ownerLabel]->decrypt(m_algorithmGcm, crow.data);
         }
 
         if (static_cast<int>(crow.data.size()) < crow.dataSize) {
