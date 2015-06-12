@@ -449,7 +449,7 @@ int CKMLogic::toBinaryData(DataType dataType,
             output_key = CKM::Key::create(input_data);
         if(output_key.get() == NULL)
         {
-            LogError("provided binary data is not valid key data");
+            LogDebug("provided binary data is not valid key data");
             return CKM_API_ERROR_INPUT_PARAM;
         }
         output_data = output_key->getDER();
@@ -686,7 +686,7 @@ int CKMLogic::readSingleRow(const Name &name,
     }
 
     if(!row_optional) {
-        LogError("No row for given name, label and type");
+        LogDebug("No row for given name, label and type");
         return CKM_API_ERROR_DB_ALIAS_UNKNOWN;
     } else {
         row = *row_optional;
@@ -730,7 +730,7 @@ int CKMLogic::readMultiRow(const Name &name,
     }
 
     if(!output.size()) {
-        LogError("No row for given name, label and type");
+        LogDebug("No row for given name, label and type");
         return CKM_API_ERROR_DB_ALIAS_UNKNOWN;
     }
 
