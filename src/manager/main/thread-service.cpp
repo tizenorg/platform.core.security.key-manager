@@ -19,6 +19,8 @@
  * @version    1.0
  */
 
+#include <stdexcept>
+#include <cassert>
 #include <thread-service.h>
 #include <dpl/log/log.h>
 
