@@ -34,9 +34,8 @@ public:
     virtual void RespondToClient(const CryptoRequest& request,
                                  int retCode,
                                  const RawBuffer& data = RawBuffer()) = 0;
-    virtual void RequestKey(const Credentials& cred,
-                            const Alias& alias,
-                            const Label& label) = 0;
+    // returns false if there's no listener to process the request
+    virtual void RequestKey(const CryptoRequest& request) = 0;
 };
 
 } // namespace CKM
