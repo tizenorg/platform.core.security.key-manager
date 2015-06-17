@@ -44,10 +44,15 @@ public:
     }
 
     // Sends message of type M to all registered listeners
-    void SendMessage(const M& msg)
+    // Returns false if no one is listening
+    bool SendMessage(const M& msg)
     {
+        if (m_listeners.empty())
+            return false;
+
         for(auto it : m_listeners)
             it(msg);
+        return true;
     }
 protected:
     MessageManager() {}
@@ -82,10 +87,11 @@ public:
     }
 
     // M message type
+    // Sending a message calls an unknown listener callback on the receiving side. It may throw.
     template <typename M>
-    void SendMessage(const M& msg)
+    bool SendMessage(const M& msg)
     {
-        MessageManager<M>::SendMessage(msg);
+        return MessageManager<M>::SendMessage(msg);
     }
 };
 
