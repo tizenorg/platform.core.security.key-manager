@@ -35,6 +35,7 @@
 #include <access-control.h>
 #include <certificate-impl.h>
 #include <sys/types.h>
+#include <generic-backend/gkey.h>
 
 #include <platform/decider.h>
 
@@ -206,6 +207,12 @@ public:
         const RawBuffer &data,
         DataType dataType,
         const PolicySerializable &policy);
+
+    int getKeyForService(const Credentials &cred,
+                         const Name &name,
+                         const Label &label,
+                         const Password& pass,
+                         Crypto::GKeyShPtr& key);
 
 private:
 

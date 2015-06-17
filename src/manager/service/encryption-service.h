@@ -22,14 +22,15 @@
 #pragma once
 
 #include <memory>
-#include <thread-service.h>
+#include <message-service.h>
 #include <noncopyable.h>
 #include <iencryption-service.h>
 #include <encryption-logic.h>
+#include <service-messages.h>
 
 namespace CKM {
 
-class EncryptionService : public ThreadService, public IEncryptionService
+class EncryptionService : public ThreadMessageService<MsgKeyResponse>, public IEncryptionService
 {
 public:
     EncryptionService();
@@ -40,7 +41,10 @@ public:
     ServiceDescriptionVector GetServiceDescription();
     typedef std::unique_ptr<EncryptionLogic> LogicPtr;
 private:
-    bool ProcessOne(const ConnectionID &conn, ConnectionInfo &info);
+    virtual void SetCommManager(CommMgr *manager);
+
+    virtual bool ProcessOne(const ConnectionID &conn, ConnectionInfo &info);
+    void ProcessMessage(MsgKeyResponse msg);
     void ProcessEncryption(const ConnectionID &conn,
                            const Credentials &cred,
                            MessageBuffer &buffer);
@@ -49,9 +53,7 @@ private:
     virtual void RespondToClient(const CryptoRequest& request,
                                  int retCode,
                                  const RawBuffer& data = RawBuffer());
-    virtual void RequestKey(const Credentials& cred,
-                            const Alias& alias,
-                            const Label& label);
+    virtual void RequestKey(const CryptoRequest& request);
 
     EncryptionLogic& Logic();
 

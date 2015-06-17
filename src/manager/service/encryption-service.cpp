@@ -51,12 +51,11 @@ void EncryptionService::RespondToClient(const CryptoRequest& request,
     m_serviceManager->Write(request.conn, response);
 }
 
-void EncryptionService::RequestKey(const Credentials& /*cred*/,
-                                   const Alias& /*alias*/,
-                                   const Label& /*label*/)
+void EncryptionService::RequestKey(const CryptoRequest& request)
 {
-    // TODO
-    throw std::runtime_error("Not supported");
+    MsgKeyRequest kReq(request.msgId, request.cred, request.name, request.label, request.password);
+    if (!m_commMgr->SendMessage(kReq))
+        throw std::runtime_error("No listener found");
 }
 
 GenericSocketService::ServiceDescriptionVector EncryptionService::GetServiceDescription()
@@ -64,6 +63,12 @@ GenericSocketService::ServiceDescriptionVector EncryptionService::GetServiceDesc
     return ServiceDescriptionVector {
         {SERVICE_SOCKET_ENCRYPTION, "key-manager::api-encryption", SOCKET_ID_ENCRYPTION}
     };
+}
+
+void EncryptionService::SetCommManager(CommMgr *manager)
+{
+    ThreadService::SetCommManager(manager);
+    Register(*manager);
 }
 
 bool EncryptionService::ProcessOne(
@@ -90,6 +95,11 @@ bool EncryptionService::ProcessOne(
 
     m_serviceManager->Close(conn);
     return false;
+}
+
+void EncryptionService::ProcessMessage(MsgKeyResponse msg)
+{
+    Logic().KeyRetrieved(std::move(msg));
 }
 
 EncryptionLogic& EncryptionService::Logic()
