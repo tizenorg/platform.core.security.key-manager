@@ -22,6 +22,8 @@
 
 #include <protocols.h>
 
+#include <utility>
+
 #include <dpl/serialization.h>
 #include <dpl/log/log.h>
 
