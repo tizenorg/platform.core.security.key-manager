@@ -21,6 +21,7 @@
 #include <exception>
 #include <fstream>
 #include <utility>
+#include <algorithm>
 
 #include <openssl/evp.h>
 #include <openssl/obj_mac.h>
@@ -47,6 +48,11 @@
 #define DEV_HW_RANDOM_FILE    "/dev/hwrng"
 #define DEV_URANDOM_FILE    "/dev/urandom"
 
+namespace CKM {
+namespace Crypto {
+namespace SW {
+namespace Internals {
+
 namespace {
 typedef std::unique_ptr<EVP_MD_CTX, std::function<void(EVP_MD_CTX*)>> EvpMdCtxUPtr;
 typedef std::unique_ptr<EVP_PKEY_CTX, std::function<void(EVP_PKEY_CTX*)>> EvpPkeyCtxUPtr;
@@ -54,27 +60,31 @@ typedef std::unique_ptr<EVP_PKEY, std::function<void(EVP_PKEY*)>> EvpPkeyUPtr;
 
 typedef std::unique_ptr<BIO, std::function<void(BIO*)>> BioUniquePtr;
 typedef int(*I2D_CONV)(BIO*, EVP_PKEY*);
-CKM::RawBuffer i2d(I2D_CONV fun, EVP_PKEY* pkey) {
+
+const size_t DEFAULT_AES_GCM_TAG_LEN = 128; // tag length in bits according to W3C Crypto API
+const size_t DEFAULT_AES_IV_LEN = 16; // default iv size in bytes for AES
+
+RawBuffer i2d(I2D_CONV fun, EVP_PKEY* pkey) {
     BioUniquePtr bio(BIO_new(BIO_s_mem()), BIO_free_all);
 
     if (NULL == pkey) {
-        ThrowErr(CKM::Exc::Crypto::InternalError, "attempt to parse an empty key!");
+        ThrowErr(Exc::Crypto::InternalError, "attempt to parse an empty key!");
     }
 
     if (NULL == bio.get()) {
-        ThrowErr(CKM::Exc::Crypto::InternalError, "Error in memory allocation! Function: BIO_new.");
+        ThrowErr(Exc::Crypto::InternalError, "Error in memory allocation! Function: BIO_new.");
     }
 
     if (1 != fun(bio.get(), pkey)) {
-        ThrowErr(CKM::Exc::Crypto::InternalError, "Error in conversion EVP_PKEY to DER");
+        ThrowErr(Exc::Crypto::InternalError, "Error in conversion EVP_PKEY to DER");
     }
 
-    CKM::RawBuffer output(8196);
+    RawBuffer output(8196);
 
     int size = BIO_read(bio.get(), output.data(), output.size());
 
     if (size <= 0) {
-        ThrowErr(CKM::Exc::Crypto::InternalError, "Error in BIO_read: ", size);
+        ThrowErr(Exc::Crypto::InternalError, "Error in BIO_read: ", size);
     }
 
     output.resize(size);
@@ -83,22 +93,76 @@ CKM::RawBuffer i2d(I2D_CONV fun, EVP_PKEY* pkey) {
 
 template<typename T>
 T unpack(
-    const CKM::CryptoAlgorithm &alg,
-    CKM::ParamName paramName)
+    const CryptoAlgorithm &alg,
+    ParamName paramName)
 {
     T result;
     if (!alg.getParam(paramName, result)) {
-        ThrowErr(CKM::Exc::Crypto::InputParam, "Wrong input param");
+        ThrowErr(Exc::Crypto::InputParam, "Wrong input param");
     }
     return result;
 }
 
-} // anonymous namespace
+void validateParams(const CryptoAlgorithm& ca)
+{
+    AlgoType type;
+    if (!ca.getParam(ParamName::ALGO_TYPE, type)) {
+        LogDebug("No algorithm type provided");
+        return;
+    }
 
-namespace CKM {
-namespace Crypto {
-namespace SW {
-namespace Internals {
+    switch (type)
+    {
+    case AlgoType::AES_CTR:
+    case AlgoType::AES_CBC:
+    case AlgoType::AES_CFB:
+    {
+        RawBuffer iv;
+        if(!ca.getParam(ParamName::ED_IV, iv))
+            ThrowErr(Exc::Crypto::InputParam, "Missing initialization vector");
+
+        if(iv.size() != DEFAULT_AES_IV_LEN)
+            ThrowErr(Exc::Crypto::InputParam, "Invalid IV size: ", iv.size());
+        break;
+    }
+    case AlgoType::AES_GCM:
+    {
+        int tagLenBits;
+        if (ca.getParam(ParamName::ED_TAG_LEN, tagLenBits))
+        {
+            static const int supported[] = {32, 64, 96, 104, 112, 120, 128};
+            static const int size = sizeof(supported)/sizeof(supported[0]);
+            auto it = std::find(supported, supported + size, tagLenBits);
+            if (it == supported + size)
+                ThrowErr(Exc::Crypto::InputParam, "Invalid AES GCM tag length:", tagLenBits,"b");
+        }
+        RawBuffer iv;
+        if(!ca.getParam(ParamName::ED_IV, iv))
+            ThrowErr(Exc::Crypto::InputParam, "Missing initialization vector");
+        break;
+    }
+
+    // TODO implement other checks
+    case AlgoType::RSA_OAEP:
+        break;
+    case AlgoType::RSA_SV:
+        break;
+    case AlgoType::DSA_SV:
+        break;
+    case AlgoType::ECDSA_SV:
+        break;
+    case AlgoType::RSA_GEN:
+        break;
+    case AlgoType::DSA_GEN:
+        break;
+    case AlgoType::ECDSA_GEN:
+        break;
+    default:
+        ThrowErr(Exc::Crypto::InputParam, "Unsupported algorithm ", static_cast<int>(type));
+    }
+}
+
+} // anonymous namespace
 
 int initialize() {
     int hw_rand_ret = 0;
@@ -423,6 +487,7 @@ RawBuffer symmetricEncrypt(const RawBuffer &key,
                            const CryptoAlgorithm &alg,
                            const RawBuffer &data)
 {
+    validateParams(alg);
     AlgoType keyType = unpack<AlgoType>(alg, ParamName::ALGO_TYPE);
 
     switch(keyType)
@@ -430,8 +495,14 @@ RawBuffer symmetricEncrypt(const RawBuffer &key,
         case AlgoType::AES_CBC:
             return encryptDataAesCbc(key, data, unpack<RawBuffer>(alg, ParamName::ED_IV));
         case AlgoType::AES_GCM:
-            return encryptDataAesGcmPacked(key, data, unpack<RawBuffer>(alg, ParamName::ED_IV),
-              unpack<int>(alg, ParamName::ED_TAG_LEN));
+        {
+            int tagLenBits = DEFAULT_AES_GCM_TAG_LEN;
+            alg.getParam(ParamName::ED_TAG_LEN, tagLenBits);
+            return encryptDataAesGcmPacked(key,
+                                           data,
+                                           unpack<RawBuffer>(alg, ParamName::ED_IV),
+                                           tagLenBits/8);
+        }
         default:
             break;
     }
@@ -443,6 +514,7 @@ RawBuffer symmetricDecrypt(const RawBuffer &key,
                            const CryptoAlgorithm &alg,
                            const RawBuffer &data)
 {
+    validateParams(alg);
     AlgoType keyType = unpack<AlgoType>(alg, ParamName::ALGO_TYPE);
 
     switch(keyType)
@@ -450,8 +522,14 @@ RawBuffer symmetricDecrypt(const RawBuffer &key,
         case AlgoType::AES_CBC:
             return decryptDataAesCbc(key, data, unpack<RawBuffer>(alg, ParamName::ED_IV));
         case AlgoType::AES_GCM:
-            return decryptDataAesGcmPacked(key, data, unpack<RawBuffer>(alg, ParamName::ED_IV),
-                unpack<int>(alg, ParamName::ED_TAG_LEN));
+        {
+            int tagLenBits = DEFAULT_AES_GCM_TAG_LEN;
+            alg.getParam(ParamName::ED_TAG_LEN, tagLenBits);
+            return decryptDataAesGcmPacked(key,
+                                           data,
+                                           unpack<RawBuffer>(alg, ParamName::ED_IV),
+                                           tagLenBits/8);
+        }
         default:
             break;
     }
