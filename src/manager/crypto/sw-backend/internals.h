@@ -60,7 +60,7 @@ RawBuffer symmetricDecrypt(const RawBuffer &key,
 std::pair<RawBuffer, RawBuffer> encryptDataAesGcm(const RawBuffer &key,
     const RawBuffer &data,
     const RawBuffer &iv,
-    int tagSize);
+    int tagSizeBits);
 
 RawBuffer decryptDataAesGcm(const RawBuffer &key,
     const RawBuffer &data,

@@ -21,6 +21,7 @@
 #include <exception>
 #include <fstream>
 #include <utility>
+#include <algorithm>
 
 #include <openssl/evp.h>
 #include <openssl/obj_mac.h>
@@ -54,6 +55,9 @@ typedef std::unique_ptr<EVP_PKEY, std::function<void(EVP_PKEY*)>> EvpPkeyUPtr;
 
 typedef std::unique_ptr<BIO, std::function<void(BIO*)>> BioUniquePtr;
 typedef int(*I2D_CONV)(BIO*, EVP_PKEY*);
+
+const size_t DEFAULT_AES_GCM_TAG_LEN = 128; // tag length in bits according to W3C Crypto API
+
 CKM::RawBuffer i2d(I2D_CONV fun, EVP_PKEY* pkey) {
     BioUniquePtr bio(BIO_new(BIO_s_mem()), BIO_free_all);
 
@@ -91,6 +95,15 @@ T unpack(
         ThrowErr(CKM::Exc::Crypto::InputParam, "Wrong input param");
     }
     return result;
+}
+
+void checkAesGcmTagLength(int lengthBits)
+{
+    static const int supported[] = {32, 64, 96, 104, 112, 120, 128};
+    static const int size = sizeof(supported)/sizeof(supported[0]);
+    auto it = std::find(supported, supported + size, lengthBits);
+    if (it == supported + size)
+        ThrowErr(CKM::Exc::Crypto::InputParam, "Invalid AES GCM tag length:", lengthBits,"b");
 }
 
 } // anonymous namespace
@@ -430,8 +443,15 @@ RawBuffer symmetricEncrypt(const RawBuffer &key,
         case AlgoType::AES_CBC:
             return encryptDataAesCbc(key, data, unpack<RawBuffer>(alg, ParamName::ED_IV));
         case AlgoType::AES_GCM:
-            return encryptDataAesGcmPacked(key, data, unpack<RawBuffer>(alg, ParamName::ED_IV),
-              unpack<int>(alg, ParamName::ED_TAG_LEN));
+        {
+            size_t tagLenBits = DEFAULT_AES_GCM_TAG_LEN;
+            alg.getParam(ParamName::ED_TAG_LEN, tagLenBits);
+            checkAesGcmTagLength(tagLenBits);
+            return encryptDataAesGcmPacked(key,
+                                           data,
+                                           unpack<RawBuffer>(alg, ParamName::ED_IV),
+                                           tagLenBits/8);
+        }
         default:
             break;
     }
@@ -450,8 +470,15 @@ RawBuffer symmetricDecrypt(const RawBuffer &key,
         case AlgoType::AES_CBC:
             return decryptDataAesCbc(key, data, unpack<RawBuffer>(alg, ParamName::ED_IV));
         case AlgoType::AES_GCM:
-            return decryptDataAesGcmPacked(key, data, unpack<RawBuffer>(alg, ParamName::ED_IV),
-                unpack<int>(alg, ParamName::ED_TAG_LEN));
+        {
+            size_t tagLenBits = DEFAULT_AES_GCM_TAG_LEN;
+            alg.getParam(ParamName::ED_TAG_LEN, tagLenBits);
+            checkAesGcmTagLength(tagLenBits);
+            return decryptDataAesGcmPacked(key,
+                                           data,
+                                           unpack<RawBuffer>(alg, ParamName::ED_IV),
+                                           tagLenBits/8);
+        }
         default:
             break;
     }

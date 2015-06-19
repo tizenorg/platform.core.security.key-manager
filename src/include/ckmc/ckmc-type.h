@@ -228,13 +228,13 @@ typedef enum __ckmc_param_name {
 
     // encryption & decryption
     CKMC_PARAM_ED_IV = 101,         /**< 16B buffer (up to 2^64-1 bytes long in case of AES GCM) */
-    CKMC_PARAM_ED_CTR_LEN,          /**< integer */
+    CKMC_PARAM_ED_CTR_LEN,          /**< integer - ctr length in bits*/
     CKMC_PARAM_ED_AAD,              /**< buffer */
-    CKMC_PARAM_ED_TAG_LEN,          /**< integer */
+    CKMC_PARAM_ED_TAG_LEN,          /**< integer - tag length in bits */
     CKMC_PARAM_ED_LABEL,            /**< buffer */
 
     // key generation
-    CKMC_PARAM_GEN_KEY_LEN = 201,   /**< integer */
+    CKMC_PARAM_GEN_KEY_LEN = 201,   /**< integer - key length in bits */
     CKMC_PARAM_GEN_EC,              /**< integer - elliptic curve (ckmc_ec_type_e) */
 
     // sign & verify
