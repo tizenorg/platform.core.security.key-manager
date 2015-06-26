@@ -299,7 +299,7 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
             RawBuffer certificate;
             RawBufferVector untrustedVector;
             RawBufferVector trustedVector;
-            bool systemCerts;
+            bool systemCerts = false;
             buffer.Deserialize(certificate, untrustedVector, trustedVector, systemCerts);
             return m_logic->getCertificateChain(
                 cred,
@@ -314,7 +314,7 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
             RawBuffer certificate;
             LabelNameVector untrustedVector;
             LabelNameVector trustedVector;
-            bool systemCerts;
+            bool systemCerts = false;
             buffer.Deserialize(certificate, untrustedVector, trustedVector, systemCerts);
             return m_logic->getCertificateChain(
                 cred,
