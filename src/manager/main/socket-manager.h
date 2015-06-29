@@ -39,6 +39,8 @@
 
 namespace CKM {
 
+class Cynara;
+
 class SocketManager : public GenericSocketManager {
 public:
     class Exception {
@@ -51,6 +53,7 @@ public:
     virtual void MainLoop();
     virtual void MainLoopStop();
 
+    virtual void CynaraSocket(int oldFd, int newFd, bool isRW);
     virtual void RegisterSocketService(GenericSocketService *service);
     virtual void Close(ConnectionID connectionID);
     virtual void Write(ConnectionID connectionID, const RawBuffer &rawBuffer);
@@ -66,7 +69,6 @@ protected:
 
     void ReadyForRead(int sock);
     void ReadyForWrite(int sock);
-    void ReadyForWriteBuffer(int sock);
     void ReadyForSendMsg(int sock);
     void ReadyForAccept(int sock);
     void ProcessQueue(void);
@@ -76,6 +78,7 @@ protected:
     struct SocketDescription {
         bool isListen;
         bool isOpen;
+        bool isCynara;
         bool isTimeout;
         InterfaceID interfaceID;
         GenericSocketService *service;
@@ -86,6 +89,7 @@ protected:
         SocketDescription()
           : isListen(false)
           , isOpen(false)
+          , isCynara(false)
           , isTimeout(false)
           , interfaceID(-1)
           , service(NULL)
@@ -121,6 +125,7 @@ protected:
     int m_counter;
     std::priority_queue<Timeout> m_timeoutQueue;
     CommMgr m_commMgr;
+    std::unique_ptr<Cynara> m_cynara;
 };
 
 } // namespace CKM

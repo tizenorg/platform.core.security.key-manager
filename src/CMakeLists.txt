@@ -7,6 +7,8 @@ PKG_CHECK_MODULES(KEY_MANAGER_DEP
     capi-base-common
     vconf
     libxml-2.0
+    cynara-client-async
+    cynara-creds-socket
     REQUIRED
     )
 FIND_PACKAGE(Threads REQUIRED)
@@ -15,6 +17,7 @@ SET(KEY_MANAGER_SRC_PATH ${PROJECT_SOURCE_DIR}/src)
 SET(KEY_MANAGER_PATH ${PROJECT_SOURCE_DIR}/src/manager)
 
 SET(KEY_MANAGER_SOURCES
+    ${KEY_MANAGER_PATH}/main/cynara.cpp
     ${KEY_MANAGER_PATH}/main/generic-socket-manager.cpp
     ${KEY_MANAGER_PATH}/main/socket-manager.cpp
     ${KEY_MANAGER_PATH}/main/key-manager-main.cpp

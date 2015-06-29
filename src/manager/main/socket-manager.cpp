@@ -47,6 +47,8 @@
 #include <smack-check.h>
 #include <socket-manager.h>
 
+#include <cynara.h>
+
 namespace {
 
 const time_t SOCKET_TIMEOUT = 1000;
@@ -153,6 +155,7 @@ SocketManager::CreateDefaultReadSocketDescription(int sock, bool timeout)
     auto &desc = m_socketDescriptionVector[sock];
     desc.isListen = false;
     desc.isOpen = true;
+    desc.isCynara = false;
     desc.interfaceID = 0;
     desc.service = NULL;
     desc.counter = ++m_counter;
@@ -207,6 +210,9 @@ SocketManager::SocketManager()
         desc2.service = signalService;
         LogInfo("SignalService mounted on " << filefd << " descriptor");
     }
+
+    // We cannot create Cynara earlier because descriptiors are not initialized!
+    m_cynara.reset(new Cynara(this));
 }
 
 SocketManager::~SocketManager() {
@@ -244,28 +250,39 @@ void SocketManager::ReadyForAccept(int sock) {
         return;
     }
 
-    Credentials peerCred;
-    if (0 > getCredentialsFromSocket(client, peerCred)) {
-        LogDebug("Error in getCredentialsFromSocket. Socket closed.");
-        TEMP_FAILURE_RETRY(close(client));
-        return;
-    }
-
-    auto &desc = CreateDefaultReadSocketDescription(client, true);
-    desc.interfaceID = m_socketDescriptionVector[sock].interfaceID;
-    desc.service = m_socketDescriptionVector[sock].service;
-
-    GenericSocketService::AcceptEvent event;
-    event.connectionID.sock = client;
-    event.connectionID.counter = desc.counter;
-    event.interfaceID = desc.interfaceID;
-    event.credentials = peerCred;
-    desc.service->Event(event);
+    m_cynara->request(client, "TODO",
+        [this, client, sock](){
+            Credentials peerCred;
+            if (0 > getCredentialsFromSocket(client, peerCred)) {
+                LogDebug("Error in getCredentialsFromSocket. Socket closed.");
+                TEMP_FAILURE_RETRY(close(client));
+                return;
+            }
+            auto &desc = CreateDefaultReadSocketDescription(client, true);
+            desc.interfaceID = m_socketDescriptionVector[sock].interfaceID;
+            desc.service = m_socketDescriptionVector[sock].service;
+    
+            GenericSocketService::AcceptEvent event;
+            event.connectionID.sock = client;
+            event.connectionID.counter = desc.counter;
+            event.interfaceID = desc.interfaceID;
+            event.credentials = peerCred;
+            desc.service->Event(event);
+        },
+        [this, client](){
+            LogDebug("Not allowed");
+            TEMP_FAILURE_RETRY(close(client));
+        });
 }
 
 void SocketManager::ReadyForRead(int sock) {
     if (m_socketDescriptionVector[sock].isListen) {
         ReadyForAccept(sock);
+        return;
+    }
+
+    if (m_socketDescriptionVector[sock].isCynara) {
+        m_cynara->processSocket();
         return;
     }
 
@@ -297,7 +314,12 @@ void SocketManager::ReadyForRead(int sock) {
     }
 }
 
-void SocketManager::ReadyForWriteBuffer(int sock) {
+void SocketManager::ReadyForWrite(int sock) {
+    if (m_socketDescriptionVector[sock].isCynara) {
+        m_cynara->processSocket();
+        return;
+    }
+
     auto &desc = m_socketDescriptionVector[sock];
     size_t size = desc.rawBuffer.size();
     ssize_t result = write(sock, &desc.rawBuffer[0], size);
@@ -331,10 +353,6 @@ void SocketManager::ReadyForWriteBuffer(int sock) {
     event.left = desc.rawBuffer.size();
 
     desc.service->Event(event);
-}
-
-void SocketManager::ReadyForWrite(int sock) {
-        ReadyForWriteBuffer(sock);
 }
 
 void SocketManager::MainLoop() {
@@ -685,6 +703,26 @@ void SocketManager::CloseSocket(int sock) {
     TEMP_FAILURE_RETRY(close(sock));
     FD_CLR(sock, &m_readSet);
     FD_CLR(sock, &m_writeSet);
+}
+
+void SocketManager::CynaraSocket(int oldFd, int newFd, bool isRW) {
+    if (oldFd != newFd) {
+        auto &desc = CreateDefaultReadSocketDescription(newFd, false);
+        desc.service = NULL;
+        desc.isCynara = true;
+        if (oldFd >= 0) {
+            auto &old = m_socketDescriptionVector[oldFd];
+            old.isOpen = false;
+            old.isCynara = false;
+        }
+    }
+
+    FD_CLR(oldFd, &m_writeSet);
+    FD_CLR(oldFd, &m_readSet);
+    FD_SET(newFd, &m_readSet);
+
+    if (isRW)
+        FD_SET(newFd, &m_writeSet);
 }
 
 } // namespace CKM

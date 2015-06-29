@@ -124,6 +124,7 @@ protected:
 struct GenericSocketManager {
     virtual void MainLoop() = 0;
     virtual void RegisterSocketService(GenericSocketService *ptr) = 0;
+    virtual void CynaraSocket(int oldFd, int newFd, bool isRW) = 0;
     virtual void Close(ConnectionID connectionID) = 0;
     virtual void Write(ConnectionID connectionID, const RawBuffer &rawBuffer) = 0;
     virtual ~GenericSocketManager(){}
