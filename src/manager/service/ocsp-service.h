@@ -47,7 +47,8 @@ public:
 private:
     bool ProcessOne(
         const ConnectionID &conn,
-        ConnectionInfo &info);
+        ConnectionInfo &info,
+        bool allowed);
 
     OCSPLogic *m_logic;
 };
