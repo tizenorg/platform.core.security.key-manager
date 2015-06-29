@@ -39,6 +39,8 @@
 
 namespace CKM {
 
+class Cynara;
+
 class SocketManager : public GenericSocketManager {
 public:
     class Exception {
@@ -46,10 +48,16 @@ public:
         DECLARE_EXCEPTION_TYPE(CKM::Exception, Base)
         DECLARE_EXCEPTION_TYPE(Base, InitFailed)
     };
+
+
     SocketManager();
     virtual ~SocketManager();
     virtual void MainLoop();
     virtual void MainLoopStop();
+
+    virtual void CynaraSocket(int oldFd, int newFd, bool isRW);
+    void AcceptedConnection(int listenSock, int clientSock);
+    void RejectedConnection(int listenSock, int clinetSock);
 
     virtual void RegisterSocketService(GenericSocketService *service);
     virtual void Close(ConnectionID connectionID);
@@ -66,28 +74,40 @@ protected:
 
     void ReadyForRead(int sock);
     void ReadyForWrite(int sock);
-    void ReadyForWriteBuffer(int sock);
-    void ReadyForSendMsg(int sock);
     void ReadyForAccept(int sock);
     void ProcessQueue(void);
     void NotifyMe(void);
     void CloseSocket(int sock);
 
+    struct Config {
+        Config() : m_status(0) {}
+        bool isListen() { return m_status & LISTEN;}
+        bool isOpen() { return m_status & OPEN;}
+        bool isCynara() { return m_status & CYNARA;}
+        bool isTimeout() { return m_status & TIMEOUT;}
+        void listen(bool isSet) { isSet ? m_status |= LISTEN : m_status &= ~LISTEN;}
+        void open(bool isSet) { isSet ? m_status |= OPEN : m_status &= ~OPEN;}
+        void cynara(bool isSet) { isSet ? m_status |= CYNARA : m_status &= ~CYNARA;}
+        void timeout(bool isSet) { isSet ? m_status |= TIMEOUT : m_status &= ~TIMEOUT;}
+    private:
+        static const char LISTEN  = 1 << 0;
+        static const char OPEN    = 1 << 1;
+        static const char CYNARA  = 1 << 2;
+        static const char TIMEOUT = 1 << 3;
+        char m_status;
+    };
+
     struct SocketDescription {
-        bool isListen;
-        bool isOpen;
-        bool isTimeout;
+        Config config;
         InterfaceID interfaceID;
         GenericSocketService *service;
         time_t timeout;
         RawBuffer rawBuffer;
         int counter;
+        std::string privilege;
 
         SocketDescription()
-          : isListen(false)
-          , isOpen(false)
-          , isTimeout(false)
-          , interfaceID(-1)
+          : interfaceID(-1)
           , service(NULL)
         {}
     };
@@ -121,6 +141,7 @@ protected:
     int m_counter;
     std::priority_queue<Timeout> m_timeoutQueue;
     CommMgr m_commMgr;
+    std::unique_ptr<Cynara> m_cynara;
 };
 
 } // namespace CKM

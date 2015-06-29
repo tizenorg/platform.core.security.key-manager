@@ -60,16 +60,16 @@ struct GenericSocketService {
     typedef std::string ServiceHandlerPath;
     struct ServiceDescription {
         ServiceDescription(const char *path,
-            const char *smackLabel,
+            const char *privilege,
             InterfaceID interfaceID = 0,
             bool useSendMsg = false)
-          : smackLabel(smackLabel)
+          : privilege(privilege)
           , interfaceID(interfaceID)
           , serviceHandlerPath(path)
           , useSendMsg(useSendMsg)
         {}
 
-        Label smackLabel;                      // Smack label for socket
+        std::string privilege;                 // privilege for socket
         InterfaceID interfaceID;               // All data from serviceHandlerPath will be marked with this interfaceHandler
         ServiceHandlerPath serviceHandlerPath; // Path to file
         bool useSendMsg;
@@ -124,6 +124,7 @@ protected:
 struct GenericSocketManager {
     virtual void MainLoop() = 0;
     virtual void RegisterSocketService(GenericSocketService *ptr) = 0;
+    virtual void CynaraSocket(int oldFd, int newFd, bool isRW) = 0;
     virtual void Close(ConnectionID connectionID) = 0;
     virtual void Write(ConnectionID connectionID, const RawBuffer &rawBuffer) = 0;
     virtual ~GenericSocketManager(){}
