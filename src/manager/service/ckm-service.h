@@ -57,7 +57,8 @@ private:
 
     bool ProcessOne(
         const ConnectionID &conn,
-        ConnectionInfo &info);
+        ConnectionInfo &info,
+        bool allowed);
 
     RawBuffer ProcessControl(
         MessageBuffer &buffer);

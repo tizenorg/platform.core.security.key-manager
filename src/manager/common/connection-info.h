@@ -36,6 +36,7 @@ namespace CKM
         InterfaceID interfaceID;
         MessageBuffer buffer;
         Credentials credentials;
+        bool checkInProgress;
     };
 
     typedef std::map<int, ConnectionInfo> ConnectionInfoMap;
