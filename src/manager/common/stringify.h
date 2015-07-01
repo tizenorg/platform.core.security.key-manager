@@ -32,32 +32,32 @@ class StringifyBasic;
 template <>
 class StringifyBasic<false> {
 public:
-    std::string operator()() {
+    static std::string Merge() {
         return std::string();
     }
 
     template <typename... Args>
-    std::string operator()(const Args&...){
+    static std::string Merge(const Args&...){
         return std::string();
     }
 };
 
 template <>
 class StringifyBasic<true> {
-    void concatenate(std::ostringstream&) {}
+    static void concatenate(std::ostringstream&) {}
 
     template <typename t, typename... Args>
-    void concatenate(std::ostringstream& stream, const t& arg1, const Args&... args) {
+    static void concatenate(std::ostringstream& stream, const t& arg1, const Args&... args) {
         stream << arg1;
         concatenate(stream, args...);
     }
 public:
-    std::string operator()() {
+    static std::string Merge() {
         return std::string();
     }
 
     template <typename T, typename... Args>
-    std::string operator()(const T& arg1, const Args&... args){
+    static std::string Merge(const T& arg1, const Args&... args){
         std::ostringstream stream;
         concatenate(stream, arg1, args...);
         return stream.str();
