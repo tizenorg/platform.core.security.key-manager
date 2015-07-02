@@ -355,6 +355,5 @@ static void init_lib(void)
 static void fini_lib(void) __attribute__ ((destructor));
 static void fini_lib(void)
 {
-
 }
 
