@@ -380,4 +380,36 @@ void ManagerAsync::Impl::observerCheck(const ManagerAsync::ObserverPtr& observer
         throw std::invalid_argument("Empty observer");
 }
 
+void ManagerAsync::Impl::crypt(
+        const ObserverPtr& observer,
+        const CryptoAlgorithm& algo,
+        const Alias& keyAlias,
+        const Password& password,
+        const RawBuffer& input,
+        bool encryption)
+{
+    observerCheck(observer);
+    if (input.empty() || keyAlias.empty())
+        return observer->ReceivedError(CKM_API_ERROR_INPUT_PARAM);
+
+    try_catch_async([&] {
+        AliasSupport helper(keyAlias);
+        CryptoAlgorithmSerializable cas(algo);
+        m_counter++;
+
+        auto send = MessageBuffer::Serialize(
+                static_cast<int>(encryption?EncryptionCommand::ENCRYPT:EncryptionCommand::DECRYPT),
+                m_counter,
+                cas,
+                helper.getName(),
+                helper.getLabel(),
+                password,
+                input);
+        thread()->sendMessage(AsyncRequest(observer,
+                                           SERVICE_SOCKET_ENCRYPTION,
+                                           send.Pop(),
+                                           m_counter));
+    }, [&observer](int error){ observer->ReceivedError(error); } );
+}
+
 } // namespace CKM
