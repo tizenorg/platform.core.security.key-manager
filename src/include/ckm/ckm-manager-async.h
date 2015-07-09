@@ -76,6 +76,8 @@ public:
 
         virtual void ReceivedSetPermission() {}
 
+        virtual void ReceivedEncryption(RawBuffer &&) {}
+
         virtual ~Observer() {}
     };
 
@@ -190,6 +192,20 @@ public:
             const Alias& alias,
             const Label& accessor,
             PermissionMask permissionMask);
+
+    void encrypt(
+            const ObserverPtr& observer,
+            const CryptoAlgorithm& algo,
+            const Alias& keyAlias,
+            const Password& password,
+            const RawBuffer& plain);
+
+    void decrypt(
+            const ObserverPtr& observer,
+            const CryptoAlgorithm& algo,
+            const Alias& keyAlias,
+            const Password& password,
+            const RawBuffer& encrypted);
 
 private:
     std::unique_ptr<Impl> m_impl;
