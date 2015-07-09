@@ -154,6 +154,14 @@ public:
         }, [&observer](int error){ observer->ReceivedError(error); } );
     }
 
+    void crypt(
+            const ObserverPtr& observer,
+            const CryptoAlgorithm& algo,
+            const Alias& keyAlias,
+            const Password& password,
+            const RawBuffer& input,
+            bool encryption);
+
 private:
 
     template <typename... Args>

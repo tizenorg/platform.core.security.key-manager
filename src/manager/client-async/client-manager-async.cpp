@@ -258,5 +258,25 @@ void ManagerAsync::setPermission(const ObserverPtr& observer,
     m_impl->setPermission(observer, alias, accessor, permissionMask);
 }
 
+void ManagerAsync::encrypt(
+        const ObserverPtr& observer,
+        const CryptoAlgorithm& algo,
+        const Alias& keyAlias,
+        const Password& password,
+        const RawBuffer& plain)
+{
+    m_impl->crypt(observer, algo, keyAlias, password, plain, true);
+}
+
+void ManagerAsync::decrypt(
+        const ObserverPtr& observer,
+        const CryptoAlgorithm& algo,
+        const Alias& keyAlias,
+        const Password& password,
+        const RawBuffer& encrypted)
+{
+    m_impl->crypt(observer, algo, keyAlias, password, encrypted, false);
+}
+
 } // namespace CKM
 
