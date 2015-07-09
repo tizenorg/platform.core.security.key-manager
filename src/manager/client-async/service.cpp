@@ -26,6 +26,7 @@
 
 #include <storage-receiver.h>
 #include <ocsp-receiver.h>
+#include <encryption-receiver.h>
 #include <protocols.h>
 
 namespace CKM {
@@ -186,6 +187,8 @@ void Service::receiveData()
             receiver.reset(new StorageReceiver(*m_responseBuffer, m_responseMap));
         else if (m_interface == SERVICE_SOCKET_OCSP)
             receiver.reset(new OcspReceiver(*m_responseBuffer, m_responseMap));
+        else if (m_interface == SERVICE_SOCKET_ENCRYPTION)
+            receiver.reset(new EncryptionReceiver(*m_responseBuffer, m_responseMap));
         else {
             LogError("Unknown service " << m_interface);
             serviceError(CKM_API_ERROR_RECV_FAILED);
