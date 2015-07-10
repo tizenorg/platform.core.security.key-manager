@@ -45,6 +45,9 @@ public:
     const RawBuffer & getData() const {
         return m_data;
     }
+    EncodingType getEncoding() const {
+        return m_encoding;
+    }
 private:
     EncodingType    m_encoding;
     RawBuffer  m_data;

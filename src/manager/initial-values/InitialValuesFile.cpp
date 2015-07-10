@@ -41,6 +41,7 @@ const char * const XML_TAG_PEM              = "PEM";
 const char * const XML_TAG_DER              = "DER";
 const char * const XML_TAG_ASCII            = "ASCII";
 const char * const XML_TAG_BASE64           = "Base64";
+const char * const XML_TAG_BASE64ENC        = "EncryptedBase64";
 const char * const XML_TAG_PERMISSION       = "Permission";
 const char * const XML_ATTR_VERSION         = "version";
 }
@@ -126,6 +127,15 @@ void InitialValuesFile::registerElementListeners()
             [this](const XML::Parser::ElementHandlerPtr &)
             {
                 ReleaseBufferHandler(EncodingType::BASE64);
+            });
+    m_parser.RegisterElementCb(XML_TAG_BASE64ENC,
+            [this]() -> XML::Parser::ElementHandlerPtr
+            {
+                return GetBufferHandler(EncodingType::BASE64ENC);
+            },
+            [this](const XML::Parser::ElementHandlerPtr &)
+            {
+                ReleaseBufferHandler(EncodingType::BASE64ENC);
             });
     m_parser.RegisterElementCb(XML_TAG_PERMISSION,
             [this]() -> XML::Parser::ElementHandlerPtr

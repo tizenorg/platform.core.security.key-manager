@@ -69,13 +69,14 @@ void InitialValueHandler::End()
     {
         // save data
         Policy policy(m_password, m_exportable);
+        bool encrypted = (m_bufferHandler->getEncoding() == EncodingType::BASE64ENC);
         int ec = m_db_logic.verifyAndSaveDataHelper(
                 Credentials(CKMLogic::SYSTEM_DB_UID, LABEL_SYSTEM_DB),
                 m_name,
                 LABEL_SYSTEM_DB,
                 m_bufferHandler->getData(),
                 getDataType(),
-                InternalPolicy(policy));
+                InternalPolicy(policy, encrypted));
         if(CKM_API_SUCCESS == ec)
         {
             // save permissions

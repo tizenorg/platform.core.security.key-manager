@@ -59,6 +59,7 @@ void BufferHandler::End()
         // Base64 decoder also does not accept any whitespaces
         case DER:
         case BASE64:
+        case BASE64ENC:
         {
             std::string trimmed = XML::trimEachLine(std::string(m_data.begin(), m_data.end()));
             Base64Decoder base64;
@@ -68,7 +69,6 @@ void BufferHandler::End()
             m_data = base64.get();
             break;
         }
-
         default:
             break;
     }

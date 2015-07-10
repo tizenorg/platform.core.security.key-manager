@@ -30,7 +30,8 @@ enum EncodingType {
     PEM,
     DER,
     ASCII,
-    BASE64
+    BASE64,
+    BASE64ENC,
 };
 
 }
