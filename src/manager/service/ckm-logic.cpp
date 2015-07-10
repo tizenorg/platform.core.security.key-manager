@@ -415,18 +415,18 @@ DB::Row CKMLogic::createEncryptedRow(
     const Label &label,
     DataType dataType,
     const RawBuffer &data,
-    const Policy &policy) const
+    const InternalPolicy &policy) const
 {
-    Crypto::GStore& store = m_decider.getStore(dataType, policy.extractable);
+    Crypto::GStore& store = m_decider.getStore(dataType, policy);
     Token token = store.import(dataType, data);
 
-    DB::Row row(std::move(token), name, label, static_cast<int>(policy.extractable));
+    DB::Row row(std::move(token), name, label, static_cast<int>(policy.isExportable()));
 
     // do not encrypt data with password during cc_mode on
     if(m_accessControl.isCCMode()) {
         crypto.encryptRow("", row);
     } else {
-        crypto.encryptRow(policy.password, row);
+        crypto.encryptRow(policy.getPassword(), row);
     }
     return row;
 }
@@ -478,7 +478,7 @@ int CKMLogic::verifyAndSaveDataHelper(
     const Label &label,
     const RawBuffer &data,
     DataType dataType,
-    const PolicySerializable &policy)
+    const InternalPolicy &policy)
 {
     int retCode = CKM_API_ERROR_UNKNOWN;
 
@@ -537,7 +537,7 @@ RawBuffer CKMLogic::saveData(
     const Label &label,
     const RawBuffer &data,
     DataType dataType,
-    const PolicySerializable &policy)
+    const InternalPolicy &policy)
 {
     int retCode = verifyAndSaveDataHelper(cred, name, label, data, dataType, policy);
     auto response = MessageBuffer::Serialize(static_cast<int>(LogicCommand::SAVE),
@@ -552,8 +552,8 @@ int CKMLogic::extractPKCS12Data(
     const Name &name,
     const Label &ownerLabel,
     const PKCS12Serializable &pkcs,
-    const PolicySerializable &keyPolicy,
-    const PolicySerializable &certPolicy,
+    const InternalPolicy &keyPolicy,
+    const InternalPolicy &certPolicy,
     DB::RowVector &output) const
 {
     // private key is mandatory
@@ -598,8 +598,8 @@ RawBuffer CKMLogic::savePKCS12(
     const Name &name,
     const Label &label,
     const PKCS12Serializable &pkcs,
-    const PolicySerializable &keyPolicy,
-    const PolicySerializable &certPolicy)
+    const InternalPolicy &keyPolicy,
+    const InternalPolicy &certPolicy)
 {
     int retCode = CKM_API_ERROR_UNKNOWN;
     try {
@@ -661,7 +661,7 @@ int CKMLogic::removeDataHelper(
 
     // destroy it in store
     for(const auto& r : rows)
-        m_decider.getStore(r.dataType, r.exportable).destroy(r);
+        m_decider.getStore(r.dataType, InternalPolicy(r.exportable)).destroy(r);
 
     // delete row in db
     handler.database.deleteRow(name, ownerLabel);
@@ -1088,7 +1088,7 @@ int CKMLogic::saveDataHelper(
     const Label &label,
     DataType dataType,
     const RawBuffer &data,
-    const PolicySerializable &policy)
+    const InternalPolicy &policy)
 {
     auto &handler = selectDatabase(cred, label);
 
@@ -1116,8 +1116,8 @@ int CKMLogic::saveDataHelper(
     const Name &name,
     const Label &label,
     const PKCS12Serializable &pkcs,
-    const PolicySerializable &keyPolicy,
-    const PolicySerializable &certPolicy)
+    const InternalPolicy &keyPolicy,
+    const InternalPolicy &certPolicy)
 {
     auto &handler = selectDatabase(cred, label);
 
@@ -1151,12 +1151,12 @@ int CKMLogic::createKeyAESHelper(
     const int size,
     const Name &name,
     const Label &label,
-    const PolicySerializable &policy)
+    const InternalPolicy &policy)
 {
     CryptoAlgorithm keyGenAlgorithm;
     keyGenAlgorithm.setParam(ParamName::ALGO_TYPE, AlgoType::AES_GEN);
     keyGenAlgorithm.setParam(ParamName::GEN_KEY_LEN, size);
-    Token key = m_decider.getStore(DataType::KEY_AES, policy.extractable).generateSKey(keyGenAlgorithm);
+    Token key = m_decider.getStore(DataType::KEY_AES, policy).generateSKey(keyGenAlgorithm);
 
     return saveDataHelper(cred,
                           name,
@@ -1174,8 +1174,8 @@ int CKMLogic::createKeyPairHelper(
     const Label &labelPrivate,
     const Name &namePublic,
     const Label &labelPublic,
-    const PolicySerializable &policyPrivate,
-    const PolicySerializable &policyPublic)
+    const InternalPolicy &policyPrivate,
+    const InternalPolicy &policyPublic)
 {
     auto &handlerPriv = selectDatabase(cred, labelPrivate);
     auto &handlerPub = selectDatabase(cred, labelPublic);
@@ -1187,8 +1187,8 @@ int CKMLogic::createKeyPairHelper(
     if(!dt.isKey())
         ThrowErr(Exc::InputParam, "Error, parameter ALGO_TYPE with wrong value.");
 
-    bool exportable = policyPrivate.extractable || policyPublic.extractable;
-    TokenPair keys = m_decider.getStore(dt, exportable).generateAKey(keyGenParams);
+    bool exportable = policyPrivate.isExportable() || policyPublic.isExportable();
+    TokenPair keys = m_decider.getStore(dt, InternalPolicy(exportable)).generateAKey(keyGenParams);
 
     DB::Crypto::Transaction transactionPriv(&handlerPriv.database);
     // in case the same database is used for private and public - the second
@@ -1226,8 +1226,8 @@ RawBuffer CKMLogic::createKeyPair(
     const Label &labelPrivate,
     const Name &namePublic,
     const Label &labelPublic,
-    const PolicySerializable &policyPrivate,
-    const PolicySerializable &policyPublic)
+    const InternalPolicy &policyPrivate,
+    const InternalPolicy &policyPublic)
 {
     int retCode = CKM_API_SUCCESS;
 
@@ -1264,7 +1264,7 @@ RawBuffer CKMLogic::createKeyAES(
     const int size,
     const Name &name,
     const Label &label,
-    const PolicySerializable &policy)
+    const InternalPolicy &policy)
 {
     int retCode = CKM_API_SUCCESS;
 
