@@ -417,8 +417,10 @@ DB::Row CKMLogic::createEncryptedRow(
     const RawBuffer &data,
     const Policy &policy) const
 {
-    DB::Row row(name, label, static_cast<int>(policy.extractable), dataType, data, static_cast<int>(data.size()));
-    row.backendId = m_decider.chooseCryptoBackend(dataType, policy.extractable);
+    Crypto::GStore& store = m_decider.getStore(dataType, policy.extractable);
+    Token token = store.import(dataType, data);
+
+    DB::Row row(std::move(token), name, label, static_cast<int>(policy.extractable));
 
     // do not encrypt data with password during cc_mode on
     if(m_accessControl.isCCMode()) {
@@ -649,14 +651,21 @@ int CKMLogic::removeDataHelper(
         return retCode;
     }
 
-    auto erased = handler.database.deleteRow(name, ownerLabel);
-    // check if the data existed or not
-    if(erased)
-        transaction.commit();
-    else {
+    // get all matching rows
+    DB::RowVector rows;
+    handler.database.getRows(name, ownerLabel, DataType::DB_FIRST, DataType::DB_LAST, rows);
+    if (rows.empty()) {
         LogDebug("No row for given name and label");
         return CKM_API_ERROR_DB_ALIAS_UNKNOWN;
     }
+
+    // destroy it in store
+    for(const auto& r : rows)
+        m_decider.getStore(r.dataType, r.exportable).destroy(r);
+
+    // delete row in db
+    handler.database.deleteRow(name, ownerLabel);
+    transaction.commit();
 
     return CKM_API_SUCCESS;
 }
