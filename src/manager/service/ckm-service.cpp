@@ -20,7 +20,7 @@
  * @brief       CKM service implementation.
  */
 
-#include <protocols.h>
+#include <internal-policy.h>
 
 #include <dpl/serialization.h>
 #include <dpl/log/log.h>
@@ -186,7 +186,7 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
         case LogicCommand::SAVE:
         {
             RawBuffer rawData;
-            PolicySerializable policy;
+            InternalPolicy policy;
             buffer.Deserialize(tmpDataType, name, label, rawData, policy);
             return m_logic->saveData(
                 cred,
@@ -201,7 +201,7 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
         {
             RawBuffer rawData;
             PKCS12Serializable pkcs;
-            PolicySerializable keyPolicy, certPolicy;
+            InternalPolicy keyPolicy, certPolicy;
             buffer.Deserialize(name, label, pkcs, keyPolicy, certPolicy);
             return m_logic->savePKCS12(
                 cred,
@@ -262,7 +262,7 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
             int size = 0;
             Name keyName;
             Label keyLabel;
-            PolicySerializable policyKey;
+            InternalPolicy policyKey;
             buffer.Deserialize(size,
                                policyKey,
                                keyName,
@@ -282,8 +282,8 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
             Label privateKeyLabel;
             Name publicKeyName;
             Label publicKeyLabel;
-            PolicySerializable policyPrivateKey;
-            PolicySerializable policyPublicKey;
+            InternalPolicy policyPrivateKey;
+            InternalPolicy policyPublicKey;
             buffer.Deserialize(keyGenAlgorithm,
                                policyPrivateKey,
                                policyPublicKey,

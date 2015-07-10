@@ -31,6 +31,17 @@
 namespace CKM {
 namespace Crypto {
 
+class IStorePolicy {
+public:
+    virtual ~IStorePolicy() {};
+
+    virtual bool isExportable() const = 0;
+
+    virtual bool isEncrypted() const = 0;
+    virtual const CKM::RawBuffer & getEncryptedKey() const = 0;
+    virtual const CKM::RawBuffer & getEncryptionIV() const = 0;
+};
+
 class GStore {
 public:
     virtual GKeyUPtr getKey(const Token &) { ThrowErr(Exc::Crypto::OperationNotSupported); }

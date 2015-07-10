@@ -25,6 +25,7 @@
 #include <ckm/ckm-type.h>
 
 #include <crypto-backend.h>
+#include <internal-policy.h>
 
 #include <generic-backend/gstore.h>
 #include <token.h>
@@ -36,7 +37,7 @@ class Decider {
 public:
     Decider();
     GStore& getStore(const Token &token) const;
-    GStore& getStore(DataType data, bool exportable) const;
+    GStore& getStore(DataType data, const IStorePolicy& policy) const;
 
     virtual ~Decider(){}
 protected:

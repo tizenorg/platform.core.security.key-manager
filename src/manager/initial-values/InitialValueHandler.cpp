@@ -75,7 +75,7 @@ void InitialValueHandler::End()
                 LABEL_SYSTEM_DB,
                 m_bufferHandler->getData(),
                 getDataType(),
-                PolicySerializable(policy));
+                InternalPolicy(policy));
         if(CKM_API_SUCCESS == ec)
         {
             // save permissions
