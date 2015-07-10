@@ -32,7 +32,7 @@ namespace CKM {
 namespace Crypto {
 
 namespace {
-CryptoBackend chooseCryptoBackend(DataType dataType, bool exportable) {
+CryptoBackend chooseCryptoBackend(DataType dataType, const IStorePolicy& policy) {
 // The list of items that MUST be support by OpenSSL
     if (dataType.isCertificate())
         return CryptoBackend::OpenSSL;
@@ -40,7 +40,7 @@ CryptoBackend chooseCryptoBackend(DataType dataType, bool exportable) {
     if (dataType.isBinaryData())
         return CryptoBackend::OpenSSL;
 
-    if (exportable)
+    if (policy.isExportable())
         return CryptoBackend::OpenSSL;
 
 //  This is the place where we can use trust zone backend
@@ -77,8 +77,8 @@ GStore& Decider::getStore(CryptoBackend cryptoBackend) const {
              "Backend not available. BackendId: ", (int)cryptoBackend);
 }
 
-GStore& Decider::getStore(DataType data, bool exportable) const {
-    return getStore(chooseCryptoBackend(data, exportable));
+GStore& Decider::getStore(DataType data, const IStorePolicy& policy) const {
+    return getStore(chooseCryptoBackend(data, policy));
 }
 
 } // namespace Crypto

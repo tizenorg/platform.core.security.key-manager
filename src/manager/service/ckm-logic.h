@@ -84,7 +84,7 @@ public:
         const Label &label,
         const RawBuffer &data,
         DataType dataType,
-        const PolicySerializable &policy);
+        const InternalPolicy &policy);
 
     RawBuffer savePKCS12(
         const Credentials &cred,
@@ -92,8 +92,8 @@ public:
         const Name &name,
         const Label &label,
         const PKCS12Serializable &pkcs,
-        const PolicySerializable &keyPolicy,
-        const PolicySerializable &certPolicy);
+        const InternalPolicy &keyPolicy,
+        const InternalPolicy &certPolicy);
 
     RawBuffer removeData(
         const Credentials &cred,
@@ -130,8 +130,8 @@ public:
         const Label &labelPrivate,
         const Name &namePublic,
         const Label &labelPublic,
-        const PolicySerializable &policyPrivate,
-        const PolicySerializable &policyPublic);
+        const InternalPolicy &policyPrivate,
+        const InternalPolicy &policyPublic);
 
     RawBuffer createKeyAES(
         const Credentials &cred,
@@ -139,7 +139,7 @@ public:
         const int size,
         const Name &name,
         const Label &label,
-        const PolicySerializable &policy);
+        const InternalPolicy &policy);
 
     RawBuffer getCertificateChain(
         const Credentials &cred,
@@ -202,7 +202,7 @@ public:
         const Label &label,
         const RawBuffer &data,
         DataType dataType,
-        const PolicySerializable &policy);
+        const InternalPolicy &policy);
 
     int getKeyForService(const Credentials &cred,
                          const Name &name,
@@ -250,15 +250,15 @@ private:
         const Label &label,
         DataType dataType,
         const RawBuffer &data,
-        const PolicySerializable &policy);
+        const InternalPolicy &policy);
 
     int saveDataHelper(
         const Credentials &cred,
         const Name &name,
         const Label &label,
         const PKCS12Serializable &pkcs,
-        const PolicySerializable &keyPolicy,
-        const PolicySerializable &certPolicy);
+        const InternalPolicy &keyPolicy,
+        const InternalPolicy &certPolicy);
 
     DB::Row createEncryptedRow(
         CryptoLogic &crypto,
@@ -266,7 +266,7 @@ private:
         const Label &label,
         DataType dataType,
         const RawBuffer &data,
-        const Policy &policy) const;
+        const InternalPolicy &policy) const;
 
     int getPKCS12Helper(
         const Credentials &cred,
@@ -283,8 +283,8 @@ private:
         const Name &name,
         const Label &ownerLabel,
         const PKCS12Serializable &pkcs,
-        const PolicySerializable &keyPolicy,
-        const PolicySerializable &certPolicy,
+        const InternalPolicy &keyPolicy,
+        const InternalPolicy &certPolicy,
         DB::RowVector &output) const;
 
     int removeDataHelper(
@@ -337,7 +337,7 @@ private:
         const int size,
         const Name &name,
         const Label &label,
-        const PolicySerializable &policy);
+        const InternalPolicy &policy);
 
     int createKeyPairHelper(
         const Credentials &cred,
@@ -346,8 +346,8 @@ private:
         const Label &labelPrivate,
         const Name &namePublic,
         const Label &labelPublic,
-        const PolicySerializable &policyPrivate,
-        const PolicySerializable &policyPublic);
+        const InternalPolicy &policyPrivate,
+        const InternalPolicy &policyPublic);
 
     int readCertificateHelper(
         const Credentials &cred,
