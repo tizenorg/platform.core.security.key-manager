@@ -45,6 +45,8 @@ struct UserData {
     KeyProvider    keyProvider;
     DB::Crypto     database;
     CryptoLogic    crypto;
+
+    int loadAppKey(const Label& appLabel);
 };
 
 class CKMLogic {
