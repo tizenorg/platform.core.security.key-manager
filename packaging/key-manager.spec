@@ -133,6 +133,7 @@ mkdir -p %{buildroot}/etc/security/
 mkdir -p %{buildroot}/usr/share/ckm/scripts
 cp data/scripts/*.sql %{buildroot}/usr/share/ckm/scripts
 cp doc/initial_values.xsd %{buildroot}/usr/share/ckm
+cp doc/sw_key.xsd %{buildroot}/usr/share/ckm
 mkdir -p %{buildroot}/usr/share/ckm-db-test
 cp tests/testme_ver1.db %{buildroot}/usr/share/ckm-db-test/
 cp tests/testme_ver2.db %{buildroot}/usr/share/ckm-db-test/
@@ -142,6 +143,10 @@ cp tests/XML_1_okay.xsd %{buildroot}/usr/share/ckm-db-test/
 cp tests/XML_1_wrong.xml %{buildroot}/usr/share/ckm-db-test/
 cp tests/XML_1_wrong.xsd %{buildroot}/usr/share/ckm-db-test/
 cp tests/XML_2_structure.xml %{buildroot}/usr/share/ckm-db-test/
+cp tests/XML_3_encrypted.xml %{buildroot}/usr/share/ckm-db-test/
+cp tests/XML_3_encrypted.xsd %{buildroot}/usr/share/ckm-db-test/
+cp tests/XML_4_device_key.xml %{buildroot}/usr/share/ckm-db-test/
+cp tests/XML_4_device_key.xsd %{buildroot}/usr/share/ckm-db-test/
 mkdir -p %{buildroot}/etc/gumd/userdel.d/
 cp data/gumd/10_key-manager.post %{buildroot}/etc/gumd/userdel.d/
 
@@ -229,6 +234,7 @@ fi
 %{_datadir}/ckm/scripts/*.sql
 %{_datadir}/
 %{_datadir}/ckm/initial_values.xsd
+%{_datadir}/ckm/sw_key.xsd
 /opt/data/ckm/initial_values/
 %attr(444, root, root) %{_datadir}/ckm/scripts/*.sql
 /etc/opt/upgrade/230.key-manager-migrate-dkek.patch.sh
@@ -285,6 +291,10 @@ fi
 %{_datadir}/ckm-db-test/XML_1_wrong.xml
 %{_datadir}/ckm-db-test/XML_1_wrong.xsd
 %{_datadir}/ckm-db-test/XML_2_structure.xml
+%{_datadir}/ckm-db-test/XML_3_encrypted.xml
+%{_datadir}/ckm-db-test/XML_3_encrypted.xsd
+%{_datadir}/ckm-db-test/XML_4_device_key.xml
+%{_datadir}/ckm-db-test/XML_4_device_key.xsd
 %{_bindir}/ckm_so_loader
 
 %files -n key-manager-pam-plugin
