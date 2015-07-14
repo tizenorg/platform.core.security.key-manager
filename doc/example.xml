@@ -1,5 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <InitialValues version="1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="initial_values.xsd">
+  <!-- if EncryptionKey present, the content is an AES key encrypted using device key.
+       The format is Base64(encrypt(AES_key_binary))
+       i.e.:
+           * RSA-OAEP encrypt AES key: openssl rsautl -encrypt -oaep -pubin -inkey device.pub -in encryption_AES_key -out encryption_AES_key.encrypted
+           * encode base64: openssl enc -base64 -in encryption_AES_key.encrypted -->
+  <EncryptionKey>
+      QL/5RW1VfS1uya04CWkVy1eykdhnRaTFiQ6Lcv0XFYhqgUKp6+PxxT1xjaz8TCVp
+      UcKorZayMPCuStRAylViZfxHFhXKR3awH+FcnGMZrhV6kORy39YCba0NGc5eAk3s
+      CBPYdRRiV7ejJSOI8n3zFjituVhHLcLuZB6xHvQQpQFFYV0BuF3BXfx6roP4+Olj
+      bZ1fYDrj8QIzqi3RV/ORGbl1BqHVRoMN/5XB+8oVKVn/EMRZPao4hnkV3pTI01Ss
+      Wid4fIHzBpi8rkkxr80/ym2BkeA/piaPNGOQtKjVfBOn/SuR2LQJreG6QbI6MYXC
+      ZVOanzc0euaenw1q9b+yEQ==
+  </EncryptionKey>
   <Key name="key1" type="RSA_PUB" password="123">
     <PEM>
       -----BEGIN PUBLIC KEY-----
@@ -71,4 +84,132 @@
     <Permission accessor="web_app1"/>
     <Permission accessor="web_app2"/>
   </Key>
+  <!-- key below is encrypted using AES-CBC algorithm.
+     The key used is decrypted <EncryptionKey> provided above.
+     Encryption:
+       * encrypt AES CBC: openssl aes-256-cbc -K `xxd -p -c 64 encryption_AES_key` -iv `xxd -p -c 64 encryption_AES_IV` -e -in data -out data.enc
+  -->
+  <Key name="test-encryption-prv" type="RSA_PRV">
+    <EncryptedDer IV="_ThisIsIVForAES_">
+      BflJyNgOcGyJSqTegG+y7MJXI1crgsGY3PjFfMpbmMbwJkVexvxoEPdf2yE5Z7da
+      6Vp4Qo2WOCUv/hllNTfm/dH7kOJOjcs/vaV1eRIfzEx3hvgKOyP82Hhkm1POynsF
+      0GyMm/VwtJFwFHA5DaJzwLln2/AoD//vC731Qhucw0Zvi2hi74d6igPog9EugIj/
+      tStvpgiNE6/Hb2ZRMDswgZ8o+tKCn+QHktR/YoZ19HfX7nDVRkMQxsiA8P4zO9Do
+      +iuiu/mGPVavlZA3df47TLG0kz+sz72jzPeEbfmvQo3gHWSuJ87TUwIcIoXDvaxY
+      xE8/On5OTqJy8HZ+jGvEThKI/96LQsFqKlEeGGenvzVJ+BVAF9x65uOkRll9yE6v
+      FIQcqbgipuBkdC6XLLaWTMgs5iiWvMn/lpNYrfZr52/TKqr09mNdei6yGvy+YuG8
+      vu/xN7/3An/zE4FOIJadgI5eADj+Dz7exml3tKTuuDpR9fhxiXd7HmZhCCf11C3r
+      54S6X9bZb7335L/5UfLxs4jMMfGhYD+1UF1Qb5zVW9IVMZ+owGeC6QQPUiX6HAxy
+      Rx7kLzd78uSbLNqeuiUeGiprxnuwMY2BgSqLq4WNCDWxY4hGTdkC7yg6DgY+L9Lz
+      wqVuJ6STmK9Hj9bL9YUe0KrzmVUfmsaq5PL+gfcv+S5lp2YlKw1cIVP9utw1ZuOo
+      j25EozWU8J+tuEa3l60Mmmh/sKzH9SH7C9EscwTYWOYjYYPwfCM9UIlNE9lnbl9s
+      bzkqJvaaXpB/HVY/b4wrldr1rK73+y9LOOzfNpV4L+R4spZXXjZ2HIW/iKQj/c14
+    </EncryptedDer>
+  </Key>
+  <Cert name="test-encryption-certificate" exportable="true">
+    <!-- Note IV differs between items -->
+    <EncryptedDer IV="IVdiffersFrItems">
+      H/1CXNoQJ13MLdMESto1BHP5583n7fbwkN4mRVELQepeJNUhX2Kc+6foG3eTOBEH
+      N/z5xPFlYZLxeRArknVaCE/2Nmrk9STQZpja//B6FEXTUg4PbVEQl1zE5vJV8RUE
+      W1jetcEoxPZtNirqH03P1izud/vQVCQRy+WYe00Nm/MluGTJ8sytW+k+wCO+GmHf
+      5vyCal0xr+o2rIHzPPJId3eg/6IbWCAmOeNU+l03im98zSrqD9bG2cdgdciNUb4B
+      ANCv/3r+Vx6Xcs3N1p33ewXP+suCqDYBUE9YwsIaZABMB9yk02cuZtpeYytBCkNk
+      QzESDqzFoIV3JREjxKL69VyJWm+ttL4OnrAinZIndJ/0zk77Dg64vg63HBRGL+qi
+      w9C5eOXfIWylfUn/CMmHbRjg378G2svAOAynZhHmTLWqfviGKJcS6Mulxs2o/egL
+      /uuITbEQNKPX5LVvtBPygUPPgV66Q3zjBGX/vbPwpMn/M8Z5gOOrUfoIKTTTh7a+
+      VwkujHjC68TJ21AJSauTH7qg291cQZOMeC3LfXXjCXQYg3qOyJnlmDrfZFfnzRk6
+      W4z6i868Dk12B8KDXtSPSR9AigSiooTOgvhqVk+diILYBdpwfrEUTIt2Cq5hgcoO
+      2e9gIe03vxD3dxOQjvEC7XYbdWeB87mlEgkOKjm9sC/XRJCnF33xVJPxsc+ixoRk
+      4udR5UdYVZMc8tkGIgO7v/aOJyaAwSnRc5NVA8L+4w/0MUNtfD911buUzeV/wmwg
+      q/YqNI7AluNifXEK5CTYBP0CmAVlGUC3k4Q0W+gRIg1peiURl0pvantE26NXsNEr
+      GuIHCkKrQcUKkcCpCGeAuzjZAfXLdtEm9oLg44BGBNEP6cBvgoryJATv5XPSR7TJ
+      SvKPQM/hkPwc2NIzJEFP2729+HagOp2ANyMob/5Z4dE6ynDpZ1hTBBRanI6WBerX
+      SBClj+MnJJhnxUsSXL9r6O9s24ajCqNUib8K8M+P5+7+K+rO07C+ckzNiy9j7uyX
+      RZm7eWfsZ7zbjwKsFPqBp0v0pDUJZ1LvTwpL/OOHE19LDE0sdpVXJqp7JyMbnFvn
+      yiT7xfFAOp0kseCee0UVk4V5Og4u+vdSrjt6HBFcueTnE1OtDkMlX0sSL3+mEyF+
+      +mkPx8bIkSvvitoPHfipP13kG8qBQ/yKaKjCgQYb7OwFOGOtwkaUaqHRm0GEBxe1
+      xr0v1lyJzpaS6ZMU/kSH2QGNrfhiiif9+nlKiUbfPmUMKqrLKAYn8KFEDkU7Wrrm
+      /cW0Y+cCntKyhszBs8jcKHyoJDCi4imUlZHg4t4MwYrD8GgaeBfUxPP5rUroHMRy
+      6K/UKXhraU9CoEtKIyAk0oXH3JlqCz0WRxjA322kAhVxDYIHa6D1pSVFY1K8FXfq
+      0hSZOw4yFBYhyEIwBkstpNiRXWtFR1xRlVTdb9ksmAPTfr0TyNWbygz8Pa6gz7qx
+      j3B+24jAShhq8PHWxpJgfsObLsr4aASNZKSxpzSC140o+BTxqmSIjljdTKF+golD
+      /XBwmrhqsfI/3mRocIte34Pcfqj0T3zKUZ45zRLQGvA=
+    </EncryptedDer>
+  </Cert>
+  <Data name="test-ascii-data-encryption">
+    <!-- this below decrypts to ASCII: "My secret data" -->
+    <EncryptedASCII IV="__another_IV_2__">zuBDjp8ptFthrU69Ua5cfg==</EncryptedASCII>
+  </Data>
+  <Data name="test-binary-data-encryption">
+    <!-- this below decrypts to small PNG image -->
+    <EncryptedBinary IV="PNGIVPNGIVPNGIVP">
+      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
+    </EncryptedBinary>
+  </Data>
 </InitialValues>

@@ -4,6 +4,7 @@
 
 	<xsd:complexType name="InitialValuesType">
 		<xsd:sequence maxOccurs="unbounded" minOccurs="1">
+			<xsd:element name="EncryptionKey" maxOccurs="1" minOccurs="0"></xsd:element>
 			<xsd:choice maxOccurs="1" minOccurs="1">
 				<xsd:element name="Data" type="DataType"
 					maxOccurs="1" minOccurs="1">
@@ -52,8 +53,8 @@
 						<xsd:element name="Base64"
 							type="EncodingRawType" maxOccurs="1" minOccurs="1">
 						</xsd:element>
-						<xsd:element name="EncryptedBase64"
-							type="EncodingRawType" maxOccurs="1" minOccurs="1">
+						<xsd:element name="EncryptedDer"
+							type="EncryptedBase64Type" maxOccurs="1" minOccurs="1">
 						</xsd:element>
 					</xsd:choice>
 					<xsd:element name="Permission" type="PermissionType" maxOccurs="unbounded" minOccurs="0"></xsd:element>
@@ -86,6 +87,9 @@
 						<xsd:element name="DER"
 							type="EncodingDerType" maxOccurs="1" minOccurs="1">
 						</xsd:element>
+						<xsd:element name="EncryptedDer"
+							type="EncryptedBase64Type" maxOccurs="1" minOccurs="1">
+						</xsd:element>
 					</xsd:choice>
 					<xsd:element name="Permission" type="PermissionType" maxOccurs="unbounded" minOccurs="0"></xsd:element>
 				</xsd:sequence>
@@ -103,6 +107,12 @@
 						</xsd:element>
 						<xsd:element name="Base64"
 							type="EncodingRawType" maxOccurs="1" minOccurs="1">
+						</xsd:element>
+						<xsd:element name="EncryptedASCII"
+							type="EncryptedBase64Type" maxOccurs="1" minOccurs="1">
+						</xsd:element>
+						<xsd:element name="EncryptedBinary"
+							type="EncryptedBase64Type" maxOccurs="1" minOccurs="1">
 						</xsd:element>
 					</xsd:choice>
 					<xsd:element name="Permission" type="PermissionType" maxOccurs="unbounded" minOccurs="0"></xsd:element>
@@ -122,6 +132,19 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="EncodingRawType">
 		<xsd:restriction base="xsd:string"></xsd:restriction>
+	</xsd:simpleType>
+	<xsd:complexType name="EncryptedBase64Type">
+		<xsd:simpleContent>
+			<xsd:extension base="EncodingRawType">
+				<xsd:attribute name="IV" type="IV_string" use="required"/>
+			</xsd:extension>
+		</xsd:simpleContent>
+	</xsd:complexType>
+	<xsd:simpleType name="IV_string">
+		<xsd:restriction base="xsd:string">
+			<xsd:minLength value="16" />
+			<xsd:maxLength value="16" />
+		</xsd:restriction>
 	</xsd:simpleType>
 
 	<xsd:complexType name="PermissionType">
