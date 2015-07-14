@@ -1,5 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <InitialValues version="1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="initial_values.xsd">
+  <!-- if EncryptionKey present, the content is an AES key encrypted using device key.
+       The format is Base64(encrypt(AES_key_binary))
+       i.e.:
+           * RSA-OAEP encrypt AES key: openssl rsautl -encrypt -oaep -pubin -inkey device.pub -in encryption_AES_key -out encryption_AES_key.encrypted
+           * encode base64: openssl enc -base64 -in encryption_AES_key.encrypted -->
+  <EncryptionKey>
+      QL/5RW1VfS1uya04CWkVy1eykdhnRaTFiQ6Lcv0XFYhqgUKp6+PxxT1xjaz8TCVp
+      UcKorZayMPCuStRAylViZfxHFhXKR3awH+FcnGMZrhV6kORy39YCba0NGc5eAk3s
+      CBPYdRRiV7ejJSOI8n3zFjituVhHLcLuZB6xHvQQpQFFYV0BuF3BXfx6roP4+Olj
+      bZ1fYDrj8QIzqi3RV/ORGbl1BqHVRoMN/5XB+8oVKVn/EMRZPao4hnkV3pTI01Ss
+      Wid4fIHzBpi8rkkxr80/ym2BkeA/piaPNGOQtKjVfBOn/SuR2LQJreG6QbI6MYXC
+      ZVOanzc0euaenw1q9b+yEQ==
+  </EncryptionKey>
   <Key name="key1" type="RSA_PUB" password="123">
     <PEM>
       -----BEGIN PUBLIC KEY-----
@@ -70,5 +83,27 @@
     </Base64>
     <Permission accessor="web_app1"/>
     <Permission accessor="web_app2"/>
+  </Key>
+  <!-- key below is encrypted using AES-CBC algorithm.
+     The key used is decrypted <EncryptionKey> provided above.
+     Encryption:
+       * encrypt AES CBC: openssl aes-256-cbc -K `xxd -p -c 64 encryption_AES_key` -iv `xxd -p -c 64 encryption_AES_IV` -e -in data -out data.enc
+  -->
+  <Key name="test-encryption-prv" type="RSA_PRV">
+    <EncryptedDer IV="_ThisIsIVForAES_">
+      BflJyNgOcGyJSqTegG+y7MJXI1crgsGY3PjFfMpbmMbwJkVexvxoEPdf2yE5Z7da
+      6Vp4Qo2WOCUv/hllNTfm/dH7kOJOjcs/vaV1eRIfzEx3hvgKOyP82Hhkm1POynsF
+      0GyMm/VwtJFwFHA5DaJzwLln2/AoD//vC731Qhucw0Zvi2hi74d6igPog9EugIj/
+      tStvpgiNE6/Hb2ZRMDswgZ8o+tKCn+QHktR/YoZ19HfX7nDVRkMQxsiA8P4zO9Do
+      +iuiu/mGPVavlZA3df47TLG0kz+sz72jzPeEbfmvQo3gHWSuJ87TUwIcIoXDvaxY
+      xE8/On5OTqJy8HZ+jGvEThKI/96LQsFqKlEeGGenvzVJ+BVAF9x65uOkRll9yE6v
+      FIQcqbgipuBkdC6XLLaWTMgs5iiWvMn/lpNYrfZr52/TKqr09mNdei6yGvy+YuG8
+      vu/xN7/3An/zE4FOIJadgI5eADj+Dz7exml3tKTuuDpR9fhxiXd7HmZhCCf11C3r
+      54S6X9bZb7335L/5UfLxs4jMMfGhYD+1UF1Qb5zVW9IVMZ+owGeC6QQPUiX6HAxy
+      Rx7kLzd78uSbLNqeuiUeGiprxnuwMY2BgSqLq4WNCDWxY4hGTdkC7yg6DgY+L9Lz
+      wqVuJ6STmK9Hj9bL9YUe0KrzmVUfmsaq5PL+gfcv+S5lp2YlKw1cIVP9utw1ZuOo
+      j25EozWU8J+tuEa3l60Mmmh/sKzH9SH7C9EscwTYWOYjYYPwfCM9UIlNE9lnbl9s
+      bzkqJvaaXpB/HVY/b4wrldr1rK73+y9LOOzfNpV4L+R4spZXXjZ2HIW/iKQj/c14
+    </EncryptedDer>
   </Key>
 </InitialValues>
