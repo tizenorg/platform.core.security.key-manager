@@ -33,6 +33,7 @@ namespace Crypto {
 
 class GStore {
 public:
+    virtual GKeyUPtr getDeviceKey() { ThrowErr(Exc::Crypto::OperationNotSupported); }
     virtual GKeyUPtr getKey(const Token &) { ThrowErr(Exc::Crypto::OperationNotSupported); }
     virtual TokenPair generateAKey(const CryptoAlgorithm &) { ThrowErr(Exc::Crypto::OperationNotSupported); }
     virtual Token generateSKey(const CryptoAlgorithm &) { ThrowErr(Exc::Crypto::OperationNotSupported); }

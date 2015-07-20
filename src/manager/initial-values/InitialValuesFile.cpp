@@ -29,11 +29,13 @@
 #include <CertHandler.h>
 #include <DataHandler.h>
 #include <EncodingType.h>
+#include <sw-backend/key.h>
 #include <dpl/log/log.h>
 
 namespace {
 const int          XML_CURRENT_VERSION      = 1;
 const char * const XML_TAG_INITIAL_VALUES   = "InitialValues";
+const char * const XML_TAG_ENCRYPTION_KEY   = "EncryptionKey";
 const char * const XML_TAG_KEY              = "Key";
 const char * const XML_TAG_DATA             = "Data";
 const char * const XML_TAG_CERT             = "Cert";
@@ -48,9 +50,12 @@ const char * const XML_ATTR_VERSION         = "version";
 namespace CKM {
 namespace InitialValues {
 
-InitialValuesFile::InitialValuesFile(const std::string &XML_filename, CKMLogic & db_logic)
-        : m_parser(XML_filename), m_db_logic(db_logic),
-          m_header(std::make_shared<HeaderHandler>(*this))
+InitialValuesFile::InitialValuesFile(const std::string &XML_filename,
+                                     const Crypto::GKeyShPtr deviceKey,
+                                     CKMLogic & db_logic)
+        : m_parser(XML_filename), m_deviceKey(deviceKey), m_db_logic(db_logic),
+          m_header(std::make_shared<HeaderHandler>(*this)),
+          m_encryptionKeyHandler(std::make_shared<EncryptionKeyHandler>(*this))
 {
     m_parser.RegisterErrorCb(InitialValuesFile::Error);
     m_parser.RegisterElementCb(XML_TAG_INITIAL_VALUES,
@@ -59,6 +64,18 @@ InitialValuesFile::InitialValuesFile(const std::string &XML_filename, CKMLogic &
                 return m_header;
             },
             [this](const XML::Parser::ElementHandlerPtr &) {});
+    if(m_deviceKey)
+    {
+        m_parser.RegisterElementCb(XML_TAG_ENCRYPTION_KEY,
+                [this]() -> XML::Parser::ElementHandlerPtr
+                {
+                    return m_encryptionKeyHandler;
+                },
+                [this](const XML::Parser::ElementHandlerPtr &)
+                {
+                    m_AESkey = m_encryptionKeyHandler->decryptAESKey();
+                });
+    }
 }
 
 void InitialValuesFile::registerElementListeners()
@@ -225,6 +242,25 @@ void InitialValuesFile::ReleasePermissionHandler()
 {
 }
 
+
+InitialValuesFile::EncryptionKeyHandler::EncryptionKeyHandler(InitialValuesFile & parent) : m_parent(parent) {}
+void InitialValuesFile::EncryptionKeyHandler::Characters(const std::string &data) {
+    m_encryptedKey.reserve(m_encryptedKey.size() + data.size());
+    m_encryptedKey.insert(m_encryptedKey.end(), data.begin(), data.end());
+};
+void InitialValuesFile::EncryptionKeyHandler::End() {
+    std::string trimmed = XML::trimEachLine(std::string(m_encryptedKey.begin(), m_encryptedKey.end()));
+    Base64Decoder base64;
+    base64.reset();
+    base64.append(RawBuffer(trimmed.begin(), trimmed.end()));
+    base64.finalize();
+    m_encryptedKey = base64.get();
+};
+Crypto::GKeyShPtr InitialValuesFile::EncryptionKeyHandler::decryptAESKey() const {
+    CryptoAlgorithm RSA_OAEP_alg;
+    RSA_OAEP_alg.setParam(ParamName::ALGO_TYPE, AlgoType::RSA_OAEP);
+    return std::make_shared<Crypto::SW::SKey>(Crypto::SW::SKey(m_parent.m_deviceKey->decrypt(RSA_OAEP_alg, m_encryptedKey), DataType::KEY_AES));
+}
 
 InitialValuesFile::HeaderHandler::HeaderHandler(InitialValuesFile & parent)
     : m_version(-1), m_parent(parent) {}
