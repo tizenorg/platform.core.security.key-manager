@@ -37,6 +37,9 @@ public:
     virtual Token import(const IStoreData &data);
     virtual Token importEncrypted(const IStoreData &, const IStoreDataEncryption &);
     virtual void destroy(const Token &){}
+
+private:
+    Crypto::GKeyShPtr m_deviceKey;
 };
 
 } // namespace SW

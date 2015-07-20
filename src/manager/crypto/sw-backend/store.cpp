@@ -24,6 +24,8 @@
 #include <sw-backend/key.h>
 #include <sw-backend/store.h>
 #include <sw-backend/internals.h>
+#include <SWKeyFile.h>
+#include <dpl/log/log.h>
 
 namespace {
 
@@ -38,9 +40,31 @@ namespace CKM {
 namespace Crypto {
 namespace SW {
 
+namespace
+{
+const char * const DEVICE_KEY_XSD       = "/usr/share/ckm/sw_key.xsd";
+const char * const DEVICE_KEY_SW_FILE   = "/opt/data/ckm/device_key.xml";
+}
+
 Store::Store(CryptoBackend backendId)
   : GStore(backendId)
 {
+    // get the device key if present
+    InitialValues::SWKeyFile keyFile(DEVICE_KEY_SW_FILE);
+    int rc = keyFile.Validate(DEVICE_KEY_XSD);
+    if(rc == XML::Parser::PARSE_SUCCESS)
+    {
+        rc = keyFile.Parse();
+        if(rc == XML::Parser::PARSE_SUCCESS)
+            m_deviceKey = keyFile.getPrivKey();
+        else
+        {
+            // do nothing, bypass encrypted elements
+            LogWarning("invalid SW key file: " << DEVICE_KEY_SW_FILE << ", parsing code: " << rc);
+        }
+    }
+    else
+        LogWarning("invalid SW key file: " << DEVICE_KEY_SW_FILE << ", validation code: " << rc);
 }
 
 GKeyUPtr Store::getKey(const Token &token) {
@@ -74,8 +98,27 @@ Token Store::generateSKey(const CryptoAlgorithm &algorithm)
     return Internals::generateSKey(m_backendId, algorithm);
 }
 
-Token Store::import(const IStoreData &data) {
-    return Token(m_backendId, data.getType(), data.getData());
+Token Store::import(const IStoreData &data)
+{
+    if(data.isEncrypted())
+    {
+        if(!m_deviceKey)
+            ThrowErr(Exc::Crypto::InternalError, "No device key present");
+
+        // decrypt the AES key using device key
+        CryptoAlgorithm algorithmRSAOAEP;
+        algorithmRSAOAEP.setParam(ParamName::ALGO_TYPE, AlgoType::RSA_OAEP);
+        Crypto::SW::SKey AES_key = Crypto::SW::SKey(m_deviceKey->decrypt(algorithmRSAOAEP, data.getEncryptedKey()), DataType::KEY_AES);
+
+        // decrypt the buffer using AES key
+        CryptoAlgorithm algorithmAESCBC;
+        algorithmAESCBC.setParam(ParamName::ALGO_TYPE, AlgoType::AES_CBC);
+        algorithmAESCBC.setParam(ParamName::ED_IV, data.getEncryptionIV());
+        RawBuffer rawData = AES_key.decrypt(algorithmAESCBC, data.getData());
+
+        return Token(m_backendId, data.getType(), rawData);
+    }
+    else return Token(m_backendId, data.getType(), data.getData());
 }
 
 Token Store::importEncrypted(const IStoreData &, const IStoreDataEncryption &) {
