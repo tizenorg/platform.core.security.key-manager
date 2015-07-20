@@ -33,7 +33,6 @@
 #include <dirent.h>
 #include <algorithm>
 #include <InitialValuesFile.h>
-#include <sw-backend/store.h>
 #include <generic-backend/exception.h>
 
 namespace {

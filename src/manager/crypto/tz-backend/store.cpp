@@ -42,7 +42,14 @@ Token Store::import(DataType, const RawBuffer &) {
     ThrowErr(Exc::Crypto::OperationNotSupported, "Trust zone backend is not implemented!");
 }
 
+Token Store::importEncrypted(DataType,
+                             const RawBuffer &,
+                             const RawBuffer &,
+                             const RawBuffer &)
+{
+   ThrowErr(Exc::Crypto::OperationNotSupported, "Trust zone backend is not implemented!");
+}
+
 } // namespace TZ
 } // namespace Crypto
 } // namespace CKM
-
