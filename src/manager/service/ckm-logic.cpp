@@ -32,6 +32,7 @@
 #include <certificate-store.h>
 #include <dirent.h>
 #include <algorithm>
+#include <SWKeyFile.h>
 #include <InitialValuesFile.h>
 #include <sw-backend/store.h>
 #include <generic-backend/exception.h>
@@ -40,6 +41,7 @@ namespace {
 const char * const CERT_SYSTEM_DIR          = "/etc/ssl/certs";
 const char * const INIT_VALUES_DIR          = "/opt/data/ckm/initial_values/";
 const char * const INIT_VALUES_XSD          = "/usr/share/ckm/initial_values.xsd";
+const char * const DEVICE_KEY_XSD           = "/usr/share/ckm/sw_key.xsd";
 const char * const INIT_VALUES_FILE_SUFFIX  = ".xml";
 const char * const SYSTEM_DB_PASSWD         = "cAtRugU7";
 
@@ -88,20 +90,40 @@ CKMLogic::CKMLogic()
         closedir(dp);
     }
 
-    // parse
-    for(const auto & file : filesToParse)
+    if(filesToParse.size())
     {
-        InitialValues::InitialValuesFile xmlFile(file.c_str(), *this);
-        int rc = xmlFile.Validate(INIT_VALUES_XSD);
+        Crypto::GKeyShPtr deviceKey;
+
+        // TODO TMP: parsing the SW key
+        const char *file = "/opt/data/ckm/device_key.xml";
+        InitialValues::SWKeyFile keyFile(file);
+        int rc = keyFile.Validate(DEVICE_KEY_XSD);
         if(rc == XML::Parser::PARSE_SUCCESS)
         {
-            rc = xmlFile.Parse();
+            rc = keyFile.Parse();
             if(rc != XML::Parser::PARSE_SUCCESS)
-                LogError("invalid initial values file: " << file << ", parsing code: " << rc);
+                LogError("invalid SW key file: " << file << ", parsing code: " << rc);
+
+            deviceKey = keyFile.getPrivKey();
         }
         else
-            LogError("invalid initial values file: " << file << ", validation code: " << rc);
-        unlink(file.c_str());
+            LogError("invalid SW key file: " << file << ", validation code: " << rc);
+
+        // parse
+        for(const auto & file : filesToParse)
+        {
+            InitialValues::InitialValuesFile xmlFile(file.c_str(), deviceKey, *this);
+            int rc = xmlFile.Validate(INIT_VALUES_XSD);
+            if(rc == XML::Parser::PARSE_SUCCESS)
+            {
+                rc = xmlFile.Parse();
+                if(rc != XML::Parser::PARSE_SUCCESS)
+                    LogError("invalid initial values file: " << file << ", parsing code: " << rc);
+            }
+            else
+                LogError("invalid initial values file: " << file << ", validation code: " << rc);
+            unlink(file.c_str());
+    }
     }
 }
 

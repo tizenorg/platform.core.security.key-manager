@@ -31,6 +31,7 @@ class Store : public GStore {
 public:
     explicit Store(CryptoBackend backendId);
 
+    virtual GKeyUPtr getDeviceKey() { ThrowErr(Exc::Crypto::OperationNotSupported); }
     virtual GKeyUPtr getKey(const Token &token);
     virtual TokenPair generateAKey(const CryptoAlgorithm &);
     virtual Token generateSKey(const CryptoAlgorithm &);
