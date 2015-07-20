@@ -43,7 +43,7 @@ public:
     virtual GKeyUPtr getKey(const Token &) { ThrowErr(Exc::Crypto::OperationNotSupported); }
     virtual TokenPair generateAKey(const CryptoAlgorithm &) { ThrowErr(Exc::Crypto::OperationNotSupported); }
     virtual Token generateSKey(const CryptoAlgorithm &) { ThrowErr(Exc::Crypto::OperationNotSupported); }
-    virtual Token import(DataType, const RawBuffer &) { ThrowErr(Exc::Crypto::OperationNotSupported); }
+    virtual Token import(DataType, const RawBuffer &, GKeyShPtr = nullptr) { ThrowErr(Exc::Crypto::OperationNotSupported); }
     virtual void destroy(const Token &) { ThrowErr(Exc::Crypto::OperationNotSupported); }
     virtual ~GStore() {}
 

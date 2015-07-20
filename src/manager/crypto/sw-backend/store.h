@@ -34,8 +34,11 @@ public:
     virtual GKeyUPtr getKey(const Token &token);
     virtual TokenPair generateAKey(const CryptoAlgorithm &);
     virtual Token generateSKey(const CryptoAlgorithm &);
-    virtual Token import(DataType dataType, const RawBuffer &buffer);
+    virtual Token import(DataType dataType, const RawBuffer &buffer, GKeyShPtr encryptedKey = nullptr);
     virtual void destroy(const Token &){}
+
+private:
+    Crypto::GKeyShPtr m_deviceKey;
 };
 
 } // namespace SW
