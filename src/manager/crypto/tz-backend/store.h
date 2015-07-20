@@ -34,6 +34,10 @@ public:
     virtual GKeyUPtr getKey(const Token &token);
     virtual TokenPair generateAKey(const CryptoAlgorithm &);
     virtual Token import(DataType dataType, const RawBuffer &buffer);
+    virtual Token importEncrypted(DataType dataType,
+                                  const RawBuffer &buffer,
+                                  const RawBuffer &encryptedAESKey,
+                                  const RawBuffer &IVforAES);
     virtual void destroy(const Token &){}
 };
 
