@@ -33,7 +33,6 @@
 #include <dirent.h>
 #include <algorithm>
 #include <InitialValuesFile.h>
-#include <sw-backend/store.h>
 #include <generic-backend/exception.h>
 
 namespace {
@@ -418,7 +417,7 @@ DB::Row CKMLogic::createEncryptedRow(
     const InternalPolicy &policy) const
 {
     Crypto::GStore& store = m_decider.getStore(dataType, policy);
-    Token token = store.import(dataType, data);
+    Token token = store.import(dataType, data, policy);
 
     DB::Row row(std::move(token), name, label, static_cast<int>(policy.isExportable()));
 

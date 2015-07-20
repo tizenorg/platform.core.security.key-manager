@@ -38,11 +38,10 @@ TokenPair Store::generateAKey(const CryptoAlgorithm &) {
     ThrowErr(Exc::Crypto::OperationNotSupported, "Trust zone backend is not implemented!");
 }
 
-Token Store::import(DataType, const RawBuffer &) {
+Token Store::import(DataType, const RawBuffer &, const IStorePolicy &) {
     ThrowErr(Exc::Crypto::OperationNotSupported, "Trust zone backend is not implemented!");
 }
 
 } // namespace TZ
 } // namespace Crypto
 } // namespace CKM
-
