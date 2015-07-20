@@ -20,53 +20,63 @@
  * @brief       XML parser class implementation.
  */
 
-#include <string>
-#include <sstream>
 #include <algorithm>
 #include <xml-utils.h>
 
 namespace
 {
 const char * const WHITESPACE       = " \n\r\t\v";
-const char * const LINE_WHITESPACE  = " \t";
-
-std::string trim_left(const std::string& s, const char *whitespaces)
-{
-    size_t startpos = s.find_first_not_of(whitespaces);
-    return (startpos == std::string::npos) ? "" : s.substr(startpos);
-}
-
-std::string trim_right(const std::string& s, const char *whitespaces)
-{
-    size_t endpos = s.find_last_not_of(whitespaces);
-    return (endpos == std::string::npos) ? "" : s.substr(0, endpos+1);
-}
-
-std::string trim(const std::string& s, const char *whitespaces)
-{
-    return trim_right(trim_left(s, whitespaces), whitespaces);
-}
+const char * const LINE_WHITESPACE  = " \r\t\v";
+//
+//std::string trim_left(const std::string& s, const char *whitespaces)
+//{
+//    size_t startpos = s.find_first_not_of(whitespaces);
+//    return (startpos == std::string::npos) ? "" : s.substr(startpos);
+//}
+//
+//std::string trim_right(const std::string& s, const char *whitespaces)
+//{
+//    size_t endpos = s.find_last_not_of(whitespaces);
+//    return (endpos == std::string::npos) ? "" : s.substr(0, endpos+1);
+//}
+//
+//std::string trim(const std::string& s, const char *whitespaces)
+//{
+//    return trim_right(trim_left(s, whitespaces), whitespaces);
+//}
 }
 
 namespace CKM {
 namespace XML {
-std::string trim(const std::string& s)
+
+template <typename T>
+T removeChars(const T& input, const char *what)
 {
-    return ::trim(s, WHITESPACE);
+    T out(input);
+    auto endit = std::remove_if(out.begin(), out.end(),
+        [what](char c)
+        {
+            for (const char *ptr = what; *ptr; ++ptr)
+                if (*ptr == c)
+                    return true;
+            return false;
+        });
+
+    out.erase(endit, out.end());
+    return out;
 }
 
-std::string trimEachLine(const std::string& s)
-{
-    std::istringstream stream(s);
-    size_t line_cnt = 0;
-    std::string line, output;
-    while(std::getline(stream, line)) {
-        if(line_cnt>0)
-            output += "\n";
-        output += ::trim(line, LINE_WHITESPACE);
-        line_cnt ++;
-    }
-    return output;
+RawBuffer removeWhiteChars(const RawBuffer &buffer) {
+    return removeChars(buffer, WHITESPACE);
 }
+
+std::string trimEachLine(const std::string& s) {
+    return removeChars(s, LINE_WHITESPACE);
+}
+
+std::string trim(const std::string &s) {
+    return removeChars(s, WHITESPACE);
+}
+
 }
 }

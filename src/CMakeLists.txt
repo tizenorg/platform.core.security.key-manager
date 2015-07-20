@@ -61,6 +61,7 @@ SET(KEY_MANAGER_SOURCES
     ${KEY_MANAGER_PATH}/initial-values/PermissionHandler.cpp
     ${KEY_MANAGER_PATH}/initial-values/InitialValueHandler.cpp
     ${KEY_MANAGER_PATH}/initial-values/InitialValuesFile.cpp
+    ${KEY_MANAGER_PATH}/initial-values/SWKeyFile.cpp
     ${KEY_MANAGER_PATH}/initial-values/xml-utils.cpp
     ${KEY_MANAGER_PATH}/dpl/core/src/assert.cpp
     ${KEY_MANAGER_PATH}/dpl/db/src/sql_connection.cpp
