@@ -24,6 +24,8 @@
 #include <sw-backend/key.h>
 #include <sw-backend/store.h>
 #include <sw-backend/internals.h>
+#include <SWKeyFile.h>
+#include <dpl/log/log.h>
 
 namespace {
 
@@ -38,9 +40,31 @@ namespace CKM {
 namespace Crypto {
 namespace SW {
 
+namespace
+{
+const char * const DEVICE_KEY_XSD       = "/usr/share/ckm/sw_key.xsd";
+const char * const DEVICE_KEY_SW_FILE   = "/opt/data/ckm/device_key.xml";
+}
+
 Store::Store(CryptoBackend backendId)
   : GStore(backendId)
 {
+    // get the device key if present
+    InitialValues::SWKeyFile keyFile(DEVICE_KEY_SW_FILE);
+    int rc = keyFile.Validate(DEVICE_KEY_XSD);
+    if(rc == XML::Parser::PARSE_SUCCESS)
+    {
+        rc = keyFile.Parse();
+        if(rc == XML::Parser::PARSE_SUCCESS)
+            m_deviceKey = keyFile.getPrivKey();
+        else
+        {
+            // do nothing, bypass encrypted elements
+            LogWarning("invalid SW key file: " << DEVICE_KEY_SW_FILE << ", parsing code: " << rc);
+        }
+    }
+    else
+        LogWarning("invalid SW key file: " << DEVICE_KEY_SW_FILE << ", validation code: " << rc);
 }
 
 GKeyUPtr Store::getKey(const Token &token) {
@@ -76,6 +100,30 @@ Token Store::generateSKey(const CryptoAlgorithm &algorithm)
 
 Token Store::import(DataType dataType, const RawBuffer &buffer) {
     return Token(m_backendId, dataType, buffer);
+}
+
+Token Store::importEncrypted(DataType dataType,
+                             const RawBuffer &buffer,
+                             const RawBuffer &encrypted_AES_key,
+                             const RawBuffer &AES_IV)
+{
+    if(m_deviceKey)
+    {
+        // decrypt the AES key using device key
+        CryptoAlgorithm RSA_OAEP_alg;
+        RSA_OAEP_alg.setParam(ParamName::ALGO_TYPE, AlgoType::RSA_OAEP);
+        Crypto::SW::SKey AES_key = Crypto::SW::SKey(m_deviceKey->decrypt(RSA_OAEP_alg, encrypted_AES_key), DataType::KEY_AES);
+
+        // decrypt the buffer using AES key
+        CryptoAlgorithm AES_CBC_alg;
+        AES_CBC_alg.setParam(ParamName::ALGO_TYPE, AlgoType::AES_CBC);
+        AES_CBC_alg.setParam(ParamName::ED_IV, AES_IV);
+        RawBuffer rawData = AES_key.decrypt(AES_CBC_alg, buffer);
+
+        return Token(m_backendId, dataType, rawData);
+    }
+    else
+        ThrowErr(Exc::Crypto::InternalError, "No device key present");
 }
 
 } // namespace SW
