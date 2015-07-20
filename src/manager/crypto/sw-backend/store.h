@@ -36,6 +36,9 @@ public:
     virtual Token generateSKey(const CryptoAlgorithm &);
     virtual Token import(const IStoreData &data);
     virtual void destroy(const Token &){}
+
+private:
+    Crypto::GKeyShPtr m_deviceKey;
 };
 
 } // namespace SW
