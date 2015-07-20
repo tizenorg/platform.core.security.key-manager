@@ -24,6 +24,8 @@
 #include <sw-backend/key.h>
 #include <sw-backend/store.h>
 #include <sw-backend/internals.h>
+#include <SWKeyFile.h>
+#include <dpl/log/log.h>
 
 namespace {
 
@@ -38,9 +40,31 @@ namespace CKM {
 namespace Crypto {
 namespace SW {
 
+namespace
+{
+const char * const DEVICE_KEY_XSD       = "/usr/share/ckm/sw_key.xsd";
+const char * const DEVICE_KEY_SW_FILE   = "/opt/data/ckm/device_key.xml";
+}
+
 Store::Store(CryptoBackend backendId)
   : GStore(backendId)
 {
+    // get the device key if present
+    InitialValues::SWKeyFile keyFile(DEVICE_KEY_SW_FILE);
+    int rc = keyFile.Validate(DEVICE_KEY_XSD);
+    if(rc == XML::Parser::PARSE_SUCCESS)
+    {
+        rc = keyFile.Parse();
+        if(rc == XML::Parser::PARSE_SUCCESS)
+            m_deviceKey = keyFile.getPrivKey();
+        else
+        {
+            // do nothing, bypass encrypted elements
+            LogWarning("invalid SW key file: " << DEVICE_KEY_SW_FILE << ", parsing code: " << rc);
+        }
+    }
+    else
+        LogWarning("invalid SW key file: " << DEVICE_KEY_SW_FILE << ", validation code: " << rc);
 }
 
 GKeyUPtr Store::getKey(const Token &token) {
@@ -74,7 +98,7 @@ Token Store::generateSKey(const CryptoAlgorithm &algorithm)
     return Internals::generateSKey(m_backendId, algorithm);
 }
 
-Token Store::import(DataType dataType, const RawBuffer &buffer) {
+Token Store::import(DataType dataType, const RawBuffer &buffer, GKeyShPtr) {
     return Token(m_backendId, dataType, buffer);
 }
 
