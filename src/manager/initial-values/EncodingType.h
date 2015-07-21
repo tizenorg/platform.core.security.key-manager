@@ -30,7 +30,11 @@ enum EncodingType {
     PEM,
     DER,
     ASCII,
-    BASE64
+    BASE64,
+    // encrypted
+    ENCRYPTED_DER,
+    ENCRYPTED_ASCII,
+    ENCRYPTED_BINARY
 };
 
 }

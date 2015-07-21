@@ -27,14 +27,25 @@
 #include <xml-utils.h>
 #include <base64.h>
 
+namespace
+{
+const char * const XML_ATTR_IV  = "IV";
+}
+
 namespace CKM {
 namespace InitialValues {
 
-BufferHandler::BufferHandler(EncodingType type) : m_encoding(type) {}
+BufferHandler::BufferHandler(EncodingType type,
+                             const Crypto::GKeyShPtr key) : m_encoding(type), m_key(key) {}
 BufferHandler::~BufferHandler() {}
 
-void BufferHandler::Start(const XML::Parser::Attributes &)
+void BufferHandler::Start(const XML::Parser::Attributes &attr)
 {
+    // get key type
+    if(attr.find(XML_ATTR_IV) != attr.end()) {
+        std::string IVstring = attr.at(XML_ATTR_IV);
+        m_IV = RawBuffer(IVstring.begin(), IVstring.end());
+    }
 }
 
 
@@ -46,6 +57,7 @@ void BufferHandler::Characters(const std::string & data)
 
 void BufferHandler::End()
 {
+    // decoding section
     switch(m_encoding)
     {
         // PEM requires that "----- END" section comes right after "\n" character
@@ -59,6 +71,9 @@ void BufferHandler::End()
         // Base64 decoder also does not accept any whitespaces
         case DER:
         case BASE64:
+        case ENCRYPTED_DER:
+        case ENCRYPTED_ASCII:
+        case ENCRYPTED_BINARY:
         {
             std::string trimmed = XML::trimEachLine(std::string(m_data.begin(), m_data.end()));
             Base64Decoder base64;
@@ -68,6 +83,23 @@ void BufferHandler::End()
             m_data = base64.get();
             break;
         }
+
+        default:
+            break;
+    }
+
+    // decrypting section
+    CryptoAlgorithm AES_CBC_alg;
+    AES_CBC_alg.setParam(ParamName::ALGO_TYPE, AlgoType::AES_CBC);
+    AES_CBC_alg.setParam(ParamName::ED_IV, m_IV);
+    switch(m_encoding)
+    {
+        // Base64 decoder also does not accept any whitespaces
+        case ENCRYPTED_DER:
+        case ENCRYPTED_ASCII:
+        case ENCRYPTED_BINARY:
+            m_data = m_key->decrypt(AES_CBC_alg, m_data);
+            break;
 
         default:
             break;

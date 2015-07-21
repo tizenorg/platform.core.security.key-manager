@@ -26,6 +26,7 @@
 #include <parser.h>
 #include <EncodingType.h>
 #include <ckm/ckm-type.h>
+#include <generic-backend/gkey.h>
 
 namespace CKM {
 namespace InitialValues {
@@ -35,7 +36,7 @@ class BufferHandler : public XML::Parser::ElementHandler
 public:
     typedef std::shared_ptr<BufferHandler> BufferHandlerPtr;
 
-    BufferHandler(EncodingType type);
+    BufferHandler(EncodingType type, const Crypto::GKeyShPtr key);
     virtual ~BufferHandler();
 
     virtual void Start(const XML::Parser::Attributes &);
@@ -46,8 +47,10 @@ public:
         return m_data;
     }
 private:
-    EncodingType    m_encoding;
-    RawBuffer  m_data;
+    EncodingType        m_encoding;
+    Crypto::GKeyShPtr   m_key;
+    RawBuffer           m_IV;
+    RawBuffer           m_data;
 };
 
 }
