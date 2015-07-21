@@ -69,11 +69,16 @@ void InitialValueHandler::End()
     {
         // save data
         Policy policy(m_password, m_exportable);
+        DataContainer newData;
+        if(m_bufferHandler->isEncrypted())
+            newData = DataContainer(getDataType(), m_bufferHandler->getData(), m_encryptedKey, m_bufferHandler->getIV());
+        else
+            newData = DataContainer(getDataType(), m_bufferHandler->getData());
         int ec = m_db_logic.verifyAndSaveDataHelper(
                 Credentials(CKMLogic::SYSTEM_DB_UID, LABEL_SYSTEM_DB),
                 m_name,
                 LABEL_SYSTEM_DB,
-                DataContainer(getDataType(), m_bufferHandler->getData()),
+                newData,
                 PolicySerializable(policy));
         if(CKM_API_SUCCESS == ec)
         {
