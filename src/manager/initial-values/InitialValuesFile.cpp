@@ -43,6 +43,9 @@ const char * const XML_TAG_PEM              = "PEM";
 const char * const XML_TAG_DER              = "DER";
 const char * const XML_TAG_ASCII            = "ASCII";
 const char * const XML_TAG_BASE64           = "Base64";
+const char * const XML_TAG_ENCRYPTED_DER    = "EncryptedDER";
+const char * const XML_TAG_ENCRYPTED_ASCII  = "EncryptedASCII";
+const char * const XML_TAG_ENCRYPTED_BINARY = "EncryptedBinary";
 const char * const XML_TAG_PERMISSION       = "Permission";
 const char * const XML_ATTR_VERSION         = "version";
 }
@@ -144,6 +147,33 @@ void InitialValuesFile::registerElementListeners()
             {
                 ReleaseBufferHandler(EncodingType::BASE64);
             });
+    m_parser.RegisterElementCb(XML_TAG_ENCRYPTED_DER,
+            [this]() -> XML::Parser::ElementHandlerPtr
+            {
+                return GetBufferHandler(EncodingType::ENCRYPTED_DER, m_AESkey);
+            },
+            [this](const XML::Parser::ElementHandlerPtr &)
+            {
+                ReleaseBufferHandler(EncodingType::ENCRYPTED_DER);
+            });
+    m_parser.RegisterElementCb(XML_TAG_ENCRYPTED_ASCII,
+            [this]() -> XML::Parser::ElementHandlerPtr
+            {
+                return GetBufferHandler(EncodingType::ENCRYPTED_ASCII, m_AESkey);
+            },
+            [this](const XML::Parser::ElementHandlerPtr &)
+            {
+                ReleaseBufferHandler(EncodingType::ENCRYPTED_ASCII);
+            });
+    m_parser.RegisterElementCb(XML_TAG_ENCRYPTED_BINARY,
+            [this]() -> XML::Parser::ElementHandlerPtr
+            {
+                return GetBufferHandler(EncodingType::ENCRYPTED_BINARY, m_AESkey);
+            },
+            [this](const XML::Parser::ElementHandlerPtr &)
+            {
+                ReleaseBufferHandler(EncodingType::ENCRYPTED_BINARY);
+            });
     m_parser.RegisterElementCb(XML_TAG_PERMISSION,
             [this]() -> XML::Parser::ElementHandlerPtr
             {
@@ -219,12 +249,13 @@ void InitialValuesFile::ReleaseObjectHandler(ObjectType /*type*/)
 
 
 
-XML::Parser::ElementHandlerPtr InitialValuesFile::GetBufferHandler(EncodingType type)
+XML::Parser::ElementHandlerPtr InitialValuesFile::GetBufferHandler(EncodingType type,
+                                                                   const Crypto::GKeyShPtr key)
 {
     if( !m_currentHandler )
         return XML::Parser::ElementHandlerPtr();
 
-    return m_currentHandler->CreateBufferHandler(type);
+    return m_currentHandler->CreateBufferHandler(type, key);
 }
 void InitialValuesFile::ReleaseBufferHandler(EncodingType /*type*/)
 {
