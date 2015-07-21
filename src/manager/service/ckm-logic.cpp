@@ -433,15 +433,18 @@ DB::Row CKMLogic::createEncryptedRow(
 int CKMLogic::verifyBinaryData(DataType dataType, RawBuffer &input_data) const
 {
     RawBuffer dummy;
-    return toBinaryData(dataType, input_data, dummy);
+    return toBinaryData(dataType, input_data, InternalPolicy(), dummy);
 }
 
 int CKMLogic::toBinaryData(DataType dataType,
                            const RawBuffer &input_data,
+                           const InternalPolicy &policy,
                            RawBuffer &output_data) const
 {
     // verify the data integrity
-    if (dataType.isKey())
+    if (policy.isEncrypted())
+        output_data = input_data;
+    else if (dataType.isKey())
     {
         KeyShPtr output_key;
         if(dataType.isSKey())
@@ -484,7 +487,7 @@ int CKMLogic::verifyAndSaveDataHelper(
     try {
         // check if data is correct
         RawBuffer binaryData;
-        retCode = toBinaryData(dataType, data, binaryData);
+        retCode = toBinaryData(dataType, data, policy, binaryData);
         if(retCode == CKM_API_SUCCESS)
         {
             retCode = saveDataHelper(cred, name, label, dataType, binaryData, policy);

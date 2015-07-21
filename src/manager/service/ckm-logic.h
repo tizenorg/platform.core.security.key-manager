@@ -236,6 +236,7 @@ private:
     int toBinaryData(
         DataType dataType,
         const RawBuffer &input_data,
+        const InternalPolicy &policy,
         RawBuffer &output_data) const;
 
     int checkSaveConditions(
