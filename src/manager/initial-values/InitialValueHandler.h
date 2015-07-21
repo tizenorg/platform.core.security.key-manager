@@ -43,7 +43,8 @@ public:
                                                         m_db_logic(db_logic) {}
     virtual ~InitialValueHandler() {};
 
-    BufferHandler::BufferHandlerPtr CreateBufferHandler(EncodingType type);
+    BufferHandler::BufferHandlerPtr CreateBufferHandler(EncodingType type,
+                                                        const Crypto::GKeyShPtr key);
     PermissionHandler::PermissionHandlerPtr CreatePermissionHandler();
     virtual void Start(const XML::Parser::Attributes &);
     virtual void Characters(const std::string & data);
