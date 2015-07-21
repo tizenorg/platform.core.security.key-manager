@@ -439,7 +439,9 @@ int CKMLogic::toBinaryData(const DataContainer &input_data,
                            DataContainer &output_data) const
 {
     // verify the data integrity
-    if (input_data.getType().isKey())
+    if (input_data.isEncrypted())
+        output_data = input_data;
+    else if (input_data.getType().isKey())
     {
         KeyShPtr output_key;
         if(input_data.getType().isSKey())
