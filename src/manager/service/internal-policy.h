@@ -29,35 +29,34 @@ namespace CKM {
 
 class InternalPolicy : protected PolicySerializable, public Crypto::IStorePolicy {
 public:
-    InternalPolicy() :
-        PolicySerializable(),
-        m_encrypted(false)
-    {}
-
-    explicit InternalPolicy(bool exportable, bool encrypted = false) :
-        PolicySerializable(),
-        m_encrypted(encrypted)
-    {
+    InternalPolicy() : PolicySerializable() {}
+    explicit InternalPolicy(bool exportable) : PolicySerializable() {
         extractable = exportable;
     }
-
-    explicit InternalPolicy(const Policy &policy, bool encrypted = false) :
+    explicit InternalPolicy(const Policy &policy) : PolicySerializable(policy) {}
+    explicit InternalPolicy(const Policy &policy,
+                            const CKM::RawBuffer & encryptedKey,
+                            const CKM::RawBuffer & encryptionIV) :
         PolicySerializable(policy),
-        m_encrypted(encrypted)
+        m_encryptedKey(encryptedKey),
+        m_IV(encryptionIV)
     {}
-
-    explicit InternalPolicy(IStream &stream, bool encrypted = false) :
-        PolicySerializable(stream),
-        m_encrypted(encrypted)
-    {}
+    explicit InternalPolicy(IStream &stream) : PolicySerializable(stream) {}
 
     void Serialize(IStream &stream) const { PolicySerializable::Serialize(stream); }
 
     Password getPassword() const { return password; }
     bool isExportable() const { return extractable; }
-    bool isEncrypted() const { return m_encrypted; }
+    bool isEncrypted() const { return (m_encryptedKey.size()>0); }
+    const CKM::RawBuffer & getEncryptedKey() const {
+        return m_encryptedKey;
+    }
+    const CKM::RawBuffer & getEncryptionIV() const {
+        return m_IV;
+    }
 private:
-    bool m_encrypted;
+    CKM::RawBuffer m_encryptedKey;
+    CKM::RawBuffer m_IV;
 };
 
 } // namespace CKM
