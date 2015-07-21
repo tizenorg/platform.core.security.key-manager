@@ -76,6 +76,7 @@ void InitialValueHandler::End()
                 m_bufferHandler->getData(),
                 getDataType(),
                 PolicySerializable(policy));
+
         if(CKM_API_SUCCESS == ec)
         {
             // save permissions
@@ -98,9 +99,10 @@ void InitialValueHandler::End()
         LogError("Invalid data with name: " << m_name << ", reason: no key data!");
 }
 
-BufferHandler::BufferHandlerPtr InitialValueHandler::CreateBufferHandler(EncodingType type)
+BufferHandler::BufferHandlerPtr InitialValueHandler::CreateBufferHandler(EncodingType type,
+                                                                         const Crypto::GKeyShPtr key)
 {
-    m_bufferHandler = std::make_shared<BufferHandler>(type);
+    m_bufferHandler = std::make_shared<BufferHandler>(type, key);
     return m_bufferHandler;
 }
 
