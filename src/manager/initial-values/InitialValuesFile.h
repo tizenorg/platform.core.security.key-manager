@@ -57,7 +57,8 @@ protected:
     XML::Parser::ElementHandlerPtr GetObjectHandler(ObjectType type);
     void ReleaseObjectHandler(ObjectType type);
 
-    XML::Parser::ElementHandlerPtr GetBufferHandler(EncodingType type);
+    XML::Parser::ElementHandlerPtr GetBufferHandler(EncodingType type,
+                                                    const Crypto::GKeyShPtr key = nullptr);
     void ReleaseBufferHandler(EncodingType type);
 
     XML::Parser::ElementHandlerPtr GetPermissionHandler();
