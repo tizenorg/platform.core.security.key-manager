@@ -45,7 +45,7 @@ public:
 private:
     virtual void SetCommManager(CommMgr *manager);
 
-    bool ProcessOne(const ConnectionID &conn, ConnectionInfo &info);
+    bool ProcessOne(const ConnectionID &conn, ConnectionInfo &info, bool allowed);
     void ProcessMessage(MsgKeyResponse msg);
     void ProcessEncryption(const ConnectionID &conn,
                            const Credentials &cred,
