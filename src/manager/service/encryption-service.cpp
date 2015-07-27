@@ -64,7 +64,7 @@ void EncryptionService::RequestKey(const CryptoRequest& request)
 GenericSocketService::ServiceDescriptionVector EncryptionService::GetServiceDescription()
 {
     return ServiceDescriptionVector {
-        {SERVICE_SOCKET_ENCRYPTION, "key-manager::api-encryption", SOCKET_ID_ENCRYPTION}
+        {SERVICE_SOCKET_ENCRYPTION, "http://tizen.org/privilege/keymanager", SOCKET_ID_ENCRYPTION}
     };
 }
 
@@ -84,8 +84,10 @@ void EncryptionService::SetCommManager(CommMgr *manager)
 
 bool EncryptionService::ProcessOne(
     const ConnectionID &conn,
-    ConnectionInfo &info)
+    ConnectionInfo &info,
+    bool allowed)
 {
+    (void) allowed;
     LogDebug ("process One");
     try {
         if (!info.buffer.Ready())

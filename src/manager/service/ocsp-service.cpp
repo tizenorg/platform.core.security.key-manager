@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2014 Samsung Electronics Co.
+ *  Copyright (c) 2014 - 2015 Samsung Electronics Co., Ltd All Rights Reserved
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -53,14 +53,16 @@ void OCSPService::Stop() {
 GenericSocketService::ServiceDescriptionVector OCSPService::GetServiceDescription()
 {
     return ServiceDescriptionVector {
-        {SERVICE_SOCKET_OCSP, "key-manager::api-ocsp", SOCKET_ID_OCSP}
+        {SERVICE_SOCKET_OCSP, "http://tizen.org/privilege/keymanager", SOCKET_ID_OCSP}
     };
 }
 
 bool OCSPService::ProcessOne(
     const ConnectionID &conn,
-    ConnectionInfo &info)
+    ConnectionInfo &info,
+    bool allowed)
 {
+    (void) allowed;
     LogDebug ("process One");
 
     Try {
