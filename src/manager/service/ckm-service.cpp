@@ -54,8 +54,8 @@ void CKMService::Stop() {
 GenericSocketService::ServiceDescriptionVector CKMService::GetServiceDescription()
 {
     return ServiceDescriptionVector {
-        {SERVICE_SOCKET_CKM_CONTROL, "key-manager::api-control", SOCKET_ID_CONTROL},
-        {SERVICE_SOCKET_CKM_STORAGE, "key-manager::api-storage", SOCKET_ID_STORAGE}
+        {SERVICE_SOCKET_CKM_CONTROL, "http://tizen.org/privilege/keymanager.admin", SOCKET_ID_CONTROL},
+        {SERVICE_SOCKET_CKM_STORAGE, "http://tizen.org/privilege/keymanager", SOCKET_ID_STORAGE}
     };
 }
 
@@ -67,8 +67,10 @@ void CKMService::SetCommManager(CommMgr *manager)
 
 bool CKMService::ProcessOne(
     const ConnectionID &conn,
-    ConnectionInfo &info)
+    ConnectionInfo &info,
+    bool allowed)
 {
+    (void) allowed;
     LogDebug ("process One");
     RawBuffer response;
 
