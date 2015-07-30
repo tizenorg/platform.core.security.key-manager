@@ -61,11 +61,13 @@ private:
         bool allowed);
 
     RawBuffer ProcessControl(
-        MessageBuffer &buffer);
+        MessageBuffer &buffer,
+        bool allowed);
 
     RawBuffer ProcessStorage(
         Credentials &cred,
-        MessageBuffer &buffer);
+        MessageBuffer &buffer,
+        bool allowed);
 
     virtual void ProcessMessage(MsgKeyRequest msg);
 

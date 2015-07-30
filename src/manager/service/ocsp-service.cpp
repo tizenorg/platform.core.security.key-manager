@@ -62,7 +62,6 @@ bool OCSPService::ProcessOne(
     ConnectionInfo &info,
     bool allowed)
 {
-    (void) allowed;
     LogDebug ("process One");
 
     Try {
@@ -75,7 +74,7 @@ bool OCSPService::ProcessOne(
         RawBufferVector chainVector;
         buffer.Deserialize(commandId, chainVector);
 
-        RawBuffer response = m_logic->ocspCheck(commandId, chainVector);
+        RawBuffer response = m_logic->ocspCheck(commandId, chainVector, allowed);
         m_serviceManager->Write(conn, response);
 
         return true;

@@ -70,7 +70,6 @@ bool CKMService::ProcessOne(
     ConnectionInfo &info,
     bool allowed)
 {
-    (void) allowed;
     LogDebug ("process One");
     RawBuffer response;
 
@@ -79,9 +78,9 @@ bool CKMService::ProcessOne(
             return false;
 
         if (info.interfaceID == SOCKET_ID_CONTROL)
-            response = ProcessControl(info.buffer);
+            response = ProcessControl(info.buffer, allowed);
         else
-            response = ProcessStorage(info.credentials, info.buffer);
+            response = ProcessStorage(info.credentials, info.buffer, allowed);
 
         m_serviceManager->Write(conn, response);
 
@@ -104,7 +103,7 @@ bool CKMService::ProcessOne(
     return false;
 }
 
-RawBuffer CKMService::ProcessControl(MessageBuffer &buffer) {
+RawBuffer CKMService::ProcessControl(MessageBuffer &buffer, bool allowed) {
     int command = 0;
     uid_t user = 0;
     ControlCommand cc;
@@ -116,6 +115,9 @@ RawBuffer CKMService::ProcessControl(MessageBuffer &buffer) {
     LogDebug("Process control. Command: " << command);
 
     cc = static_cast<ControlCommand>(command);
+
+    if (cc != ControlCommand::SET_PERMISSION && !allowed)
+        return MessageBuffer::Serialize(CKM_API_ERROR_ACCESS_DENIED).Pop();
 
     switch(cc) {
     case ControlCommand::UNLOCK_USER_KEY:
@@ -155,14 +157,15 @@ RawBuffer CKMService::ProcessControl(MessageBuffer &buffer) {
             name,
             label,
             accessorLabel,
-            permissionMask);
+            permissionMask,
+            allowed);
     }
     default:
         Throw(Exception::BrokenProtocol);
     }
 }
 
-RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
+RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer, bool allowed)
 {
     int command = 0;
     int msgID = 0;
@@ -197,7 +200,8 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
                 label,
                 rawData,
                 DataType(tmpDataType),
-                policy);
+                policy,
+                allowed);
         }
         case LogicCommand::SAVE_PKCS12:
         {
@@ -212,7 +216,8 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
                 label,
                 pkcs,
                 keyPolicy,
-                certPolicy);
+                certPolicy,
+                allowed);
         }
         case LogicCommand::REMOVE:
         {
@@ -221,7 +226,8 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
                 cred,
                 msgID,
                 name,
-                label);
+                label,
+                allowed);
         }
         case LogicCommand::GET:
         {
@@ -233,7 +239,8 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
                 DataType(tmpDataType),
                 name,
                 label,
-                password);
+                password,
+                allowed);
         }
         case LogicCommand::GET_PKCS12:
         {
@@ -249,7 +256,8 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
                 name,
                 label,
                 passKey,
-                passCert);
+                passCert,
+                allowed);
         }
         case LogicCommand::GET_LIST:
         {
@@ -257,7 +265,8 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
             return m_logic->getDataList(
                 cred,
                 msgID,
-                DataType(tmpDataType));
+                DataType(tmpDataType),
+                allowed);
         }
         case LogicCommand::CREATE_KEY_AES:
         {
@@ -275,7 +284,8 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
                 size,
                 keyName,
                 keyLabel,
-                policyKey);
+                policyKey,
+                allowed);
         }
         case LogicCommand::CREATE_KEY_PAIR:
         {
@@ -302,7 +312,8 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
                 publicKeyName,
                 publicKeyLabel,
                 policyPrivateKey,
-                policyPublicKey);
+                policyPublicKey,
+                allowed);
         }
         case LogicCommand::GET_CHAIN_CERT:
         {
@@ -317,7 +328,8 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
                 certificate,
                 untrustedVector,
                 trustedVector,
-                systemCerts);
+                systemCerts,
+                allowed);
         }
         case LogicCommand::GET_CHAIN_ALIAS:
         {
@@ -332,7 +344,8 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
                 certificate,
                 untrustedVector,
                 trustedVector,
-                systemCerts);
+                systemCerts,
+                allowed);
         }
         case LogicCommand::CREATE_SIGNATURE:
         {
@@ -348,7 +361,8 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
                   password,           // password for private_key
                   message,
                   static_cast<HashAlgorithm>(hash),
-                  static_cast<RSAPaddingAlgorithm>(padding));
+                  static_cast<RSAPaddingAlgorithm>(padding),
+                  allowed);
         }
         case LogicCommand::VERIFY_SIGNATURE:
         {
@@ -374,7 +388,8 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
                 message,
                 signature,
                 static_cast<const HashAlgorithm>(hash),
-                static_cast<const RSAPaddingAlgorithm>(padding));
+                static_cast<const RSAPaddingAlgorithm>(padding),
+                allowed);
         }
         case LogicCommand::SET_PERMISSION:
         {
@@ -387,7 +402,8 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
                 name,
                 label,
                 accessorLabel,
-                permissionMask);
+                permissionMask,
+                allowed);
         }
         default:
             Throw(Exception::BrokenProtocol);
