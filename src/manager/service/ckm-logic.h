@@ -82,7 +82,8 @@ public:
         const Label &label,
         const RawBuffer &data,
         DataType dataType,
-        const PolicySerializable &policy);
+        const PolicySerializable &policy,
+        bool allowed);
 
     RawBuffer savePKCS12(
         const Credentials &cred,
@@ -91,13 +92,15 @@ public:
         const Label &label,
         const PKCS12Serializable &pkcs,
         const PolicySerializable &keyPolicy,
-        const PolicySerializable &certPolicy);
+        const PolicySerializable &certPolicy,
+        bool allowed);
 
     RawBuffer removeData(
         const Credentials &cred,
         int commandId,
         const Name &name,
-        const Label &label);
+        const Label &label,
+        bool allowed);
 
     RawBuffer getData(
         const Credentials &cred,
@@ -105,7 +108,8 @@ public:
         DataType dataType,
         const Name &name,
         const Label &label,
-        const Password &password);
+        const Password &password,
+        bool allowed);
 
     RawBuffer getPKCS12(
         const Credentials &cred,
@@ -113,12 +117,14 @@ public:
         const Name &name,
         const Label &label,
         const Password &keyPassword,
-        const Password &certPassword);
+        const Password &certPassword,
+        bool allowed);
 
     RawBuffer getDataList(
         const Credentials &cred,
         int commandId,
-        DataType dataType);
+        DataType dataType,
+        bool allowed);
 
     RawBuffer createKeyPair(
         const Credentials &cred,
@@ -129,7 +135,8 @@ public:
         const Name &namePublic,
         const Label &labelPublic,
         const PolicySerializable &policyPrivate,
-        const PolicySerializable &policyPublic);
+        const PolicySerializable &policyPublic,
+        bool allowed);
 
     RawBuffer createKeyAES(
         const Credentials &cred,
@@ -137,7 +144,8 @@ public:
         const int size,
         const Name &name,
         const Label &label,
-        const PolicySerializable &policy);
+        const PolicySerializable &policy,
+        bool allowed);
 
     RawBuffer getCertificateChain(
         const Credentials &cred,
@@ -145,7 +153,8 @@ public:
         const RawBuffer &certificate,
         const RawBufferVector &untrustedCertificates,
         const RawBufferVector &trustedCertificates,
-        bool useTrustedSystemCertificates);
+        bool useTrustedSystemCertificates,
+        bool allowed);
 
     RawBuffer getCertificateChain(
         const Credentials &cred,
@@ -153,9 +162,10 @@ public:
         const RawBuffer &certificate,
         const LabelNameVector &untrustedCertificates,
         const LabelNameVector &trustedCertificates,
-        bool useTrustedSystemCertificates);
+        bool useTrustedSystemCertificates,
+        bool allowed);
 
-    RawBuffer  createSignature(
+    RawBuffer createSignature(
         const Credentials &cred,
         int commandId,
         const Name &privateKeyName,
@@ -163,7 +173,8 @@ public:
         const Password &password,           // password for private_key
         const RawBuffer &message,
         const HashAlgorithm hash,
-        const RSAPaddingAlgorithm padding);
+        const RSAPaddingAlgorithm padding,
+        bool allowed);
 
     RawBuffer verifySignature(
         const Credentials &cred,
@@ -174,7 +185,8 @@ public:
         const RawBuffer &message,
         const RawBuffer &signature,
         const HashAlgorithm hash,
-        const RSAPaddingAlgorithm padding);
+        const RSAPaddingAlgorithm padding,
+        bool allowed);
 
     RawBuffer updateCCMode();
 
@@ -185,7 +197,8 @@ public:
         const Name &name,
         const Label &label,
         const Label &accessor_label,
-        const PermissionMask permissionMask);
+        const PermissionMask permissionMask,
+        bool allowed);
 
     int setPermissionHelper(
             const Credentials &cred,

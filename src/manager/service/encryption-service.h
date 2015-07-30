@@ -49,7 +49,8 @@ private:
     void ProcessMessage(MsgKeyResponse msg);
     void ProcessEncryption(const ConnectionID &conn,
                            const Credentials &cred,
-                           MessageBuffer &buffer);
+                           MessageBuffer &buffer,
+                           bool allowed);
 
     // from IEncryptionService
     virtual void RespondToClient(const CryptoRequest& request,

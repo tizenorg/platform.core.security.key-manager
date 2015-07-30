@@ -535,9 +535,13 @@ RawBuffer CKMLogic::saveData(
     const Label &label,
     const RawBuffer &data,
     DataType dataType,
-    const PolicySerializable &policy)
+    const PolicySerializable &policy,
+    bool allowed)
 {
-    int retCode = verifyAndSaveDataHelper(cred, name, label, data, dataType, policy);
+    int retCode = allowed
+        ? verifyAndSaveDataHelper(cred, name, label, data, dataType, policy)
+        : CKM_API_ERROR_ACCESS_DENIED;
+
     auto response = MessageBuffer::Serialize(static_cast<int>(LogicCommand::SAVE),
                                              commandId,
                                              retCode,
@@ -597,11 +601,13 @@ RawBuffer CKMLogic::savePKCS12(
     const Label &label,
     const PKCS12Serializable &pkcs,
     const PolicySerializable &keyPolicy,
-    const PolicySerializable &certPolicy)
+    const PolicySerializable &certPolicy,
+    bool allowed)
 {
-    int retCode = CKM_API_ERROR_UNKNOWN;
+    int retCode = CKM_API_ERROR_ACCESS_DENIED;
     try {
-        retCode = saveDataHelper(cred, name, label, pkcs, keyPolicy, certPolicy);
+        if (allowed)
+            retCode = saveDataHelper(cred, name, label, pkcs, keyPolicy, certPolicy);
     } catch (const Exc::Exception &e) {
         retCode = e.error();
     } catch (const DB::Crypto::Exception::InternalError &e) {
@@ -665,13 +671,15 @@ RawBuffer CKMLogic::removeData(
     const Credentials &cred,
     int commandId,
     const Name &name,
-    const Label &label)
+    const Label &label,
+    bool allowed)
 {
-    int retCode = CKM_API_ERROR_UNKNOWN;
+    int retCode = CKM_API_ERROR_ACCESS_DENIED;
 
     try
     {
-        retCode = removeDataHelper(cred, name, label);
+        if (allowed)
+            retCode = removeDataHelper(cred, name, label);
     }
     catch (const Exc::Exception &e)
     {
@@ -878,13 +886,15 @@ RawBuffer CKMLogic::getData(
     DataType dataType,
     const Name &name,
     const Label &label,
-    const Password &password)
+    const Password &password,
+    bool allowed)
 {
-    int retCode = CKM_API_SUCCESS;
+    int retCode = CKM_API_ERROR_ACCESS_DENIED;
     DB::Row row;
 
     try {
-        retCode = readDataHelper(true, cred, dataType, name, label, password, row);
+        if (allowed)
+            retCode = readDataHelper(true, cred, dataType, name, label, password, row);
     } catch (const DB::Crypto::Exception::Base &e) {
         LogError("DB::Crypto failed with message: " << e.GetMessage());
         retCode = CKM_API_ERROR_DB_ERROR;
@@ -956,16 +966,19 @@ RawBuffer CKMLogic::getPKCS12(
         const Name &name,
         const Label &label,
         const Password &keyPassword,
-        const Password &certPassword)
+        const Password &certPassword,
+        bool allowed)
 {
-    int retCode = CKM_API_ERROR_UNKNOWN;
+    int retCode = CKM_API_ERROR_ACCESS_DENIED;
 
     PKCS12Serializable output;
     try {
         KeyShPtr privKey;
         CertificateShPtr cert;
         CertificateShPtrVector caChain;
-        retCode = getPKCS12Helper(cred, name, label, keyPassword, certPassword, privKey, cert, caChain);
+
+        if (allowed)
+            retCode = getPKCS12Helper(cred, name, label, keyPassword, certPassword, privKey, cert, caChain);
 
         // prepare response
         if(retCode == CKM_API_SUCCESS)
@@ -1024,13 +1037,18 @@ int CKMLogic::getDataListHelper(const Credentials &cred,
 RawBuffer CKMLogic::getDataList(
     const Credentials &cred,
     int commandId,
-    DataType dataType)
+    DataType dataType,
+    bool allowed)
 {
+    int retCode = CKM_API_ERROR_ACCESS_DENIED;
+
     LabelNameVector systemVector;
     LabelNameVector userVector;
     LabelNameVector labelNameVector;
 
-    int retCode = unlockSystemDB();
+    if (allowed)
+        retCode = unlockSystemDB();
+
     if (CKM_API_SUCCESS == retCode)
     {
         // system database
@@ -1218,12 +1236,14 @@ RawBuffer CKMLogic::createKeyPair(
     const Name &namePublic,
     const Label &labelPublic,
     const PolicySerializable &policyPrivate,
-    const PolicySerializable &policyPublic)
+    const PolicySerializable &policyPublic,
+    bool allowed)
 {
-    int retCode = CKM_API_SUCCESS;
+    int retCode = CKM_API_ERROR_ACCESS_DENIED;
 
     try {
-        retCode = createKeyPairHelper(
+        if (allowed)
+            retCode = createKeyPairHelper(
                         cred,
                         keyGenParams,
                         namePrivate,
@@ -1255,12 +1275,14 @@ RawBuffer CKMLogic::createKeyAES(
     const int size,
     const Name &name,
     const Label &label,
-    const PolicySerializable &policy)
+    const PolicySerializable &policy,
+    bool allowed)
 {
-    int retCode = CKM_API_SUCCESS;
+    int retCode = CKM_API_ERROR_ACCESS_DENIED;
 
     try {
-        retCode = createKeyAESHelper(cred, size, name, label, policy);
+        if (allowed)
+            retCode = createKeyAESHelper(cred, size, name, label, policy);
     } catch (const Exc::Exception &e) {
         retCode = e.error();
     } catch (std::invalid_argument &e) {
@@ -1391,13 +1413,17 @@ RawBuffer CKMLogic::getCertificateChain(
     const RawBuffer &certificate,
     const RawBufferVector &untrustedCertificates,
     const RawBufferVector &trustedCertificates,
-    bool useTrustedSystemCertificates)
+    bool useTrustedSystemCertificates,
+    bool allowed)
 {
     CertificateImpl cert(certificate, DataFormat::FORM_DER);
     RawBufferVector chainRawVector;
-    int retCode = CKM_API_ERROR_UNKNOWN;
+
+    int retCode = CKM_API_ERROR_ACCESS_DENIED;
     try {
-        retCode = getCertificateChainHelper(cert,
+        if (allowed)
+            retCode = getCertificateChainHelper(
+                                            cert,
                                             untrustedCertificates,
                                             trustedCertificates,
                                             useTrustedSystemCertificates,
@@ -1427,13 +1453,16 @@ RawBuffer CKMLogic::getCertificateChain(
     const RawBuffer &certificate,
     const LabelNameVector &untrustedCertificates,
     const LabelNameVector &trustedCertificates,
-    bool useTrustedSystemCertificates)
+    bool useTrustedSystemCertificates,
+    bool allowed)
 {
-    int retCode = CKM_API_ERROR_UNKNOWN;
+    int retCode = CKM_API_ERROR_ACCESS_DENIED;
     CertificateImpl cert(certificate, DataFormat::FORM_DER);
     RawBufferVector chainRawVector;
     try {
-        retCode = getCertificateChainHelper(cred,
+        if (allowed)
+            retCode = getCertificateChainHelper(
+                                            cred,
                                             cert,
                                             untrustedCertificates,
                                             trustedCertificates,
@@ -1466,7 +1495,8 @@ RawBuffer CKMLogic::createSignature(
         const Password &password,           // password for private_key
         const RawBuffer &message,
         const HashAlgorithm hash,
-        const RSAPaddingAlgorithm padding)
+        const RSAPaddingAlgorithm padding,
+        bool allowed)
 {
     DB::Row row;
     RawBuffer signature;
@@ -1474,13 +1504,15 @@ RawBuffer CKMLogic::createSignature(
     cryptoAlg.setParam(ParamName::SV_HASH_ALGO, hash);
     cryptoAlg.setParam(ParamName::SV_RSA_PADDING, padding);
 
-    int retCode = CKM_API_SUCCESS;
+    int retCode = CKM_API_ERROR_ACCESS_DENIED;
 
     try {
-        retCode = readDataHelper(false, cred, DataType::DB_KEY_FIRST, privateKeyName, ownerLabel, password, row);
-        if(retCode == CKM_API_SUCCESS) {
+        if (allowed)
+            retCode = readDataHelper(false, cred, DataType::DB_KEY_FIRST, privateKeyName, ownerLabel, password, row);
+
+        if (retCode == CKM_API_SUCCESS)
             signature = m_decider.getStore(row).getKey(row)->sign(cryptoAlg, message);
-        }
+
     } catch (const DB::Crypto::Exception::Base &e) {
         LogError("DB::Crypto failed with message: " << e.GetMessage());
         retCode = CKM_API_ERROR_DB_ERROR;
@@ -1507,9 +1539,10 @@ RawBuffer CKMLogic::verifySignature(
         const RawBuffer &message,
         const RawBuffer &signature,
         const HashAlgorithm hash,
-        const RSAPaddingAlgorithm padding)
+        const RSAPaddingAlgorithm padding,
+        bool allowed)
 {
-    int retCode = CKM_API_ERROR_VERIFICATION_FAILED;
+    int retCode = CKM_API_ERROR_ACCESS_DENIED;
 
     try {
         DB::Row row;
@@ -1521,7 +1554,10 @@ RawBuffer CKMLogic::verifySignature(
         // try certificate first - looking for a public key.
         // in case of PKCS, pub key from certificate will be found first
         // rather than private key from the same PKCS.
-        retCode = readDataHelper(false, cred, DataType::CERTIFICATE, publicKeyOrCertName, ownerLabel, password, row);
+        if (allowed) {
+            retCode = readDataHelper(false, cred, DataType::CERTIFICATE, publicKeyOrCertName, ownerLabel, password, row);
+        }
+
         if (retCode == CKM_API_ERROR_DB_ALIAS_UNKNOWN) {
             retCode = readDataHelper(false, cred, DataType::DB_KEY_FIRST, publicKeyOrCertName, ownerLabel, password, row);
         }
@@ -1605,11 +1641,13 @@ RawBuffer CKMLogic::setPermission(
         const Name &name,
         const Label &label,
         const Label &accessorLabel,
-        const PermissionMask permissionMask)
+        const PermissionMask permissionMask,
+        bool allowed)
 {
-    int retCode;
+    int retCode = CKM_API_ERROR_ACCESS_DENIED;
     Try {
-        retCode = setPermissionHelper(cred, name, label, accessorLabel, permissionMask);
+        if (allowed)
+            retCode = setPermissionHelper(cred, name, label, accessorLabel, permissionMask);
     } catch (const Exc::Exception &e) {
         retCode = e.error();
     } Catch (CKM::Exception) {

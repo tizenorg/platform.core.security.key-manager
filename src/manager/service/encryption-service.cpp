@@ -87,13 +87,12 @@ bool EncryptionService::ProcessOne(
     ConnectionInfo &info,
     bool allowed)
 {
-    (void) allowed;
     LogDebug ("process One");
     try {
         if (!info.buffer.Ready())
             return false;
 
-        ProcessEncryption(conn, info.credentials, info.buffer);
+        ProcessEncryption(conn, info.credentials, info.buffer, allowed);
         return true;
     } catch (MessageBuffer::Exception::Base) {
         LogError("Broken protocol. Closing socket.");
@@ -114,7 +113,8 @@ void EncryptionService::ProcessMessage(MsgKeyResponse msg)
 
 void EncryptionService::ProcessEncryption(const ConnectionID &conn,
                                           const Credentials &cred,
-                                          MessageBuffer &buffer)
+                                          MessageBuffer &buffer,
+                                          bool allowed)
 {
     int tmpCmd = 0;
     CryptoRequest req;
@@ -126,7 +126,11 @@ void EncryptionService::ProcessEncryption(const ConnectionID &conn,
 
     req.conn = conn;
     req.cred = cred;
-    m_logic.Crypt(req);
+
+    if (allowed)
+        m_logic.Crypt(req);
+    else
+        RespondToClient(req, CKM_API_ERROR_ACCESS_DENIED, RawBuffer());
 }
 
 } /* namespace CKM */
