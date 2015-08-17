@@ -7,6 +7,7 @@ PKG_CHECK_MODULES(KEY_MANAGER_DEP
     capi-base-common
     vconf
     libxml-2.0
+    security-manager
     REQUIRED
     )
 FIND_PACKAGE(Threads REQUIRED)
@@ -17,6 +18,7 @@ SET(KEY_MANAGER_PATH ${PROJECT_SOURCE_DIR}/src/manager)
 SET(KEY_MANAGER_SOURCES
     ${KEY_MANAGER_PATH}/main/generic-socket-manager.cpp
     ${KEY_MANAGER_PATH}/main/socket-manager.cpp
+    ${KEY_MANAGER_PATH}/main/socket-2-id.cpp
     ${KEY_MANAGER_PATH}/main/key-manager-main.cpp
     ${KEY_MANAGER_PATH}/main/smack-check.cpp
     ${KEY_MANAGER_PATH}/main/thread-service.cpp
