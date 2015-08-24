@@ -14,31 +14,33 @@
  *  limitations under the License
  */
 /*
- * @file       store.h
- * @author     Bartłomiej Grzelewski (b.grzelewski@samsung.com)
+ * @file       istoredata.h
+ * @author     Maciej Karpiuk (m.karpiuk2@samsung.com)
  * @version    1.0
  */
 #pragma once
 
-#include <generic-backend/gkey.h>
-#include <generic-backend/gstore.h>
+#include <ckm/ckm-type.h>
+#include <data-type.h>
 
 namespace CKM {
 namespace Crypto {
-namespace SW {
 
-class Store : public GStore {
+class IStoreData {
 public:
-    explicit Store(CryptoBackend backendId);
+    virtual ~IStoreData() {};
 
-    virtual GKeyUPtr getKey(const Token &token);
-    virtual TokenPair generateAKey(const CryptoAlgorithm &);
-    virtual Token generateSKey(const CryptoAlgorithm &);
-    virtual Token import(const IStoreData &data);
-    virtual Token importEncrypted(const IStoreData &, const IStoreDataEncryption &);
-    virtual void destroy(const Token &){}
+    virtual const CKM::DataType getType() const = 0;
+    virtual const CKM::RawBuffer & getData() const = 0;
 };
 
-} // namespace SW
+class IStoreDataEncryption
+{
+public:
+    virtual ~IStoreDataEncryption() {};
+    virtual const CKM::RawBuffer & getEncryptedKey() const = 0;
+    virtual const CKM::RawBuffer & getEncryptionIV() const = 0;
+};
+
 } // namespace Crypto
 } // namespace CKM

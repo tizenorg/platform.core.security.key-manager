@@ -74,11 +74,14 @@ Token Store::generateSKey(const CryptoAlgorithm &algorithm)
     return Internals::generateSKey(m_backendId, algorithm);
 }
 
-Token Store::import(DataType dataType, const RawBuffer &buffer) {
-    return Token(m_backendId, dataType, buffer);
+Token Store::import(const IStoreData &data) {
+    return Token(m_backendId, data.getType(), data.getData());
+}
+
+Token Store::importEncrypted(const IStoreData &, const IStoreDataEncryption &) {
+    ThrowErr(Exc::Crypto::OperationNotSupported, "Importing encrypted data not yet implemented!");
 }
 
 } // namespace SW
 } // namespace Crypto
 } // namespace CKM
-
