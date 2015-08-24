@@ -73,8 +73,7 @@ void InitialValueHandler::End()
                 Credentials(CKMLogic::SYSTEM_DB_UID, LABEL_SYSTEM_DB),
                 m_name,
                 LABEL_SYSTEM_DB,
-                m_bufferHandler->getData(),
-                getDataType(),
+                DataContainer(getDataType(), m_bufferHandler->getData()),
                 PolicySerializable(policy));
         if(CKM_API_SUCCESS == ec)
         {
