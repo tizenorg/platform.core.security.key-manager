@@ -38,7 +38,7 @@ TokenPair Store::generateAKey(const CryptoAlgorithm &) {
     ThrowErr(Exc::Crypto::OperationNotSupported, "Trust zone backend is not implemented!");
 }
 
-Token Store::import(DataType, const RawBuffer &) {
+Token Store::import(const IStoreData &) {
     ThrowErr(Exc::Crypto::OperationNotSupported, "Trust zone backend is not implemented!");
 }
 
