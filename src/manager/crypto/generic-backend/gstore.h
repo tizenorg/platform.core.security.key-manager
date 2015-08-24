@@ -22,6 +22,7 @@
 
 #include <memory>
 
+#include <generic-backend/istoredata.h>
 #include <generic-backend/exception.h>
 #include <generic-backend/gkey.h>
 #include <ckm/ckm-type.h>
@@ -36,7 +37,8 @@ public:
     virtual GKeyUPtr getKey(const Token &) { ThrowErr(Exc::Crypto::OperationNotSupported); }
     virtual TokenPair generateAKey(const CryptoAlgorithm &) { ThrowErr(Exc::Crypto::OperationNotSupported); }
     virtual Token generateSKey(const CryptoAlgorithm &) { ThrowErr(Exc::Crypto::OperationNotSupported); }
-    virtual Token import(DataType, const RawBuffer &) { ThrowErr(Exc::Crypto::OperationNotSupported); }
+    virtual Token import(const IStoreData &) { ThrowErr(Exc::Crypto::OperationNotSupported); }
+    virtual Token importEncrypted(const IStoreData &, const IStoreDataEncryption &) { ThrowErr(Exc::Crypto::OperationNotSupported); }
     virtual void destroy(const Token &) { ThrowErr(Exc::Crypto::OperationNotSupported); }
     virtual ~GStore() {}
 
@@ -48,4 +50,3 @@ protected:
 
 } // namespace Crypto
 } // namespace CKM
-
