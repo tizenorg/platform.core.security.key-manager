@@ -413,12 +413,11 @@ DB::Row CKMLogic::createEncryptedRow(
     CryptoLogic &crypto,
     const Name &name,
     const Label &label,
-    DataType dataType,
-    const RawBuffer &data,
+    const Crypto::Data &data,
     const Policy &policy) const
 {
-    Crypto::GStore& store = m_decider.getStore(dataType, policy.extractable);
-    Token token = store.import(dataType, data);
+    Crypto::GStore& store = m_decider.getStore(data.type, policy.extractable);
+    Token token = store.import(data);
 
     DB::Row row(std::move(token), name, label, static_cast<int>(policy.extractable));
 
@@ -431,43 +430,41 @@ DB::Row CKMLogic::createEncryptedRow(
     return row;
 }
 
-int CKMLogic::verifyBinaryData(DataType dataType, RawBuffer &input_data) const
+int CKMLogic::verifyBinaryData(Crypto::Data &input) const
 {
-    RawBuffer dummy;
-    return toBinaryData(dataType, input_data, dummy);
+    Crypto::Data dummy;
+    return toBinaryData(input, dummy);
 }
 
-int CKMLogic::toBinaryData(DataType dataType,
-                           const RawBuffer &input_data,
-                           RawBuffer &output_data) const
+int CKMLogic::toBinaryData(const Crypto::Data &input, Crypto::Data &output) const
 {
     // verify the data integrity
-    if (dataType.isKey())
+    if (input.type.isKey())
     {
         KeyShPtr output_key;
-        if(dataType.isSKey())
-            output_key = CKM::Key::createAES(input_data);
+        if(input.type.isSKey())
+            output_key = CKM::Key::createAES(input.data);
         else
-            output_key = CKM::Key::create(input_data);
+            output_key = CKM::Key::create(input.data);
         if(output_key.get() == NULL)
         {
             LogDebug("provided binary data is not valid key data");
             return CKM_API_ERROR_INPUT_PARAM;
         }
-        output_data = output_key->getDER();
+        output = std::move(Crypto::Data(input.type, output_key->getDER()));
     }
-    else if (dataType.isCertificate() || dataType.isChainCert())
+    else if (input.type.isCertificate() || input.type.isChainCert())
     {
-        CertificateShPtr cert = CKM::Certificate::create(input_data, DataFormat::FORM_DER);
+        CertificateShPtr cert = CKM::Certificate::create(input.data, DataFormat::FORM_DER);
         if(cert.get() == NULL)
         {
             LogDebug("provided binary data is not valid certificate data");
             return CKM_API_ERROR_INPUT_PARAM;
         }
-        output_data = cert->getDER();
+        output = std::move(Crypto::Data(input.type, cert->getDER()));
     }
     else
-        output_data = input_data;
+        output = input;
     // TODO: add here BINARY_DATA verification, i.e: max size etc.
     return CKM_API_SUCCESS;
 }
@@ -476,19 +473,18 @@ int CKMLogic::verifyAndSaveDataHelper(
     const Credentials &cred,
     const Name &name,
     const Label &label,
-    const RawBuffer &data,
-    DataType dataType,
+    const Crypto::Data &data,
     const PolicySerializable &policy)
 {
     int retCode = CKM_API_ERROR_UNKNOWN;
 
     try {
         // check if data is correct
-        RawBuffer binaryData;
-        retCode = toBinaryData(dataType, data, binaryData);
+        Crypto::Data binaryData;
+        retCode = toBinaryData(data, binaryData);
         if(retCode == CKM_API_SUCCESS)
         {
-            retCode = saveDataHelper(cred, name, label, dataType, binaryData, policy);
+            retCode = saveDataHelper(cred, name, label, binaryData, policy);
         }
     } catch (const DB::Crypto::Exception::InternalError &e) {
         LogError("DB::Crypto failed with message: " << e.GetMessage());
@@ -535,15 +531,14 @@ RawBuffer CKMLogic::saveData(
     int commandId,
     const Name &name,
     const Label &label,
-    const RawBuffer &data,
-    DataType dataType,
+    const Crypto::Data &data,
     const PolicySerializable &policy)
 {
-    int retCode = verifyAndSaveDataHelper(cred, name, label, data, dataType, policy);
+    int retCode = verifyAndSaveDataHelper(cred, name, label, data, policy);
     auto response = MessageBuffer::Serialize(static_cast<int>(LogicCommand::SAVE),
                                              commandId,
                                              retCode,
-                                             static_cast<int>(dataType));
+                                             static_cast<int>(data.type));
     return response.Pop();
 }
 
@@ -560,33 +555,31 @@ int CKMLogic::extractPKCS12Data(
     if( !pkcs.getKey() )
         return CKM_API_ERROR_INVALID_FORMAT;
     Key* keyPtr = pkcs.getKey().get();
-    DataType keyType = DataType(keyPtr->getType());
-    RawBuffer keyData = keyPtr->getDER();
-    int retCode = verifyBinaryData(keyType, keyData);
+    Crypto::Data keyData(DataType(keyPtr->getType()), keyPtr->getDER());
+    int retCode = verifyBinaryData(keyData);
     if(retCode != CKM_API_SUCCESS)
         return retCode;
-    output.push_back(createEncryptedRow(crypto, name, ownerLabel, keyType, keyData, keyPolicy));
+    output.push_back(createEncryptedRow(crypto, name, ownerLabel, keyData, keyPolicy));
 
     // certificate is mandatory
     if( !pkcs.getCertificate() )
         return CKM_API_ERROR_INVALID_FORMAT;
-    RawBuffer certData = pkcs.getCertificate().get()->getDER();
-    retCode = verifyBinaryData(DataType::CERTIFICATE, certData);
+    Crypto::Data certData(DataType::CERTIFICATE, pkcs.getCertificate().get()->getDER());
+    retCode = verifyBinaryData(certData);
     if(retCode != CKM_API_SUCCESS)
         return retCode;
-    output.push_back(createEncryptedRow(crypto, name, ownerLabel, DataType::CERTIFICATE, certData, certPolicy));
+    output.push_back(createEncryptedRow(crypto, name, ownerLabel, certData, certPolicy));
 
     // CA cert chain
     unsigned int cert_index = 0;
     for(const auto & ca : pkcs.getCaCertificateShPtrVector())
     {
-        DataType chainDataType = DataType::getChainDatatype(cert_index ++);
-        RawBuffer caCertData = ca->getDER();
-        int retCode = verifyBinaryData(chainDataType, caCertData);
+        Crypto::Data caCertData(DataType::getChainDatatype(cert_index ++), ca->getDER());
+        int retCode = verifyBinaryData(caCertData);
         if(retCode != CKM_API_SUCCESS)
             return retCode;
 
-        output.push_back(createEncryptedRow(crypto, name, ownerLabel, chainDataType, caCertData, certPolicy));
+        output.push_back(createEncryptedRow(crypto, name, ownerLabel, caCertData, certPolicy));
     }
 
     return CKM_API_SUCCESS;
@@ -1090,8 +1083,7 @@ int CKMLogic::saveDataHelper(
     const Credentials &cred,
     const Name &name,
     const Label &label,
-    DataType dataType,
-    const RawBuffer &data,
+    const Crypto::Data &data,
     const PolicySerializable &policy)
 {
     auto &handler = selectDatabase(cred, label);
@@ -1108,7 +1100,7 @@ int CKMLogic::saveDataHelper(
         return retCode;
 
     // save the data
-    DB::Row encryptedRow = createEncryptedRow(handler.crypto, name, ownerLabel, dataType, data, policy);
+    DB::Row encryptedRow = createEncryptedRow(handler.crypto, name, ownerLabel, data, policy);
     handler.database.saveRow(encryptedRow);
 
     transaction.commit();
@@ -1165,8 +1157,7 @@ int CKMLogic::createKeyAESHelper(
     return saveDataHelper(cred,
                           name,
                           label,
-                          DataType::KEY_AES,
-                          key.data,
+                          Crypto::Data(DataType::KEY_AES, std::move(key.data)),
                           policy);
 }
 
@@ -1202,8 +1193,7 @@ int CKMLogic::createKeyPairHelper(
     int retCode = saveDataHelper(cred,
                              namePrivate,
                              labelPrivate,
-                             keys.first.dataType,
-                             keys.first.data,
+                             Crypto::Data(keys.first.dataType, std::move(keys.first.data)),
                              policyPrivate);
     if (CKM_API_SUCCESS != retCode)
         return retCode;
@@ -1211,8 +1201,7 @@ int CKMLogic::createKeyPairHelper(
     retCode = saveDataHelper(cred,
                              namePublic,
                              labelPublic,
-                             keys.second.dataType,
-                             keys.second.data,
+                             Crypto::Data(keys.second.dataType, std::move(keys.second.data)),
                              policyPublic);
     if (CKM_API_SUCCESS != retCode)
         return retCode;

@@ -31,12 +31,25 @@
 namespace CKM {
 namespace Crypto {
 
+struct Data {
+    Data() {};
+    Data(const DataType& t, RawBuffer d) : type(t), data(d) {}
+    DataType type;
+    RawBuffer data;
+};
+
+struct DataEncryption {
+    RawBuffer encryptedKey;
+    RawBuffer iv;
+};
+
 class GStore {
 public:
     virtual GKeyUPtr getKey(const Token &) { ThrowErr(Exc::Crypto::OperationNotSupported); }
     virtual TokenPair generateAKey(const CryptoAlgorithm &) { ThrowErr(Exc::Crypto::OperationNotSupported); }
     virtual Token generateSKey(const CryptoAlgorithm &) { ThrowErr(Exc::Crypto::OperationNotSupported); }
-    virtual Token import(DataType, const RawBuffer &) { ThrowErr(Exc::Crypto::OperationNotSupported); }
+    virtual Token import(const Data &) { ThrowErr(Exc::Crypto::OperationNotSupported); }
+    virtual Token importEncrypted(const Data &, const DataEncryption &) { ThrowErr(Exc::Crypto::OperationNotSupported); }
     virtual void destroy(const Token &) { ThrowErr(Exc::Crypto::OperationNotSupported); }
     virtual ~GStore() {}
 
@@ -48,4 +61,3 @@ protected:
 
 } // namespace Crypto
 } // namespace CKM
-

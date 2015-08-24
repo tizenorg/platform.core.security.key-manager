@@ -36,7 +36,6 @@
 #include <certificate-impl.h>
 #include <sys/types.h>
 #include <generic-backend/gkey.h>
-
 #include <platform/decider.h>
 
 namespace CKM {
@@ -80,8 +79,7 @@ public:
         int commandId,
         const Name &name,
         const Label &label,
-        const RawBuffer &data,
-        DataType dataType,
+        const Crypto::Data &data,
         const PolicySerializable &policy);
 
     RawBuffer savePKCS12(
@@ -198,8 +196,7 @@ public:
         const Credentials &cred,
         const Name &name,
         const Label &label,
-        const RawBuffer &data,
-        DataType dataType,
+        const Crypto::Data &data,
         const PolicySerializable &policy);
 
     int getKeyForService(const Credentials &cred,
@@ -229,14 +226,11 @@ private:
         uid_t user,
         const Password &password);
 
-    int verifyBinaryData(
-        DataType dataType,
-        RawBuffer &input_data) const;
+    int verifyBinaryData(Crypto::Data &input_data) const;
 
     int toBinaryData(
-        DataType dataType,
-        const RawBuffer &input_data,
-        RawBuffer &output_data) const;
+        const Crypto::Data &input_data,
+        Crypto::Data &output_data) const;
 
     int checkSaveConditions(
         const Credentials &cred,
@@ -248,8 +242,7 @@ private:
         const Credentials &cred,
         const Name &name,
         const Label &label,
-        DataType dataType,
-        const RawBuffer &data,
+        const Crypto::Data &data,
         const PolicySerializable &policy);
 
     int saveDataHelper(
@@ -264,8 +257,7 @@ private:
         CryptoLogic &crypto,
         const Name &name,
         const Label &label,
-        DataType dataType,
-        const RawBuffer &data,
+        const Crypto::Data &data,
         const Policy &policy) const;
 
     int getPKCS12Helper(

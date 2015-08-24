@@ -34,11 +34,11 @@ public:
     virtual GKeyUPtr getKey(const Token &token);
     virtual TokenPair generateAKey(const CryptoAlgorithm &);
     virtual Token generateSKey(const CryptoAlgorithm &);
-    virtual Token import(DataType dataType, const RawBuffer &buffer);
+    virtual Token import(const Data &data);
+    virtual Token importEncrypted(const Data &, const DataEncryption &);
     virtual void destroy(const Token &){}
 };
 
 } // namespace SW
 } // namespace Crypto
 } // namespace CKM
-

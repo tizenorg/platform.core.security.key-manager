@@ -24,7 +24,6 @@
 
 #include <dpl/serialization.h>
 #include <dpl/log/log.h>
-
 #include <ckm-service.h>
 #include <ckm-logic.h>
 
@@ -196,8 +195,7 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
                 msgID,
                 name,
                 label,
-                rawData,
-                DataType(tmpDataType),
+                Crypto::Data(DataType(tmpDataType), std::move(rawData)),
                 policy);
         }
         case LogicCommand::SAVE_PKCS12:
