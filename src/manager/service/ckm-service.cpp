@@ -24,7 +24,7 @@
 
 #include <dpl/serialization.h>
 #include <dpl/log/log.h>
-
+#include <data-container.h>
 #include <ckm-service.h>
 #include <ckm-logic.h>
 
@@ -193,8 +193,7 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
                 msgID,
                 name,
                 label,
-                rawData,
-                DataType(tmpDataType),
+                DataContainer(DataType(tmpDataType), rawData),
                 policy);
         }
         case LogicCommand::SAVE_PKCS12:
