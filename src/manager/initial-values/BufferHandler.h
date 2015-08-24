@@ -25,6 +25,7 @@
 
 #include <parser.h>
 #include <EncodingType.h>
+#include <data-container.h>
 #include <ckm/ckm-type.h>
 
 namespace CKM {
@@ -42,11 +43,11 @@ public:
     virtual void Characters(const std::string & data);
     virtual void End();
 
-    const RawBuffer & getData() const {
+    const RawBuffer getData() const {
         return m_data;
     }
 private:
-    EncodingType    m_encoding;
+    EncodingType m_encoding;
     RawBuffer  m_data;
 };
 

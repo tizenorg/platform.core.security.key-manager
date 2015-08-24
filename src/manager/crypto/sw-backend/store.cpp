@@ -74,8 +74,8 @@ Token Store::generateSKey(const CryptoAlgorithm &algorithm)
     return Internals::generateSKey(m_backendId, algorithm);
 }
 
-Token Store::import(DataType dataType, const RawBuffer &buffer) {
-    return Token(m_backendId, dataType, buffer);
+Token Store::import(const IStoreData &data) {
+    return Token(m_backendId, data.getType(), data.getData());
 }
 
 } // namespace SW
