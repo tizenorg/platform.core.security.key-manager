@@ -71,14 +71,15 @@ int OCSPModule::verify(const CertificateImplVector &certificateChain) {
     // create trusted store
     X509_STACK_PTR trustedCerts = create_x509_stack();
 
-    // skip first 2 certificates
-    for (auto it=certificateChain.cbegin()+2; it < certificateChain.cend(); it++)
+    // skip the first leaf certificate
+    for (auto it=certificateChain.cbegin()+1; it < certificateChain.cend(); it++)
     {
         if (it->empty()) {
             LogError("Error. Broken certificate chain.");
             return CKM_API_OCSP_STATUS_INTERNAL_ERROR;
         }
         sk_X509_push(trustedCerts.get(), it->getX509());
+        // these trusted certs will be changed while verifying ocsp status.
     }
 
     for (int i=0; i < static_cast<int>(certificateChain.size())-1; i++) {// except root certificate
