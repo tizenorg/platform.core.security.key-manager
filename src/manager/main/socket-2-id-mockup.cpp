@@ -32,30 +32,59 @@ namespace CKM {
 namespace {
 
 int getCredentialsFromSocket(int sock, std::string &res)  {
-    std::vector<char> result(1);
-    socklen_t length = 1;
+    std::vector<char> result(SMACK_LABEL_LEN+1);
+    socklen_t length = SMACK_LABEL_LEN;
 
-    if ((0 > getsockopt(sock, SOL_SOCKET, SO_PEERSEC, result.data(), &length))
-      && errno != ERANGE)
-    {
+    if (0 == getsockopt(sock, SOL_SOCKET, SO_PEERSEC, result.data(), &length)) {
+        result[length] = 0;
+        if (result[length-1] == 0)
+            --length;
+        res.assign(result.data(), length);
+        return 0;
+    }
+
+    if (errno != ERANGE) {
         LogError("getsockopt failed");
         return -1;
     }
 
-    result.resize(length);
+    result.resize(length+1);
 
     if (0 > getsockopt(sock, SOL_SOCKET, SO_PEERSEC, result.data(), &length)) {
-        LogError("getsockopt failed");
+        LogError("getsockopt failed with errno: " << errno);
         return -1;
     }
 
-    result.push_back('\0');
-    res = result.data();
+    result[length] = 0;
+    if (result[length-1] == 0)
+        --length;
+    res.assign(result.data(), length);
     return 0;
 }
 
 int getPkgIdFromSmack(const std::string &smack, std::string &pkgId) {
-    pkgId = smack;
+    static const std::string SMACK_PREFIX_APPID  = "User::App::";
+
+    if (smack.empty()) {
+        LogError("Smack is empty. Connection will be rejected");
+        return -1;
+    }
+
+    if (smack.compare(0, SMACK_PREFIX_APPID.size(), SMACK_PREFIX_APPID)) {
+        pkgId = "/" + smack;
+        LogDebug("Smack: " << smack << " Was translated to owner id: " << pkgId);
+        return 0;
+    }
+
+    std::string appId = smack.substr(SMACK_PREFIX_APPID.size(), std::string::npos);
+
+    if (appId.empty()) {
+        LogError("After conversion (smack->pkgId) pkgId is empty. Label: " << appId);
+        return -1;
+    }
+
+    pkgId = std::move(appId);
+    LogDebug("Smack: " << smack << " Was translated to owner id: " << pkgId);
     return 0;
 }
 
@@ -74,7 +103,7 @@ int Socket2Id::translate(int sock, std::string &result) {
         return -1;
     }
 
-    result = pkgId;
+    result = std::move(pkgId);
     return 0;
 }
 

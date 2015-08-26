@@ -32,25 +32,34 @@ namespace CKM {
 namespace {
 
 int getCredentialsFromSocket(int sock, std::string &res)  {
-    std::vector<char> result(1);
-    socklen_t length = 1;
+    std::vector<char> result(SMACK_LABEL_LEN+1);
+    socklen_t length = SMACK_LABEL_LEN;
 
-    if ((0 > getsockopt(sock, SOL_SOCKET, SO_PEERSEC, result.data(), &length))
-      && errno != ERANGE)
-    {
+    if (0 == getsockopt(sock, SOL_SOCKET, SO_PEERSEC, result.data(), &length)) {
+        result[length] = 0;        // old implementation returns cstring without 0
+        if (result[length-1] == 0) // new implementation returns cstring size + 1
+            --length;
+        res.assign(result.data(), length);
+        return 0;
+    }
+
+    if (errno != ERANGE) {
         LogError("getsockopt failed");
         return -1;
     }
 
-    result.resize(length);
+    result.resize(length+1);
 
     if (0 > getsockopt(sock, SOL_SOCKET, SO_PEERSEC, result.data(), &length)) {
-        LogError("getsockopt failed");
+        LogError("getsockopt failed with errno: " << errno);
         return -1;
     }
 
-    result.push_back('\0');
-    res = result.data();
+    result[length] = 0;
+    if (result[length-1] == 0)
+        --length;
+
+    res.assign(result.data(), length);
     return 0;
 }
 
