@@ -841,48 +841,37 @@ SqlConnection::~SqlConnection()
     }
 }
 
-void SqlConnection::ExecCommand(const char *format, ...)
+int SqlConnection::Output::Callback(void* param, int columns, char** values, char** names)
 {
-    if (m_connection == NULL) {
-        LogError("Cannot execute command. Not connected to DB!");
-        return;
+    if(!param)
+        return 0;
+
+    Output* self = static_cast<Output*>(param);
+
+    if (self->names.empty()) {
+        for (int i=0;i<columns;i++)
+            self->names.push_back(names[i] ? names[i] : "NULL");
     }
+    Row row;
+    for (int i=0;i<columns;i++)
+        row.push_back(values[i] ? values[i] : "NULL");
+    self->values.push_back(std::move(row));
+    return 0;
+}
 
-    if (format == NULL) {
-        LogError("Null query!");
-        ThrowMsg(Exception::SyntaxError, "Null statement");
-    }
-
-    char *rawBuffer;
-
-    va_list args;
-    va_start(args, format);
-
-    if (vasprintf(&rawBuffer, format, args) == -1) {
-        rawBuffer = NULL;
-    }
-
-    va_end(args);
-
-    CharUniquePtr buffer(rawBuffer);
-
-    if (!buffer) {
-        LogError("Failed to allocate statement string");
-        return;
-    }
-
-    LogPedantic("Executing SQL command: " << buffer.get());
+void SqlConnection::ExecCommandHelper(Output* out, const char *rawBuffer)
+{
+    LogPedantic("Executing SQL command: " << rawBuffer);
 
     // Notify all after potentially synchronized database connection access
     ScopedNotifyAll notifyAll(m_synchronizationObject.get());
 
     for (int i = 0; i < MAX_RETRY; i++) {
         char *errorBuffer;
-
         int ret = sqlcipher3_exec(m_connection,
-                               buffer.get(),
-                               NULL,
-                               NULL,
+                               rawBuffer,
+                               out ? &Output::Callback : NULL,
+                               out,
                                &errorBuffer);
 
         std::string errorMsg;
@@ -917,6 +906,68 @@ void SqlConnection::ExecCommand(const char *format, ...)
 
     LogError("sqlite in the state of possible infinite loop");
     ThrowMsg(Exception::InternalError, "sqlite permanently busy");
+}
+
+void SqlConnection::ExecCommand(Output* out, const char *format, ...)
+{
+    if (m_connection == NULL) {
+        LogError("Cannot execute command. Not connected to DB!");
+        return;
+    }
+
+    if (format == NULL) {
+        LogError("Null query!");
+        ThrowMsg(Exception::SyntaxError, "Null statement");
+    }
+
+    va_list args;
+    va_start(args, format);
+    char *rawBuffer;
+
+    if (vasprintf(&rawBuffer, format, args) == -1) {
+        rawBuffer = NULL;
+    }
+    va_end(args);
+
+    CharUniquePtr buffer(rawBuffer);
+
+    if (!buffer) {
+        LogError("Failed to allocate statement string");
+        return;
+    }
+
+    ExecCommandHelper(out, rawBuffer);
+}
+
+void SqlConnection::ExecCommand(const char *format, ...)
+{
+    if (m_connection == NULL) {
+        LogError("Cannot execute command. Not connected to DB!");
+        return;
+    }
+
+    if (format == NULL) {
+        LogError("Null query!");
+        ThrowMsg(Exception::SyntaxError, "Null statement");
+    }
+
+    va_list args;
+    va_start(args, format);
+    char *rawBuffer;
+
+    if (vasprintf(&rawBuffer, format, args) == -1) {
+        rawBuffer = NULL;
+    }
+    va_end(args);
+
+    CharUniquePtr buffer(rawBuffer);
+
+    if (!buffer) {
+        LogError("Failed to allocate statement string");
+        return;
+    }
+
+    ExecCommandHelper(NULL, rawBuffer);
 }
 
 SqlConnection::DataCommandUniquePtr SqlConnection::PrepareDataCommand(
