@@ -380,10 +380,12 @@ private:
 
     int loadAppKey(UserData& handle, const Label& appLabel);
 
-    std::map<uid_t, UserData> m_userDataMap;
     AccessControl m_accessControl;
     Crypto::Decider m_decider;
     //FileLock m_lock;
+
+protected:
+    std::map<uid_t, UserData> m_userDataMap;
 };
 
 } // namespace CKM
