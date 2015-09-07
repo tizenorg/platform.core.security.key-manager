@@ -94,6 +94,17 @@ namespace {
             "          ?009"
             "         );";
 
+    const char *DB_CMD_OBJECT_UPDATE =
+            "UPDATE OR FAIL OBJECTS SET"
+            "   algorithmType = ?003,"
+            "   encryptionScheme = ?004,"
+            "   iv = ?005,"
+            "   dataSize = ?006,"
+            "   data = ?007,"
+            "   tag = ?008"
+            "   WHERE idx IN (SELECT idx FROM NAMES WHERE name=?101 and label=?102)"
+            "   AND dataType = ?002;";
+
     const char *DB_CMD_OBJECT_SELECT_BY_NAME_AND_LABEL =
             "SELECT * FROM [join_name_object_tables] "
             " WHERE (dataType BETWEEN ?001 AND ?002) "
@@ -386,6 +397,21 @@ namespace DB {
         }
         ThrowMsg(Crypto::Exception::InternalError,
                 "Couldn't save Row");
+    }
+
+    void Crypto::updateRow(const Row &row) {
+        Try {
+            // transaction is present in the layer above
+            ObjectTable objectTable(this->m_connection);
+            objectTable.updateRow(row);
+            return;
+        } Catch(SqlConnection::Exception::SyntaxError) {
+            LogError("Couldn't prepare update statement");
+        } Catch(SqlConnection::Exception::InternalError) {
+            LogError("Couldn't execute update statement");
+        }
+        ThrowMsg(Crypto::Exception::InternalError,
+                "Couldn't update Row");
     }
 
     bool Crypto::deleteRow(
