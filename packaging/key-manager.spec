@@ -123,7 +123,8 @@ export LDFLAGS+="-Wl,--rpath=%{_libdir},-Bsymbolic-functions "
 %endif
         -DSYSTEMD_UNIT_DIR=%{_unitdir} \
         -DSYSTEMD_ENV_FILE="/etc/sysconfig/central-key-manager" \
-        -DMOCKUP_SM=%{?mockup_sm:%mockup_sm}%{!?mockup_sm:OFF}
+        -DMOCKUP_SM=ON
+#%        -DMOCKUP_SM=%{?mockup_sm:%mockup_sm}%{!?mockup_sm:OFF}
 
 make %{?jobs:-j%jobs}
 
