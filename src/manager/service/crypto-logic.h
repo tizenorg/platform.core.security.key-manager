@@ -38,7 +38,9 @@ public:
     virtual ~CryptoLogic(){}
 
     void decryptRow(const Password &password, DB::Row &row);
-    void encryptRow(const Password &password, DB::Row &row);
+    void encryptRow(DB::Row &row);
+
+    static bool newScheme(int encryptionScheme);
 
     bool haveKey(const Label &smackLabel);
     void pushKey(const Label &smackLabel,
@@ -46,9 +48,14 @@ public:
     void removeKey(const Label &smackLabel);
 
 private:
+    /*
+     * ENCR_SCHEME_V2 - newer encryption scheme. Stored data is optionally encrypted by store with
+     * user password. Returned token is encrypted with app key and stored in db.
+     */
     static const int ENCR_BASE64 =   1 << 0;
     static const int ENCR_APPKEY =   1 << 1;
     static const int ENCR_PASSWORD = 1 << 2;
+    static const int ENCR_SCHEME_V2 =1 << 3;
 
     std::map<Label, RawBuffer> m_keyMap;
 
