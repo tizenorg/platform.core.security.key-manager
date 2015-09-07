@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2000 - 2014 Samsung Electronics Co., Ltd All Rights Reserved
+ *  Copyright (c) 2000 - 2015 Samsung Electronics Co., Ltd All Rights Reserved
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -54,8 +54,8 @@ void CKMService::Stop() {
 GenericSocketService::ServiceDescriptionVector CKMService::GetServiceDescription()
 {
     return ServiceDescriptionVector {
-        {SERVICE_SOCKET_CKM_CONTROL, "key-manager::api-control", SOCKET_ID_CONTROL},
-        {SERVICE_SOCKET_CKM_STORAGE, "key-manager::api-storage", SOCKET_ID_STORAGE}
+        {SERVICE_SOCKET_CKM_CONTROL, "http://tizen.org/privilege/keymanager.admin", SOCKET_ID_CONTROL},
+        {SERVICE_SOCKET_CKM_STORAGE, "http://tizen.org/privilege/keymanager", SOCKET_ID_STORAGE}
     };
 }
 
@@ -67,7 +67,8 @@ void CKMService::SetCommManager(CommMgr *manager)
 
 bool CKMService::ProcessOne(
     const ConnectionID &conn,
-    ConnectionInfo &info)
+    ConnectionInfo &info,
+    bool allowed)
 {
     LogDebug ("process One");
     RawBuffer response;
@@ -79,7 +80,7 @@ bool CKMService::ProcessOne(
         if (info.interfaceID == SOCKET_ID_CONTROL)
             response = ProcessControl(info.buffer);
         else
-            response = ProcessStorage(info.credentials, info.buffer);
+            response = ProcessStorage(info.credentials, info.buffer, allowed);
 
         m_serviceManager->Write(conn, response);
 
@@ -160,7 +161,7 @@ RawBuffer CKMService::ProcessControl(MessageBuffer &buffer) {
     }
 }
 
-RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
+RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer, bool allowed)
 {
     int command = 0;
     int msgID = 0;
@@ -171,6 +172,12 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
 
     buffer.Deserialize(command);
     buffer.Deserialize(msgID);
+
+    if (!allowed)
+        MessageBuffer::Serialize(
+                command,
+                msgID,
+                CKM_API_ERROR_ACCESS_DENIED).Pop();
 
     // This is a workaround solution for locktype=None in Tizen 2.2.1
     // When locktype is None, lockscreen app doesn't interfere with unlocking process.
