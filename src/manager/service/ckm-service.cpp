@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2000 - 2014 Samsung Electronics Co., Ltd All Rights Reserved
+ *  Copyright (c) 2000 - 2015 Samsung Electronics Co., Ltd All Rights Reserved
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -54,8 +54,8 @@ void CKMService::Stop() {
 GenericSocketService::ServiceDescriptionVector CKMService::GetServiceDescription()
 {
     return ServiceDescriptionVector {
-        {SERVICE_SOCKET_CKM_CONTROL, "key-manager::api-control", SOCKET_ID_CONTROL},
-        {SERVICE_SOCKET_CKM_STORAGE, "key-manager::api-storage", SOCKET_ID_STORAGE}
+        {SERVICE_SOCKET_CKM_CONTROL, "http://tizen.org/privilege/keymanager.admin", SOCKET_ID_CONTROL},
+        {SERVICE_SOCKET_CKM_STORAGE, "http://tizen.org/privilege/keymanager", SOCKET_ID_STORAGE}
     };
 }
 
@@ -67,7 +67,8 @@ void CKMService::SetCommManager(CommMgr *manager)
 
 bool CKMService::ProcessOne(
     const ConnectionID &conn,
-    ConnectionInfo &info)
+    ConnectionInfo &info,
+    bool allowed)
 {
     LogDebug ("process One");
     RawBuffer response;
@@ -79,7 +80,7 @@ bool CKMService::ProcessOne(
         if (info.interfaceID == SOCKET_ID_CONTROL)
             response = ProcessControl(info.buffer);
         else
-            response = ProcessStorage(info.credentials, info.buffer);
+            response = ProcessStorage(info.credentials, info.buffer, allowed);
 
         m_serviceManager->Write(conn, response);
 
@@ -160,7 +161,7 @@ RawBuffer CKMService::ProcessControl(MessageBuffer &buffer) {
     }
 }
 
-RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
+RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer, bool allowed)
 {
     int command = 0;
     int msgID = 0;
@@ -171,6 +172,13 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
 
     buffer.Deserialize(command);
     buffer.Deserialize(msgID);
+
+    MessageBuffer response;
+    if (!allowed) {
+        LogError("!!!!!!DISABLOWED!!!!!!");
+
+        Serializer<int,int,int>::Serialize(response, command, msgID, CKM_API_ERROR_ACCESS_DENIED);
+    }
 
     // This is a workaround solution for locktype=None in Tizen 2.2.1
     // When locktype is None, lockscreen app doesn't interfere with unlocking process.
@@ -188,6 +196,12 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
             RawBuffer rawData;
             PolicySerializable policy;
             buffer.Deserialize(tmpDataType, name, label, rawData, policy);
+
+            if (!allowed) {
+                Serializer<int>::Serialize(response, static_cast<int>(DataType(tmpDataType)));
+                return response.Pop();
+            }
+
             return m_logic->saveData(
                 cred,
                 msgID,
@@ -203,6 +217,10 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
             PKCS12Serializable pkcs;
             PolicySerializable keyPolicy, certPolicy;
             buffer.Deserialize(name, label, pkcs, keyPolicy, certPolicy);
+
+            if (!allowed)
+                return response.Pop();
+
             return m_logic->savePKCS12(
                 cred,
                 msgID,
@@ -215,6 +233,8 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
         case LogicCommand::REMOVE:
         {
             buffer.Deserialize(name, label);
+            if (!allowed)
+                return response.Pop();
             return m_logic->removeData(
                 cred,
                 msgID,
@@ -225,6 +245,14 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
         {
             Password password;
             buffer.Deserialize(tmpDataType, name, label, password);
+
+            if (!allowed) {
+                Serializer<int,RawBuffer>::Serialize(response,
+                                                     static_cast<int>(DataType(tmpDataType)),
+                                                     RawBuffer());
+                return response.Pop();
+            }
+
             return m_logic->getData(
                 cred,
                 msgID,
@@ -241,6 +269,12 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
                                label,
                                passKey,
                                passCert);
+
+            if (!allowed) {
+                Serializer<PKCS12Serializable>::Serialize(response, PKCS12Serializable());
+                return response.Pop();
+            }
+
             return m_logic->getPKCS12(
                 cred,
                 msgID,
@@ -252,6 +286,14 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
         case LogicCommand::GET_LIST:
         {
             buffer.Deserialize(tmpDataType);
+
+            if (!allowed) {
+                Serializer<int, LabelNameVector>::Serialize(response,
+                                                            static_cast<int>(DataType(tmpDataType)),
+                                                            LabelNameVector());
+                return response.Pop();
+            }
+
             return m_logic->getDataList(
                 cred,
                 msgID,
@@ -267,6 +309,9 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
                                policyKey,
                                keyName,
                                keyLabel);
+            if (!allowed) {
+                return response.Pop();
+            }
             return m_logic->createKeyAES(
                 cred,
                 msgID,
@@ -291,6 +336,10 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
                                privateKeyLabel,
                                publicKeyName,
                                publicKeyLabel);
+
+            if (!allowed)
+                return response.Pop();
+
             return m_logic->createKeyPair(
                 cred,
                 msgID,
@@ -309,6 +358,12 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
             RawBufferVector trustedVector;
             bool systemCerts = false;
             buffer.Deserialize(certificate, untrustedVector, trustedVector, systemCerts);
+
+            if (!allowed) {
+                Serializer<RawBufferVector>::Serialize(response, RawBufferVector());
+                return response.Pop();
+            }
+
             return m_logic->getCertificateChain(
                 cred,
                 msgID,
@@ -324,6 +379,12 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
             LabelNameVector trustedVector;
             bool systemCerts = false;
             buffer.Deserialize(certificate, untrustedVector, trustedVector, systemCerts);
+
+            if (!allowed) {
+                Serializer<LabelNameVector>::Serialize(response, LabelNameVector());
+                return response.Pop();
+            }
+
             return m_logic->getCertificateChain(
                 cred,
                 msgID,
@@ -338,6 +399,12 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
             RawBuffer message;
             int padding = 0, hash = 0;
             buffer.Deserialize(name, label, password, message, hash, padding);
+
+            if (!allowed) {
+                Serializer<RawBuffer>::Serialize(response, RawBuffer());
+                return response.Pop();
+            }
+
             return m_logic->createSignature(
                   cred,
                   msgID,
@@ -363,6 +430,10 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
                                signature,
                                hash,
                                padding);
+
+            if (!allowed)
+                return response.Pop();
+
             return m_logic->verifySignature(
                 cred,
                 msgID,
@@ -378,6 +449,10 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
         {
             PermissionMask permissionMask = 0;
             buffer.Deserialize(name, label, accessorLabel, permissionMask);
+
+            if (!allowed)
+                return response.Pop();
+
             return m_logic->setPermission(
                 cred,
                 command,
