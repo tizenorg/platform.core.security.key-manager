@@ -172,6 +172,7 @@ public:
             const RawBuffer& message,
             const HashAlgorithm hash,
             const RSAPaddingAlgorithm padding);
+
     void verifySignature(
             const ObserverPtr& observer,
             const Alias& publicKeyOrCertAlias,
