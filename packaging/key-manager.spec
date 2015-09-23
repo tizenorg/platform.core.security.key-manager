@@ -95,9 +95,8 @@ Requires(post): /sbin/ldconfig
 Requires(postun): /sbin/ldconfig
 
 %description -n key-manager-pam-plugin
-CKM login/password module to PAM. Used to monitor user login/logout
-and password change events from PAM
-
+CKM login/password module for PAM
+It's used to monitor user login/logout and password change events from PAM.
 
 %prep
 %setup -q
@@ -188,10 +187,11 @@ if [ $1 = 0 ]; then
     systemctl daemon-reload
 fi
 
-%post -n libkey-manager-common -p /sbin/ldconfig
 %post -n libkey-manager-client -p /sbin/ldconfig
-%postun -n libkey-manager-common -p /sbin/ldconfig
 %postun -n libkey-manager-client -p /sbin/ldconfig
+
+%post -n libkey-manager-common -p /sbin/ldconfig
+%postun -n libkey-manager-common -p /sbin/ldconfig
 
 %post -n key-manager-listener
 systemctl daemon-reload
