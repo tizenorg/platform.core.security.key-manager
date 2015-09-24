@@ -9,6 +9,8 @@ ADD_DEFINITIONS( "-DBOOST_TEST_DYN_LINK" )
 SET(KEY_MANAGER_SRC_PATH ${PROJECT_SOURCE_DIR}/src)
 SET(KEY_MANAGER_PATH ${PROJECT_SOURCE_DIR}/src/manager)
 
+SET(TARGET_ENCRYPTION_SCHEME_COMMON "encryption-scheme-common")
+
 ################################################################################
 
 
@@ -27,6 +29,7 @@ INCLUDE_DIRECTORIES(
     ${KEY_MANAGER_PATH}/client-async/
     ${KEY_MANAGER_SRC_PATH}/include
     ${KEY_MANAGER_TEST_MERGED_SRC}/
+    ${KEY_MANAGER_TEST_MERGED_SRC}/encryption-scheme/
     )
 
 SET(TEST_MERGED_SOURCES
@@ -42,6 +45,7 @@ SET(TEST_MERGED_SOURCES
     ${KEY_MANAGER_TEST_MERGED_SRC}/test_comm-manager.cpp
     ${KEY_MANAGER_TEST_MERGED_SRC}/test_serialization.cpp
     ${KEY_MANAGER_TEST_MERGED_SRC}/test_xml-parser.cpp
+    ${KEY_MANAGER_TEST_MERGED_SRC}/test_encryption-scheme.cpp
     ${KEY_MANAGER_PATH}/service/db-crypto.cpp
     ${KEY_MANAGER_PATH}/service/key-provider.cpp
     ${KEY_MANAGER_PATH}/initial-values/parser.cpp
@@ -60,6 +64,7 @@ TARGET_LINK_LIBRARIES(${TARGET_TEST_MERGED}
     ${TARGET_KEY_MANAGER_COMMON}
     ${CMAKE_THREAD_LIBS_INIT}
     ${KEY_MANAGER_DEP_LIBRARIES}
+    ${ENCRYPTION_SCHEME_COMMON}
     boost_unit_test_framework
     -ldl
     )
