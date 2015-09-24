@@ -147,6 +147,9 @@ cp tests/XML_1_okay.xsd %{buildroot}/usr/share/ckm-db-test/
 cp tests/XML_1_wrong.xml %{buildroot}/usr/share/ckm-db-test/
 cp tests/XML_1_wrong.xsd %{buildroot}/usr/share/ckm-db-test/
 cp tests/XML_2_structure.xml %{buildroot}/usr/share/ckm-db-test/
+cp tests/encryption-scheme/db/db-7654 %{buildroot}/usr/share/ckm-db-test/db-7654
+cp tests/encryption-scheme/db/db-key-7654 %{buildroot}/usr/share/ckm-db-test/db-key-7654
+cp tests/encryption-scheme/db/key-7654 %{buildroot}/usr/share/ckm-db-test/key-7654
 mkdir -p %{buildroot}/etc/gumd/userdel.d/
 cp data/gumd/10_key-manager.post %{buildroot}/etc/gumd/userdel.d/
 
@@ -290,8 +293,13 @@ fi
 %{_datadir}/ckm-db-test/XML_1_wrong.xml
 %{_datadir}/ckm-db-test/XML_1_wrong.xsd
 %{_datadir}/ckm-db-test/XML_2_structure.xml
+%{_datadir}/ckm-db-test/db-7654
+%{_datadir}/ckm-db-test/db-key-7654
+%{_datadir}/ckm-db-test/key-7654
+%{_datadir}/ckm-db-test/encryption-scheme.p12
 %{_bindir}/ckm_so_loader
 %{_bindir}/ckm_db_tool
+%{_bindir}/ckm_generate_db
 
 %files -n key-manager-pam-plugin
 %defattr(-,root,root,-)
