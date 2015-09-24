@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 
 #include <ckm/ckm-control.h>
@@ -45,13 +46,30 @@ public:
     SchemeTest();
     ~SchemeTest();
 
+    void RemoveUserData();
     void SwitchToUser();
     void SwitchToRoot();
     void FillDb();
+    void ReadAll();
+    void RestoreDb();
+    void CheckSchemeVersion(bool isNew);
+
 
 private:
+    void EnableDirectDbAccess();
+    void CheckKeyExportability(const Item& item);
+    void CheckCertExportability(const Item& item);
+    void CheckPkcs(const Item& item);
+    void ReadData(const Item& item);
+    void SignVerify(const Item& itemPrv, const Item& itemPub);
+    void EncryptDecrypt(const Item& item);
+    void CreateCertChain(const CKM::CertificateShPtr& leaf, const Item& ca, const Item& root);
+
     CKM::ControlShPtr m_control;
     CKM::ManagerShPtr m_mgr;
     std::string m_origLabel;
     bool m_userChanged;
+
+    std::unique_ptr<CKM::DB::Crypto> m_db;
+    bool m_directAccessEnabled;
 };
