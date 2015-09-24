@@ -292,6 +292,8 @@ fi
 %{_datadir}/ckm-db-test/XML_2_structure.xml
 %{_bindir}/ckm_so_loader
 %{_bindir}/ckm_db_tool
+%{_bindir}/ckm_generate_db
+%{_libdir}/libencryption-scheme-common.so*
 
 %files -n key-manager-pam-plugin
 %defattr(-,root,root,-)
