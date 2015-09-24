@@ -28,7 +28,7 @@ int main()
 {
     try {
         SchemeTest st;
-        st.SetupUser();
+        st.SwitchToUser();
         st.FillDb();
         return 0;
     } catch (const std::runtime_error& e) {
