@@ -22,12 +22,24 @@
 
 #include <sys/smack.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/sendfile.h>
+#include <fcntl.h>
 #include <unistd.h>
+#include <string.h>
 
 #include <fstream>
 #include <stdexcept>
 
+#include <boost/test/unit_test.hpp>
+
 #include <smack-access.h>
+
+#include <db-crypto.h>
+#include <file-system.h>
+#include <key-provider.h>
+#include <db-row.h>
+#include <crypto-init.h>
 
 using namespace CKM;
 using namespace std;
@@ -37,9 +49,14 @@ const uid_t UID = 7654;
 const gid_t GID = 7654;
 const char* const DBPASS = "db-pass";
 const char* const LABEL = "my-label";
+const Label DB_LABEL = "/" + string(LABEL);
+const int NEW_ENC_SCHEME  = 1; // this is done to limit the amount of code included in binary
+const int ENC_SCHEME_OFFSET = 24;
 const string TEST_DATA_STR = "test-data";
 RawBuffer TEST_DATA(TEST_DATA_STR.begin(), TEST_DATA_STR.end());
 const Password TEST_PASS = "custom user password";
+const size_t IV_LEN = 16;
+const size_t CHAIN_LEN = 3;
 
 enum {
     NO_PASS = 0,
@@ -214,12 +231,71 @@ std::string TEST_LEAF =
     "Zj/T1JkYXKkEwZU6nAR2jdZp3EP9xj3o15V/tyFcXHx6l8NTxn4cJb+Xe4VquQJz\n"
     "6ON7PVe0ABN/AlwVQiFE\n"
     "-----END CERTIFICATE-----\n";
+
+
+
+struct FdCloser {
+    void operator()(int* fd) {
+        if(fd)
+            close(*fd);
+    }
+};
+
+typedef std::unique_ptr<int, FdCloser> FdPtr;
+
+void restoreFile(const string& filename) {
+    string sourcePath = "/usr/share/ckm-db-test/" + filename;
+    string targetPath = "/opt/data/ckm/" + filename;
+
+    int ret;
+
+    int sourceFd = TEMP_FAILURE_RETRY(open(sourcePath.c_str(), O_RDONLY));
+    BOOST_REQUIRE_MESSAGE(sourceFd > 0, "Opening " << sourcePath << " failed.");
+
+    FdPtr sourceFdPtr(&sourceFd);
+
+    int targetFd = TEMP_FAILURE_RETRY(creat(targetPath.c_str(), 666));
+    BOOST_REQUIRE_MESSAGE(targetFd > 0, "Creating " << targetPath << " failed.");
+
+    FdPtr targetFdPtr(&targetFd);
+
+    struct stat sourceStat;
+    ret = fstat(sourceFd, &sourceStat);
+    BOOST_REQUIRE_MESSAGE(ret != -1, "fstat() failed: " << ret);
+
+    ret = sendfile(targetFd, sourceFd, 0, sourceStat.st_size);
+    BOOST_REQUIRE_MESSAGE(ret != -1, "sendfile failed: " << ret);
+
+    ret = fsync(targetFd);
+    BOOST_REQUIRE_MESSAGE(ret != -1, "fsync failed: " << ret);
+}
+
+void generateRandom(size_t random_bytes, char *output)
+{
+    if(random_bytes<=0 || !output)
+        throw runtime_error("Invalid param");
+
+    std::ifstream is("/dev/urandom", std::ifstream::binary);
+    if(!is)
+        throw runtime_error("Failed to read /dev/urandom");
+    is.read(output, random_bytes);
+    if(static_cast<std::streamsize>(random_bytes) != is.gcount())
+        throw runtime_error("Not enough bytes read from /dev/urandom");
+}
+
+RawBuffer createRandomBuffer(size_t random_bytes)
+{
+    char buffer[random_bytes];
+    generateRandom(random_bytes, buffer);
+    return RawBuffer(buffer, buffer + random_bytes);
+}
 } // namespace anonymous
 
 
-SchemeTest::SchemeTest() : m_userChanged(false) {
+SchemeTest::SchemeTest() : m_userChanged(false), m_directAccessEnabled(false) {
     m_control = Control::create();
     m_mgr = Manager::create();
+    initOpenSsl();
 
     SmackAccess sa;
     sa.add("System", LABEL, "rwx");
@@ -230,6 +306,14 @@ SchemeTest::SchemeTest() : m_userChanged(false) {
 
 SchemeTest::~SchemeTest() {
     SwitchToRoot();
+}
+
+void SchemeTest::RemoveUserData() {
+    if(CKM_API_SUCCESS != m_control->lockUserKey(UID))
+        throw runtime_error("lockUserKey failed");
+
+    if(CKM_API_SUCCESS != m_control->removeUserData(UID))
+        throw runtime_error("removeUserData failed");
 }
 
 void SchemeTest::SwitchToUser() {
@@ -342,4 +426,317 @@ void SchemeTest::FillDb() {
             throw runtime_error("unsupported data type");
         }
     }
+}
+
+void SchemeTest::ReadAll(bool useWrongPass) {
+    SwitchToUser();
+
+    for(int i=0;i<AFTER_LAST;i++) {
+        int ret;
+        Password pass = ITEMS[i].policy.password;
+        if(useWrongPass) {
+            if(pass.empty())
+                pass = TEST_PASS;
+            else
+                pass = Password();
+        }
+
+        switch (ITEMS[i].type) {
+        case DataType::BINARY_DATA:
+        {
+            RawBuffer receivedData;
+            ret = m_mgr->getData(ITEMS[i].alias, pass, receivedData);
+            BOOST_REQUIRE_MESSAGE(useWrongPass || receivedData == TEST_DATA,
+                                  "Received data is different for " << ITEMS[i].alias);
+            break;
+        }
+
+        case DataType::KEY_AES:
+        case DataType::KEY_RSA_PRIVATE:
+        case DataType::KEY_RSA_PUBLIC:
+        {
+            KeyShPtr receivedKey;
+            ret = m_mgr->getKey(ITEMS[i].alias, pass, receivedKey);
+            break;
+        }
+
+        case DataType::CERTIFICATE:
+        {
+            CertificateShPtr receivedCert;
+            ret = m_mgr->getCertificate(ITEMS[i].alias, pass, receivedCert);
+            break;
+        }
+
+        case DataType::CHAIN_CERT_0: // pkcs
+        {
+            PKCS12ShPtr pkcs;
+            ret = m_mgr->getPKCS12(ITEMS[i].alias, pass, pass, pkcs);
+            break;
+        }
+
+        default:
+            BOOST_FAIL("Unsupported data type " << ITEMS[i].type);
+        }
+
+        if(ITEMS[i].policy.extractable) {
+            if(useWrongPass)
+                BOOST_REQUIRE_MESSAGE(ret == CKM_API_ERROR_AUTHENTICATION_FAILED,
+                                      "Reading item " << ITEMS[i].alias << " should fail with " <<
+                                      CKM_API_ERROR_AUTHENTICATION_FAILED << " got: " << ret);
+            else
+                BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS, "Reading item " << ITEMS[i].alias <<
+                                      " failed with " << ret);
+        }
+        else
+            BOOST_REQUIRE_MESSAGE(ret == CKM_API_ERROR_NOT_EXPORTABLE, "Item " << ITEMS[i].alias <<
+                                  " should not be exportable");
+    }
+}
+
+void SchemeTest::SignVerify() {
+    SwitchToUser();
+
+    for(int i=0;i<AFTER_LAST;i++) {
+        switch (ITEMS[i].type) {
+        case DataType::BINARY_DATA:
+        case DataType::KEY_AES:
+        case DataType::KEY_RSA_PUBLIC:
+        case DataType::CERTIFICATE:
+            break;
+
+        case DataType::KEY_RSA_PRIVATE:
+            // matching public key must be at i+1
+            BOOST_REQUIRE_MESSAGE(i+1 < AFTER_LAST && ITEMS[i+1].type == DataType::KEY_RSA_PUBLIC,
+                                  "Missing public key for " << ITEMS[i].alias );
+
+            SignVerifyItem(ITEMS[i], ITEMS[i+1]);
+            break;
+
+        case DataType::CHAIN_CERT_0:    // PKCS
+            SignVerifyItem(ITEMS[i], ITEMS[i]);
+            break;
+
+        default:
+            BOOST_FAIL("Unsupported data type");
+            break;
+        }
+    }
+}
+
+void SchemeTest::EncryptDecrypt() {
+    SwitchToUser();
+
+    for(int i=0;i<AFTER_LAST;i++) {
+        switch (ITEMS[i].type) {
+        case DataType::BINARY_DATA:
+        case DataType::KEY_RSA_PUBLIC:
+        case DataType::CERTIFICATE:
+            break;
+
+        case DataType::KEY_AES:
+            EncryptDecryptItem(ITEMS[i]);
+            break;
+
+        case DataType::KEY_RSA_PRIVATE:
+            // matching public key must be at i+1
+            BOOST_REQUIRE_MESSAGE(i+1 < AFTER_LAST && ITEMS[i+1].type == DataType::KEY_RSA_PUBLIC,
+                                  "Missing public key for " << ITEMS[i].alias );
+            EncryptDecryptItem(ITEMS[i], ITEMS[i+1]);
+            break;
+
+        case DataType::CHAIN_CERT_0:    // PKCS
+            EncryptDecryptItem(ITEMS[i], ITEMS[i]);
+            break;
+
+        default:
+            BOOST_FAIL("Unsupported data type");
+            break;
+        }
+    }
+}
+
+void SchemeTest::CreateChain() {
+    SwitchToUser();
+
+    for(int i=0;i<AFTER_LAST;i++) {
+        switch (ITEMS[i].type) {
+        case DataType::BINARY_DATA:
+        case DataType::KEY_RSA_PRIVATE:
+        case DataType::KEY_RSA_PUBLIC:
+        case DataType::KEY_AES:
+            break;
+
+        case DataType::CERTIFICATE:
+            if(i >= CERT_ROOT1 && i <= CERT_ROOT4) {
+                BOOST_REQUIRE_MESSAGE(i+8 < AFTER_LAST &&
+                                      ITEMS[i+4].type == DataType::CERTIFICATE &&
+                                      ITEMS[i+8].type == DataType::CERTIFICATE,
+                                      "Missing ca/leaf certificate for " << ITEMS[i].alias);
+                CreateChainItem(ITEMS[i+8], { ITEMS[i], ITEMS[i+4] });
+            }
+            break;
+
+        case DataType::CHAIN_CERT_0:    // PKCS
+            CreateChainItem(ITEMS[i], { ITEMS[i] });
+            break;
+
+        default:
+            BOOST_FAIL("Unsupported data type");
+            break;
+        }
+    }
+}
+
+void SchemeTest::RemoveAll() {
+    SwitchToUser();
+
+    for(int i=0;i<AFTER_LAST;i++) {
+        int ret = m_mgr->removeAlias(ITEMS[i].alias);
+        BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS,
+                              "removeAlias() failed with " << ret << " for " << ITEMS[i].alias);
+    }
+}
+size_t SchemeTest::CountObjects() {
+    EnableDirectDbAccess();
+
+    size_t ret = 0;
+    for(int i=FIRST;i<AFTER_LAST;i++) {
+        DB::RowVector rows;
+        // it is assumed that aliases are different
+        m_db->getRows(ITEMS[i].alias, DB_LABEL, DataType::DB_FIRST, DataType::DB_LAST, rows);
+        ret += rows.size();
+    }
+    return ret;
+}
+
+void SchemeTest::RestoreDb() {
+    restoreFile("key-7654");
+    restoreFile("db-key-7654");
+    restoreFile("db-7654");
+    m_db.reset();
+    m_directAccessEnabled = false;
+}
+
+void SchemeTest::CheckSchemeVersion(const ItemFilter& filter, bool isNew) {
+    EnableDirectDbAccess();
+
+    for(int i=FIRST;i<AFTER_LAST;i++) {
+        if(!filter.Matches(ITEMS[i]))
+            continue;
+
+        DB::RowVector rows;
+        m_db->getRows(ITEMS[i].alias, DB_LABEL, filter.typeFrom, filter.typeTo, rows);
+        BOOST_REQUIRE_MESSAGE(rows.size() > 0, "No rows found for " << ITEMS[i].alias);
+        for(const auto& r : rows) {
+            BOOST_REQUIRE_MESSAGE(
+                    ((r.encryptionScheme >> ENC_SCHEME_OFFSET) == NEW_ENC_SCHEME) == isNew,
+                    "Wrong encryption scheme for " << ITEMS[i].alias << ". Expected "
+                    << NEW_ENC_SCHEME << " got: " << (r.encryptionScheme >> ENC_SCHEME_OFFSET));
+        }
+    }
+}
+
+void SchemeTest::EnableDirectDbAccess() {
+    SwitchToRoot();
+
+    if(m_directAccessEnabled)
+        return;
+
+    // direct access to db
+    FileSystem fs(UID);
+    auto wrappedDKEK = fs.getDKEK();
+    auto keyProvider = KeyProvider(wrappedDKEK, DBPASS);
+
+    auto wrappedDatabaseDEK = fs.getDBDEK();
+    RawBuffer key = keyProvider.getPureDEK(wrappedDatabaseDEK);
+
+    m_db.reset(new DB::Crypto(fs.getDBPath(), key));
+    m_directAccessEnabled = true;
+}
+
+void SchemeTest::SignVerifyItem(const Item& itemPrv, const Item& itemPub) {
+    int ret;
+    KeyShPtr receivedKey;
+    RawBuffer signature;
+    // create/verify signature
+    ret = m_mgr->createSignature(itemPrv.alias,
+                                 itemPrv.policy.password,
+                                 TEST_DATA,
+                                 HashAlgorithm::SHA512,
+                                 RSAPaddingAlgorithm::X931,
+                                 signature);
+    BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS, "createSignature() failed with " << ret <<
+                          " for " << itemPrv.alias);
+    ret = m_mgr->verifySignature(itemPub.alias,
+                                 itemPub.policy.password,
+                                 TEST_DATA,
+                                 signature,
+                                 HashAlgorithm::SHA512,
+                                 RSAPaddingAlgorithm::X931);
+    BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS, "verifySignature() failed with " << ret <<
+                          " for " << itemPub.alias);
+
+}
+
+void SchemeTest::EncryptDecryptItem(const Item& item) {
+    CryptoAlgorithm algo;
+    RawBuffer iv = createRandomBuffer(IV_LEN);
+    RawBuffer encrypted, decrypted;
+    int ret;
+
+    algo.setParam(ParamName::ALGO_TYPE, AlgoType::AES_GCM);
+    algo.setParam(ParamName::ED_IV, iv);
+
+    ret = m_mgr->encrypt(algo, item.alias, item.policy.password, TEST_DATA, encrypted);
+    BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS, "encrypt() failed iwth " << ret << " for " <<
+                          item.alias);
+
+    ret = m_mgr->decrypt(algo, item.alias, item.policy.password, encrypted, decrypted);
+    BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS, "decrypt() failed iwth " << ret << " for " <<
+                          item.alias);
+
+    BOOST_REQUIRE_MESSAGE(decrypted == TEST_DATA, "Decrypted data not equal to original");
+}
+
+void SchemeTest::EncryptDecryptItem(const Item& itemPrv, const Item& itemPub) {
+    CryptoAlgorithm algo;
+    RawBuffer encrypted, decrypted;
+    int ret;
+
+    algo.setParam(ParamName::ALGO_TYPE, AlgoType::RSA_OAEP);
+
+    ret = m_mgr->encrypt(algo, itemPub.alias, itemPub.policy.password, TEST_DATA, encrypted);
+    BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS, "encrypt() failed iwth " << ret << " for " <<
+                          itemPub.alias);
+
+    ret = m_mgr->decrypt(algo, itemPrv.alias, itemPrv.policy.password, encrypted, decrypted);
+    BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS, "decrypt() failed iwth " << ret << " for " <<
+                          itemPrv.alias);
+
+    BOOST_REQUIRE_MESSAGE(decrypted == TEST_DATA, "Decrypted data not equal to original");
+}
+
+void SchemeTest::CreateChainItem(const Item& leaf, const Items& certs) {
+    CertificateShPtrVector chain;
+    AliasVector trusted;
+
+    if(!leaf.policy.extractable || !leaf.policy.password.empty())
+        return;
+
+    for(const auto& i : certs) {
+        if(!i.policy.extractable || !i.policy.password.empty())
+            return;
+        trusted.push_back(i.alias);
+    }
+
+    CertificateShPtr leafCrt;
+    int ret = m_mgr->getCertificate(leaf.alias, leaf.policy.password, leafCrt);
+    BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS,
+                          "getCertificate failed with " << ret << " for " <<
+                          leaf.alias);
+
+    ret = m_mgr->getCertificateChain(leafCrt, AliasVector(), trusted, false, chain);
+    BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS,
+                          "getCertificateChain() failed with " << ret);
+    BOOST_REQUIRE_MESSAGE(chain.size() == CHAIN_LEN, "Wrong chain length: " << chain.size());
 }
