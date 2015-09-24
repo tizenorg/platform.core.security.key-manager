@@ -22,12 +22,24 @@
 
 #include <sys/smack.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/sendfile.h>
+#include <fcntl.h>
 #include <unistd.h>
+#include <string.h>
 
 #include <fstream>
 #include <stdexcept>
 
+#include <boost/test/unit_test.hpp>
+
 #include <smack-access.h>
+
+#include <db-crypto.h>
+#include <file-system.h>
+#include <key-provider.h>
+#include <db-row.h>
+#include <crypto-init.h>
 
 using namespace CKM;
 using namespace std;
@@ -37,9 +49,42 @@ const uid_t UID = 7654;
 const gid_t GID = 7654;
 const char* const DBPASS = "db-pass";
 const char* const LABEL = "my-label";
+const int NEW_ENC_SCHEME  = 1 << 3; // this is done to limit the number of code included in this binary
 const string TEST_DATA_STR = "test-data";
 RawBuffer TEST_DATA(TEST_DATA_STR.begin(), TEST_DATA_STR.end());
 const Password TEST_PASS = "custom user password";
+const size_t IV_LEN = 16;
+
+const char* const DATA_ALIAS1 = "data-alias1";
+const char* const DATA_ALIAS2 = "data-alias2";
+const char* const KEY_RSA_PRV_ALIAS1 = "key-rsa-prv-alias1";
+const char* const KEY_RSA_PRV_ALIAS2 = "key-rsa-prv-alias2";
+const char* const KEY_RSA_PRV_ALIAS3 = "key-rsa-prv-alias3";
+const char* const KEY_RSA_PRV_ALIAS4 = "key-rsa-prv-alias4";
+const char* const KEY_RSA_PUB_ALIAS1 = "key-rsa-pub-alias1";
+const char* const KEY_RSA_PUB_ALIAS2 = "key-rsa-pub-alias2";
+const char* const KEY_RSA_PUB_ALIAS3 = "key-rsa-pub-alias3";
+const char* const KEY_RSA_PUB_ALIAS4 = "key-rsa-pub-alias4";
+const char* const KEY_AES_ALIAS1 = "key-aes-alias1";
+const char* const KEY_AES_ALIAS2 = "key-aes-alias2";
+const char* const KEY_AES_ALIAS3 = "key-aes-alias3";
+const char* const KEY_AES_ALIAS4 = "key-aes-alias4";
+const char* const CERT_ROOT_ALIAS1 = "cert-root-alias1";
+const char* const CERT_ROOT_ALIAS2 = "cert-root-alias2";
+const char* const CERT_ROOT_ALIAS3 = "cert-root-alias3";
+const char* const CERT_ROOT_ALIAS4 = "cert-root-alias4";
+const char* const CERT_IM_CA_ALIAS1 = "cert-im-ca-alias1";
+const char* const CERT_IM_CA_ALIAS2 = "cert-im-ca-alias2";
+const char* const CERT_IM_CA_ALIAS3 = "cert-im-ca-alias3";
+const char* const CERT_IM_CA_ALIAS4 = "cert-im-ca-alias4";
+const char* const CERT_LEAF_ALIAS1 = "cert-leaf-alias1";
+const char* const CERT_LEAF_ALIAS2 = "cert-leaf-alias2";
+const char* const CERT_LEAF_ALIAS3 = "cert-leaf-alias3";
+const char* const CERT_LEAF_ALIAS4 = "cert-leaf-alias4";
+const char* const PKCS_ALIAS1 = "pkcs-alias1";
+const char* const PKCS_ALIAS2 = "pkcs-alias2";
+const char* const PKCS_ALIAS3 = "pkcs-alias3";
+const char* const PKCS_ALIAS4 = "pkcs-alias4";
 
 enum {
     NO_PASS = 0,
@@ -200,12 +245,71 @@ std::string TEST_LEAF =
     "Zj/T1JkYXKkEwZU6nAR2jdZp3EP9xj3o15V/tyFcXHx6l8NTxn4cJb+Xe4VquQJz\n"
     "6ON7PVe0ABN/AlwVQiFE\n"
     "-----END CERTIFICATE-----\n";
+
+
+
+struct FdCloser {
+    void operator()(int* fd) {
+        if(fd)
+            close(*fd);
+    }
+};
+
+typedef std::unique_ptr<int, FdCloser> FdPtr;
+
+void restoreFile(const string& filename) {
+    string sourcePath = "/usr/share/ckm-db-test/" + filename;
+    string targetPath = "/opt/data/ckm/" + filename;
+
+    int ret;
+
+    int sourceFd = TEMP_FAILURE_RETRY(open(sourcePath.c_str(), O_RDONLY));
+    BOOST_REQUIRE_MESSAGE(sourceFd > 0, "Opening " << sourcePath << " failed.");
+
+    FdPtr sourceFdPtr(&sourceFd);
+
+    int targetFd = TEMP_FAILURE_RETRY(creat(targetPath.c_str(), 666));
+    BOOST_REQUIRE_MESSAGE(sourceFd > 0, "Opening " << sourcePath << " failed.");
+
+    FdPtr targetFdPtr(&targetFd);
+
+    struct stat sourceStat;
+    ret = fstat(sourceFd, &sourceStat);
+    BOOST_REQUIRE_MESSAGE(ret != -1, "fstat() failed: " << ret);
+
+    ret = sendfile(targetFd, sourceFd, 0, sourceStat.st_size);
+    BOOST_REQUIRE_MESSAGE(ret != -1, "sendfile failed: " << ret);
+
+    ret = fsync(targetFd);
+    BOOST_REQUIRE_MESSAGE(ret != -1, "fsync failed: " << ret);
+}
+
+void generateRandom(size_t random_bytes, char *output)
+{
+    if(random_bytes<=0 || !output)
+        throw runtime_error("Invalid param");
+
+    std::ifstream is("/dev/urandom", std::ifstream::binary);
+    if(!is)
+        throw runtime_error("Failed to read /dev/urandom");
+    is.read(output, random_bytes);
+    if(static_cast<std::streamsize>(random_bytes) != is.gcount())
+        throw runtime_error("Not enough bytes read from /dev/urandom");
+}
+
+RawBuffer createRandomBuffer(size_t random_bytes)
+{
+    char buffer[random_bytes];
+    generateRandom(random_bytes, buffer);
+    return RawBuffer(buffer, buffer + random_bytes);
+}
 } // namespace anonymous
 
 
-SchemeTest::SchemeTest() : m_userChanged(false) {
+SchemeTest::SchemeTest() : m_userChanged(false), m_directAccessEnabled(false) {
     m_control = Control::create();
     m_mgr = Manager::create();
+    initOpenSsl();
 
     SmackAccess sa;
     sa.add("System", LABEL, "rwx");
@@ -216,6 +320,14 @@ SchemeTest::SchemeTest() : m_userChanged(false) {
 
 SchemeTest::~SchemeTest() {
     SwitchToRoot();
+}
+
+void SchemeTest::RemoveUserData() {
+    if(CKM_API_SUCCESS != m_control->lockUserKey(UID))
+        throw runtime_error("lockUserKey failed");
+
+    if(CKM_API_SUCCESS != m_control->removeUserData(UID))
+        throw runtime_error("removeUserData failed");
 }
 
 void SchemeTest::SwitchToUser() {
@@ -266,7 +378,7 @@ void SchemeTest::FillDb() {
     CertificateShPtr leaf = CKM::Certificate::create(leafBuffer, CKM::DataFormat::FORM_PEM);
 
     // pkcs
-    ifstream is("/usr/share/ckm-test/pkcs.p12");
+    ifstream is("/usr/share/ckm-db-test/encryption-scheme.p12");
     istreambuf_iterator<char> begin(is), end;
     RawBuffer pkcsBuffer(begin, end);
     auto pkcs = PKCS12::create(pkcsBuffer, Password());
@@ -329,3 +441,228 @@ void SchemeTest::FillDb() {
         }
     }
 }
+
+void SchemeTest::ReadAll() {
+    SwitchToUser();
+
+    for(int i=0;i<AFTER_LAST;i++) {
+        switch (ITEMS[i].type) {
+        case DataType::BINARY_DATA:
+            ReadData(ITEMS[i]);
+            break;
+
+        case DataType::KEY_RSA_PRIVATE:
+            // matching public key must be at i+4
+            BOOST_REQUIRE_MESSAGE(i+4 < AFTER_LAST && ITEMS[i+4].type == DataType::KEY_RSA_PUBLIC,
+                                  "Missing public key for " << ITEMS[i].alias );
+
+            SignVerify(ITEMS[i], ITEMS[i+4]);
+            CheckKeyExportability(ITEMS[i]);
+            break;
+
+        case DataType::KEY_RSA_PUBLIC:
+            CheckKeyExportability(ITEMS[i]);
+            break;
+
+        case DataType::KEY_AES:
+            EncryptDecrypt(ITEMS[i]);
+            CheckKeyExportability(ITEMS[i]);
+            break;
+
+        case DataType::CERTIFICATE:
+        {
+            if(i >= CERT_ROOT1 && i <= CERT_ROOT4) {
+                BOOST_REQUIRE_MESSAGE(i+4 < AFTER_LAST &&
+                                      ITEMS[i+4].type == DataType::CERTIFICATE,
+                                      "Missing ca/leaf certificate for " << ITEMS[i].alias);
+
+                RawBuffer leafBuffer(TEST_LEAF.begin(), TEST_LEAF.end());
+                CertificateShPtr leaf = CKM::Certificate::create(leafBuffer, CKM::DataFormat::FORM_PEM);
+                CreateCertChain(leaf, { ITEMS[i], ITEMS[i+4] });
+            }
+
+            CheckCertExportability(ITEMS[i]);
+            break;
+        }
+
+        case DataType::CHAIN_CERT_0:    // PKCS
+            SignVerify(ITEMS[i], ITEMS[i]);
+
+            CheckPkcs(ITEMS[i]);
+
+            CheckKeyExportability(ITEMS[i]);
+            CheckCertExportability(ITEMS[i]);
+            break;
+
+        default:
+            BOOST_FAIL("Unsupported data type");
+            break;
+        }
+    }
+}
+
+void SchemeTest::RestoreDb() {
+    restoreFile("key-7654");
+    restoreFile("db-key-7654");
+    restoreFile("db-7654");
+    m_db.reset();
+    m_directAccessEnabled = false;
+}
+
+void SchemeTest::CheckSchemeVersion(bool isNew) {
+    EnableDirectDbAccess();
+
+    for(int i=FIRST;i<AFTER_LAST;i++) {
+        DB::RowVector rows;
+        m_db->getRows(ITEMS[i].alias, LABEL, DataType::DB_FIRST, DataType::DB_LAST, rows);
+        for(const auto& r : rows)
+            BOOST_REQUIRE_MESSAGE(((r.encryptionScheme & NEW_ENC_SCHEME) > 0) == isNew,
+                                  "Wrong encryption scheme for " << ITEMS[i].alias << ". Expected "
+                                  << isNew << " got: " << r.encryptionScheme);
+    }
+}
+
+void SchemeTest::EnableDirectDbAccess() {
+    if(m_directAccessEnabled)
+        return;
+
+    // direct access to db
+    FileSystem fs(UID);
+    auto wrappedDKEK = fs.getDKEK();
+    auto keyProvider = KeyProvider(wrappedDKEK, DBPASS);
+
+    auto wrappedDatabaseDEK = fs.getDBDEK();
+    RawBuffer key = keyProvider.getPureDEK(wrappedDatabaseDEK);
+
+    m_db.reset(new DB::Crypto(fs.getDBPath(), key));
+    m_directAccessEnabled = true;
+}
+
+void SchemeTest::CheckKeyExportability(const Item& item) {
+    KeyShPtr receivedKey;
+    int ret = m_mgr->getKey(item.alias, item.policy.password, receivedKey);
+    if(item.policy.extractable)
+        BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS, "getKey() failed with " << ret << " for " <<
+                              item.alias);
+    else
+        BOOST_REQUIRE_MESSAGE(ret == CKM_API_ERROR_NOT_EXPORTABLE, "Key " << item.alias <<
+                              " should not be exportable");
+}
+
+void SchemeTest::CheckCertExportability(const Item& item) {
+    CertificateShPtr receivedCert;
+    int ret = m_mgr->getCertificate(item.alias, item.policy.password, receivedCert);
+    if(item.policy.extractable)
+        BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS, "getCertificate() failed with " << ret <<
+                              " for " << item.alias);
+    else
+        BOOST_REQUIRE_MESSAGE(ret == CKM_API_ERROR_NOT_EXPORTABLE, "Certificate " << item.alias <<
+                              " should not be exportable");
+}
+
+void SchemeTest::CheckPkcs(const Item& item) {
+    PKCS12ShPtr pkcs;
+    int ret = m_mgr->getPKCS12(item.alias, pkcs);
+    if(item.policy.extractable) {
+        if(item.policy.password.empty()) {
+            BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS, "getPKCS12() failed with " << ret <<
+                                  " for " << item.alias);
+            BOOST_REQUIRE_MESSAGE(!pkcs->empty(), "Empty pkcs for " << item.alias);
+
+            CreateCertChain(pkcs->getCertificate(), { item });
+        }
+        else
+            BOOST_REQUIRE_MESSAGE(ret == CKM_API_ERROR_AUTHENTICATION_FAILED, "getPKCS12() returned"
+                                  << ret << " for " << item.alias);
+    }
+    else
+        BOOST_REQUIRE_MESSAGE(ret == CKM_API_ERROR_NOT_EXPORTABLE, "getPKCS12() returned"
+                              << ret << " for " << item.alias);
+}
+
+void SchemeTest::ReadData(const Item& item) {
+    RawBuffer receivedData;
+
+    int ret = m_mgr->getData(item.alias, item.policy.password, receivedData);
+    BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS, "getData failed with " << ret << " for "
+                          << item.alias);
+    BOOST_REQUIRE_MESSAGE(receivedData == TEST_DATA, "Received data is different for " <<
+                          item.alias);
+}
+
+void SchemeTest::SignVerify(const Item& itemPrv, const Item& itemPub) {
+    int ret;
+    KeyShPtr receivedKey;
+    RawBuffer signature;
+    // create/verify signature
+    ret = m_mgr->createSignature(itemPrv.alias,
+                                 itemPrv.policy.password,
+                                 TEST_DATA,
+                                 HashAlgorithm::SHA512,
+                                 RSAPaddingAlgorithm::X931,
+                                 signature);
+    BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS, "createSignature() failed with " << ret <<
+                          " for " << itemPrv.alias);
+    ret = m_mgr->verifySignature(itemPub.alias,
+                                 itemPub.policy.password,
+                                 TEST_DATA,
+                                 signature,
+                                 HashAlgorithm::SHA512,
+                                 RSAPaddingAlgorithm::X931);
+    BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS, "verifySignature() failed with " << ret <<
+                          " for " << itemPub.alias);
+
+}
+
+void SchemeTest::EncryptDecrypt(const Item& item) {
+    CryptoAlgorithm algo;
+    RawBuffer iv = createRandomBuffer(IV_LEN);
+    RawBuffer encrypted, decrypted;
+    int ret;
+
+    algo.setParam(ParamName::ALGO_TYPE, AlgoType::AES_GCM);
+    algo.setParam(ParamName::ED_IV, iv);
+
+    ret = m_mgr->encrypt(algo, item.alias, item.policy.password, TEST_DATA, encrypted);
+    BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS, "encrypt() failed iwth " << ret << " for " <<
+                          item.alias);
+
+    ret = m_mgr->decrypt(algo, item.alias, item.policy.password, encrypted, decrypted);
+    BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS, "decrypt() failed iwth " << ret << " for " <<
+                          item.alias);
+
+    BOOST_REQUIRE_MESSAGE(decrypted == TEST_DATA, "Decrypted data not equal to original");
+}
+
+void SchemeTest::CreateCertChain(const CertificateShPtr& leaf, const Items& certs) {
+    CertificateShPtrVector chain;
+    AliasVector trusted;
+    bool pass = false;
+    bool exportable = true;
+    for(const auto& i : certs) {
+        trusted.push_back(i.alias);
+        if(!i.policy.password.empty())
+            pass = true;
+        if(!i.policy.extractable)
+            exportable = false;
+    }
+
+    int ret = m_mgr->getCertificateChain(leaf, AliasVector(), trusted, false, chain);
+    if (exportable) {
+        if (!pass) {
+            BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS,
+                                  "getCertificateChain() failed with " << ret);
+            BOOST_REQUIRE_MESSAGE(chain.size() == certs.size() + 1,
+                                  "Wrong chain length: " << chain.size());
+        }
+        else
+            BOOST_REQUIRE_MESSAGE(ret == CKM_API_ERROR_AUTHENTICATION_FAILED,
+                                  "getCertificateChain() returned: " << ret << " expected: " <<
+                                  CKM_API_ERROR_AUTHENTICATION_FAILED);
+    }
+    else
+        BOOST_REQUIRE_MESSAGE(ret == CKM_API_ERROR_NOT_EXPORTABLE,
+                              "getCertificateChain() returned: " << ret << " expected: " <<
+                              CKM_API_ERROR_NOT_EXPORTABLE);
+}
+
