@@ -604,9 +604,9 @@ int ckmc_create_key_pair_ecdsa(const ckmc_ec_type_e type,
 }
 
 KEY_MANAGER_CAPI
-int ckmc_create_key_aes(const size_t size,
+int ckmc_create_key_aes(size_t size,
                         const char *key_alias,
-                        const ckmc_policy_s key_policy)
+                        ckmc_policy_s key_policy)
 {
     CKM::ManagerShPtr mgr = CKM::Manager::create();
 
