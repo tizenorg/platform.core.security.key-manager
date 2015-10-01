@@ -572,13 +572,13 @@ void ckmc_cert_list_all_free(ckmc_cert_list_s *first)
 }
 
 KEY_MANAGER_CAPI
-int ckmc_param_list_new(ckmc_param_list_s **ppparams)
+int ckmc_param_list_new(ckmc_param_list_s **pparams)
 {
-    if (!ppparams)
+    if (!pparams)
         return CKMC_ERROR_INVALID_PARAMETER;
 
-    *ppparams = reinterpret_cast<ckmc_param_list_s*>(new(std::nothrow)(CKM::CryptoAlgorithm));
-    if (!*ppparams)
+    *pparams = reinterpret_cast<ckmc_param_list_s *>(new(std::nothrow)(CKM::CryptoAlgorithm));
+    if (!*pparams)
         return CKMC_ERROR_OUT_OF_MEMORY;
     return CKMC_ERROR_NONE;
 }
@@ -649,15 +649,17 @@ void ckmc_param_list_free(ckmc_param_list_s *params)
 }
 
 KEY_MANAGER_CAPI
-int ckmc_generate_params(ckmc_algo_type_e type, ckmc_param_list_s *params)
+int ckmc_generate_params(ckmc_algo_type_e type, ckmc_param_list_s **pparams)
 {
-    // return error if params are NULL
-    if(params == NULL)
+    if (pparams == NULL)
         return CKMC_ERROR_INVALID_PARAMETER;
 
-    int ret = CKMC_ERROR_NONE;
-    switch(type)
-    {
+    ckmc_param_list_s *params = NULL;
+    int ret = ckmc_param_list_new(&params);
+    if (ret != CKMC_ERROR_NONE)
+        return ret;
+
+    switch (type) {
     case CKMC_ALGO_AES_CTR:
         ret = ckmc_param_list_add_integer(params, CKMC_PARAM_ED_CTR_LEN, DEFAULT_IV_LEN_BITS);
         break;
@@ -680,9 +682,22 @@ int ckmc_generate_params(ckmc_algo_type_e type, ckmc_param_list_s *params)
         ret = ckmc_param_list_add_integer(params, CKMC_PARAM_GEN_EC, CKMC_EC_PRIME192V1);
         break;
     default:
-        return CKMC_ERROR_INVALID_PARAMETER;
+        ret = CKMC_ERROR_INVALID_PARAMETER;
+        break;
     }
-    if (ret == CKMC_ERROR_NONE)
-        return ckmc_param_list_add_integer(params, CKMC_PARAM_ALGO_TYPE, type);
-    return ret;
+
+    if (ret != CKMC_ERROR_NONE) {
+        ckmc_param_list_free(params);
+        return ret;
+    }
+
+    ret = ckmc_param_list_add_integer(params, CKMC_PARAM_ALGO_TYPE, type);
+    if (ret != CKMC_ERROR_NONE) {
+        ckmc_param_list_free(params);
+        return ret;
+    }
+
+    *pparams = params;
+
+    return CKMC_ERROR_NONE;
 }
