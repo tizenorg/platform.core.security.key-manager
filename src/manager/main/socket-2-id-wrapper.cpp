@@ -26,46 +26,33 @@
 #include <protocols.h>
 #include <socket-2-id.h>
 
-namespace CKM {
+namespace {
 
-int Socket2Id::getPkgIdFromSmack(const std::string &smack, std::string &pkgId) {
-    // TODO
-    // Conversion from smack label to pkgId should be done
-    // by security-manager. Current version of security-manager
-    // does not support this feature yet.
-
-    static const std::string SMACK_PREFIX_APPID  = "User::App::";
-
-    if (smack.empty()) {
-        LogError("Smack is empty. Connection will be rejected");
-        return -1;
-    }
-
-    if (smack.compare(0, SMACK_PREFIX_APPID.size(), SMACK_PREFIX_APPID)) {
-        pkgId = "/" + smack;
-        LogDebug("Smack: " << smack << " Was translated to owner id: " << pkgId);
-        return 0;
-    }
-
-    std::string appId = smack.substr(SMACK_PREFIX_APPID.size(), std::string::npos);
-
+int getPkgIdFromFd(int sock, std::string &pkgId) {
     char *pkg = nullptr;
 
-    if (0 > security_manager_get_app_pkgid(&pkg, appId.c_str())) {
-        LogError("Error in security_manager_get_app_pkgid");
-        return -1;
+    int ret = security_manager_identify_app_from_socket(sock, &pkg, nullptr);
+
+    if (ret == SECURITY_MANAGER_ERROR_NO_SUCH_OBJECT) {
+        LogError("Owner of socket is not connected with pkgid.");
+        return 1;
     }
 
-    if (!pkg) {
-        LogError("PkgId could not be NULL");
+    if (ret != SECURITY_MANAGER_SUCCESS) {
+        LogError("security_manager_identify_app_from_socket failed with error: "
+                 << ret);
         return -1;
     }
 
     pkgId = pkg;
     free(pkg);
-    LogDebug("Smack: " << smack << " Was translated to owner id: " << pkgId);
+    LogDebug("Socket: " << sock << " Was translated to owner id: " << pkgId);
     return 0;
 }
+
+} // namespace anonymous
+
+namespace CKM {
 
 int Socket2Id::translate(int sock, std::string &result) {
     std::string smack;
@@ -82,7 +69,13 @@ int Socket2Id::translate(int sock, std::string &result) {
     }
 
     std::string pkgId;
-    if (0 > getPkgIdFromSmack(smack, pkgId)) {
+    int retCode = getPkgIdFromFd(sock, pkgId);
+
+    if (1 == retCode) {
+        pkgId = "/" + smack;
+    }
+
+    if (0 > retCode) {
         return -1;
     }
 
