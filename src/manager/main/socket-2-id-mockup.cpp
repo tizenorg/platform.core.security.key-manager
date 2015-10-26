@@ -24,9 +24,9 @@
 #include <protocols.h>
 #include <socket-2-id.h>
 
-namespace CKM {
+namespace {
 
-int Socket2Id::getPkgIdFromSmack(const std::string &smack, std::string &pkgId) {
+int getPkgIdFromSmack(const std::string &smack, std::string &pkgId) {
     static const std::string SMACK_PREFIX_APPID  = "User::App::";
 
     if (smack.empty()) {
@@ -51,6 +51,10 @@ int Socket2Id::getPkgIdFromSmack(const std::string &smack, std::string &pkgId) {
     LogDebug("Smack: " << smack << " Was translated to owner id: " << pkgId);
     return 0;
 }
+
+} // namespace anonymous
+
+namespace CKM {
 
 int Socket2Id::translate(int sock, std::string &result) {
     std::string smack;
