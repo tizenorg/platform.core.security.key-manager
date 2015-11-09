@@ -20,6 +20,7 @@
  * @brief       InitialValueHandler class implementation.
  */
 
+#include <cctype>
 #include <sstream>
 #include <algorithm>
 #include <memory>
@@ -27,6 +28,7 @@
 #include <InitialValueHandler.h>
 #include <EncodingType.h>
 #include <ckm/ckm-type.h>
+#include <xml-utils.h>
 
 namespace
 {
@@ -58,11 +60,6 @@ void InitialValueHandler::Start(const XML::Parser::Attributes &attr)
     }
 }
 
-void InitialValueHandler::Characters(const std::string &)
-{
-    throw std::runtime_error("error: value handler detected raw data outside data-specific tag");
-}
-
 void InitialValueHandler::End()
 {
     if (!m_bufferHandler) {
@@ -76,7 +73,8 @@ void InitialValueHandler::End()
     int ec = m_db_logic.importInitialData(
       m_name,
       Crypto::Data(getDataType(), m_bufferHandler->getData()),
-      Crypto::DataEncryption(m_encryptedKey, m_bufferHandler->getIV()),
+      Crypto::DataEncryption(m_bufferHandler->getIV().empty() ? RawBuffer() : m_encryptedKey,
+                             m_bufferHandler->getIV()),
       policy);
 
     if(CKM_API_SUCCESS != ec) {
