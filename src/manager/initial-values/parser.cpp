@@ -47,7 +47,6 @@ Parser::Parser(const std::string &XML_filename)
 }
 Parser::~Parser()
 {
-    xmlCleanupParser();
 }
 
 int Parser::Validate(const std::string &XSD_schema)
