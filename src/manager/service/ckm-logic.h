@@ -58,6 +58,8 @@ public:
     CKMLogic& operator=(CKMLogic &&) = delete;
     virtual ~CKMLogic();
 
+    void initialize();
+
     RawBuffer unlockUserKey(uid_t user, const Password &password);
     RawBuffer lockUserKey(uid_t user);
 

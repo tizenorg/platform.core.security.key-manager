@@ -66,7 +66,11 @@ CKMLogic::CKMLogic()
     CertificateConfig::addSystemCertificateDir(CERT_SYSTEM_DIR);
 
     m_accessControl.updateCCMode();
+}
 
+CKMLogic::~CKMLogic(){}
+
+void CKMLogic::initialize() {
     // make initial file list
     std::vector<std::string> filesToParse;
     DIR *dp = opendir(INIT_VALUES_DIR);
@@ -104,8 +108,6 @@ CKMLogic::CKMLogic()
         unlink(file.c_str());
     }
 }
-
-CKMLogic::~CKMLogic(){}
 
 void CKMLogic::loadDKEKFile(uid_t user, const Password &password) {
     auto &handle = m_userDataMap[user];

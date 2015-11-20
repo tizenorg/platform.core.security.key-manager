@@ -37,7 +37,9 @@ namespace CKM {
 
 CKMService::CKMService()
   : m_logic(new CKMLogic)
-{}
+{
+    m_logic->initialize();
+}
 
 CKMService::~CKMService() {
     delete m_logic;
