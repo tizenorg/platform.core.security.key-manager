@@ -1,5 +1,8 @@
 <manifest>
 	<request>
-		<domain name="_" />
+		<domain name="System" />
 	</request>
+	<assign>
+		<filesystem path=”/etc/gumd/userdel.d/10_key-manager.post" label="_"/>
+	</assign>
 </manifest>

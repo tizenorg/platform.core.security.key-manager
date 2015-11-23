@@ -135,7 +135,6 @@ rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/license
 cp LICENSE %{buildroot}/usr/share/license/%{name}
 cp LICENSE %{buildroot}/usr/share/license/libkey-manager-client
-mkdir -p %{buildroot}/opt/data/ckm/initial_values
 mkdir -p %{buildroot}/etc/security/
 mkdir -p %{buildroot}/usr/share/ckm/scripts
 mkdir -p %{buildroot}/etc/gumd/userdel.d/
@@ -229,6 +228,7 @@ fi
 
 
 %files -n key-manager
+%defattr(-, system, system)
 %manifest key-manager.manifest
 %{_bindir}/key-manager
 %{_unitdir}/multi-user.target.wants/central-key-manager.service
@@ -245,11 +245,13 @@ fi
 %{_datadir}/license/%{name}
 %{_datadir}/ckm/initial_values.xsd
 %{_datadir}/ckm/sw_key.xsd
-/opt/data/ckm/initial_values/
-%attr(444, root, root) %{_datadir}/ckm/scripts/*.sql
+%attr(750,-,-) /opt/data/ckm/
+%attr(750,-,-) /opt/data/ckm/initial_values/
+%attr(444,-,-) %{_datadir}/ckm/scripts/*.sql
 /etc/opt/upgrade/230.key-manager-migrate-dkek.patch.sh
-%attr(550, root, root) /etc/gumd/userdel.d/10_key-manager.post
+%attr(550,-,-) /etc/gumd/userdel.d/10_key-manager.post
 %{_bindir}/ckm_tool
+%attr(750,-,-) /var/run/key-manager/
 
 %files -n key-manager-pam-plugin
 %manifest key-manager-pam-plugin.manifest
@@ -292,6 +294,7 @@ fi
 %{_libdir}/pkgconfig/*.pc
 
 %files -n key-manager-tests
+%defattr(-, system, system)
 %{_bindir}/ckm-tests-internal
 %{_datadir}/ckm-db-test/testme_ver1.db
 %{_datadir}/ckm-db-test/testme_ver2.db

@@ -82,6 +82,9 @@ INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/data/scripts/230.key-manager-migrate-d
                 OWNER_WRITE
                 OWNER_EXECUTE)
 
+INSTALL(DIRECTORY DESTINATION /var/run/key-manager/)
+INSTALL(DIRECTORY DESTINATION /opt/data/ckm/initial_values)
+
 ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(build)
 ADD_SUBDIRECTORY(systemd)
