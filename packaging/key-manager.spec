@@ -9,7 +9,9 @@ Source1001: key-manager.manifest
 Source1002: key-manager-pam-plugin.manifest
 Source1003: key-manager-listener.manifest
 Source1004: libkey-manager-client.manifest
-Source1005: libkey-manager-common.manifest
+Source1005: libkey-manager-client-devel.manifest
+Source1006: libkey-manager-common.manifest
+Source1007: key-manager-tests.manifest
 BuildRequires: cmake
 BuildRequires: zip
 BuildRequires: pkgconfig(dlog)
@@ -105,6 +107,8 @@ cp -a %{SOURCE1002} .
 cp -a %{SOURCE1003} .
 cp -a %{SOURCE1004} .
 cp -a %{SOURCE1005} .
+cp -a %{SOURCE1006} .
+cp -a %{SOURCE1007} .
 
 %build
 %if 0%{?sec_build_binary_debug_enable}
@@ -224,6 +228,7 @@ fi
 
 
 %files -n key-manager
+%defattr(-, system, system)
 %manifest key-manager.manifest
 %{_bindir}/key-manager
 %{_unitdir}/multi-user.target.wants/central-key-manager.service
@@ -238,35 +243,43 @@ fi
 %{_unitdir}/sockets.target.wants/central-key-manager-api-encryption.socket
 %{_unitdir}/central-key-manager-api-encryption.socket
 %{_datadir}/license/%{name}
+%{_datadir}/ckm
 %{_datadir}/ckm/initial_values.xsd
 %{_datadir}/ckm/sw_key.xsd
+/opt/data/ckm/
 /opt/data/ckm/initial_values/
-%attr(444, root, root) %{_datadir}/ckm/scripts/*.sql
+%attr(444,-,-) %{_datadir}/ckm/scripts/*.sql
 /etc/opt/upgrade/230.key-manager-migrate-dkek.patch.sh
-%attr(550, root, root) /etc/gumd/userdel.d/10_key-manager.post
+%attr(550,-,-) /etc/gumd/userdel.d/10_key-manager.post
 %{_bindir}/ckm_tool
 
 %files -n key-manager-pam-plugin
+%defattr(-, system, system)
 %manifest key-manager-pam-plugin.manifest
 %{_libdir}/security/pam_key_manager_plugin.so*
 
 %files -n key-manager-listener
+%defattr(-, system, system)
 %manifest key-manager-listener.manifest
 %{_bindir}/key-manager-listener
 %{_unitdir}/multi-user.target.wants/central-key-manager-listener.service
 %{_unitdir}/central-key-manager-listener.service
 
 %files -n libkey-manager-common
+%defattr(-, system, system)
 %manifest libkey-manager-common.manifest
 %{_libdir}/libkey-manager-common.so.*
 
 %files -n libkey-manager-client
+%defattr(-, system, system)
 %manifest libkey-manager-client.manifest
 %{_libdir}/libkey-manager-client.so.*
 %{_libdir}/libkey-manager-control-client.so.*
 %{_datadir}/license/libkey-manager-client
 
 %files -n libkey-manager-client-devel
+%defattr(-, system, system)
+%manifest libkey-manager-client-devel.manifest
 %{_libdir}/libkey-manager-client.so
 %{_libdir}/libkey-manager-control-client.so
 %{_libdir}/libkey-manager-common.so
@@ -287,7 +300,10 @@ fi
 %{_libdir}/pkgconfig/*.pc
 
 %files -n key-manager-tests
+%defattr(-, system, system)
+%manifest key-manager-tests.manifest
 %{_bindir}/ckm-tests-internal
+%{_datadir}/ckm-db-test
 %{_datadir}/ckm-db-test/testme_ver1.db
 %{_datadir}/ckm-db-test/testme_ver2.db
 %{_datadir}/ckm-db-test/testme_ver3.db
