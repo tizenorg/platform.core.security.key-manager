@@ -10,6 +10,7 @@ Source1002: key-manager-pam-plugin.manifest
 Source1003: key-manager-listener.manifest
 Source1004: libkey-manager-client.manifest
 Source1005: libkey-manager-common.manifest
+Source1006: key-manager-tests.manifest
 BuildRequires: cmake
 BuildRequires: zip
 BuildRequires: pkgconfig(dlog)
@@ -105,6 +106,7 @@ cp -a %{SOURCE1002} .
 cp -a %{SOURCE1003} .
 cp -a %{SOURCE1004} .
 cp -a %{SOURCE1005} .
+cp -a %{SOURCE1006} .
 
 %build
 %if 0%{?sec_build_binary_debug_enable}
@@ -135,15 +137,14 @@ rm -rf %{buildroot}
 mkdir -p %{buildroot}/usr/share/license
 cp LICENSE %{buildroot}/usr/share/license/%{name}
 cp LICENSE %{buildroot}/usr/share/license/libkey-manager-client
-mkdir -p %{buildroot}/opt/data/ckm/initial_values
 mkdir -p %{buildroot}/etc/security/
-mkdir -p %{buildroot}/usr/share/ckm/scripts
 mkdir -p %{buildroot}/etc/gumd/userdel.d/
+mkdir -p %{buildroot}/opt/data/ckm/initial_values
+mkdir -p %{buildroot}/usr/share/ckm/scripts
 cp data/scripts/*.sql %{buildroot}/usr/share/ckm/scripts
 cp doc/initial_values.xsd %{buildroot}/usr/share/ckm
 cp doc/sw_key.xsd %{buildroot}/usr/share/ckm
 cp data/gumd/10_key-manager.post %{buildroot}/etc/gumd/userdel.d/
-
 mkdir -p %{buildroot}/usr/share/ckm-db-test
 cp tests/testme_ver1.db %{buildroot}/usr/share/ckm-db-test/
 cp tests/testme_ver2.db %{buildroot}/usr/share/ckm-db-test/
@@ -160,8 +161,7 @@ cp tests/XML_4_device_key.xsd %{buildroot}/usr/share/ckm-db-test/
 cp tests/encryption-scheme/db/db-7654 %{buildroot}/usr/share/ckm-db-test/db-7654
 cp tests/encryption-scheme/db/db-key-7654 %{buildroot}/usr/share/ckm-db-test/db-key-7654
 cp tests/encryption-scheme/db/key-7654 %{buildroot}/usr/share/ckm-db-test/key-7654
-mkdir -p %{buildroot}/etc/gumd/userdel.d/
-cp data/gumd/10_key-manager.post %{buildroot}/etc/gumd/userdel.d/
+mkdir -p %{buildroot}/var/run/central-key-manager
 
 %make_install
 %install_service multi-user.target.wants central-key-manager.service
@@ -229,6 +229,7 @@ fi
 
 
 %files -n key-manager
+%defattr(-, system, system)
 %manifest key-manager.manifest
 %{_bindir}/key-manager
 %{_unitdir}/multi-user.target.wants/central-key-manager.service
@@ -243,35 +244,43 @@ fi
 %{_unitdir}/sockets.target.wants/central-key-manager-api-encryption.socket
 %{_unitdir}/central-key-manager-api-encryption.socket
 %{_datadir}/license/%{name}
-%{_datadir}/ckm/initial_values.xsd
+%attr(750,-,-) /opt/data/ckm/
+%attr(750,-,-) /opt/data/ckm/initial_values/
+%{_datadir}/ckm
 %{_datadir}/ckm/sw_key.xsd
-/opt/data/ckm/initial_values/
-%attr(444, root, root) %{_datadir}/ckm/scripts/*.sql
+%{_datadir}/ckm/initial_values.xsd
+%{_datadir}/ckm/scripts
+%attr(444,-,-) %{_datadir}/ckm/scripts/*.sql
 /etc/opt/upgrade/230.key-manager-migrate-dkek.patch.sh
-%attr(550, root, root) /etc/gumd/userdel.d/10_key-manager.post
+%attr(550,-,-) /etc/gumd/userdel.d/10_key-manager.post
 %{_bindir}/ckm_tool
 
 %files -n key-manager-pam-plugin
+%defattr(-, system, system)
 %manifest key-manager-pam-plugin.manifest
 %{_libdir}/security/pam_key_manager_plugin.so*
 
 %files -n key-manager-listener
+%defattr(-, system, system)
 %manifest key-manager-listener.manifest
 %{_bindir}/key-manager-listener
 %{_unitdir}/multi-user.target.wants/central-key-manager-listener.service
 %{_unitdir}/central-key-manager-listener.service
 
 %files -n libkey-manager-common
+%defattr(-, system, system)
 %manifest libkey-manager-common.manifest
 %{_libdir}/libkey-manager-common.so.*
 
 %files -n libkey-manager-client
+%defattr(-, system, system)
 %manifest libkey-manager-client.manifest
 %{_libdir}/libkey-manager-client.so.*
 %{_libdir}/libkey-manager-control-client.so.*
 %{_datadir}/license/libkey-manager-client
 
 %files -n libkey-manager-client-devel
+%defattr(-, system, system)
 %{_libdir}/libkey-manager-client.so
 %{_libdir}/libkey-manager-control-client.so
 %{_libdir}/libkey-manager-common.so
@@ -292,7 +301,10 @@ fi
 %{_libdir}/pkgconfig/*.pc
 
 %files -n key-manager-tests
+%defattr(-, system, system)
+%manifest key-manager-tests.manifest
 %{_bindir}/ckm-tests-internal
+%{_datadir}/ckm-db-test
 %{_datadir}/ckm-db-test/testme_ver1.db
 %{_datadir}/ckm-db-test/testme_ver2.db
 %{_datadir}/ckm-db-test/testme_ver3.db

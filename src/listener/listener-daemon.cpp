@@ -35,7 +35,7 @@
 #define LOG_TAG "CKM_LISTENER"
 
 namespace {
-const char* const CKM_LOCK = "/var/run/key-manager.pid";
+const char* const CKM_LOCK = "/var/run/central-key-manager/key-manager.pid";
 };
 
 bool isCkmRunning()
