@@ -3,6 +3,8 @@ Description=Start the Central Key Manager
 DefaultDependencies=no
 
 [Service]
+User=system
+Group=system
 Type=notify
 ExecStart=/usr/bin/key-manager
 Sockets=central-key-manager-api-storage.socket
