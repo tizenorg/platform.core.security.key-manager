@@ -56,8 +56,8 @@ RawBuffer TEST_DATA(TEST_DATA_STR.begin(), TEST_DATA_STR.end());
 const Password TEST_PASS = "custom user password";
 const size_t IV_LEN = 16;
 const size_t CHAIN_LEN = 3;
-const uid_t CKM_UID = 0;
-const gid_t CKM_GID = 0;
+const uid_t CKM_UID = 200; // system
+const gid_t CKM_GID = 200; // system
 
 enum {
     NO_PASS = 0,
