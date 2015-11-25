@@ -306,12 +306,6 @@ RawBuffer CKMLogic::removeApplicationData(const Label &smackLabel) {
             }
         }
 
-    } catch (const DB::Crypto::Exception::InternalError &e) {
-        LogError("DB::Crypto couldn't remove data: " << e.GetMessage());
-        retCode = CKM_API_ERROR_DB_ERROR;
-    } catch (const DB::Crypto::Exception::TransactionError &e) {
-        LogError("DB::Crypto transaction failed with message " << e.GetMessage());
-        retCode = CKM_API_ERROR_DB_ERROR;
     } catch (const Exc::Exception &e) {
         retCode = e.error();
     } catch (const CKM::Exception &e) {
@@ -439,12 +433,6 @@ int CKMLogic::verifyAndSaveDataHelper(
         {
             retCode = saveDataHelper(cred, name, label, binaryData, policy);
         }
-    } catch (const DB::Crypto::Exception::InternalError &e) {
-        LogError("DB::Crypto failed with message: " << e.GetMessage());
-        retCode = CKM_API_ERROR_DB_ERROR;
-    } catch (const DB::Crypto::Exception::TransactionError &e) {
-        LogError("DB::Crypto transaction failed with message " << e.GetMessage());
-        retCode = CKM_API_ERROR_DB_ERROR;
     } catch (const Exc::Exception &e) {
         retCode = e.error();
     } catch (const CKM::Exception &e) {
@@ -469,9 +457,6 @@ int CKMLogic::getKeyForService(
         if (retCode == CKM_API_SUCCESS)
             key = std::move(obj);
         return retCode;
-    } catch (const DB::Crypto::Exception::Base &e) {
-        LogError("DB::Crypto failed with message: " << e.GetMessage());
-        return CKM_API_ERROR_DB_ERROR;
     } catch (const Exc::Exception &e) {
         return e.error();
     } catch (const CKM::Exception &e) {
@@ -553,12 +538,6 @@ RawBuffer CKMLogic::savePKCS12(
         retCode = saveDataHelper(cred, name, label, pkcs, keyPolicy, certPolicy);
     } catch (const Exc::Exception &e) {
         retCode = e.error();
-    } catch (const DB::Crypto::Exception::InternalError &e) {
-        LogError("DB::Crypto failed with message: " << e.GetMessage());
-        retCode = CKM_API_ERROR_DB_ERROR;
-    } catch (const DB::Crypto::Exception::TransactionError &e) {
-        LogError("DB::Crypto transaction failed with message " << e.GetMessage());
-        retCode = CKM_API_ERROR_DB_ERROR;
     } catch (const CKM::Exception &e) {
         LogError("CKM::Exception: " << e.GetMessage());
         retCode = CKM_API_ERROR_SERVER_ERROR;
@@ -904,9 +883,6 @@ RawBuffer CKMLogic::getData(
         retCode = readDataHelper(true, cred, dataType, name, label, password, obj, objDataType);
         if(retCode == CKM_API_SUCCESS)
             row.data = std::move(obj->getBinary());
-    } catch (const DB::Crypto::Exception::Base &e) {
-        LogError("DB::Crypto failed with message: " << e.GetMessage());
-        retCode = CKM_API_ERROR_DB_ERROR;
     } catch (const Exc::Exception &e) {
         retCode = e.error();
     } catch (const CKM::Exception &e) {
@@ -989,9 +965,6 @@ RawBuffer CKMLogic::getPKCS12(
         // prepare response
         if(retCode == CKM_API_SUCCESS)
             output = PKCS12Serializable(privKey, cert, caChain);
-    } catch (const DB::Crypto::Exception::Base &e) {
-        LogError("DB::Crypto failed with message: " << e.GetMessage());
-        retCode = CKM_API_ERROR_DB_ERROR;
     } catch (const Exc::Exception &e) {
         retCode = e.error();
     } catch (const CKM::Exception &e) {
@@ -1327,12 +1300,6 @@ RawBuffer CKMLogic::createKeyPair(
                         policyPublic);
     } catch(const Exc::Exception &e) {
         retCode = e.error();
-    } catch (DB::Crypto::Exception::TransactionError &e) {
-        LogDebug("DB::Crypto error: transaction error: " << e.GetMessage());
-        retCode = CKM_API_ERROR_DB_ERROR;
-    } catch (DB::Crypto::Exception::InternalError &e) {
-        LogDebug("DB::Crypto internal error: " << e.GetMessage());
-        retCode = CKM_API_ERROR_DB_ERROR;
     } catch (const CKM::Exception &e) {
         LogError("CKM::Exception: " << e.GetMessage());
         retCode = CKM_API_ERROR_SERVER_ERROR;
@@ -1359,12 +1326,6 @@ RawBuffer CKMLogic::createKeyAES(
     } catch (std::invalid_argument &e) {
         LogDebug("invalid argument error: " << e.what());
         retCode = CKM_API_ERROR_INPUT_PARAM;
-    } catch (DB::Crypto::Exception::TransactionError &e) {
-        LogDebug("DB::Crypto error: transaction error: " << e.GetMessage());
-        retCode = CKM_API_ERROR_DB_ERROR;
-    } catch (DB::Crypto::Exception::InternalError &e) {
-        LogDebug("DB::Crypto internal error: " << e.GetMessage());
-        retCode = CKM_API_ERROR_DB_ERROR;
     } catch (const CKM::Exception &e) {
         LogError("CKM::Exception: " << e.GetMessage());
         retCode = CKM_API_ERROR_SERVER_ERROR;
@@ -1513,9 +1474,6 @@ RawBuffer CKMLogic::getCertificateChain(
                                             chainRawVector);
     } catch (const Exc::Exception &e) {
         retCode = e.error();
-    } catch (const DB::Crypto::Exception::Base &e) {
-        LogError("DB::Crypto failed with message: " << e.GetMessage());
-        retCode = CKM_API_ERROR_DB_ERROR;
     } catch (const std::exception& e) {
         LogError("STD exception " << e.what());
         retCode = CKM_API_ERROR_SERVER_ERROR;
@@ -1548,9 +1506,6 @@ RawBuffer CKMLogic::getCertificateChain(
                                             trustedCertificates,
                                             useTrustedSystemCertificates,
                                             chainRawVector);
-    } catch (const DB::Crypto::Exception::Base &e) {
-        LogError("DB::Crypto failed with message: " << e.GetMessage());
-        retCode = CKM_API_ERROR_DB_ERROR;
     } catch (const Exc::Exception &e) {
         retCode = e.error();
     } catch (const std::exception& e) {
@@ -1587,13 +1542,13 @@ RawBuffer CKMLogic::createSignature(
         if(retCode == CKM_API_SUCCESS) {
             signature = obj->sign(cryptoAlg, message);
         }
-    } catch (const DB::Crypto::Exception::Base &e) {
-        LogError("DB::Crypto failed with message: " << e.GetMessage());
-        retCode = CKM_API_ERROR_DB_ERROR;
     } catch (const Exc::Exception &e) {
         retCode = e.error();
     } catch (const CKM::Exception &e) {
         LogError("Unknown CKM::Exception: " << e.GetMessage());
+        retCode = CKM_API_ERROR_SERVER_ERROR;
+    } catch (const std::exception &e) {
+        LogError("STD exception " << e.what());
         retCode = CKM_API_ERROR_SERVER_ERROR;
     }
 
@@ -1633,9 +1588,6 @@ RawBuffer CKMLogic::verifySignature(
         }
     } catch (const Exc::Exception &e) {
         retCode = e.error();
-    } catch (const DB::Crypto::Exception::Base &e) {
-        LogError("DB::Crypto failed with message: " << e.GetMessage());
-        retCode = CKM_API_ERROR_DB_ERROR;
     } catch (const CKM::Exception &e) {
         LogError("Unknown CKM::Exception: " << e.GetMessage());
         retCode = CKM_API_ERROR_SERVER_ERROR;
