@@ -118,6 +118,10 @@ typedef DefineException<CKM_API_ERROR_FILE_SYSTEM,
         Stringify, PrintError> FileSystemFailed;
 typedef DefineException<CKM_API_ERROR_AUTHENTICATION_FAILED,
         StringifyDebug, PrintDebug> AuthenticationFailed;
+typedef DefineException<CKM_API_ERROR_DB_ERROR,
+        StringifyError, PrintError> TransactionFailed;
+typedef DefineException<CKM_API_ERROR_DB_ERROR,
+        StringifyError, PrintError> DatabaseFailed;
 
 } // namespace Exc
 } // namespace CKM

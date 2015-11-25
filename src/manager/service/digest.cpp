@@ -18,6 +18,8 @@
 
 #include <openssl/evp.h>
 
+#include <exception.h>
+
 #include <digest.h>
 
 namespace CKM {
@@ -53,7 +55,7 @@ void Digest::reset()
 
     ret = EVP_DigestInit_ex(m_ctx, m_md, NULL);
     if (ret != 1) {
-        ThrowMsg(Exception::InternalError,
+        ThrowErr(Exc::InternalError,
                  "Failed to create digest context.");
     }
     m_digest.clear();
@@ -66,19 +68,18 @@ void Digest::append(const RawBuffer &data, std::size_t len)
     int ret = -1;
 
     if (data.size() == 0) {
-        ThrowMsg(Exception::InternalError, "Empty data.");
+        ThrowErr(Exc::InternalError, "Empty data.");
     }
     if (0 == len)
         len = data.size();
     if (m_finalized) {
-        ThrowMsg(Exception::InternalError, "Already finalized.");
+        ThrowErr(Exc::InternalError, "Already finalized.");
     }
     if (not m_initialized)
         reset();
     ret = EVP_DigestUpdate(m_ctx, data.data(), len);
     if (ret != 1) {
-        ThrowMsg(Exception::InternalError,
-                 "Failed to calculate digest in openssl.");
+        ThrowErr(Exc::InternalError, "Failed to calculate digest in openssl.");
     }
 }
 
@@ -88,16 +89,15 @@ RawBuffer Digest::finalize()
     unsigned int dlen;
 
     if (m_finalized) {
-        ThrowMsg(Exception::InternalError, "Already finalized.");
+        ThrowErr(Exc::InternalError, "Already finalized.");
     }
     m_finalized = true;
     ret = EVP_DigestFinal_ex(m_ctx, m_digest.data(), &dlen);
     if (ret != 1) {
-        ThrowMsg(Exception::InternalError,
-                 "Failed in digest final in openssl.");
+        ThrowErr(Exc::InternalError, "Failed in digest final in openssl.");
     }
     if (dlen != length()) {
-        ThrowMsg(Exception::InternalError, "Invalid digest length.");
+        ThrowErr(Exc::InternalError, "Invalid digest length.");
     }
     if (dlen != EVP_MAX_MD_SIZE)
         m_digest.resize(dlen);

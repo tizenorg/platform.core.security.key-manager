@@ -34,13 +34,6 @@ class Digest
 {
     public:
         NONCOPYABLE(Digest)
-
-        class Exception
-        {
-            public:
-                DECLARE_EXCEPTION_TYPE(CKM::Exception, Base)
-                DECLARE_EXCEPTION_TYPE(Base, InternalError)
-        };
         Digest();
         ~Digest();
         void append(const RawBuffer &data, std::size_t len = 0);
