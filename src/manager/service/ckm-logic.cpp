@@ -1113,10 +1113,15 @@ int CKMLogic::importInitialData(
         m_decider.getStore(data.type, policy.extractable, !enc.encryptedKey.empty());
 
     Token token;
-    if (enc.encryptedKey.empty())
-        token = store.import(data, m_accessControl.isCCMode() ? "" : policy.password);
-    else
+
+    if (enc.encryptedKey.empty()) {
+        Crypto::Data binaryData;
+        if (CKM_API_SUCCESS != (retCode = toBinaryData(data, binaryData)))
+            return retCode;
+        token = store.import(binaryData, m_accessControl.isCCMode() ? "" : policy.password);
+    } else {
         token = store.importEncrypted(data, m_accessControl.isCCMode() ? "" : policy.password, enc);
+    }
 
     DB::Row row(std::move(token), name, OWNER_ID_SYSTEM, static_cast<int>(policy.extractable));
     handler.crypto.encryptRow(row);
