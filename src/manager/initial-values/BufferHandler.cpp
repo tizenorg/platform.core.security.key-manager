@@ -41,7 +41,7 @@ BufferHandler::~BufferHandler() {}
 void BufferHandler::Start(const XML::Parser::Attributes &attr)
 {
     // get key type
-    if(attr.find(XML_ATTR_IV) != attr.end()) {
+    if (attr.find(XML_ATTR_IV) != attr.end()) {
         std::string IVstring = attr.at(XML_ATTR_IV);
         Base64Decoder base64;
         base64.reset();
@@ -61,7 +61,7 @@ void BufferHandler::Characters(const std::string & data)
 void BufferHandler::End()
 {
     // decoding section
-    switch(m_encoding)
+    switch (m_encoding)
     {
         // PEM requires that "----- END" section comes right after "\n" character
         case PEM:

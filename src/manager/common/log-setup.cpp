@@ -58,7 +58,7 @@ EnvFileParser::EnvFileParser()
     std::ifstream is(SYSTEMD_ENV_FILE);
     LogDebug("Reading env file: " SYSTEMD_ENV_FILE);
 
-    while(is.good()) {
+    while (is.good()) {
         std::string line;
 
         std::getline(is, line);

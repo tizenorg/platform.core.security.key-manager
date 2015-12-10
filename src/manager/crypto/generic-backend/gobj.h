@@ -32,7 +32,8 @@ namespace Crypto {
 
 class GObj {
 protected:
-    GObj(){}
+    GObj() {}
+
 public:
     virtual RawBuffer getBinary() const {
         ThrowErr(Exc::Crypto::OperationNotSupported);
@@ -54,7 +55,7 @@ public:
         ThrowErr(Exc::Crypto::OperationNotSupported);
     }
 
-    virtual ~GObj () {}
+    virtual ~GObj() {}
 };
 
 typedef std::unique_ptr<GObj> GObjUPtr;

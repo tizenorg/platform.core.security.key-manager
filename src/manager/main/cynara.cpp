@@ -55,7 +55,7 @@ void Cynara::Request(
       user.c_str(),
       privilege.c_str());
 
-    switch(ret) {
+    switch (ret) {
     default:
     case CYNARA_API_ACCESS_DENIED:
         callback(false);
@@ -79,7 +79,7 @@ void Cynara::ProcessSocket() {
     }
 }
 
-Cynara::~Cynara(){
+Cynara::~Cynara() {
     cynara_async_finish(m_cynara);
 }
 
@@ -158,7 +158,7 @@ bool Cynara::GetUserFromSocket(int socket, std::string &user) {
 
 bool Cynara::GetClientFromSocket(int socket, std::string &client) {
     char *ptr;
-    if (CYNARA_API_SUCCESS!=cynara_creds_socket_get_client(socket, CLIENT_METHOD_DEFAULT, &ptr))
+    if (CYNARA_API_SUCCESS != cynara_creds_socket_get_client(socket, CLIENT_METHOD_DEFAULT, &ptr))
         return false;
     client = ptr;
     free(ptr);

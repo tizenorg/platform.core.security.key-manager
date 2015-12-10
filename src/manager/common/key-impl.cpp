@@ -147,7 +147,7 @@ KeyImpl::KeyImpl(const RawBuffer &buf, const Password &password)
 
     m_pkey.reset(pkey, EVP_PKEY_free);
 
-    switch(EVP_PKEY_type(pkey->type))
+    switch (EVP_PKEY_type(pkey->type))
     {
         case EVP_PKEY_RSA:
             m_type = isPrivate ? KeyType::KEY_RSA_PRIVATE : KeyType::KEY_RSA_PUBLIC;
@@ -167,7 +167,7 @@ KeyImpl::KeyImpl(const RawBuffer &buf, const Password &password)
 KeyImpl::KeyImpl(EvpShPtr pkey, KeyType type) : m_pkey(pkey), m_type(type)
 {
     int expected_type = EVP_PKEY_NONE;
-    switch(type)
+    switch (type)
     {
         case KeyType::KEY_RSA_PRIVATE:
         case KeyType::KEY_RSA_PUBLIC:
@@ -195,7 +195,7 @@ KeyImpl::KeyImpl(EvpShPtr pkey, KeyType type) : m_pkey(pkey), m_type(type)
 
     // verify if actual key type matches the expected tpe
     int given_key_type = EVP_PKEY_type(pkey->type);
-    if(given_key_type==EVP_PKEY_NONE || expected_type!=given_key_type)
+    if (given_key_type == EVP_PKEY_NONE || expected_type != given_key_type)
     {
         m_pkey.reset();
         m_type = KeyType::KEY_NONE;
@@ -223,7 +223,7 @@ RawBuffer KeyImpl::getDERPUB() const {
 }
 
 RawBuffer KeyImpl::getDER() const {
-    switch(m_type)
+    switch (m_type)
     {
         case KeyType::KEY_RSA_PRIVATE:
         case KeyType::KEY_DSA_PRIVATE:

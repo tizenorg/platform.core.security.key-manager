@@ -62,7 +62,7 @@ bool OCSPService::ProcessOne(
     ConnectionInfo &info,
     bool allowed)
 {
-    LogDebug ("process One");
+    LogDebug("process One");
 
     Try {
         if (!info.buffer.Ready())
@@ -78,7 +78,7 @@ bool OCSPService::ProcessOne(
         m_serviceManager->Write(conn, response);
 
         return true;
-    } Catch (MessageBuffer::Exception::Base) {
+    } Catch(MessageBuffer::Exception::Base) {
         LogError("Broken protocol. Closing socket.");
     } catch (const std::string &e) {
         LogError("String exception(" << e << "). Closing socket");

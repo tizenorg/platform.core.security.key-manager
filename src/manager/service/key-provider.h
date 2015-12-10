@@ -144,6 +144,7 @@ public:
     static int closeLibrary();
 
     virtual ~KeyProvider();
+
 private:
     // KeyAndInfoContainer class
     std::shared_ptr<KeyAndInfoContainer> m_kmcDKEK;
@@ -168,7 +169,6 @@ private:
     static char * concat_password_user(
         const char *user,
         const char *password);
-
 };
 
 } // namespace CKM

@@ -672,14 +672,14 @@ void SqlConnection::Connect(const std::string &address,
     TurnOnForeignKeys();
 }
 
-const std::string SQLCIPHER_RAW_PREFIX="x'";
-const std::string SQLCIPHER_RAW_SUFIX="'";
+const std::string SQLCIPHER_RAW_PREFIX = "x'";
+const std::string SQLCIPHER_RAW_SUFIX = "'";
 const std::size_t SQLCIPHER_RAW_DATA_SIZE = 32;
 
 RawBuffer rawToHexString(const RawBuffer &raw)
 {
     RawBuffer output;
-    for(auto &e: raw) {
+    for (auto &e: raw) {
         char result[3];
         snprintf(result, sizeof(result), "%02X", static_cast<unsigned int>(e));
         output.push_back(static_cast<unsigned char>(result[0]));
@@ -688,7 +688,7 @@ RawBuffer rawToHexString(const RawBuffer &raw)
     return output;
 }
 
-RawBuffer createHexPass(const RawBuffer &rawPass){
+RawBuffer createHexPass(const RawBuffer &rawPass) {
     // We are required to pass 64byte long hex password made out of 32byte raw
     // binary data
     RawBuffer output;
@@ -736,8 +736,7 @@ void SqlConnection::ResetKey(const RawBuffer &rawPassOld,
     }
     AssertMsg(rawPassOld.size() == SQLCIPHER_RAW_DATA_SIZE &&
               rawPassNew.size() == SQLCIPHER_RAW_DATA_SIZE,
-            "Binary data for raw password should be 32 bytes long."
-             );
+            "Binary data for raw password should be 32 bytes long.");
     // sqlcipher3_rekey requires for key to be already set
     if (!m_isKeySet)
         SetKey(rawPassOld);
@@ -839,7 +838,7 @@ SqlConnection::~SqlConnection()
 
 int SqlConnection::Output::Callback(void* param, int columns, char** values, char** names)
 {
-    if(param)
+    if (param)
         static_cast<Output*>(param)->SetResults(columns, values, names);
     return 0;
 }
@@ -847,11 +846,11 @@ int SqlConnection::Output::Callback(void* param, int columns, char** values, cha
 void SqlConnection::Output::SetResults(int columns, char** values, char** names)
 {
     if (m_names.empty()) {
-        for (int i=0;i<columns;i++)
+        for (int i=0; i < columns; i++)
             m_names.push_back(names[i] ? names[i] : "NULL");
     }
     Row row;
-    for (int i=0;i<columns;i++)
+    for (int i=0; i < columns; i++)
         row.push_back(values[i] ? values[i] : "NULL");
     m_values.push_back(std::move(row));
 }

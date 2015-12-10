@@ -41,15 +41,15 @@ namespace InitialValues {
 void InitialValueHandler::Start(const XML::Parser::Attributes &attr)
 {
     // get name
-    if(attr.find(XML_ATTR_NAME) != attr.end())
+    if (attr.find(XML_ATTR_NAME) != attr.end())
         m_name = Alias(attr.at(XML_ATTR_NAME));
 
     // get password
-    if(attr.find(XML_ATTR_PASSWORD) != attr.end())
+    if (attr.find(XML_ATTR_PASSWORD) != attr.end())
         m_password = Password(attr.at(XML_ATTR_PASSWORD).c_str());
 
     // get exportable
-    if(attr.find(XML_ATTR_EXPORTABLE) != attr.end())
+    if (attr.find(XML_ATTR_EXPORTABLE) != attr.end())
     {
         std::string flagVal = attr.at(XML_ATTR_EXPORTABLE);
         std::transform(flagVal.begin(), flagVal.end(), flagVal.begin(), ::tolower);
@@ -64,12 +64,11 @@ void InitialValueHandler::End()
         LogError("Invalid data with name: " << m_name << ", reason: no key data!");
         return;
     }
- 
     // save data
     Policy policy(m_password, m_exportable);
 
     Crypto::DataEncryption de;
-    if(m_bufferHandler->isEncrypted()) {
+    if (m_bufferHandler->isEncrypted()) {
         de.encryptedKey = m_encryptedKey;
         de.iv = m_bufferHandler->getIV();
     }
@@ -79,14 +78,14 @@ void InitialValueHandler::End()
                                           de,
                                           policy);
 
-    if(CKM_API_SUCCESS != ec) {
+    if (CKM_API_SUCCESS != ec) {
         LogError("Saving type: " << getDataType() << " with params: name(" <<
             m_name << "), exportable(" << m_exportable<< ") failed, code: " << ec);
         return;
     }
 
     // save permissions
-    for(const auto & permission : m_permissions)
+    for (const auto & permission : m_permissions)
     {
         ec = m_db_logic.setPermissionHelper(
                 Credentials(CKMLogic::SYSTEM_DB_UID, OWNER_ID_SYSTEM),
@@ -100,8 +99,7 @@ void InitialValueHandler::End()
               ") failed, code: " << ec);
         }
     }
-} 
-
+}
 
 BufferHandler::BufferHandlerPtr InitialValueHandler::CreateBufferHandler(EncodingType type)
 {

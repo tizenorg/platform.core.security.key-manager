@@ -69,7 +69,7 @@ FileLock::FileLock(const char* const file)
 
     int ret = fsync(m_lockFd);
     if (-1 == ret)
-        throw io_exception("Fsync failed. Errno: ",strerror(errno));
+        throw io_exception("Fsync failed. Errno: ", strerror(errno));
 }
 
 FileLock::~FileLock()

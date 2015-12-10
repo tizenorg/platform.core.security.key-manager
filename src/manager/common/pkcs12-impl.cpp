@@ -83,7 +83,7 @@ PKCS12Impl::PKCS12Impl(const RawBuffer &buffer, const Password &password)
 
     if (pkey) {
         KeyImpl::EvpShPtr ptr(pkey, EVP_PKEY_free);
-        switch(EVP_PKEY_type(pkey->type))
+        switch (EVP_PKEY_type(pkey->type))
         {
             case EVP_PKEY_RSA:
                 m_pkey = std::make_shared<KeyImpl>(ptr, KeyType::KEY_RSA_PRIVATE);
@@ -141,7 +141,7 @@ PKCS12Impl::PKCS12Impl(const PKCS12Impl &other)
 
 PKCS12Impl& PKCS12Impl::operator=(const PKCS12Impl &other)
 {
-    if(this != &other)
+    if (this != &other)
     {
         m_pkey = other.getKey();
         m_cert = other.getCertificate();

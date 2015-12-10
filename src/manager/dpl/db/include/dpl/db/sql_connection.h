@@ -63,7 +63,7 @@ class SqlConnection
         typedef std::vector<std::string> Row;
         typedef std::vector<Row> Rows;
 
-        static int Callback(void*,int,char**,char**);
+        static int Callback(void*, int, char**, char**);
         const Row& GetNames() const { return m_names; }
         const Rows& GetValues() const { return m_values; }
     private:
@@ -398,7 +398,7 @@ class SqlConnection
         enum Option
         {
             RO = SQLCIPHER_OPEN_NOMUTEX | SQLCIPHER_OPEN_READONLY,
-            RW = SQLCIPHER_OPEN_NOMUTEX | SQLCIPHER_OPEN_READWRITE, 
+            RW = SQLCIPHER_OPEN_NOMUTEX | SQLCIPHER_OPEN_READWRITE,
             CRW = RW | SQLCIPHER_OPEN_CREATE
         };
     };

@@ -39,7 +39,7 @@ void LoadFiles(CKMLogic &logic) {
     try {
         std::vector<std::string> filesToParse;
         DIR *dp = opendir(INIT_VALUES_DIR);
-        if(dp)
+        if (dp)
         {
             struct dirent *entry;
             while ((entry = readdir(dp)))
@@ -49,7 +49,7 @@ void LoadFiles(CKMLogic &logic) {
                 // check if XML file
                 std::string lowercaseFilename = filename;
                 std::transform(lowercaseFilename.begin(), lowercaseFilename.end(), lowercaseFilename.begin(), ::tolower);
-                if(lowercaseFilename.find(INIT_VALUES_FILE_SUFFIX) == std::string::npos)
+                if (lowercaseFilename.find(INIT_VALUES_FILE_SUFFIX) == std::string::npos)
                     continue;
 
                 filesToParse.push_back(std::string(INIT_VALUES_DIR) + filename);
@@ -58,14 +58,14 @@ void LoadFiles(CKMLogic &logic) {
         }
 
         // parse
-        for(const auto & file : filesToParse)
+        for (const auto & file : filesToParse)
         {
             InitialValues::InitialValuesFile xmlFile(file.c_str(), logic);
             int rc = xmlFile.Validate(INIT_VALUES_XSD);
-            if(rc == XML::Parser::PARSE_SUCCESS)
+            if (rc == XML::Parser::PARSE_SUCCESS)
             {
                 rc = xmlFile.Parse();
-                if(rc != XML::Parser::PARSE_SUCCESS)
+                if (rc != XML::Parser::PARSE_SUCCESS)
                     LogError("invalid initial values file: " << file << ", parsing code: " << rc);
             }
             else

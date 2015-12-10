@@ -47,7 +47,7 @@ public:
         return m_data;
     }
     bool isEncrypted() const {
-        if(m_encoding == EncodingType::ENCRYPTED)
+        if (m_encoding == EncodingType::ENCRYPTED)
             return true;
         return false;
     }

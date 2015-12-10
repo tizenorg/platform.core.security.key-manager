@@ -42,6 +42,6 @@ struct Token {
     RawBuffer data;
 };
 
-typedef std::pair<Token,Token> TokenPair;
+typedef std::pair<Token, Token> TokenPair;
 
 } // namespace CKM

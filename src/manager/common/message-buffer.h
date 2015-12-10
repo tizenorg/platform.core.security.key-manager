@@ -62,7 +62,7 @@ public:
 
     // generic serialization
     template <typename... Args>
-    static MessageBuffer Serialize( const Args&... args) {
+    static MessageBuffer Serialize(const Args&... args) {
         MessageBuffer buffer;
         Serializer<Args...>::Serialize(buffer, args...);
         return buffer;
@@ -75,7 +75,6 @@ public:
     }
 
 protected:
-
     inline void CountBytesLeft() {
         if (m_bytesLeft > 0)
             return;  // we already counted m_bytesLeft nothing to do

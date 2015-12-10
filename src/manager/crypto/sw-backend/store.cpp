@@ -156,10 +156,10 @@ Store::Store(CryptoBackend backendId)
     // get the device key if present
     InitialValues::SWKeyFile keyFile(DEVICE_KEY_SW_FILE);
     int rc = keyFile.Validate(DEVICE_KEY_XSD);
-    if(rc == XML::Parser::PARSE_SUCCESS)
+    if (rc == XML::Parser::PARSE_SUCCESS)
     {
         rc = keyFile.Parse();
-        if(rc == XML::Parser::PARSE_SUCCESS)
+        if (rc == XML::Parser::PARSE_SUCCESS)
             m_deviceKey = keyFile.getPrivKey();
         else
         {
@@ -203,7 +203,7 @@ TokenPair Store::generateAKey(const CryptoAlgorithm &algorithm,
                               const Password &pubPass)
 {
     Internals::DataPair ret = Internals::generateAKey(algorithm);
-    return std::make_pair<Token,Token>(
+    return std::make_pair<Token, Token>(
             Token(m_backendId, ret.first.type, pack(ret.first.buffer, prvPass)),
             Token(m_backendId, ret.second.type, pack(ret.second.buffer, pubPass)));
 }
@@ -219,7 +219,7 @@ Token Store::import(const Data &data, const Password &pass) {
 }
 
 Token Store::importEncrypted(const Data &data, const Password &pass, const DataEncryption &enc) {
-    if(!m_deviceKey)
+    if (!m_deviceKey)
         ThrowErr(Exc::Crypto::InternalError, "No device key present");
 
     // decrypt the AES key using device key

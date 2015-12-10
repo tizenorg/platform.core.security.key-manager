@@ -47,7 +47,6 @@ int getCertChain(
     CertificateShPtrVector &certificateChainVector)
 {
     return try_catch([&] {
-
         MessageBuffer recv;
         auto send = MessageBuffer::Serialize(static_cast<int>(command),
                                              counter,
@@ -139,7 +138,7 @@ int Manager::Impl::saveKey(const Alias &alias, const KeyShPtr &key, const Policy
         return CKM_API_ERROR_INPUT_PARAM;
     Try {
         return saveBinaryData(alias, DataType(key->getType()), key->getDER(), policy);
-    } Catch (DataType::Exception::Base) {
+    } Catch(DataType::Exception::Base) {
         LogError("Error in key conversion. Could not convert KeyType::NONE to DBDataType!");
     }
     return CKM_API_ERROR_INPUT_PARAM;
@@ -168,7 +167,7 @@ int Manager::Impl::savePKCS12(
     const Policy &keyPolicy,
     const Policy &certPolicy)
 {
-    if (alias.empty() || pkcs.get()==NULL)
+    if (alias.empty() || pkcs.get() == NULL)
         return CKM_API_ERROR_INPUT_PARAM;
 
     int my_counter = ++m_counter;
@@ -324,7 +323,7 @@ int Manager::Impl::getKey(const Alias &alias, const Password &password, KeyShPtr
         return retCode;
 
     KeyShPtr keyParsed;
-    if(DataType::KEY_AES == recvDataType)
+    if (DataType::KEY_AES == recvDataType)
         keyParsed = KeyShPtr(new KeyAESImpl(rawData));
     else
         keyParsed = KeyShPtr(new KeyImpl(rawData));
@@ -410,8 +409,8 @@ int Manager::Impl::getBinaryDataAliasVector(DataType dataType, AliasVector &alia
             return CKM_API_ERROR_UNKNOWN;
         }
 
-        for(const auto &it : labelNameVector)
-            aliasVector.push_back( AliasSupport::merge(it.first, it.second) );
+        for (const auto &it : labelNameVector)
+            aliasVector.push_back(AliasSupport::merge(it.first, it.second));
 
         return retCode;
     });
@@ -470,7 +469,6 @@ int Manager::Impl::createKeyAES(
     int my_counter = ++m_counter;
 
     return try_catch([&] {
-
         MessageBuffer recv;
         AliasSupport aliasHelper(keyAlias);
         auto send = MessageBuffer::Serialize(static_cast<int>(LogicCommand::CREATE_KEY_AES),
@@ -506,7 +504,7 @@ int Manager::Impl::createKeyPair(
 {
     // input type check
     CryptoAlgorithm keyGenAlgorithm;
-    switch(key_type)
+    switch (key_type)
     {
         case KeyType::KEY_RSA_PUBLIC:
         case KeyType::KEY_RSA_PRIVATE:
@@ -534,7 +532,6 @@ int Manager::Impl::createKeyPair(
     int my_counter = ++m_counter;
 
     return try_catch([&] {
-
         MessageBuffer recv;
         AliasSupport privateHelper(privateKeyAlias);
         AliasSupport publicHelper(publicKeyAlias);
@@ -573,7 +570,7 @@ int Manager::Impl::getCertificateChain(
     RawBufferVector untrustedVector;
     RawBufferVector trustedVector;
 
-    if(!certificate || certificate->empty())
+    if (!certificate || certificate->empty())
         return CKM_API_ERROR_INPUT_PARAM;
 
     for (auto &e: untrustedCertificates) {
@@ -604,7 +601,7 @@ int Manager::Impl::getCertificateChain(
     LabelNameVector untrustedVector;
     LabelNameVector trustedVector;
 
-    if(!certificate || certificate->empty())
+    if (!certificate || certificate->empty())
         return CKM_API_ERROR_INPUT_PARAM;
 
     for (auto &e: untrustedCertificates) {
@@ -637,7 +634,6 @@ int Manager::Impl::createSignature(
     int my_counter = ++m_counter;
 
     return try_catch([&] {
-
         MessageBuffer recv;
         AliasSupport helper(privateKeyAlias);
         auto send = MessageBuffer::Serialize(static_cast<int>(LogicCommand::CREATE_SIGNATURE),
