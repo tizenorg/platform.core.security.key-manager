@@ -28,7 +28,6 @@
 #include <client-manager-async-impl.h>
 
 namespace CKM {
-
 int ManagerAsync::Impl::m_counter = 0;
 
 ManagerAsync::Impl::Impl()
@@ -98,7 +97,7 @@ void ManagerAsync::Impl::saveBinaryData(const ManagerAsync::ObserverPtr& observe
                       helper.getLabel(),
                       rawData,
                       PolicySerializable(policy));
-    }, [&observer](int error){ observer->ReceivedError(error); } );
+    }, [&observer](int error){ observer->ReceivedError(error); });
 }
 
 void ManagerAsync::Impl::savePKCS12(const ManagerAsync::ObserverPtr& observer,
@@ -117,8 +116,7 @@ void ManagerAsync::Impl::savePKCS12(const ManagerAsync::ObserverPtr& observer,
                       PKCS12Serializable(*pkcs.get()),
                       PolicySerializable(keyPolicy),
                       PolicySerializable(certPolicy));
-
-    }, [&observer](int error){ observer->ReceivedError(error); } );
+    }, [&observer](int error){ observer->ReceivedError(error); });
 }
 
 void ManagerAsync::Impl::removeAlias(const ManagerAsync::ObserverPtr& observer,
@@ -136,7 +134,7 @@ void ManagerAsync::Impl::removeAlias(const ManagerAsync::ObserverPtr& observer,
                       m_counter,
                       helper.getName(),
                       helper.getLabel());
-    }, [&observer](int error){ observer->ReceivedError(error); } );
+    }, [&observer](int error){ observer->ReceivedError(error); });
 }
 
 void ManagerAsync::Impl::getBinaryData(const ManagerAsync::ObserverPtr& observer,
@@ -158,7 +156,7 @@ void ManagerAsync::Impl::getBinaryData(const ManagerAsync::ObserverPtr& observer
                       helper.getName(),
                       helper.getLabel(),
                       password);
-    }, [&observer](int error){ observer->ReceivedError(error); } );
+    }, [&observer](int error){ observer->ReceivedError(error); });
 }
 
 void ManagerAsync::Impl::getPKCS12(const ManagerAsync::ObserverPtr& observer,
@@ -180,7 +178,7 @@ void ManagerAsync::Impl::getPKCS12(const ManagerAsync::ObserverPtr& observer,
                       helper.getLabel(),
                       passwordKey,
                       passwordCert);
-    }, [&observer](int error){ observer->ReceivedError(error); } );
+    }, [&observer](int error){ observer->ReceivedError(error); });
 }
 
 void ManagerAsync::Impl::createSignature(const ObserverPtr& observer,
@@ -230,7 +228,7 @@ void ManagerAsync::Impl::verifySignature(const ObserverPtr& observer,
                       message,
                       signature,
                       CryptoAlgorithmSerializable(cAlg));
-    }, [&observer](int error){ observer->ReceivedError(error); } );
+    }, [&observer](int error){ observer->ReceivedError(error); });
 }
 
 void ManagerAsync::Impl::ocspCheck(const ObserverPtr& observer,
@@ -244,7 +242,7 @@ void ManagerAsync::Impl::ocspCheck(const ObserverPtr& observer,
     try_catch_async([&] {
         RawBufferVector rawCertChain;
         for (auto &e: certificateChainVector) {
-            if(!e || e->empty())
+            if (!e || e->empty())
                 return observer->ReceivedError(CKM_API_ERROR_INPUT_PARAM);
             rawCertChain.push_back(e->getDER());
         }
@@ -256,7 +254,7 @@ void ManagerAsync::Impl::ocspCheck(const ObserverPtr& observer,
                                            SERVICE_SOCKET_OCSP,
                                            send.Pop(),
                                            m_counter));
-    }, [&observer](int error){ observer->ReceivedError(error); } );
+    }, [&observer](int error){ observer->ReceivedError(error); });
 }
 
 void ManagerAsync::Impl::setPermission(const ObserverPtr& observer,
@@ -278,7 +276,7 @@ void ManagerAsync::Impl::setPermission(const ObserverPtr& observer,
                       helper.getLabel(),
                       accessor,
                       permissionMask);
-    }, [&observer](int error){ observer->ReceivedError(error); } );
+    }, [&observer](int error){ observer->ReceivedError(error); });
 }
 
 void ManagerAsync::Impl::getBinaryDataAliasVector(const ManagerAsync::ObserverPtr& observer,
@@ -290,7 +288,7 @@ void ManagerAsync::Impl::getBinaryDataAliasVector(const ManagerAsync::ObserverPt
                       static_cast<int>(LogicCommand::GET_LIST),
                       m_counter,
                       static_cast<int>(dataType));
-    }, [&observer](int error){ observer->ReceivedError(error); } );
+    }, [&observer](int error){ observer->ReceivedError(error); });
 }
 
 void ManagerAsync::Impl::createKeyPair(const ManagerAsync::ObserverPtr& observer,
@@ -308,8 +306,7 @@ void ManagerAsync::Impl::createKeyPair(const ManagerAsync::ObserverPtr& observer
     }
     // input type check
     CryptoAlgorithm keyGenAlgorithm;
-    switch(key_type)
-    {
+    switch (key_type) {
         case KeyType::KEY_RSA_PUBLIC:
         case KeyType::KEY_RSA_PRIVATE:
             keyGenAlgorithm.setParam(ParamName::ALGO_TYPE, AlgoType::RSA_GEN);
@@ -346,7 +343,7 @@ void ManagerAsync::Impl::createKeyPair(const ManagerAsync::ObserverPtr& observer
                       prvHelper.getLabel(),
                       pubHelper.getName(),
                       pubHelper.getLabel());
-    }, [&observer](int error){ observer->ReceivedError(error); } );
+    }, [&observer](int error){ observer->ReceivedError(error); });
 }
 
 void ManagerAsync::Impl::createKeyAES(const ManagerAsync::ObserverPtr& observer,
@@ -369,12 +366,12 @@ void ManagerAsync::Impl::createKeyAES(const ManagerAsync::ObserverPtr& observer,
                       PolicySerializable(policyKey),
                       aliasHelper.getName(),
                       aliasHelper.getLabel());
-    }, [&observer](int error){ observer->ReceivedError(error); } );
+    }, [&observer](int error){ observer->ReceivedError(error); });
 }
 
 void ManagerAsync::Impl::observerCheck(const ManagerAsync::ObserverPtr& observer)
 {
-    if(!observer)
+    if (!observer)
         throw std::invalid_argument("Empty observer");
 }
 
@@ -407,7 +404,7 @@ void ManagerAsync::Impl::crypt(
                                            SERVICE_SOCKET_ENCRYPTION,
                                            send.Pop(),
                                            m_counter));
-    }, [&observer](int error){ observer->ReceivedError(error); } );
+    }, [&observer](int error){ observer->ReceivedError(error); });
 }
 
 } // namespace CKM

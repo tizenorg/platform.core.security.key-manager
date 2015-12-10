@@ -46,7 +46,8 @@ namespace DB {
             Crypto() :
                 m_connection(NULL),
                 m_inUserTransaction(false)
-              {};
+            {
+            }
             // user name instead of path?
             Crypto(const std::string &path, const RawBuffer &rawPass);
             Crypto(const Crypto &other) = delete;
@@ -137,59 +138,64 @@ namespace DB {
 
             class Transaction {
             public:
-                Transaction(Crypto *db)
-                    : m_db(db),
-                      m_inTransaction(false) {
-                    if(!m_db->m_inUserTransaction) {
+                Transaction(Crypto *db) :
+                    m_db(db),
+                    m_inTransaction(false)
+                {
+                    if (!m_db->m_inUserTransaction) {
                         Try {
                             m_db->m_connection->ExecCommand("BEGIN EXCLUSIVE");
                             m_db->m_inUserTransaction = true;
                             m_inTransaction = true;
-                        } Catch (SqlConnection::Exception::InternalError) {
+                        } Catch(SqlConnection::Exception::InternalError) {
                             ThrowErr(Exc::TransactionFailed, "sqlite got into infinite busy state");
-                        } Catch (SqlConnection::Exception::Base) {
+                        } Catch(SqlConnection::Exception::Base) {
                             ThrowErr(Exc::TransactionFailed, "Couldn't begin transaction");
                         }
                     }
                 }
-                void commit() {
-                    if(m_inTransaction) {
+                void commit()
+                {
+                    if (m_inTransaction) {
                         Try {
                             m_db->m_connection->CommitTransaction();
                             m_db->m_inUserTransaction = false;
                             m_inTransaction = false;
-                        } Catch (SqlConnection::Exception::InternalError) {
+                        } Catch(SqlConnection::Exception::InternalError) {
                             ThrowErr(Exc::TransactionFailed, "sqlite got into infinite busy state");
-                        } Catch (SqlConnection::Exception::Base) {
+                        } Catch(SqlConnection::Exception::Base) {
                             ThrowErr(Exc::TransactionFailed, "Couldn't commit transaction");
                         }
                     }
                 }
-                void rollback() {
-                    if(m_inTransaction) {
+                void rollback()
+                {
+                    if (m_inTransaction) {
                         Try {
                             m_db->m_connection->RollbackTransaction();
                             m_db->m_inUserTransaction = false;
                             m_inTransaction = false;
-                        } Catch (SqlConnection::Exception::InternalError) {
+                        } Catch(SqlConnection::Exception::InternalError) {
                             ThrowErr(Exc::TransactionFailed, "sqlite got into infinite busy state");
-                        } Catch (SqlConnection::Exception::Base) {
+                        } Catch(SqlConnection::Exception::Base) {
                             ThrowErr(Exc::TransactionFailed, "Couldn't rollback transaction");
                         }
                     }
                 }
-                ~Transaction() {
+                ~Transaction()
+                {
                     Try {
-                        if(m_inTransaction) {
+                        if (m_inTransaction) {
                             m_db->m_inUserTransaction = false;
                             m_db->m_connection->RollbackTransaction();
                         }
-                    } Catch (SqlConnection::Exception::InternalError) {
+                    } Catch(SqlConnection::Exception::InternalError) {
                         ThrowErr(Exc::TransactionFailed, "sqlite got into infinite busy state");
-                    } Catch (SqlConnection::Exception::Base) {
+                    } Catch(SqlConnection::Exception::Base) {
                         LogError("Transaction rollback failed!");
                     }
                 }
+
             private:
                 Crypto *m_db;
                 bool m_inTransaction;
@@ -197,6 +203,7 @@ namespace DB {
 
          protected:
             SqlConnection* m_connection;
+
          private:
             bool m_inUserTransaction;
 
