@@ -27,8 +27,7 @@ namespace CKM {
 KeyAESImpl::KeyAESImpl(const RawBuffer &buf) : m_key(buf)
 {
     // buf stores bytes -> compare the bit sizes
-    switch(buf.size() * 8)
-    {
+    switch (buf.size() * 8) {
         case 128:
         case 192:
         case 256:
@@ -39,23 +38,28 @@ KeyAESImpl::KeyAESImpl(const RawBuffer &buf) : m_key(buf)
     }
 }
 
-bool KeyAESImpl::empty() const {
+bool KeyAESImpl::empty() const
+{
     return (getSize() == 0);
 }
 
-KeyType KeyAESImpl::getType() const {
+KeyType KeyAESImpl::getType() const
+{
     return KeyType::KEY_AES;
 }
 
-RawBuffer KeyAESImpl::getDER() const {
+RawBuffer KeyAESImpl::getDER() const
+{
     return m_key;
 }
 
-int KeyAESImpl::getSize() const {
+int KeyAESImpl::getSize() const
+{
     return m_key.size();
 }
 
-KeyShPtr Key::createAES(const RawBuffer &raw) {
+KeyShPtr Key::createAES(const RawBuffer &raw)
+{
     try {
         KeyShPtr output = std::make_shared<KeyAESImpl>(raw);
         if (output->empty())
