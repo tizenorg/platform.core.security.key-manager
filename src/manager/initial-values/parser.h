@@ -35,8 +35,7 @@
 namespace CKM {
 namespace XML {
 
-class Parser
-{
+class Parser {
 public:
     enum ErrorCode {
         PARSE_SUCCESS                  =   0,
@@ -66,8 +65,7 @@ public:
     int RegisterErrorCb(const ErrorCb newCb);
 
     typedef std::map<std::string, std::string> Attributes;
-    class ElementHandler
-    {
+    class ElementHandler {
         public:
             virtual ~ElementHandler() {}
 
@@ -117,15 +115,14 @@ private:
     std::string             m_XMLfile;
     ErrorCb                 m_errorCb;
 
-    struct ElementListener
-    {
+    struct ElementListener {
         StartCb     startCb;
         EndCb       endCb;
     };
     std::map<std::string, ElementListener> m_elementListenerMap;
     std::stack<ElementHandlerPtr> m_elementHandlerStack;
 
-    void CallbackHelper(std::function<void (void)> func);
+    void CallbackHelper(std::function<void(void)> func);
 };
 
 }

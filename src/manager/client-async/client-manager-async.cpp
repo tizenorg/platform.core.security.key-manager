@@ -28,10 +28,10 @@ namespace {
 RawBufferVector toRawBufferVector(const CertificateShPtrVector& certificates)
 {
     RawBufferVector rawBufferVector;
-    for (auto &e: certificates) {
+    for (auto &e: certificates)
         rawBufferVector.push_back(e->getDER());
-    }
-    return rawBufferVector;
+
+	return rawBufferVector;
 }
 
 LabelNameVector toLabelNameVector(const AliasVector& aliases)

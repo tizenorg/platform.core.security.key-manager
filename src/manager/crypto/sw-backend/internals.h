@@ -43,7 +43,7 @@ struct Data {
     RawBuffer buffer;
 };
 
-typedef std::pair<Data,Data> DataPair;
+typedef std::pair<Data, Data> DataPair;
 
 DataPair createKeyPairRSA(const int size);
 DataPair createKeyPairDSA(const int size);
@@ -53,26 +53,32 @@ Data     createKeyAES(const int sizeBits);
 DataPair generateAKey(const CryptoAlgorithm &algorithm);
 Data generateSKey(const CryptoAlgorithm &algorithm);
 
-RawBuffer symmetricEncrypt(const RawBuffer &key,
-                           const CryptoAlgorithm &alg,
-                           const RawBuffer &data);
-RawBuffer symmetricDecrypt(const RawBuffer &key,
-                           const CryptoAlgorithm &alg,
-                           const RawBuffer &cipher);
-RawBuffer asymmetricEncrypt(const EvpShPtr &key,
-                            const CryptoAlgorithm &alg,
-                            const RawBuffer &data);
-RawBuffer asymmetricDecrypt(const EvpShPtr &key,
-                            const CryptoAlgorithm &alg,
-                            const RawBuffer &data);
+RawBuffer symmetricEncrypt(
+	const RawBuffer &key,
+	const CryptoAlgorithm &alg,
+    const RawBuffer &data);
+RawBuffer symmetricDecrypt(
+	const RawBuffer &key,
+    const CryptoAlgorithm &alg,
+   	const RawBuffer &cipher);
+RawBuffer asymmetricEncrypt(
+	const EvpShPtr &key,
+    const CryptoAlgorithm &alg,
+    const RawBuffer &data);
+RawBuffer asymmetricDecrypt(
+	const EvpShPtr &key,
+    const CryptoAlgorithm &alg,
+    const RawBuffer &data);
 
-std::pair<RawBuffer, RawBuffer> encryptDataAesGcm(const RawBuffer &key,
+std::pair<RawBuffer, RawBuffer> encryptDataAesGcm(
+	const RawBuffer &key,
     const RawBuffer &data,
     const RawBuffer &iv,
     int tagSize,
     const RawBuffer &aad = RawBuffer());
 
-RawBuffer decryptDataAesGcm(const RawBuffer &key,
+RawBuffer decryptDataAesGcm(
+	const RawBuffer &key,
     const RawBuffer &data,
     const RawBuffer &iv,
     const RawBuffer &tag,
