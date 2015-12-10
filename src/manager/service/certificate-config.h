@@ -26,8 +26,7 @@
 
 namespace CKM {
 
-class CertificateConfig
-{
+class CertificateConfig {
 public:
     static void addSystemCertificateDir(const std::string& dir) { m_sysCertDirs.insert(dir); }
     static void addSystemCertificateFile(const std::string& file) { m_sysCertFiles.insert(file); }
