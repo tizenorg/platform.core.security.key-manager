@@ -78,7 +78,7 @@ CertificateImpl::CertificateImpl(X509 *x509, bool duplicate)
         m_x509 = x509;
 }
 
-CertificateImpl::CertificateImpl(const CertificateImpl &second){
+CertificateImpl::CertificateImpl(const CertificateImpl &second) {
     m_x509 = X509_dup(second.m_x509);
 }
 
@@ -91,7 +91,7 @@ CertificateImpl::CertificateImpl(CertificateImpl &&second) {
 CertificateImpl& CertificateImpl::operator=(CertificateImpl &&second) {
     if (this == &second)
         return *this;
-    if(m_x509)
+    if (m_x509)
         X509_free(m_x509);
     m_x509 = second.m_x509;
     second.m_x509 = NULL;
@@ -102,7 +102,7 @@ CertificateImpl& CertificateImpl::operator=(CertificateImpl &&second) {
 CertificateImpl& CertificateImpl::operator=(const CertificateImpl &second) {
     if (this == &second)
         return *this;
-    if(m_x509)
+    if (m_x509)
         X509_free(m_x509);
     m_x509 = X509_dup(second.m_x509);
     return *this;
@@ -137,7 +137,7 @@ KeyImpl::EvpShPtr CertificateImpl::getEvpShPtr() const {
 
 KeyImpl CertificateImpl::getKeyImpl() const {
     KeyImpl::EvpShPtr evp(X509_get_pubkey(m_x509), EVP_PKEY_free);
-    switch(EVP_PKEY_type(evp->type))
+    switch (EVP_PKEY_type(evp->type))
     {
         case EVP_PKEY_RSA:
             return KeyImpl(evp, KeyType::KEY_RSA_PUBLIC);
@@ -260,7 +260,7 @@ std::string CertificateImpl::getOCSPURL() const {
 }
 
 CertificateImpl::~CertificateImpl() {
-    if(m_x509)
+    if (m_x509)
         X509_free(m_x509);
 }
 

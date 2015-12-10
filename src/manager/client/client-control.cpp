@@ -40,7 +40,7 @@ public:
 
     virtual int unlockUserKey(uid_t user, const Password &password) {
         return try_catch([&] {
-            if((int)user < 0) {
+            if ((int)user < 0) {
                 return CKM_API_ERROR_INPUT_PARAM;
             }
 
@@ -61,7 +61,7 @@ public:
 
     virtual int lockUserKey(uid_t user) {
         return try_catch([&] {
-            if((int)user < 0) {
+            if ((int)user < 0) {
                 return CKM_API_ERROR_INPUT_PARAM;
             }
 
@@ -80,7 +80,7 @@ public:
 
     virtual int removeUserData(uid_t user) {
         return try_catch([&] {
-            if((int)user < 0) {
+            if ((int)user < 0) {
                 return CKM_API_ERROR_INPUT_PARAM;
             }
 
@@ -99,7 +99,7 @@ public:
 
     virtual int changeUserPassword(uid_t user, const Password &oldPassword, const Password &newPassword) {
         return try_catch([&] {
-            if((int)user < 0) {
+            if ((int)user < 0) {
                 return CKM_API_ERROR_INPUT_PARAM;
             }
 
@@ -122,7 +122,7 @@ public:
 
     virtual int resetUserPassword(uid_t user, const Password &newPassword) {
         return try_catch([&] {
-            if((int)user < 0) {
+            if ((int)user < 0) {
                 return CKM_API_ERROR_INPUT_PARAM;
             }
 
@@ -203,7 +203,8 @@ public:
         });
     }
 
-    virtual ~ControlImpl(){}
+    virtual ~ControlImpl() {}
+
 private:
     CKM::ServiceConnection m_controlConnection;
 };

@@ -121,7 +121,8 @@ struct GenericSocketService {
     virtual void Stop() = 0;
 
     GenericSocketService() : m_serviceManager(NULL), m_commMgr(NULL) {}
-    virtual ~GenericSocketService(){}
+    virtual ~GenericSocketService() {}
+
 protected:
     GenericSocketManager *m_serviceManager;
     CommMgr *m_commMgr;

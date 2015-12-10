@@ -55,9 +55,10 @@ struct Base {
     virtual void AppendAAD(const T&) = 0;
     virtual T Append(const T&) = 0;
     virtual T Finalize() = 0;
-    virtual ~Base(){
+    virtual ~Base() {
         EVP_CIPHER_CTX_free(m_ctx);
     }
+
 protected:
     EVP_CIPHER_CTX *m_ctx;
 };
@@ -70,7 +71,7 @@ public:
     EvpCipherWrapper(const EVP_CIPHER *type, const T &key, const T &iv, bool encryption)
     {
         if (static_cast<int>(key.size()) != EVP_CIPHER_key_length(type)) {
-            ThrowErr(Exc::Crypto::InternalError, "Wrong key size! Expected: ", EVP_CIPHER_key_length(type) ," Get: ", key.size());
+            ThrowErr(Exc::Crypto::InternalError, "Wrong key size! Expected: ", EVP_CIPHER_key_length(type), " Get: ", key.size());
         }
 
         if (static_cast<int>(iv.size()) < EVP_CIPHER_iv_length(type)) {

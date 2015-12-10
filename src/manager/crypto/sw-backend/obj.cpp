@@ -40,7 +40,7 @@ namespace SW {
 namespace {
 
 AlgoType key2algo(DataType type) {
-    switch(static_cast<int>(type)) {
+    switch (static_cast<int>(type)) {
     case DataType::Type::KEY_RSA_PRIVATE:
     case DataType::Type::KEY_RSA_PUBLIC:
         return AlgoType::RSA_SV;
@@ -83,9 +83,9 @@ int AKey::verify(const CryptoAlgorithm &alg, const RawBuffer &message, const Raw
     AlgoType type;
 
     // setup algorithm type basing on evp key type if it doesn't exist
-    if(!algWithType.getParam(ParamName::ALGO_TYPE, type)) {
+    if (!algWithType.getParam(ParamName::ALGO_TYPE, type)) {
         int subType = EVP_PKEY_type(evp->type);
-        switch(subType) {
+        switch (subType) {
         case EVP_PKEY_RSA:
             type = AlgoType::RSA_SV; break;
         case EVP_PKEY_DSA:

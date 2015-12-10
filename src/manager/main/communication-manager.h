@@ -47,7 +47,7 @@ public:
     // Returns the number of listeners called
     size_t SendMessage(const M& msg) const
     {
-        for(auto& it : m_listeners)
+        for (auto& it : m_listeners)
             it(msg);
         return m_listeners.size();
     }

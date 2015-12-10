@@ -104,7 +104,6 @@ private:
     void registerElementListeners();
     static void Error(const XML::Parser::ErrorType errorType,
                       const std::string & logMsg);
-
 };
 
 }

@@ -53,7 +53,8 @@ public:
     }
 
     virtual bool empty() const;
-    virtual ~KeyImpl(){}
+    virtual ~KeyImpl() {}
+
 protected:
     EvpShPtr m_pkey;
     KeyType m_type;

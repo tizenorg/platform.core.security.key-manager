@@ -24,7 +24,7 @@
 #include <ckmc-type-converter.h>
 
 int to_ckm_error(int ckmc_error) {
-    switch(ckmc_error) {
+    switch (ckmc_error) {
     case CKMC_ERROR_NONE:                  return CKM_API_SUCCESS;
     case CKMC_ERROR_SOCKET:                return CKM_API_ERROR_SOCKET;
     case CKMC_ERROR_BAD_REQUEST:           return CKM_API_ERROR_BAD_REQUEST;
@@ -53,7 +53,7 @@ int to_ckm_error(int ckmc_error) {
 }
 
 int to_ckmc_error(int ckm_error) {
-    switch(ckm_error) {
+    switch (ckm_error) {
     case CKM_API_SUCCESS:                     return CKMC_ERROR_NONE;
     case CKM_API_ERROR_SOCKET:                return CKMC_ERROR_SOCKET;
     case CKM_API_ERROR_BAD_REQUEST:           return CKMC_ERROR_BAD_REQUEST;
@@ -82,7 +82,7 @@ int to_ckmc_error(int ckm_error) {
 }
 
 ckmc_ocsp_status_e to_ckmc_ocsp_status(int ckm_ocsp_status) {
-    switch(ckm_ocsp_status) {
+    switch (ckm_ocsp_status) {
     case CKM_API_OCSP_STATUS_GOOD:             return CKMC_OCSP_STATUS_GOOD;
     case CKM_API_OCSP_STATUS_UNSUPPORTED:      return CKMC_OCSP_ERROR_UNSUPPORTED;
     case CKM_API_OCSP_STATUS_REVOKED:          return CKMC_OCSP_STATUS_REVOKED;
@@ -97,7 +97,7 @@ ckmc_ocsp_status_e to_ckmc_ocsp_status(int ckm_ocsp_status) {
 
 int access_to_permission_mask(ckmc_access_right_e ar, int & permissionMask)
 {
-    switch(ar)
+    switch (ar)
     {
         case CKMC_AR_READ:
             permissionMask = CKMC_PERMISSION_READ;

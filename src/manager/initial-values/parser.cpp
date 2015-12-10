@@ -59,7 +59,7 @@ Parser::~Parser()
 
 int Parser::Validate(const std::string &XSD_schema)
 {
-    if(XSD_schema.empty()) {
+    if (XSD_schema.empty()) {
         LogError("no XSD file path given");
         return ERROR_INVALID_ARGUMENT;
     }
@@ -68,7 +68,7 @@ int Parser::Validate(const std::string &XSD_schema)
     std::unique_ptr<xmlSchemaParserCtxt, void(*)(xmlSchemaParserCtxtPtr)>
             parserCtxt(xmlSchemaNewParserCtxt(XSD_schema.c_str()),
                        [](xmlSchemaParserCtxtPtr ctx){ xmlSchemaFreeParserCtxt(ctx); });
-    if(!parserCtxt) {
+    if (!parserCtxt) {
         LogError("XSD file path is invalid");
         return ERROR_INVALID_ARGUMENT;
     }
@@ -76,7 +76,7 @@ int Parser::Validate(const std::string &XSD_schema)
     std::unique_ptr<xmlSchema, void(*)(xmlSchemaPtr)>
         schema(xmlSchemaParse(parserCtxt.get()),
                        [](xmlSchemaPtr schemaPtr){ xmlSchemaFree(schemaPtr); });
-    if(!schema) {
+    if (!schema) {
         LogError("Parsing XSD file failed");
         return ERROR_XSD_PARSE_FAILED;
     }
@@ -85,7 +85,7 @@ int Parser::Validate(const std::string &XSD_schema)
     std::unique_ptr<xmlSchemaValidCtxt, void(*)(xmlSchemaValidCtxtPtr)>
         validCtxt(xmlSchemaNewValidCtxt(schema.get()),
                        [](xmlSchemaValidCtxtPtr validCtxPtr){ xmlSchemaFreeValidCtxt(validCtxPtr); });
-    if(!validCtxt) {
+    if (!validCtxt) {
         LogError("Internal parser error");
         return ERROR_INTERNAL;
     }
@@ -96,7 +96,7 @@ int Parser::Validate(const std::string &XSD_schema)
     xmlThrDefSetGenericErrorFunc(this, &Parser::ErrorValidate);
 
     retCode = xmlSchemaValidateFile(validCtxt.get(), m_XMLfile.c_str(), 0);
-    if(0 != retCode) {
+    if (0 != retCode) {
         LogWarning("Validating XML file failed, ec: " << retCode);
         retCode = ERROR_XML_VALIDATION_FAILED;
     }
@@ -108,17 +108,17 @@ int Parser::Validate(const std::string &XSD_schema)
 
 int Parser::Parse()
 {
-    if(m_elementListenerMap.empty()) {
+    if (m_elementListenerMap.empty()) {
         LogError("Can not parse XML file: no registered element callbacks.");
         return ERROR_INVALID_ARGUMENT;
     }
     int retCode = xmlSAXUserParseFile(&m_saxHandler, this, m_XMLfile.c_str());
-    if(0 != retCode) {
+    if (0 != retCode) {
         LogWarning("Parsing XML file failed, ec: " << retCode);
         return ERROR_XML_PARSE_FAILED;
     }
     // if error detected while parsing
-    if(m_elementListenerMap.empty()) {
+    if (m_elementListenerMap.empty()) {
         LogError("Critical error detected while parsing.");
         return ERROR_INTERNAL;
     }
@@ -127,7 +127,7 @@ int Parser::Parse()
 
 int Parser::RegisterErrorCb(const ErrorCb newCb)
 {
-    if(m_errorCb) {
+    if (m_errorCb) {
         LogError("Callback already registered!");
         return ERROR_CALLBACK_PRESENT;
     }
@@ -139,12 +139,12 @@ int Parser::RegisterElementCb(const char * elementName,
                               const StartCb startCb,
                               const EndCb endCb)
 {
-    if(!elementName)
+    if (!elementName)
         return ERROR_INVALID_ARGUMENT;
 
     std::string key(elementName);
 
-    if(m_elementListenerMap.find(elementName) != m_elementListenerMap.end()) {
+    if (m_elementListenerMap.find(elementName) != m_elementListenerMap.end()) {
         LogError("Callback for element " << elementName << " already registered!");
         return ERROR_CALLBACK_PRESENT;
     }
@@ -157,30 +157,30 @@ void Parser::StartElement(const xmlChar *name,
                           const xmlChar **attrs)
 {
     std::string key(reinterpret_cast<const char*>(name));
-    if(m_elementListenerMap.find(key) == m_elementListenerMap.end())
+    if (m_elementListenerMap.find(key) == m_elementListenerMap.end())
         return;
 
     ElementHandlerPtr newHandler;
     const ElementListener & current = m_elementListenerMap[key];
-    if(current.startCb)
+    if (current.startCb)
     {
         Attributes attribs;
         {
             size_t numAttrs = 0;
             std::string key;
-            while(attrs && attrs[numAttrs])
+            while (attrs && attrs[numAttrs])
             {
                 const char *attrChr = reinterpret_cast<const char*>(attrs[numAttrs]);
-                if((numAttrs%2)==0)
+                if ((numAttrs%2) == 0)
                     key = std::string(attrChr);
                 else
                     attribs[key] = std::string(attrChr);
-                numAttrs ++;
+                numAttrs++;
             }
         }
 
         newHandler = current.startCb();
-        if(newHandler)
+        if (newHandler)
             newHandler->Start(attribs);
     }
     // always put a handler, even if it's empty. This will not break
@@ -191,19 +191,19 @@ void Parser::StartElement(const xmlChar *name,
 void Parser::EndElement(const xmlChar *name)
 {
     std::string key(reinterpret_cast<const char*>(name));
-    if(m_elementListenerMap.find(key) == m_elementListenerMap.end())
+    if (m_elementListenerMap.find(key) == m_elementListenerMap.end())
         return;
 
     // this should never ever happen
-    if( m_elementHandlerStack.empty() )
+    if ( m_elementHandlerStack.empty() )
         throw std::runtime_error("internal error: element queue desynchronized!");
 
     ElementHandlerPtr &currentHandler = m_elementHandlerStack.top();
-    if(currentHandler)
+    if (currentHandler)
         currentHandler->End();
 
     const ElementListener & current = m_elementListenerMap[key];
-    if(current.endCb)
+    if (current.endCb)
         current.endCb(currentHandler);
 
     m_elementHandlerStack.pop();
@@ -212,20 +212,20 @@ void Parser::EndElement(const xmlChar *name)
 void Parser::Characters(const xmlChar *ch, size_t chLen)
 {
     std::string chars(reinterpret_cast<const char*>(ch), chLen);
-    if(chars.empty())
+    if (chars.empty())
         return;
 
-    if( !m_elementHandlerStack.empty() )
+    if ( !m_elementHandlerStack.empty() )
     {
         ElementHandlerPtr &currentHandler = m_elementHandlerStack.top();
-        if(currentHandler)
+        if (currentHandler)
             currentHandler->Characters(chars);
     }
 }
 
 void Parser::Error(const ErrorType errorType, const char *msg, va_list &args)
 {
-    if(!m_errorCb)
+    if (!m_errorCb)
         return;
 
     va_list args2;
@@ -248,7 +248,7 @@ void Parser::Error(const ErrorType errorType, const char *msg, va_list &args)
 //
 // -------------------------- start of static wrappers --------------------------
 //
-void Parser::CallbackHelper(std::function<void (void)> func)
+void Parser::CallbackHelper(std::function<void(void)> func)
 {
     try
     {
@@ -257,12 +257,12 @@ void Parser::CallbackHelper(std::function<void (void)> func)
     }
     catch(const std::exception &e) {
         LogError("parser error: " << e.what());
-        if(m_errorCb)
+        if (m_errorCb)
             m_errorCb(PARSE_ERROR, e.what());
     }
     catch(...) {
         LogError("unknown parser error");
-        if(m_errorCb)
+        if (m_errorCb)
             m_errorCb(PARSE_ERROR, "unknown parser error");
     }
     // raise error flag - unregister listeners

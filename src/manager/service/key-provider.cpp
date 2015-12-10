@@ -43,7 +43,7 @@ WrappedKeyAndInfo& WrappedKeyAndInfoContainer::getWrappedKeyAndInfo()
     return *wrappedKeyAndInfo;
 }
 
-void WrappedKeyAndInfoContainer::setKeyInfoKeyLength(const unsigned int length){
+void WrappedKeyAndInfoContainer::setKeyInfoKeyLength(const unsigned int length) {
     wrappedKeyAndInfo->keyInfo.keyLength = length;
 }
 
@@ -150,7 +150,6 @@ KeyProvider::KeyProvider(
         PBKDF2_ITERATIONS,
         MAX_KEY_SIZE,
         PKEK1)) {
-
         delete[] concat_user_pass;
         ThrowErr(Exc::InternalError, "OPENSSL_ENGINE_ERROR");
     }
@@ -166,7 +165,6 @@ KeyProvider::KeyProvider(
         PKEK1,
         wkmcDKEK.getWrappedKeyAndInfo().keyInfo.iv,
         m_kmcDKEK->getKeyAndInfo().key))) {
-
         ThrowErr(Exc::AuthenticationFailed, "VerifyDomainKEK failed in KeyProvider Constructor");
     }
 
@@ -233,7 +231,6 @@ RawBuffer KeyProvider::getWrappedDomainKEK(const Password &password)
         PBKDF2_ITERATIONS,
         MAX_KEY_SIZE,
         PKEK1)) {
-
         delete[] concat_user_pass;
         ThrowErr(Exc::InternalError, "OPENSSL_ENGINE_ERROR");
     }
@@ -251,7 +248,6 @@ RawBuffer KeyProvider::getWrappedDomainKEK(const Password &password)
         m_kmcDKEK->getKeyAndInfo().keyInfo.iv,
         wkmcDKEK.getWrappedKeyAndInfo().wrappedKey,
         wkmcDKEK.getWrappedKeyAndInfo().keyInfo.tag))) {
-
         ThrowErr(Exc::InternalError, "WrapDKEK Failed in KeyProvider::getDomainKEK");
     }
 
@@ -268,7 +264,7 @@ RawBuffer KeyProvider::getPureDEK(const RawBuffer &DEKInWrapForm)
         ThrowErr(Exc::InternalError, "Object not initialized!");
     }
 
-    if (DEKInWrapForm.size() != sizeof(WrappedKeyAndInfo)){
+    if (DEKInWrapForm.size() != sizeof(WrappedKeyAndInfo)) {
         LogError("input size:" << DEKInWrapForm.size()
                   << " Expected: " << sizeof(WrappedKeyAndInfo));
         ThrowErr(Exc::InternalError,
@@ -290,7 +286,6 @@ RawBuffer KeyProvider::getPureDEK(const RawBuffer &DEKInWrapForm)
         PBKDF2_ITERATIONS,
         MAX_KEY_SIZE,
         PKEK2)) {
-
         ThrowErr(Exc::InternalError, "OPENSSL_ENGINE_ERROR");
     }
 
@@ -301,7 +296,6 @@ RawBuffer KeyProvider::getPureDEK(const RawBuffer &DEKInWrapForm)
         PKEK2,
         wkmcDEK.getWrappedKeyAndInfo().keyInfo.iv,
         kmcDEK.getKeyAndInfo().key))) {
-
         ThrowErr(Exc::InternalError,
             "UnwrapDEK Failed in KeyProvider::getPureDEK");
     }
@@ -332,7 +326,6 @@ RawBuffer KeyProvider::generateDEK(const std::string &smackLabel)
 
     if (!RAND_bytes(key, m_kmcDKEK->getKeyAndInfo().keyInfo.keyLength) ||
         !RAND_bytes(wkmcDEK.getWrappedKeyAndInfo().keyInfo.iv, MAX_IV_SIZE)) {
-
         ThrowErr(Exc::InternalError, "OPENSSL_ENGINE_ERROR");
     }
 
@@ -344,7 +337,6 @@ RawBuffer KeyProvider::generateDEK(const std::string &smackLabel)
         PBKDF2_ITERATIONS,
         MAX_KEY_SIZE,
         PKEK2)) {
-
         ThrowErr(Exc::InternalError, "OPENSSL_ENGINE_ERROR");
     }
 
@@ -357,7 +349,6 @@ RawBuffer KeyProvider::generateDEK(const std::string &smackLabel)
         wkmcDEK.getWrappedKeyAndInfo().keyInfo.iv,
         wkmcDEK.getWrappedKeyAndInfo().wrappedKey,
         wkmcDEK.getWrappedKeyAndInfo().keyInfo.tag))) {
-
         ThrowErr(Exc::InternalError, "GenerateDEK Failed in KeyProvider::generateDEK");
     }
 
@@ -403,7 +394,6 @@ RawBuffer KeyProvider::reencrypt(
         PBKDF2_ITERATIONS,
         MAX_KEY_SIZE,
         PKEK1)) {
-
         delete[] concat_user_pass;
         ThrowErr(Exc::InternalError, "OPENSSL_ENGINE_ERROR");
     }
@@ -416,10 +406,8 @@ RawBuffer KeyProvider::reencrypt(
         PKEK1,
         wkmcOldDKEK.getWrappedKeyAndInfo().keyInfo.iv,
         kmcDKEK.getKeyAndInfo().key))) {
-
         ThrowErr(Exc::AuthenticationFailed, "Incorrect Old Password ");
     }
-
     kmcDKEK.setKeyInfo(&(wkmcOldDKEK.getWrappedKeyAndInfo().keyInfo));
     kmcDKEK.setKeyInfoKeyLength((unsigned int)keyLength);
 
@@ -435,7 +423,6 @@ RawBuffer KeyProvider::reencrypt(
         PBKDF2_ITERATIONS,
         MAX_KEY_SIZE,
         PKEK1)) {
-
         delete[] concat_user_pass;
         ThrowErr(Exc::InternalError, "OPENSSL_ENGINE_ERROR");
     }
@@ -451,8 +438,7 @@ RawBuffer KeyProvider::reencrypt(
         PKEK1,
         kmcDKEK.getKeyAndInfo().keyInfo.iv,
         wkmcNewDKEK.getWrappedKeyAndInfo().wrappedKey,
-        wkmcNewDKEK.getWrappedKeyAndInfo().keyInfo.tag))) {
-
+    wkmcNewDKEK.getWrappedKeyAndInfo().keyInfo.tag))) {
         ThrowErr(Exc::InternalError, "UpdateDomainKEK in KeyProvider::reencrypt Failed");
     }
 
@@ -486,7 +472,6 @@ RawBuffer KeyProvider::generateDomainKEK(
         PBKDF2_ITERATIONS,
         MAX_KEY_SIZE,
         PKEK1)) {
-
         delete[] concat_user_pass;
         ThrowErr(Exc::InternalError, "OPENSSL_ENGINED_ERROR");
     }
@@ -500,11 +485,9 @@ RawBuffer KeyProvider::generateDomainKEK(
         wkmcDKEK.getWrappedKeyAndInfo().keyInfo.iv,
         wkmcDKEK.getWrappedKeyAndInfo().wrappedKey,
         wkmcDKEK.getWrappedKeyAndInfo().keyInfo.tag))) {
-
         ThrowErr(Exc::InternalError,
             "GenerateDomainKEK Failed in KeyProvider::generateDomainKEK");
     }
-
     wkmcDKEK.setKeyInfoKeyLength((unsigned int)wrappedKeyLength);
     wkmcDKEK.setKeyInfoLabel(user);
 
@@ -531,7 +514,6 @@ KeyProvider::~KeyProvider()
 
 int KeyProvider::encryptAes256Gcm(const unsigned char *plaintext, int plaintext_len, const unsigned char *key, const unsigned char *iv, unsigned char *ciphertext, unsigned char *tag)
 {
-
     EVP_CIPHER_CTX *ctx;
     int len;
     int ciphertext_len = 0;
@@ -573,7 +555,6 @@ int KeyProvider::encryptAes256Gcm(const unsigned char *plaintext, int plaintext_
 
 int KeyProvider::decryptAes256Gcm(const unsigned char *ciphertext, int ciphertext_len, unsigned char *tag, const unsigned char *key, const unsigned char *iv, unsigned char *plaintext)
 {
-
     EVP_CIPHER_CTX *ctx;
     int len;
     int plaintext_len;
@@ -649,7 +630,7 @@ char * KeyProvider::concat_password_user(const char *user, const char *password)
 const char* KeyProvider::getConvertedStr(const Password &password)
 {
 #ifdef PASSWORD_PROTECTION_DISABLE
-    (void ) password;
+    (void) password;
     return "";
 #else
     return password.c_str();

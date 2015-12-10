@@ -27,7 +27,7 @@ namespace CKM {
 KeyAESImpl::KeyAESImpl(const RawBuffer &buf) : m_key(buf)
 {
     // buf stores bytes -> compare the bit sizes
-    switch(buf.size() * 8)
+    switch (buf.size() * 8)
     {
         case 128:
         case 192:

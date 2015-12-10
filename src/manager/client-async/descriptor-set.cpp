@@ -35,7 +35,7 @@ DescriptorSet::~DescriptorSet() {
 }
 
 void DescriptorSet::purge() {
-    for(auto it:m_descriptors)
+    for (auto it:m_descriptors)
         close(it.first);
     m_descriptors.clear();
 }
@@ -44,7 +44,7 @@ void DescriptorSet::add(int fd, short events, Callback&& callback) {
     // map operator[] requires empty DescriptorData constructor
     auto it = m_descriptors.find(fd);
     if (it == m_descriptors.end()) {
-        m_descriptors.insert(std::make_pair(fd,DescriptorData(events, std::move(callback))));
+        m_descriptors.insert(std::make_pair(fd, DescriptorData(events, std::move(callback))));
     } else {
         it->second.events = events;
         it->second.callback = std::move(callback);
@@ -61,7 +61,7 @@ void DescriptorSet::remove(int fd, bool close_fd) {
 }
 
 void DescriptorSet::wait(int timeout_ms) {
-    if(!rebuildPollfd())
+    if (!rebuildPollfd())
         return;
 
     // wait
@@ -87,7 +87,7 @@ bool DescriptorSet::rebuildPollfd() {
 
        m_fds = new pollfd[m_descriptors.size()];
        size_t idx = 0;
-       for(const auto& it : m_descriptors) {
+       for (const auto& it : m_descriptors) {
            m_fds[idx].fd = it.first;
            m_fds[idx].events = it.second.events;
            idx++;
@@ -99,7 +99,7 @@ bool DescriptorSet::rebuildPollfd() {
 
 void DescriptorSet::notify(int descCount) {
     size_t size = m_descriptors.size();
-    for(size_t idx = 0;idx < size;++idx) {
+    for (size_t idx = 0;idx < size;++idx) {
         const pollfd& pfd = m_fds[idx];
         if (pfd.revents == 0)
             continue;

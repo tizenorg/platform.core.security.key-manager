@@ -147,45 +147,45 @@ namespace DB {
                 Transaction(Crypto *db)
                     : m_db(db),
                       m_inTransaction(false) {
-                    if(!m_db->m_inUserTransaction) {
+                    if (!m_db->m_inUserTransaction) {
                         Try {
                             m_db->m_connection->ExecCommand("BEGIN EXCLUSIVE");
                             m_db->m_inUserTransaction = true;
                             m_inTransaction = true;
-                        } Catch (SqlConnection::Exception::InternalError) {
+                        } Catch(SqlConnection::Exception::InternalError) {
                             LogError("sqlite got into infinite busy state");
                             ReThrow(Crypto::Exception::TransactionError);
-                        } Catch (SqlConnection::Exception::Base) {
+                        } Catch(SqlConnection::Exception::Base) {
                             LogError("Couldn't begin transaction");
                             ReThrow(Crypto::Exception::TransactionError);
                         }
                     }
                 }
                 void commit() {
-                    if(m_inTransaction) {
+                    if (m_inTransaction) {
                         Try {
                             m_db->m_connection->CommitTransaction();
                             m_db->m_inUserTransaction = false;
                             m_inTransaction = false;
-                        } Catch (SqlConnection::Exception::InternalError) {
+                        } Catch(SqlConnection::Exception::InternalError) {
                             LogError("sqlite got into infinite busy state");
                             ReThrow(Crypto::Exception::TransactionError);
-                        } Catch (SqlConnection::Exception::Base) {
+                        } Catch(SqlConnection::Exception::Base) {
                             LogError("Couldn't commit transaction");
                             ReThrow(Crypto::Exception::TransactionError);
                         }
                     }
                 }
                 void rollback() {
-                    if(m_inTransaction) {
+                    if (m_inTransaction) {
                         Try {
                             m_db->m_connection->RollbackTransaction();
                             m_db->m_inUserTransaction = false;
                             m_inTransaction = false;
-                        } Catch (SqlConnection::Exception::InternalError) {
+                        } Catch(SqlConnection::Exception::InternalError) {
                             LogError("sqlite got into infinite busy state");
                             ReThrow(Crypto::Exception::TransactionError);
-                        } Catch (SqlConnection::Exception::Base) {
+                        } Catch(SqlConnection::Exception::Base) {
                             LogError("Couldn't rollback transaction");
                             ReThrow(Crypto::Exception::TransactionError);
                         }
@@ -193,17 +193,18 @@ namespace DB {
                 }
                 ~Transaction() {
                     Try {
-                        if(m_inTransaction) {
+                        if (m_inTransaction) {
                             m_db->m_inUserTransaction = false;
                             m_db->m_connection->RollbackTransaction();
                         }
-                    } Catch (SqlConnection::Exception::InternalError) {
+                    } Catch(SqlConnection::Exception::InternalError) {
                         LogError("sqlite got into infinite busy state");
                         ReThrow(Crypto::Exception::TransactionError);
-                    } Catch (SqlConnection::Exception::Base) {
+                    } Catch(SqlConnection::Exception::Base) {
                         LogError("Transaction rollback failed!");
                     }
                 }
+
             private:
                 Crypto *m_db;
                 bool m_inTransaction;
@@ -211,6 +212,7 @@ namespace DB {
 
          protected:
             SqlConnection* m_connection;
+
          private:
             bool m_inUserTransaction;
 

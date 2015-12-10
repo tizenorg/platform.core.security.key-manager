@@ -35,9 +35,8 @@ inline X509_STACK_PTR create_x509_stack() {
     return X509_STACK_PTR(sk_X509_new_null(), [](STACK_OF(X509)* stack) { sk_X509_free(stack); });
 }
 inline X509_STORE_CTX_PTR create_x509_store_ctx() {
-    return X509_STORE_CTX_PTR(X509_STORE_CTX_new(),X509_STORE_CTX_free);
+    return X509_STORE_CTX_PTR(X509_STORE_CTX_new(), X509_STORE_CTX_free);
 }
 
-} // namespace CKM
-
+} // namespace CK
 
