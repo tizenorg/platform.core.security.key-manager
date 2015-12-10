@@ -53,7 +53,7 @@ struct std_erase_on_dealloc
 
     void deallocate(T* ptr, std::size_t n) {
         // clear the memory before deleting
-        memset(ptr, 0 ,n * sizeof(T));
+        memset(ptr, 0 , n * sizeof(T));
         ::operator delete(ptr);
     }
 

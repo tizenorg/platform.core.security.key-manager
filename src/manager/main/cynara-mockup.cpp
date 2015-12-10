@@ -42,7 +42,7 @@ void Cynara::Request(
 
 void Cynara::ProcessSocket() {}
 
-Cynara::~Cynara(){}
+Cynara::~Cynara() {}
 
 void Cynara::ChangeStatus(
     int,

@@ -104,6 +104,7 @@ protected:
           , service(NULL)
           , m_flags(0)
         {}
+
     private:
         static const char LISTEN  = 1 << 0;
         static const char OPEN    = 1 << 1;

@@ -75,7 +75,7 @@ bool CKMService::ProcessOne(
     ConnectionInfo &info,
     bool /*allowed*/)
 {
-    LogDebug ("process One");
+    LogDebug("process One");
     RawBuffer response;
 
     Try {
@@ -90,9 +90,9 @@ bool CKMService::ProcessOne(
         m_serviceManager->Write(conn, response);
 
         return true;
-    } Catch (MessageBuffer::Exception::Base) {
+    } Catch(MessageBuffer::Exception::Base) {
         LogError("Broken protocol. Closing socket.");
-    } Catch (Exception::BrokenProtocol) {
+    } Catch(Exception::BrokenProtocol) {
         LogError("Broken protocol. Closing socket.");
     } catch (const DataType::Exception::Base &e) {
         LogError("Closing socket. DBDataType::Exception: " << e.DumpToString());
@@ -121,7 +121,7 @@ RawBuffer CKMService::ProcessControl(MessageBuffer &buffer) {
 
     cc = static_cast<ControlCommand>(command);
 
-    switch(cc) {
+    switch (cc) {
     case ControlCommand::UNLOCK_USER_KEY:
         buffer.Deserialize(user, newPass);
         return m_logic->unlockUserKey(user, newPass);
@@ -187,7 +187,7 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
 
     LogDebug("Process storage. Command: " << command);
 
-    switch(static_cast<LogicCommand>(command)) {
+    switch (static_cast<LogicCommand>(command)) {
         case LogicCommand::SAVE:
         {
             RawBuffer rawData;
@@ -416,7 +416,7 @@ void CKMService::CustomHandle(const ReadEvent &event) {
     LogDebug("Read event");
     auto &info = m_connectionInfoMap[event.connectionID.counter];
     info.buffer.Push(event.rawBuffer);
-    while(ProcessOne(event.connectionID, info, true));
+    while (ProcessOne(event.connectionID, info, true));
 }
 
 void CKMService::CustomHandle(const SecurityEvent & /*event*/) {

@@ -36,7 +36,7 @@ PermissionHandler::~PermissionHandler() {}
 void PermissionHandler::Start(const XML::Parser::Attributes & attr)
 {
     // get accessor label
-    if(attr.find(XML_ATTR_ACCESSOR) != attr.end())
+    if (attr.find(XML_ATTR_ACCESSOR) != attr.end())
         m_accessor = Label(attr.at(XML_ATTR_ACCESSOR));
 }
 

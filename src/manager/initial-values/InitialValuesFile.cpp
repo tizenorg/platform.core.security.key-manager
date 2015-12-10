@@ -184,7 +184,7 @@ void InitialValuesFile::registerElementListeners()
 void InitialValuesFile::Error(const XML::Parser::ErrorType errorType,
                               const std::string & log_msg)
 {
-    switch(errorType)
+    switch (errorType)
     {
         case XML::Parser::VALIDATION_ERROR:
             LogWarning("validating error: " << log_msg);
@@ -206,7 +206,7 @@ int InitialValuesFile::Validate(const std::string &XSD_file)
 int InitialValuesFile::Parse()
 {
     int ec = m_parser.Parse();
-    if(!m_header || !m_header->isCorrectVersion()) {
+    if (!m_header || !m_header->isCorrectVersion()) {
         LogError("bypassing XML file: " << m_filename << " - wrong file version!");
         ec = XML::Parser::ERROR_INVALID_VERSION;
     }
@@ -216,7 +216,7 @@ int InitialValuesFile::Parse()
 XML::Parser::ElementHandlerPtr InitialValuesFile::GetObjectHandler(ObjectType type,
                                                                    const CKM::RawBuffer &encryptedKey)
 {
-    switch(type)
+    switch (type)
     {
         case KEY:
             m_currentHandler = std::make_shared<KeyHandler>(m_db_logic, encryptedKey);
@@ -248,7 +248,7 @@ void InitialValuesFile::ReleaseObjectHandler(ObjectType /*type*/)
 
 XML::Parser::ElementHandlerPtr InitialValuesFile::GetBufferHandler(EncodingType type)
 {
-    if( !m_currentHandler )
+    if ( !m_currentHandler )
         return XML::Parser::ElementHandlerPtr();
 
     return m_currentHandler->CreateBufferHandler(type);
@@ -260,7 +260,7 @@ void InitialValuesFile::ReleaseBufferHandler(EncodingType /*type*/)
 
 XML::Parser::ElementHandlerPtr InitialValuesFile::GetPermissionHandler()
 {
-    if( !m_currentHandler )
+    if ( !m_currentHandler )
         return XML::Parser::ElementHandlerPtr();
 
     return m_currentHandler->CreatePermissionHandler();
@@ -293,11 +293,11 @@ InitialValuesFile::HeaderHandler::HeaderHandler(InitialValuesFile & parent)
 void InitialValuesFile::HeaderHandler::Start(const XML::Parser::Attributes & attr)
 {
     // get key type
-    if(attr.find(XML_ATTR_VERSION) != attr.end())
+    if (attr.find(XML_ATTR_VERSION) != attr.end())
     {
         m_version = atoi(attr.at(XML_ATTR_VERSION).c_str());
 
-        if(isCorrectVersion())
+        if (isCorrectVersion())
             m_parent.registerElementListeners();
     }
 }

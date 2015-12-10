@@ -129,7 +129,7 @@ bool Base64Decoder::finalize()
                                  whiteCharacter),
                   m_input.end());
 
-    for (size_t i = 0; i<m_input.size(); ++i) {
+    for (size_t i = 0; i < m_input.size(); ++i) {
         if (isalnum(m_input[i])
             || m_input[i] == '+'
             || m_input[i] == '/'

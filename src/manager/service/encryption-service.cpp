@@ -58,7 +58,7 @@ void EncryptionService::RequestKey(const CryptoRequest& request)
 {
     MsgKeyRequest kReq(request.msgId, request.cred, request.name, request.label, request.password);
     if (!m_commMgr->SendMessage(kReq))
-        throw std::runtime_error("No listener found"); // TODO
+        throw std::runtime_error("No listener found");// TODO
 }
 
 GenericSocketService::ServiceDescriptionVector EncryptionService::GetServiceDescription()
@@ -89,7 +89,7 @@ bool EncryptionService::ProcessOne(
     ConnectionInfo &info,
     bool /*allowed*/)
 {
-    LogDebug ("process One");
+    LogDebug("process One");
     try {
         if (!info.buffer.Ready())
             return false;
@@ -134,7 +134,7 @@ void EncryptionService::CustomHandle(const ReadEvent &event) {
     LogDebug("Read event");
     auto &info = m_connectionInfoMap[event.connectionID.counter];
     info.buffer.Push(event.rawBuffer);
-    while(ProcessOne(event.connectionID, info, true));
+    while (ProcessOne(event.connectionID, info, true));
 }
 
 void EncryptionService::CustomHandle(const SecurityEvent &/*event*/) {

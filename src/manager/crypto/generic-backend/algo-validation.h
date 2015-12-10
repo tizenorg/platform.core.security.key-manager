@@ -196,7 +196,7 @@ struct ParamCheck : public ParamCheckBase {
         std::ostringstream os;
 
         // check existence
-        if(!ca.getParam(Name,value)) {
+        if (!ca.getParam(Name, value)) {
             if (Mandatory) {
                 os << "Mandatory parameter " << static_cast<int>(Name) << " doesn't exist";
                 ErrorHandler::Handle(os.str());
@@ -204,7 +204,7 @@ struct ParamCheck : public ParamCheckBase {
             return;
         }
         // validate
-        if(!Validator::Check(Getter::Get(value))) {
+        if (!Validator::Check(Getter::Get(value))) {
             os << "The ";
             Getter::What(os);
             os << " of param '" << static_cast<int>(Name) << "'=";

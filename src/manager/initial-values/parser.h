@@ -125,7 +125,7 @@ private:
     std::map<std::string, ElementListener> m_elementListenerMap;
     std::stack<ElementHandlerPtr> m_elementHandlerStack;
 
-    void CallbackHelper(std::function<void (void)> func);
+    void CallbackHelper(std::function<void(void)> func);
 };
 
 }

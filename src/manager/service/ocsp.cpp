@@ -61,7 +61,7 @@ OCSPModule::OCSPModule() {
     // Do nothing.
 }
 
-OCSPModule::~OCSPModule(){
+OCSPModule::~OCSPModule() {
     // Do nothing.
 }
 
@@ -102,7 +102,7 @@ int OCSPModule::verify(const CertificateImplVector &certificateChain) {
         // remove first element from trustedCerts store
         sk_X509_delete(trustedCerts.get(), 0);
 
-        if(result != CKM_API_OCSP_STATUS_GOOD) {
+        if (result != CKM_API_OCSP_STATUS_GOOD) {
             LogError("Fail to OCSP certification check. Errorcode=[" << result <<
                 "], on certChain[" << i << "]");
             return result;
@@ -133,7 +133,7 @@ int OCSPModule::ocsp_verify(X509 *cert, X509 *issuer, STACK_OF(X509) *trustedCer
     char subj_buf[256];
     int reason = 0;
     //    const char *reason_str = NULL;0
-    X509_STORE *trustedStore=NULL;
+    X509_STORE *trustedStore = NULL;
     BioUniquePtr bioLogger(BIO_new(BIO_s_mem()), BIO_write_and_free);
 
     std::vector<char> url(constUrl.begin(), constUrl.end());
@@ -216,17 +216,17 @@ int OCSPModule::ocsp_verify(X509 *cert, X509 *issuer, STACK_OF(X509) *trustedCer
 
     req = OCSP_REQUEST_new();
 
-    if(req == NULL) {
+    if (req == NULL) {
         LogDebug("Error in OCPS_REQUEST_new");
         return CKM_API_OCSP_STATUS_INTERNAL_ERROR;
     }
     certid = OCSP_cert_to_id(NULL, cert, issuer);
-    if(certid == NULL)  {
+    if (certid == NULL)  {
         LogDebug("Error in OCSP_cert_to_id");
         return CKM_API_OCSP_STATUS_INTERNAL_ERROR;
     }
 
-    if(OCSP_request_add0_id(req, certid) == NULL) {
+    if (OCSP_request_add0_id(req, certid) == NULL) {
         LogDebug("Error in OCSP_request_add0_id");
         return CKM_API_OCSP_STATUS_INTERNAL_ERROR;
     }
@@ -288,9 +288,9 @@ int OCSPModule::ocsp_verify(X509 *cert, X509 *issuer, STACK_OF(X509) *trustedCer
         return CKM_API_OCSP_STATUS_INVALID_RESPONSE;
     }
 
-    if(trustedCerts != NULL) {
+    if (trustedCerts != NULL) {
         trustedStore = X509_STORE_new();
-        for(int tmpIdx=0; tmpIdx<sk_X509_num(trustedCerts); tmpIdx++) {
+        for (int tmpIdx=0; tmpIdx < sk_X509_num(trustedCerts); tmpIdx++) {
             X509_STORE_add_cert(trustedStore, sk_X509_value(trustedCerts, tmpIdx));
         }
         X509_STORE_add_cert(trustedStore, issuer);
@@ -323,7 +323,7 @@ int OCSPModule::ocsp_verify(X509 *cert, X509 *issuer, STACK_OF(X509) *trustedCer
     }
 
     (void)X509_NAME_oneline(X509_get_subject_name(cert), subj_buf, 255);
-    if(!OCSP_resp_find_status(bs, certid, &ocspStatus, &reason,
+    if (!OCSP_resp_find_status(bs, certid, &ocspStatus, &reason,
           &rev, &thisupd, &nextupd)) {
         /* report error */
         ERR_print_errors(bioLogger.get());
@@ -369,12 +369,12 @@ int OCSPModule::ocsp_verify(X509 *cert, X509 *issuer, STACK_OF(X509) *trustedCer
         bs = NULL;
     }
 
-    if(trustedStore != NULL) {
+    if (trustedStore != NULL) {
         X509_STORE_free(trustedStore);
         trustedStore = NULL;
     }
 
-    switch(ocspStatus) {
+    switch (ocspStatus) {
     case V_OCSP_CERTSTATUS_GOOD:
         return CKM_API_OCSP_STATUS_GOOD;
     case V_OCSP_CERTSTATUS_REVOKED:

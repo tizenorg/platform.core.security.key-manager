@@ -30,7 +30,7 @@ Manager::Manager()
   : m_impl(new Impl())
 {}
 
-Manager::~Manager(){}
+Manager::~Manager() {}
 
 int Manager::saveKey(const Alias &alias, const KeyShPtr &key, const Policy &policy) {
     return m_impl->saveKey(alias, key, policy);

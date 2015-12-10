@@ -80,10 +80,10 @@ public:
     DefineException(const char *path, const char *function, int line, const Args&... args)
       : Exception(path, function, line, Stringify::Merge(args...))
     {
-        Before(m_path, m_function, m_line, DefineException<Error,Stringify,Before,After>::error(), m_message);
+        Before(m_path, m_function, m_line, DefineException<Error, Stringify, Before, After>::error(), m_message);
     }
     ~DefineException() noexcept {
-        After(m_path, m_function, m_line, DefineException<Error,Stringify,Before,After>::error(), m_message);
+        After(m_path, m_function, m_line, DefineException<Error, Stringify, Before, After>::error(), m_message);
     }
     virtual int error(void) const {
         return Error;

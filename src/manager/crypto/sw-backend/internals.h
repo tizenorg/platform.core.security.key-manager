@@ -43,7 +43,7 @@ struct Data {
     RawBuffer buffer;
 };
 
-typedef std::pair<Data,Data> DataPair;
+typedef std::pair<Data, Data> DataPair;
 
 DataPair createKeyPairRSA(const int size);
 DataPair createKeyPairDSA(const int size);

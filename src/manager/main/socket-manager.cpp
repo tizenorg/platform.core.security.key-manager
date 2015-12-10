@@ -117,7 +117,7 @@ struct SignalService : public GenericSocketService {
     void Event(const ReadEvent &event) {
         LogDebug("Get signal information");
 
-        if(sizeof(struct signalfd_siginfo) != event.rawBuffer.size()) {
+        if (sizeof(struct signalfd_siginfo) != event.rawBuffer.size()) {
             LogError("Wrong size of signalfd_siginfo struct. Expected: "
                 << sizeof(signalfd_siginfo) << " Get: "
                 << event.rawBuffer.size());
@@ -316,7 +316,7 @@ void SocketManager::ReadyForRead(int sock) {
         desc.service->Event(event);
     } else if (size == -1) {
         int err = errno;
-        switch(err) {
+        switch (err) {
             case EAGAIN:
             case EINTR:
                 break;
@@ -338,7 +338,7 @@ void SocketManager::ReadyForWrite(int sock) {
     ssize_t result = write(sock, &desc.rawBuffer[0], size);
     if (result == -1) {
         int err = errno;
-        switch(err) {
+        switch (err) {
         case EAGAIN:
         case EINTR:
             // select will trigger write once again, nothing to do
@@ -376,7 +376,7 @@ void SocketManager::MainLoop() {
     sd_notify(0, "READY=1");
 
     m_working = true;
-    while(m_working) {
+    while (m_working) {
         fd_set readSet = m_readSet;
         fd_set writeSet = m_writeSet;
 
@@ -386,7 +386,7 @@ void SocketManager::MainLoop() {
         // I need to extract timeout from priority_queue.
         // Timeout in priority_queue may be deprecated.
         // I need to find some actual one.
-        while(!m_timeoutQueue.empty()) {
+        while (!m_timeoutQueue.empty()) {
             auto &top = m_timeoutQueue.top();
             auto &desc = m_socketDescriptionVector[top.sock];
 
@@ -451,7 +451,7 @@ void SocketManager::MainLoop() {
         }
 
         if (-1 == ret) {
-            switch(errno) {
+            switch (errno) {
             case EINTR:
                 LogDebug("EINTR in select");
                 break;
@@ -462,7 +462,7 @@ void SocketManager::MainLoop() {
             }
             continue;
         }
-        for(int i = 0; i<m_maxDesc+1 && ret; ++i) {
+        for (int i = 0; i < m_maxDesc+1 && ret; ++i) {
             if (FD_ISSET(i, &readSet)) {
                 ReadyForRead(i);
                 --ret;
@@ -498,7 +498,7 @@ int SocketManager::GetSocketFromSystemD(
         ThrowMsg(Exception::InitFailed, "Error in sd_listend_fds");
     }
 
-    for(fd = SD_LISTEN_FDS_START; fd < SD_LISTEN_FDS_START+n; ++fd) {
+    for (fd = SD_LISTEN_FDS_START; fd < SD_LISTEN_FDS_START+n; ++fd) {
         if (0 < sd_is_socket_unix(fd, SOCK_STREAM, 1,
                                   desc.serviceHandlerPath.c_str(), 0))
         {
@@ -516,7 +516,7 @@ int SocketManager::CreateDomainSocketHelp(
 {
     int sockfd;
 
-    if(desc.serviceHandlerPath.size()*sizeof(decltype(desc.serviceHandlerPath)::value_type) >=
+    if (desc.serviceHandlerPath.size()*sizeof(decltype(desc.serviceHandlerPath)::value_type) >=
          sizeof(static_cast<sockaddr_un*>(0)->sun_path))
     {
         LogError("Service handler path too long: " << desc.serviceHandlerPath.size());
@@ -606,7 +606,7 @@ void SocketManager::RegisterSocketService(GenericSocketService *service) {
     Try {
         for (auto iter = serviceVector.begin(); iter != serviceVector.end(); ++iter)
             CreateDomainSocket(service, *iter);
-    } Catch (Exception::Base) {
+    } Catch(Exception::Base) {
         for (int i =0; i < (int)m_socketDescriptionVector.size(); ++i)
         {
             auto &desc = m_socketDescriptionVector[i];
@@ -651,7 +651,7 @@ void SocketManager::NotifyMe() {
 }
 
 void SocketManager::ProcessQueue() {
-    while(1) {
+    while (1) {
         EventFunction fun;
         {
             std::lock_guard<std::mutex> ulock(m_eventQueueMutex);

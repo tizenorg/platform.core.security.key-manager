@@ -194,7 +194,7 @@ do                                                                              
         do {                                                                                   \
             (void) file; (void) line; (void) function;                                         \
             DPL_MACRO_DUMMY_LOGGING(message, CKM::Log::AbstractLogProvider::LogLevel::Debug);  \
-        } while(0)
+        } while (0)
 #endif // BUILD_TYPE_DEBUG
 
 #endif // CENT_KEY_LOG_H
