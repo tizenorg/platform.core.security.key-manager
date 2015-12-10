@@ -102,7 +102,6 @@ void OldStyleLogProvider::Log(AbstractLogProvider::LogLevel level,
     } catch (const std::out_of_range&) {
         fprintf(stdout, "Unsupported log level: %d\n", level);
     }
-
 }
 
 }

@@ -111,7 +111,7 @@ void MessageService<Msg>::AddMessage(const Msg& msg)
 template <typename Msg>
 void MessageService<Msg>::CheckMessages()
 {
-    while(true) {
+    while (true) {
         m_messagesMutex.lock();
         if (m_messages.empty()) {
             m_messagesMutex.unlock();

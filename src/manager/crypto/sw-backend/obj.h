@@ -30,7 +30,7 @@ namespace CKM {
 namespace Crypto {
 namespace SW {
 
-typedef std::unique_ptr<EVP_PKEY_CTX,std::function<void(EVP_PKEY_CTX*)>> ContextUPtr;
+typedef std::unique_ptr<EVP_PKEY_CTX, std::function<void(EVP_PKEY_CTX*)>> ContextUPtr;
 typedef std::shared_ptr<EVP_PKEY> EvpShPtr;
 
 class BData : public GObj {
@@ -63,7 +63,8 @@ public:
     virtual int verify(const CryptoAlgorithm &alg, const RawBuffer &message, const RawBuffer &sign);
     virtual RawBuffer encrypt(const CryptoAlgorithm &, const RawBuffer &);
     virtual RawBuffer decrypt(const CryptoAlgorithm &, const RawBuffer &);
-    virtual ~AKey(){}
+    virtual ~AKey() {}
+
 protected:
     virtual EvpShPtr getEvpShPtr();
 
@@ -75,7 +76,7 @@ public:
     Cert(RawBuffer buffer, DataType dataType)
       : AKey(std::move(buffer), dataType)
     {}
-    virtual ~Cert(){}
+    virtual ~Cert() {}
 protected:
     virtual EvpShPtr getEvpShPtr();
 };

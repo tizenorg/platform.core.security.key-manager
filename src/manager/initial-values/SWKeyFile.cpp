@@ -70,7 +70,7 @@ void SWKeyFile::registerElementListeners()
 void SWKeyFile::Error(const XML::Parser::ErrorType errorType,
                       const std::string & log_msg)
 {
-    switch(errorType)
+    switch (errorType)
     {
         case XML::Parser::VALIDATION_ERROR:
             LogWarning("validating error: " << log_msg);
@@ -92,7 +92,7 @@ int SWKeyFile::Validate(const std::string &XSD_file)
 int SWKeyFile::Parse()
 {
     int ec = m_parser.Parse();
-    if(!m_header || !m_header->isCorrectVersion()) {
+    if (!m_header || !m_header->isCorrectVersion()) {
         LogError("bypassing XML file: " << m_filename << " - wrong file version!");
         ec = XML::Parser::ERROR_INVALID_VERSION;
     }
@@ -130,11 +130,11 @@ SWKeyFile::HeaderHandler::HeaderHandler(SWKeyFile & parent)
 void SWKeyFile::HeaderHandler::Start(const XML::Parser::Attributes & attr)
 {
     // get key type
-    if(attr.find(XML_ATTR_VERSION) != attr.end())
+    if (attr.find(XML_ATTR_VERSION) != attr.end())
     {
         m_version = atoi(attr.at(XML_ATTR_VERSION).c_str());
 
-        if(isCorrectVersion())
+        if (isCorrectVersion())
             m_parent.registerElementListeners();
     }
 }

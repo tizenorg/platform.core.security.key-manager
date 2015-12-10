@@ -47,7 +47,7 @@ std::mutex* g_mutexes = NULL;
 
 void lockingCallback(int mode, int type, const char*, int)
 {
-    if(!g_mutexes) {
+    if (!g_mutexes) {
         LogError("Openssl mutexes do not exist");
         return;
     }
@@ -104,7 +104,7 @@ void initOpenSsl() {
     OPENSSL_config(NULL);
 
     // enable FIPS mode by default
-    if(0 == FIPS_mode_set(1)) {
+    if (0 == FIPS_mode_set(1)) {
         LogWarning("Failed to set FIPS mode. Key-manager will be operated in non FIPS mode.");
     }
 
@@ -115,14 +115,14 @@ void initOpenSsl() {
     int ret = 0;
 
     std::ifstream ifile(DEV_HW_RANDOM_FILE);
-    if(ifile.is_open())
-        ret= RAND_load_file(DEV_HW_RANDOM_FILE, RANDOM_BUFFER_LEN);
+    if (ifile.is_open())
+        ret = RAND_load_file(DEV_HW_RANDOM_FILE, RANDOM_BUFFER_LEN);
 
-    if(ret != RANDOM_BUFFER_LEN ){
+    if (ret != RANDOM_BUFFER_LEN) {
         LogWarning("Error in HW_RAND file load");
         ret = RAND_load_file(DEV_URANDOM_FILE, RANDOM_BUFFER_LEN);
 
-        if(ret != RANDOM_BUFFER_LEN)
+        if (ret != RANDOM_BUFFER_LEN)
             LogError("Error in U_RAND_file_load");
     }
 
@@ -151,7 +151,7 @@ void initOpenSslAndDetach();
 typedef void(*initFnPtr)();
 
 // has to be atomic as storing function pointer is not an atomic operation on armv7l
-std::atomic<initFnPtr> initFn (&initOpenSslAndDetach);
+std::atomic<initFnPtr> initFn(&initOpenSslAndDetach);
 
 void initEmpty() {}
 
@@ -162,7 +162,7 @@ void initOpenSslAndDetach() {
      * We don't care about memory ordering here. Current thread will order it correctly and for
      * other threads only store matters. Also only one thread can be here at once because of lock.
      */
-    if(initFn.load(std::memory_order_relaxed) != &initEmpty)
+    if (initFn.load(std::memory_order_relaxed) != &initEmpty)
     {
         initOpenSsl();
 

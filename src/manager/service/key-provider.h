@@ -144,6 +144,7 @@ public:
     static int closeLibrary();
 
     virtual ~KeyProvider();
+
 private:
     // KeyAndInfoContainer class
     std::shared_ptr<KeyAndInfoContainer> m_kmcDKEK;

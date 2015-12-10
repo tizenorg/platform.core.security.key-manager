@@ -75,7 +75,7 @@ struct Policy {
       : password(pass)
       , extractable(extract)
     {}
-    virtual ~Policy(){}
+    virtual ~Policy() {}
     Password password;  // byte array used to encrypt data inside CKM
     bool extractable;   // if true key may be extracted from storage
 };

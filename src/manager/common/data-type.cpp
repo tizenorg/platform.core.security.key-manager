@@ -37,7 +37,7 @@ DataType::DataType(Type data)
 }
 
 DataType::DataType(KeyType key) {
-    switch(key) {
+    switch (key) {
     case KeyType::KEY_RSA_PUBLIC:    m_dataType = DataType::KEY_RSA_PUBLIC;    break;
     case KeyType::KEY_RSA_PRIVATE:   m_dataType = DataType::KEY_RSA_PRIVATE;   break;
     case KeyType::KEY_DSA_PUBLIC:    m_dataType = DataType::KEY_DSA_PUBLIC;    break;
@@ -52,7 +52,7 @@ DataType::DataType(KeyType key) {
 }
 
 DataType::DataType(AlgoType algorithmType) {
-    switch(algorithmType) {
+    switch (algorithmType) {
     case AlgoType::AES_CTR:
     case AlgoType::AES_CBC:
     case AlgoType::AES_GCM:
@@ -84,7 +84,7 @@ DataType::operator int () const {
 }
 
 DataType::operator KeyType () const {
-    switch(m_dataType) {
+    switch (m_dataType) {
     case DataType::KEY_RSA_PUBLIC: return KeyType::KEY_RSA_PUBLIC;
     case DataType::KEY_RSA_PRIVATE: return KeyType::KEY_RSA_PRIVATE;
     case DataType::KEY_DSA_PUBLIC: return KeyType::KEY_DSA_PUBLIC;
@@ -95,7 +95,7 @@ DataType::operator KeyType () const {
     default:
         ThrowMsg(Exception::OutOfRange,
                  "Invalid conversion from DBDataType=" << static_cast<int>(m_dataType) <<
-                 " to KeyType" );
+                 " to KeyType");
     }
 }
 

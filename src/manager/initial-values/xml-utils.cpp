@@ -78,7 +78,7 @@ std::string trimEachLine(const std::string& input) {
     std::stringstream output;
     std::string line;
 
-    while(std::getline(ss, line, '\n')) {
+    while (std::getline(ss, line, '\n')) {
         auto afterTrim = ::trim(line, LINE_WHITESPACE);
         if (!afterTrim.empty())
             output << afterTrim << std::endl;

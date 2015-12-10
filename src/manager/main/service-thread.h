@@ -102,7 +102,7 @@ protected:
         deinitOpenSslThread();
     }
 
-    void ThreadLoop(){
+    void ThreadLoop() {
         for (;;) {
             EventDescription description;
             {

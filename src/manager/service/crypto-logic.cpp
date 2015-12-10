@@ -210,7 +210,7 @@ void CryptoLogic::decryptRow(const Password &password, DB::Row &row)
                      "DB row is password protected, but given password is empty.");
         }
 
-        if(!(row.encryptionScheme & ENCR_PASSWORD) && !password.empty()) {
+        if (!(row.encryptionScheme & ENCR_PASSWORD) && !password.empty()) {
             ThrowErr(Exc::AuthenticationFailed,
                      "DB row is not password protected, but given password is not empty.");
         }
@@ -227,7 +227,7 @@ void CryptoLogic::decryptRow(const Password &password, DB::Row &row)
             decBase64(crow.data);
         }
 
-        if((crow.encryptionScheme >> ENCR_ORDER_OFFSET) == ENCR_ORDER_V2) {
+        if ((crow.encryptionScheme >> ENCR_ORDER_OFFSET) == ENCR_ORDER_V2) {
             if (crow.encryptionScheme & ENCR_APPKEY) {
                 key = m_keyMap[crow.ownerLabel];
                 crow.data = Crypto::SW::Internals::decryptDataAesGcm(key, crow.data, crow.iv, crow.tag);

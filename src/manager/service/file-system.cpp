@@ -94,8 +94,8 @@ RawBuffer FileSystem::loadFile(const std::string &path) const {
                  "Error opening file: ", path, " Reason: ", description);
     }
 
-    std::istreambuf_iterator<char> begin(is),end;
-    std::vector<char> buff(begin,end); // This trick does not work with boost vector
+    std::istreambuf_iterator<char> begin(is), end;
+    std::vector<char> buff(begin, end); // This trick does not work with boost vector
 
     RawBuffer buffer(buff.size());
     memcpy(buffer.data(), buff.data(), buff.size());
@@ -153,9 +153,9 @@ AppLabelVector FileSystem::clearRemovedsApps() const
     std::string line;
     std::ifstream removedAppsFile(getRemovedAppsPath());
     if (removedAppsFile.is_open()) {
-        while (! removedAppsFile.eof() ) {
-            getline (removedAppsFile,line);
-            if(line.size() > 0)
+        while (!removedAppsFile.eof()) {
+            getline(removedAppsFile, line);
+            if (line.size() > 0)
                 removedApps.push_back(line);
         }
         removedAppsFile.close();
