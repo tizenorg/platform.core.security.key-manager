@@ -74,6 +74,14 @@ struct MsgKeyResponse : public MsgBase {
     int error;
 };
 
-typedef CommunicationManager<MsgKeyRequest, MsgKeyResponse> CommMgr;
+struct MsgRemoveAppData {
+    MsgRemoveAppData(std::string pkgIdT)
+      : pkgId(std::move(pkgIdT))
+    {}
+
+    std::string pkgId;
+};
+
+typedef CommunicationManager<MsgKeyRequest, MsgKeyResponse, MsgRemoveAppData> CommMgr;
 
 } /* namespace CKM */
