@@ -155,7 +155,6 @@ cp tests/encryption-scheme/db/key-7654 %{buildroot}/usr/share/ckm-db-test/key-76
 
 %make_install
 %install_service multi-user.target.wants central-key-manager.service
-%install_service multi-user.target.wants central-key-manager-listener.service
 %install_service sockets.target.wants central-key-manager-api-control.socket
 %install_service sockets.target.wants central-key-manager-api-storage.socket
 %install_service sockets.target.wants central-key-manager-api-ocsp.socket
@@ -248,9 +247,6 @@ fi
 
 %files -n key-manager-listener
 %manifest key-manager-listener.manifest
-%{_bindir}/key-manager-listener
-%{_unitdir}/multi-user.target.wants/central-key-manager-listener.service
-%{_unitdir}/central-key-manager-listener.service
 
 %files -n libkey-manager-common
 %manifest libkey-manager-common.manifest
