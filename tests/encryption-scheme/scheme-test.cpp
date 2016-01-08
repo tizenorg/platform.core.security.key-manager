@@ -269,7 +269,7 @@ void restoreFile(const string& filename) {
     static uid_t CKM_UID = getUid(USER_NAME);
     static gid_t CKM_GID = getGid(GROUP_NAME);
     string sourcePath = "/usr/share/ckm-db-test/" + filename;
-    string targetPath = "/opt/data/ckm/" + filename;
+    string targetPath = string(CKM_DATA_DIR) + filename;
 
     int err, ret;
 
