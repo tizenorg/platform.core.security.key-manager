@@ -1,0 +1,20 @@
+0. set up environment:
+
+export PREFIXDIR=/opt/data/usr
+
+1. compilation of cynara:
+
+go to cynara directory and start compilation:
+
+cmake -DCMAKE_INSTALL_PREFIX:PATH=$PREFIXDIR . && make all install
+
+2. compilation of key-manager:
+
+go to key-manager directory and start compilation:
+
+PKG_CONFIG_PATH=$PREFIXDIR/lib/pkgconfig cmake -DCMAKE_INSTALL_PREFIX:PATH=$PREFIXDIR . && make all install
+
+
+
+
+
