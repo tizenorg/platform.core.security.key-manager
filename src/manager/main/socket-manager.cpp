@@ -27,7 +27,6 @@
 #include <sys/signalfd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/smack.h>
 #include <sys/un.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -36,7 +35,9 @@
 #include <errno.h>
 #include <time.h>
 
+#ifdef BUILD_WITH_SYSTEMD
 #include <systemd/sd-daemon.h>
+#endif
 
 #include <dpl/errno_string.h>
 #include <dpl/log/log.h>
@@ -383,11 +384,14 @@ void SocketManager::ReadyForWrite(int sock)
 
 void SocketManager::MainLoop()
 {
+
+#ifdef BUILD_WITH_SYSTEMD
     // remove evironment values passed by systemd
     sd_listen_fds(1);
 
     // Daemon is ready to work.
     sd_notify(0, "READY=1");
+#endif
 
     m_working = true;
     while (m_working) {
@@ -496,6 +500,7 @@ void SocketManager::MainLoopStop()
     NotifyMe();
 }
 
+#ifdef BUILD_WITH_SYSTEMD
 int SocketManager::GetSocketFromSystemD(
     const GenericSocketService::ServiceDescription &desc)
 {
@@ -523,6 +528,7 @@ int SocketManager::GetSocketFromSystemD(
     LogError("No useable sockets were passed by systemd.");
     return -1;
 }
+#endif
 
 int SocketManager::CreateDomainSocketHelp(
     const GenericSocketService::ServiceDescription &desc)
@@ -596,7 +602,12 @@ void SocketManager::CreateDomainSocket(
     GenericSocketService *service,
     const GenericSocketService::ServiceDescription &desc)
 {
-    int sockfd = GetSocketFromSystemD(desc);
+    int sockfd = -1;
+
+#ifdef BUILD_WITH_SYSTEMD
+    sockfd = GetSocketFromSystemD(desc);
+#endif
+
     if (-1 == sockfd)
         sockfd = CreateDomainSocketHelp(desc);
 

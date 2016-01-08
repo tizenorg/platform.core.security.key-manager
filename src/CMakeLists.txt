@@ -1,33 +1,61 @@
+SET(KM_DEP
+    glib-2.0
+    openssl
+    libcrypto
+    libxml-2.0
+    cynara-client-async
+    cynara-creds-socket)
+
+IF(BUILD_WITH_SYSTEMD)
+    SET(KM_DEP
+        ${KM_DEP}
+        libsystemd-daemon)
+ENDIF(BUILD_WITH_SYSTEMD)
+
+IF(BUILD_WITH_SMACK)
+    SET(KM_DEP
+        ${KM_DEP}
+        libsmack)
+ENDIF(BUILD_WITH_SMACK)
+
+IF(BUILD_WITH_SECURITY_MANAGER)
+    SET(KM_DEP
+        ${KM_DEP}
+        security-manager)
+ENDIF(BUILD_WITH_SECURITY_MANAGER)
+
+IF(BUILD_WITH_CAPI_SYSTEM_INFO)
+    SET(KM_DEP
+        ${KM_DEP}
+        capi-system-info)
+ENDIF(BUILD_WITH_CAPI_SYSTEM_INFO)
+
 PKG_CHECK_MODULES(KEY_MANAGER_DEP
     REQUIRED
-    dlog
-    openssl
-    libsmack
-    libcrypto
-    libsystemd-daemon
-    capi-base-common
-    capi-system-info
-    libxml-2.0
-    security-manager
-    cynara-client-async
-    cynara-creds-socket
+    ${KM_DEP}
     )
+
+UNSET(KM_DEP)
+
 FIND_PACKAGE(Threads REQUIRED)
 
 SET(KEY_MANAGER_SRC_PATH ${PROJECT_SOURCE_DIR}/src)
 SET(KEY_MANAGER_PATH ${PROJECT_SOURCE_DIR}/src/manager)
 
-IF (MOCKUP_SM MATCHES "ON")
+SET(SECURITY_MANAGER_WRAPPER_PATH)
+SET(CYNARA_WRAPPER_PATH)
+
+IF(MOCKUP_SM OR NOT BUILD_WITH_SECURITY_MANAGER OR NOT BUILD_WITH_CYNARA)
     IF (CMAKE_BUILD_TYPE MATCHES "RELEASE")
         MESSAGE(FATAL_ERROR "You cannot compile release version with SECURITY MOCKUPS!")
     ENDIF (CMAKE_BUILD_TYPE MATCHES "RELEASE")
     MESSAGE("USING MOCKUPS INSTEAD SECURITY MODULES (SECURITY MANAGER AND CYNARA)")
     SET(SECURITY_MANAGER_WRAPPER_PATH ${KEY_MANAGER_PATH}/main/socket-2-id-mockup.cpp)
     SET(CYNARA_WRAPPER_PATH ${KEY_MANAGER_PATH}/main/cynara-mockup.cpp)
-ELSE (MOCKUP_SM MATCHES "ON")
+ELSE(MOCKUP_SM OR NOT BUILD_WITH_SECURITY_MANAGER OR NOT BUILD_WITH_CYNARA)
     SET(SECURITY_MANAGER_WRAPPER_PATH ${KEY_MANAGER_PATH}/main/socket-2-id-wrapper.cpp)
     SET(CYNARA_WRAPPER_PATH ${KEY_MANAGER_PATH}/main/cynara.cpp)
-ENDIF (MOCKUP_SM MATCHES "ON")
+ENDIF(MOCKUP_SM OR NOT BUILD_WITH_SECURITY_MANAGER OR NOT BUILD_WITH_CYNARA)
 
 SET(KEY_MANAGER_SOURCES
     ${KEY_MANAGER_PATH}/main/generic-socket-manager.cpp
@@ -99,6 +127,8 @@ INCLUDE_DIRECTORIES(
     ${KEY_MANAGER_PATH}/dpl/db/include
     ${KEY_MANAGER_PATH}/crypto
     )
+
+LINK_DIRECTORIES(${KEY_MANAGER_DEP_LIBRARY_DIRS})
 
 ADD_EXECUTABLE(${TARGET_KEY_MANAGER} ${KEY_MANAGER_SOURCES})
 
@@ -202,11 +232,10 @@ TARGET_LINK_LIBRARIES(${TARGET_KEY_MANAGER_CONTROL_CLIENT}
     )
 
 ################################################################################
-INSTALL(TARGETS ${TARGET_KEY_MANAGER_CLIENT} DESTINATION ${LIB_INSTALL_DIR})
-INSTALL(TARGETS ${TARGET_KEY_MANAGER_CONTROL_CLIENT} DESTINATION ${LIB_INSTALL_DIR})
+INSTALL(TARGETS ${TARGET_KEY_MANAGER_CLIENT} DESTINATION ${LIB_DIR})
+INSTALL(TARGETS ${TARGET_KEY_MANAGER_CONTROL_CLIENT} DESTINATION ${LIB_DIR})
 
-INSTALL(TARGETS ${TARGET_KEY_MANAGER} DESTINATION bin)
-
+INSTALL(TARGETS ${TARGET_KEY_MANAGER} DESTINATION ${BIN_DIR})
 
 INSTALL(FILES
     ${KEY_MANAGER_SRC_PATH}/include/ckm/ckm-manager.h
@@ -219,17 +248,15 @@ INSTALL(FILES
     ${KEY_MANAGER_SRC_PATH}/include/ckm/ckm-pkcs12.h
     ${KEY_MANAGER_SRC_PATH}/include/ckm/ckm-raw-buffer.h
     ${KEY_MANAGER_SRC_PATH}/include/ckm/ckm-type.h
-    DESTINATION /usr/include/ckm/ckm
-    )
+    DESTINATION ${INCLUDE_DIR}/ckm/ckm)
+
 INSTALL(FILES
     ${KEY_MANAGER_SRC_PATH}/include/ckmc/ckmc-manager.h
     ${KEY_MANAGER_SRC_PATH}/include/ckmc/ckmc-control.h
     ${KEY_MANAGER_SRC_PATH}/include/ckmc/ckmc-error.h
     ${KEY_MANAGER_SRC_PATH}/include/ckmc/ckmc-type.h
-    DESTINATION /usr/include/ckm/ckmc
-    )
+    DESTINATION ${INCLUDE_DIR}/ckm/ckmc)
 ################################################################################
 
 ADD_SUBDIRECTORY(manager)
-ADD_SUBDIRECTORY(listener)
-ADD_SUBDIRECTORY(pam_plugin)
+#ADD_SUBDIRECTORY(pam_plugin)
