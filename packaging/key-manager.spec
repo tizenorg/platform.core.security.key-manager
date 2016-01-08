@@ -25,8 +25,10 @@ BuildRequires: pkgconfig(capi-system-info)
 BuildRequires: pkgconfig(security-manager)
 BuildRequires: pkgconfig(cynara-client-async)
 BuildRequires: pkgconfig(cynara-creds-socket)
+BuildRequires: pkgconfig(libtzplatform-config)
 BuildRequires: boost-devel
 Requires(pre): pwdutils
+Requires(pre): tizen-platform-config-tools
 Requires(postun): pwdutils
 Requires: libkey-manager-common = %{version}-%{release}
 %{?systemd_requires}
@@ -36,6 +38,8 @@ Requires: libkey-manager-common = %{version}-%{release}
 %global service_name key-manager
 %global _rundir /run
 %global smack_domain_name System
+%global ckm_data_dir %{?TZ_SYS_DATA:%TZ_SYS_DATA/ckm/}%{!?TZ_SYS_DATA:/opt/data/ckm/}
+%global initial_values_dir %{ckm_data_dir}initial_values/
 
 %description
 Central Key Manager daemon could be used as secure storage
@@ -110,7 +114,6 @@ and password change events from PAM
 
 %prep
 %setup -q
-cp -a %{SOURCE1001} .
 cp -a %{SOURCE1002} .
 cp -a %{SOURCE1003} .
 cp -a %{SOURCE1004} .
@@ -138,13 +141,15 @@ export LDFLAGS+="-Wl,--rpath=%{_libdir},-Bsymbolic-functions "
         -DUSER_NAME=%{user_name} \
         -DGROUP_NAME=%{group_name} \
         -DSMACK_DOMAIN_NAME=%{smack_domain_name} \
-        -DMOCKUP_SM=%{?mockup_sm:%mockup_sm}%{!?mockup_sm:OFF}
+        -DMOCKUP_SM=%{?mockup_sm:%mockup_sm}%{!?mockup_sm:OFF} \
+        -DCKM_DATA_DIR=%{ckm_data_dir} \
+        -DINITIAL_VALUES_DIR=%{initial_values_dir}
 
 make %{?jobs:-j%jobs}
 
 %install
 rm -rf %{buildroot}
-mkdir -p %{buildroot}/opt/data/ckm/initial_values
+mkdir -p %{buildroot}%{initial_values_dir}
 mkdir -p %{buildroot}/etc/security/
 mkdir -p %{buildroot}/usr/share/ckm/scripts
 mkdir -p %{buildroot}/etc/gumd/userdel.d/
@@ -179,6 +184,13 @@ cp tests/encryption-scheme/db/key-7654 %{buildroot}/usr/share/ckm-db-test/key-76
 %install_service sockets.target.wants central-key-manager-api-encryption.socket
 
 %pre
+# fail if runtime data dir variable is different than compilation time variable
+if [ `tzplatform-get TZ_SYS_DATA | cut -d'=' -f2` != %{TZ_SYS_DATA} ]
+then
+    echo "Runtime value of TZ_SYS_DATA is different than the compilation time value. Aborting"
+    exit 1
+fi
+
 # User/group (key-manager/key-manager) should be already added in passwd package.
 # This is our backup plan if passwd package will not be configured correctly.
 id -g %{group_name} > /dev/null 2>&1
@@ -195,6 +207,13 @@ fi
 rm -rf %{buildroot}
 
 %post
+# move data from old path to new one
+# we have to assume that in case of TZ_SYS_DATA change some upgrade script will move all the data
+if [ -d "/opt/data/ckm" ]
+then
+    cp -a /opt/data/ckm %{ckm_data_dir}/.. && rm -rf /opt/data/ckm
+fi
+
 systemctl daemon-reload
 if [ $1 = 1 ]; then
     # installation
@@ -205,8 +224,8 @@ if [ $1 = 2 ]; then
     # update
 
     # In ckm version <= 0.1.18 all files were owned by root.
-    find /opt/data/ckm -exec chsmack -a %{smack_domain_name} {} \;
-    chown %{user_name}:%{group_name} -R /opt/data/ckm
+    find %{ckm_data_dir} -exec chsmack -a %{smack_domain_name} {} \;
+    chown %{user_name}:%{group_name} -R %{ckm_data_dir}
     systemctl restart central-key-manager.service
 fi
 
@@ -271,8 +290,8 @@ fi
 %dir %{_datadir}/ckm
 %{_datadir}/ckm/initial_values.xsd
 %{_datadir}/ckm/sw_key.xsd
-%attr(770, %{user_name}, %{group_name}) /opt/data/ckm/
-%attr(770, %{user_name}, %{group_name}) /opt/data/ckm/initial_values/
+%attr(770, %{user_name}, %{group_name}) %{ckm_data_dir}
+%attr(770, %{user_name}, %{group_name}) %{initial_values_dir}
 %{_datadir}/ckm/scripts/*.sql
 /etc/opt/upgrade/230.key-manager-migrate-dkek.patch.sh
 /etc/opt/upgrade/231.key-manager-change-user.patch.sh
