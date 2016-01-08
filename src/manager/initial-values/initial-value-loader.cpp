@@ -27,19 +27,19 @@
 #include <InitialValuesFile.h>
 
 namespace {
-const char * const INIT_VALUES_DIR          = "/opt/data/ckm/initial_values/";
 const char * const INIT_VALUES_XSD          = "/usr/share/ckm/initial_values.xsd";
 const char * const INIT_VALUES_FILE_SUFFIX  = ".xml";
 } // namespace anonymous
 
 namespace CKM {
+
 namespace InitialValues {
 
 void LoadFiles(CKMLogic &logic)
 {
     try {
         std::vector<std::string> filesToParse;
-        DIR *dp = opendir(INIT_VALUES_DIR);
+        DIR *dp = opendir(INITIAL_VALUES_DIR);
         if (dp) {
             struct dirent *entry;
             while ((entry = readdir(dp))) {
@@ -52,7 +52,7 @@ void LoadFiles(CKMLogic &logic)
                 if (lowercaseFilename.find(INIT_VALUES_FILE_SUFFIX) == std::string::npos)
                     continue;
 
-                filesToParse.push_back(std::string(INIT_VALUES_DIR) + filename);
+                filesToParse.push_back(INITIAL_VALUES_DIR + filename);
             }
             closedir(dp);
         }
