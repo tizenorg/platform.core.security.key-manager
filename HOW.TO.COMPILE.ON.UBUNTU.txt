@@ -1,0 +1,6 @@
+compilation of cynara:
+
+git clean -dfx && cmake -DCMAKE_INSTALL_PREFIX:PATH=/home/b.grzelewski/system/usr . && make all install
+
+
+

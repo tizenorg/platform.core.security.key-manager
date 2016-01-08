@@ -131,7 +131,7 @@ export LDFLAGS+="-Wl,--rpath=%{_libdir},-Bsymbolic-functions "
 %cmake . -DVERSION=%{version} \
         -DCMAKE_BUILD_TYPE=%{?build_type:%build_type}%{!?build_type:RELEASE} \
         -DCMAKE_VERBOSE_MAKEFILE=ON \
-        -DSYSTEMD_UNIT_DIR=%{_unitdir} \
+        -DSYSTEMD_UNIT_DIR:PATH=%{_unitdir} \
         -DSYSTEMD_ENV_FILE="/etc/sysconfig/central-key-manager" \
         -DRUN_DIR:PATH=%{_rundir} \
         -DSERVICE_NAME=%{service_name} \
