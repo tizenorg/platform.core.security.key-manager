@@ -2,7 +2,7 @@
 
 USER_NAME=key-manager
 GROUP_NAME=key-manager
-CKM_DATA_PATH=/opt/data/ckm
+CKM_DATA_PATH="`tzplatform-get TZ_SYS_DATA | cut -d'=' -f2`/ckm"
 SMACK_LABEL=System
 
 id -g $GROUP_NAME > /dev/null 2>&1
@@ -16,6 +16,6 @@ if [ $? -eq 1 ]; then
 fi
 
 # In ckm version <= 0.1.18 all files were owned by root.
-find /opt/data/ckm -exec chsmack -a $SMACK_LABEL {} \;
+find ${CKM_DATA_PATH} -exec chsmack -a $SMACK_LABEL {} \;
 chown ${USER_NAME}:${GROUP_NAME} -R ${CKM_DATA_PATH}
 
