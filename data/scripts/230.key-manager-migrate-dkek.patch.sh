@@ -1,6 +1,7 @@
 #!/bin/bash
 
-CKM_DATA_PATH=/opt/data/ckm
+CKM_DATA_PATH_OLD=/opt/data/ckm
+CKM_DATA_PATH="`tzplatform-get TZ_SYS_DATA | cut -d'=' -f2`/ckm"
 VERSION_INFO_PATH=${CKM_DATA_PATH}/version-info
 CURRENT_VERSION=1
 
@@ -55,6 +56,13 @@ migrate_from_0_to_1()
         done
     done
 }
+
+# move data from old path to new one
+# we have to assume that in case of TZ_SYS_DATA change some upgrade script will move all the data
+if [ -d "$CKM_DATA_PATH_OLD" ]
+then
+    cp -a $CKM_DATA_PATH_OLD $CKM_DATA_PATH/.. && rm -rf $CKM_DATA_PATH_OLD
+fi
 
 if [ ! -f ${VERSION_INFO_PATH} ]
 then
