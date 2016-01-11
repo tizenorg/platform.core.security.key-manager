@@ -5,7 +5,6 @@ Release:    1
 Group:      System/Security
 License:    Apache-2.0 and BSL-1.0
 Source0:    %{name}-%{version}.tar.gz
-Source1001: key-manager.manifest
 Source1002: key-manager-pam-plugin.manifest
 Source1003: key-manager-listener.manifest
 Source1004: libkey-manager-client.manifest
@@ -203,6 +202,10 @@ fi
 
 if [ $1 = 2 ]; then
     # update
+
+    # In ckm version <= 0.1.18 all files were owned by root.
+    find /opt/data/ckm -exec chsmack -a %{smack_domain_name} {} \;
+    chown %{user_name}:%{group_name} -R /opt/data/ckm
     systemctl restart central-key-manager.service
 fi
 
@@ -232,10 +235,6 @@ if [ $1 = 1 ]; then
 fi
 if [ $1 = 2 ]; then
     # update
-
-    # In ckm version <= 0.1.18 all files were owned by root.
-    find /opt/data/ckm -exec chsmack -a %{smack_domain_name} {} \;
-    chown %{user_name}:%{group_name} -R /opt/data/ckm
     systemctl restart central-key-manager-listener.service
 fi
 
