@@ -1,12 +1,10 @@
 PKG_CHECK_MODULES(KEY_MANAGER_DEP
     REQUIRED
-    dlog
     glib-2.0
     openssl
     libsmack
     libcrypto
     libsystemd-daemon
-    capi-base-common
     capi-system-info
     libxml-2.0
     security-manager
