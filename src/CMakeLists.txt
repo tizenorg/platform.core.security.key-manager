@@ -12,7 +12,7 @@ PKG_CHECK_MODULES(KEY_MANAGER_DEP
     security-manager
     cynara-client-async
     cynara-creds-socket
-    capi-appfw-package-manager
+    pkgmgr
     )
 FIND_PACKAGE(Threads REQUIRED)
 

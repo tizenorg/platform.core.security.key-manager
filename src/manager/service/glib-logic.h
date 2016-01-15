@@ -24,7 +24,7 @@
 #include <glib.h>
 
 #include <noncopyable.h>
-#include <package_manager.h>
+#include <package-manager.h>
 #include <service-messages.h>
 
 namespace CKM {
@@ -40,27 +40,29 @@ public:
     void SetCommManager(CommMgr *manager);
     virtual ~GLIBLogic();
 protected:
-    static void packageEventCallbackStatic(
+    static int packageEventCallbackStatic(
         uid_t uid,
-        const char *type,
-        const char *package,
-        package_manager_event_type_e eventType,
-        package_manager_event_state_e eventState,
-        int progress,
-        package_manager_error_e error,
-        void *userData);
+        int reqid,
+        const char *pkgtype,
+        const char *pkgid,
+        const char *key,
+        const char *val,
+        const void *pmsg,
+        void *data);
 
-    void packageEventCallback(
+    int packageEventCallback(
         uid_t uid,
-        const char *type,
-        const char *package,
-        package_manager_event_type_e eventType,
-        package_manager_event_state_e eventState,
-        int progress,
-        package_manager_error_e error);
+        int reqid,
+        const char *pkgtype,
+        const char *pkgid,
+        const char *key,
+        const char *val,
+        const void *pmsg,
+        void *data);
 
     CommMgr *m_commMgr;
     GMainLoop *m_gMainLoop;
+    int m_reqid;
 };
 
 } // namespace CKM
