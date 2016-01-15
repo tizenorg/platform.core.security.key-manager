@@ -5,12 +5,11 @@ Release:    1
 Group:      System/Security
 License:    Apache-2.0 and BSL-1.0
 Source0:    %{name}-%{version}.tar.gz
-Source1002: key-manager-pam-plugin.manifest
-Source1003: key-manager-listener.manifest
-Source1004: libkey-manager-client.manifest
-Source1005: libkey-manager-client-devel.manifest
-Source1006: libkey-manager-common.manifest
-Source1007: key-manager-tests.manifest
+Source1001: key-manager-pam-plugin.manifest
+Source1002: libkey-manager-client.manifest
+Source1003: libkey-manager-client-devel.manifest
+Source1004: libkey-manager-common.manifest
+Source1005: key-manager-tests.manifest
 BuildRequires: cmake
 BuildRequires: zip
 BuildRequires: pkgconfig(dlog)
@@ -25,6 +24,8 @@ BuildRequires: pkgconfig(security-manager)
 BuildRequires: pkgconfig(cynara-client-async)
 BuildRequires: pkgconfig(cynara-creds-socket)
 BuildRequires: pkgconfig(libtzplatform-config)
+BuildRequires: pkgconfig(glib-2.0)
+BuildRequires: pkgconfig(capi-appfw-package-manager)
 BuildRequires: boost-devel
 Requires(pre): pwdutils
 Requires(pre): tizen-platform-config-tools
@@ -46,19 +47,6 @@ Requires: libkey-manager-common = %{version}-%{release}
 Central Key Manager daemon could be used as secure storage
 for certificate and private/public keys. It gives API for
 application to sign and verify (DSA/RSA/ECDSA) signatures.
-
-%package -n key-manager-listener
-Summary:    Package with listener daemon
-Group:      System/Security
-BuildRequires: pkgconfig(glib-2.0)
-BuildRequires: pkgconfig(dlog)
-BuildRequires: pkgconfig(capi-appfw-package-manager)
-Requires:   libkey-manager-client = %{version}-%{release}
-
-%description -n key-manager-listener
-Listener for central key manager. This daemon is responsible for
-receive notification from dbus about uninstall application
-and pass them to key-manager daemon.
 
 %package -n libkey-manager-common
 Summary:    Central Key Manager (common libraries)
@@ -115,12 +103,11 @@ and password change events from PAM
 
 %prep
 %setup -q
+cp -a %{SOURCE1001} .
 cp -a %{SOURCE1002} .
 cp -a %{SOURCE1003} .
 cp -a %{SOURCE1004} .
 cp -a %{SOURCE1005} .
-cp -a %{SOURCE1006} .
-cp -a %{SOURCE1007} .
 
 %build
 %if 0%{?sec_build_binary_debug_enable}
@@ -254,26 +241,6 @@ fi
 %postun -n libkey-manager-common -p /sbin/ldconfig
 %postun -n libkey-manager-client -p /sbin/ldconfig
 
-%post -n key-manager-listener
-systemctl daemon-reload
-if [ $1 = 2 ]; then
-    # update
-    systemctl stop central-key-manager-listener.service
-fi
-
-%preun -n key-manager-listener
-if [ $1 = 0 ]; then
-    # unistall
-    systemctl stop central-key-manager-listener.service
-fi
-
-%postun -n key-manager-listener
-if [ $1 = 0 ]; then
-    # unistall
-    systemctl daemon-reload
-fi
-
-
 %files -n key-manager
 %manifest key-manager.manifest
 %license LICENSE
@@ -305,9 +272,6 @@ fi
 %files -n key-manager-pam-plugin
 %manifest key-manager-pam-plugin.manifest
 %{_libdir}/security/pam_key_manager_plugin.so*
-
-%files -n key-manager-listener
-%manifest key-manager-listener.manifest
 
 %files -n libkey-manager-common
 %manifest libkey-manager-common.manifest
