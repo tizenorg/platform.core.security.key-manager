@@ -25,7 +25,7 @@ BuildRequires: pkgconfig(security-manager)
 BuildRequires: pkgconfig(cynara-client-async)
 BuildRequires: pkgconfig(cynara-creds-socket)
 BuildRequires: pkgconfig(glib-2.0)
-BuildRequires: pkgconfig(capi-appfw-package-manager)
+BuildRequires: pkgconfig(pkgmgr)
 BuildRequires: boost-devel
 Requires(pre): pwdutils
 Requires(postun): pwdutils
