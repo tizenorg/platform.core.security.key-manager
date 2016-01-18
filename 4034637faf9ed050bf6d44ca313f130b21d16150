@@ -1,0 +1,10 @@
+Code-Review+1: Bartlomiej Grzelewski <b.grzelewski@samsung.com>
+Code-Review+1: Build Bot <b.bot@partner.samsung.com>
+Code-Review+1: sangsu choi <sangsu.choi@samsung.com>
+Code-Review+2: Dong Sun Lee <ds73.lee@samsung.com>
+Verified+1: Dong Sun Lee <ds73.lee@samsung.com>
+Submitted-by: kyungwook tak <k.tak@samsung.com>
+Submitted-at: Sun, 17 Jan 2016 18:44:42 -0800
+Reviewed-on: https://review.tizen.org/gerrit/57132
+Project: platform/core/security/key-manager
+Branch: refs/heads/tizen
