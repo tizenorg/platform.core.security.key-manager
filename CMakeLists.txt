@@ -78,6 +78,7 @@ SET(TARGET_PAM_KEY_MANAGER_PLUGIN "pam_key_manager_plugin")
 
 SET(TARGET_TEST_MERGED "ckm-tests-internal")
 
+STRING(REGEX REPLACE "/$" "" RW_DATA_DIR_WITHOUT_END_SLASH "${RW_DATA_DIR}")
 CONFIGURE_FILE(packaging/key-manager.manifest.in key-manager.manifest @ONLY)
 
 ADD_SUBDIRECTORY(data/scripts)

@@ -258,11 +258,12 @@ fi
 %{_unitdir}/sockets.target.wants/central-key-manager-api-encryption.socket
 %{_unitdir}/central-key-manager-api-encryption.socket
 %dir %{_datadir}/ckm
+%dir %{_datadir}/ckm/scripts
 %{_datadir}/ckm/initial_values.xsd
 %{_datadir}/ckm/sw_key.xsd
-%attr(770, %{user_name}, %{group_name}) %{rw_data_dir}
-%attr(770, %{user_name}, %{group_name}) %{initial_values_dir}
 %{_datadir}/ckm/scripts/*.sql
+%dir %attr(770, %{user_name}, %{group_name}) %{rw_data_dir}
+%dir %attr(770, %{user_name}, %{group_name}) %{initial_values_dir}
 /etc/opt/upgrade/230.key-manager-change-data-dir.patch.sh
 /etc/opt/upgrade/231.key-manager-migrate-dkek.patch.sh
 /etc/opt/upgrade/232.key-manager-change-user.patch.sh
