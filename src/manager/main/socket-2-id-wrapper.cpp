@@ -34,7 +34,8 @@ int getPkgIdFromSocket(int sock, std::string &pkgId) {
     int ret = security_manager_identify_app_from_socket(sock, &pkg, nullptr);
 
     if (ret == SECURITY_MANAGER_ERROR_NO_SUCH_OBJECT) {
-        LogError("Owner of socket is not connected with pkgid.");
+        LogInfo("Owner of socket is not connected with pkgid. "
+            "This case must be special-labled client. e.g. User, System");
         return 1;
     }
 
@@ -70,12 +71,12 @@ int Socket2Id::translate(int sock, std::string &result) {
     std::string pkgId;
     int retCode = getPkgIdFromSocket(sock, pkgId);
 
-    if (1 == retCode) {
-        pkgId = "/" + smack;
-    }
-
-    if (0 > retCode) {
+    if (retCode < 0)
         return -1;
+
+    if (retCode == 1) {
+        LogInfo("Special smack label case. label: " << smack);
+        pkgId = "/" + smack;
     }
 
     result = pkgId;
