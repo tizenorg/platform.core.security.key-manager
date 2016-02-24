@@ -33,7 +33,7 @@ INSTALL(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/230.key-manager-change-data-dir.patch.sh
         ${CMAKE_CURRENT_BINARY_DIR}/231.key-manager-migrate-dkek.patch.sh
         ${CMAKE_CURRENT_BINARY_DIR}/232.key-manager-change-user.patch.sh
-        DESTINATION /etc/opt/upgrade
+        DESTINATION ${ETC_DIR}/opt/upgrade
         PERMISSIONS OWNER_READ
                     OWNER_WRITE
                     OWNER_EXECUTE)

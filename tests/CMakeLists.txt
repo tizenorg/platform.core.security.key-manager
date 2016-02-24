@@ -1,6 +1,6 @@
 PKG_CHECK_MODULES(KEY_MANAGER_TEST_DEP
-    libxml-2.0
     REQUIRED
+    libxml-2.0
     )
 
 FIND_PACKAGE(Threads REQUIRED)
@@ -71,5 +71,25 @@ TARGET_LINK_LIBRARIES(${TARGET_TEST_MERGED}
     )
 
 INSTALL(TARGETS ${TARGET_TEST_MERGED} DESTINATION bin)
+INSTALL(
+    FILES
+        resources/XML_1_okay.xml
+        resources/XML_1_okay.xsd
+        resources/XML_1_wrong.xml
+        resources/XML_1_wrong.xsd
+        resources/XML_2_structure.xml
+        resources/XML_3_encrypted.xml
+        resources/XML_3_encrypted.xsd
+        resources/XML_4_device_key.xml
+        resources/XML_4_device_key.xsd
+        resources/encryption-scheme.p12
+        resources/db-7654
+        resources/db-key-7654
+        resources/key-7654
+        resources/testme_ver1.db
+        resources/testme_ver2.db
+        resources/testme_ver3.db
+    DESTINATION ${DB_TEST_DIR}
+    )
 
 ADD_SUBDIRECTORY(encryption-scheme)

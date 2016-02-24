@@ -36,11 +36,12 @@ Requires: libkey-manager-common = %{version}-%{release}
 %global user_name key-manager
 %global group_name key-manager
 %global service_name key-manager
-%global _rundir /run
 %global smack_domain_name System
 %global rw_data_dir %{?TZ_SYS_DATA:%TZ_SYS_DATA/ckm/}%{!?TZ_SYS_DATA:/opt/data/ckm/}
 %global ro_data_dir %{?TZ_SYS_SHARE:%TZ_SYS_SHARE/ckm/}%{!?TZ_SYS_SHARE:/usr/share/ckm/}
 %global db_test_dir %{?TZ_SYS_SHARE:%TZ_SYS_SHARE/ckm-db-test/}%{!?TZ_SYS_SHARE:/usr/share/ckm-db-test/}
+%global etc_dir %{?TZ_SYS_ETC:%TZ_SYS_ETC/}%{!?TZ_SYS_ETC:/etc/}
+%global run_dir %{?TZ_SYS_RUN:%TZ_SYS_RUN/}%{!?TZ_SYS_RUN:/var/run/}
 %global initial_values_dir %{rw_data_dir}initial_values/
 
 %description
@@ -123,8 +124,8 @@ export LDFLAGS+="-Wl,--rpath=%{_libdir},-Bsymbolic-functions "
         -DCMAKE_BUILD_TYPE=%{?build_type:%build_type}%{!?build_type:RELEASE} \
         -DCMAKE_VERBOSE_MAKEFILE=ON \
         -DSYSTEMD_UNIT_DIR=%{_unitdir} \
-        -DSYSTEMD_ENV_FILE="/etc/sysconfig/central-key-manager" \
-        -DRUN_DIR:PATH=%{_rundir} \
+        -DSYSTEMD_ENV_FILE=%{etc_dir}"/sysconfig/central-key-manager" \
+        -DRUN_DIR:PATH=%{run_dir} \
         -DSERVICE_NAME=%{service_name} \
         -DUSER_NAME=%{user_name} \
         -DGROUP_NAME=%{group_name} \
@@ -132,6 +133,7 @@ export LDFLAGS+="-Wl,--rpath=%{_libdir},-Bsymbolic-functions "
         -DMOCKUP_SM=%{?mockup_sm:%mockup_sm}%{!?mockup_sm:OFF} \
         -DRW_DATA_DIR=%{rw_data_dir} \
         -DRO_DATA_DIR=%{ro_data_dir} \
+        -DETC_DIR=%{etc_dir} \
         -DINITIAL_VALUES_DIR=%{initial_values_dir} \
         -DDB_TEST_DIR=%{db_test_dir}
 
@@ -140,30 +142,12 @@ make %{?jobs:-j%jobs}
 %install
 rm -rf %{buildroot}
 mkdir -p %{buildroot}%{initial_values_dir}
-mkdir -p %{buildroot}/etc/security/
 mkdir -p %{buildroot}%{ro_data_dir}/scripts
-mkdir -p %{buildroot}/etc/gumd/userdel.d/
+mkdir -p %{buildroot}%{etc_dir}/gumd/userdel.d/
 cp data/scripts/*.sql %{buildroot}%{ro_data_dir}/scripts
 cp doc/initial_values.xsd %{buildroot}%{ro_data_dir}
 cp doc/sw_key.xsd %{buildroot}%{ro_data_dir}
-cp data/gumd/10_key-manager.post %{buildroot}/etc/gumd/userdel.d/
-
-mkdir -p %{buildroot}%{db_test_dir}
-cp tests/testme_ver1.db %{buildroot}%{db_test_dir}
-cp tests/testme_ver2.db %{buildroot}%{db_test_dir}
-cp tests/testme_ver3.db %{buildroot}%{db_test_dir}
-cp tests/XML_1_okay.xml %{buildroot}%{db_test_dir}
-cp tests/XML_1_okay.xsd %{buildroot}%{db_test_dir}
-cp tests/XML_1_wrong.xml %{buildroot}%{db_test_dir}
-cp tests/XML_1_wrong.xsd %{buildroot}%{db_test_dir}
-cp tests/XML_2_structure.xml %{buildroot}%{db_test_dir}
-cp tests/XML_3_encrypted.xml %{buildroot}%{db_test_dir}
-cp tests/XML_3_encrypted.xsd %{buildroot}%{db_test_dir}
-cp tests/XML_4_device_key.xml %{buildroot}%{db_test_dir}
-cp tests/XML_4_device_key.xsd %{buildroot}%{db_test_dir}
-cp tests/encryption-scheme/db/db-7654 %{buildroot}%{db_test_dir}/db-7654
-cp tests/encryption-scheme/db/db-key-7654 %{buildroot}%{db_test_dir}/db-key-7654
-cp tests/encryption-scheme/db/key-7654 %{buildroot}%{db_test_dir}/key-7654
+cp data/gumd/10_key-manager.post %{buildroot}%{etc_dir}/gumd/userdel.d/
 
 %make_install
 %install_service multi-user.target.wants central-key-manager.service
@@ -264,10 +248,10 @@ fi
 %{_datadir}/ckm/scripts/*.sql
 %dir %attr(770, %{user_name}, %{group_name}) %{rw_data_dir}
 %dir %attr(770, %{user_name}, %{group_name}) %{initial_values_dir}
-/etc/opt/upgrade/230.key-manager-change-data-dir.patch.sh
-/etc/opt/upgrade/231.key-manager-migrate-dkek.patch.sh
-/etc/opt/upgrade/232.key-manager-change-user.patch.sh
-/etc/gumd/userdel.d/10_key-manager.post
+%{etc_dir}/opt/upgrade/230.key-manager-change-data-dir.patch.sh
+%{etc_dir}/opt/upgrade/231.key-manager-migrate-dkek.patch.sh
+%{etc_dir}/opt/upgrade/232.key-manager-change-user.patch.sh
+%{etc_dir}/gumd/userdel.d/10_key-manager.post
 %{_bindir}/ckm_tool
 
 %files -n key-manager-pam-plugin
@@ -308,24 +292,7 @@ fi
 %files -n key-manager-tests
 %manifest key-manager-tests.manifest
 %{_bindir}/ckm-tests-internal
-%dir %{_datadir}/ckm-db-test
-%{_datadir}/ckm-db-test/testme_ver1.db
-%{_datadir}/ckm-db-test/testme_ver2.db
-%{_datadir}/ckm-db-test/testme_ver3.db
-%{_datadir}/ckm-db-test/XML_1_okay.xml
-%{_datadir}/ckm-db-test/XML_1_okay.xsd
-%{_datadir}/ckm-db-test/XML_1_wrong.xml
-%{_datadir}/ckm-db-test/XML_1_wrong.xsd
-%{_datadir}/ckm-db-test/XML_2_structure.xml
-%{_datadir}/ckm-db-test/XML_3_encrypted.xml
-%{_datadir}/ckm-db-test/XML_3_encrypted.xsd
-%{_datadir}/ckm-db-test/XML_4_device_key.xml
-%{_datadir}/ckm-db-test/XML_4_device_key.xsd
-%{_datadir}/ckm-db-test/db-7654
-%{_datadir}/ckm-db-test/db-key-7654
-%{_datadir}/ckm-db-test/key-7654
-%{_datadir}/ckm-db-test/encryption-scheme.p12
 %{_bindir}/ckm_so_loader
 %{_bindir}/ckm_db_tool
 %{_bindir}/ckm_generate_db
-
+%db_test_dir
