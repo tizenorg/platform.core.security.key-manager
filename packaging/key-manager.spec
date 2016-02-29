@@ -3,7 +3,7 @@ Summary:    Central Key Manager and utilities
 Version:    0.1.20
 Release:    1
 Group:      System/Security
-License:    Apache-2.0 and BSL-1.0
+License:    Apache-2.0 and BSL-1.0 and BSD-2.0
 Source0:    %{name}-%{version}.tar.gz
 Source1001: key-manager-pam-plugin.manifest
 Source1002: libkey-manager-client.manifest
@@ -229,6 +229,7 @@ fi
 %manifest key-manager.manifest
 %license LICENSE
 %license LICENSE.BSL-1.0
+%license LICENSE.BSD-2.0
 %{_bindir}/key-manager
 %{_unitdir}/multi-user.target.wants/central-key-manager.service
 %{_unitdir}/central-key-manager.service
