@@ -19,7 +19,7 @@
 # @brief       Moves key-manager data to a location specified at compilation time
 #
 
-CKM_DATA_PATH_OLD=/opt/data/ckm
+CKM_DATA_PATH_OLD=/opt/data/ckm/
 
 # move data from old path to new one
 if [ -d "$CKM_DATA_PATH_OLD" ] && [ "@RW_DATA_DIR@" != "$CKM_DATA_PATH_OLD" ]

@@ -38,9 +38,9 @@ Requires: libkey-manager-common = %{version}-%{release}
 %global service_name key-manager
 %global smack_domain_name System
 %global rw_data_dir %{?TZ_SYS_DATA:%TZ_SYS_DATA/ckm/}%{!?TZ_SYS_DATA:/opt/data/ckm/}
-%global ro_data_dir %{?TZ_SYS_SHARE:%TZ_SYS_SHARE/ckm/}%{!?TZ_SYS_SHARE:/usr/share/ckm/}
-%global db_test_dir %{?TZ_SYS_SHARE:%TZ_SYS_SHARE/ckm-db-test/}%{!?TZ_SYS_SHARE:/usr/share/ckm-db-test/}
-%global etc_dir %{?TZ_SYS_ETC:%TZ_SYS_ETC/}%{!?TZ_SYS_ETC:/etc/}
+%global ro_data_dir %{?TZ_SYS_RO_SHARE:%TZ_SYS_RO_SHARE/ckm/}%{!?TZ_SYS_RO_SHARE:/usr/share/ckm/}
+%global db_test_dir %{?TZ_SYS_RO_SHARE:%TZ_SYS_RO_SHARE/ckm-db-test/}%{!?TZ_SYS_RO_SHARE:/usr/share/ckm-db-test/}
+%global etc_dir %{?TZ_SYS_RO_ETC:%TZ_SYS_RO_ETC/}%{!?TZ_SYS_RO_ETC:/etc/}
 %global run_dir %{?TZ_SYS_RUN:%TZ_SYS_RUN/}%{!?TZ_SYS_RUN:/var/run/}
 %global initial_values_dir %{rw_data_dir}initial_values/
 
@@ -157,17 +157,18 @@ cp data/gumd/10_key-manager.post %{buildroot}%{etc_dir}/gumd/userdel.d/
 %install_service sockets.target.wants central-key-manager-api-encryption.socket
 
 %pre
+# tzplatform-get sync breaked because of on-development situation. comment out just for temporary
 # fail if runtime dir variable is different than compilation time variable
-if [ `tzplatform-get TZ_SYS_DATA | cut -d'=' -f2` != %{TZ_SYS_DATA} ]
-then
-    echo "Runtime value of TZ_SYS_DATA is different than the compilation time value. Aborting"
-    exit 1
-fi
-if [ `tzplatform-get TZ_SYS_SHARE | cut -d'=' -f2` != %{TZ_SYS_SHARE} ]
-then
-    echo "Runtime value of TZ_SYS_SHARE is different than the compilation time value. Aborting"
-    exit 1
-fi
+#if [ `tzplatform-get TZ_SYS_DATA | cut -d'=' -f2` != %{TZ_SYS_DATA} ]
+#then
+#    echo "Runtime value of TZ_SYS_DATA is different than the compilation time value. Aborting"
+#    exit 1
+#fi
+#if [ `tzplatform-get TZ_SYS_RO_SHARE | cut -d'=' -f2` != %{TZ_SYS_RO_SHARE} ]
+#then
+#    echo "Runtime value of TZ_SYS_RO_SHARE is different than the compilation time value. Aborting"
+#    exit 1
+#fi
 
 # User/group (key-manager/key-manager) should be already added in passwd package.
 # This is our backup plan if passwd package will not be configured correctly.
@@ -187,9 +188,9 @@ rm -rf %{buildroot}
 %post
 # move data from old path to new one
 # we have to assume that in case of TZ_SYS_DATA change some upgrade script will move all the data
-if [ -d "/opt/data/ckm" ]
+if [ -d "/opt/data/ckm/" ] && [ "%{rw_data_dir}" != "/opt/data/ckm/" ]
 then
-    cp -a /opt/data/ckm/. %{rw_data_dir} && rm -rf /opt/data/ckm
+    cp -a /opt/data/ckm/. %{rw_data_dir} && rm -rf /opt/data/ckm/
 fi
 
 systemctl daemon-reload
@@ -242,11 +243,11 @@ fi
 %{_unitdir}/central-key-manager-api-ocsp.socket
 %{_unitdir}/sockets.target.wants/central-key-manager-api-encryption.socket
 %{_unitdir}/central-key-manager-api-encryption.socket
-%dir %{_datadir}/ckm
-%dir %{_datadir}/ckm/scripts
-%{_datadir}/ckm/initial_values.xsd
-%{_datadir}/ckm/sw_key.xsd
-%{_datadir}/ckm/scripts/*.sql
+%dir %{ro_data_dir}
+%dir %{ro_data_dir}/scripts
+%{ro_data_dir}/initial_values.xsd
+%{ro_data_dir}/sw_key.xsd
+%{ro_data_dir}/scripts/*.sql
 %dir %attr(770, %{user_name}, %{group_name}) %{rw_data_dir}
 %dir %attr(770, %{user_name}, %{group_name}) %{initial_values_dir}
 %{etc_dir}/opt/upgrade/230.key-manager-change-data-dir.patch.sh
