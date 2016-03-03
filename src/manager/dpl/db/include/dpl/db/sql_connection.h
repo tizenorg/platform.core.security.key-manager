@@ -27,7 +27,7 @@
 #include <memory>
 #include <boost/optional.hpp>
 #include <dpl/log/log.h>
-#include <sqlcipher.h>
+#include <sqlcipher/sqlite3.h>
 #include <dpl/assert.h>
 #include <stdint.h>
 #include <dpl/raw-buffer.h>
@@ -80,7 +80,7 @@ class SqlConnection {
     class DataCommand {
       private:
         SqlConnection *m_masterConnection;
-        sqlcipher3_stmt *m_stmt;
+        sqlite3_stmt *m_stmt;
 
         void CheckBindResult(int result);
         void CheckColumnIndex(SqlConnection::ColumnIndex column);
@@ -392,14 +392,14 @@ class SqlConnection {
     class Flag {
       public:
         enum Option {
-            RO = SQLCIPHER_OPEN_NOMUTEX | SQLCIPHER_OPEN_READONLY,
-            RW = SQLCIPHER_OPEN_NOMUTEX | SQLCIPHER_OPEN_READWRITE,
-            CRW = RW | SQLCIPHER_OPEN_CREATE
+            RO = SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_READONLY,
+            RW = SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_READWRITE,
+            CRW = RW | SQLITE_OPEN_CREATE
         };
     };
 
     // RowID
-    typedef sqlcipher3_int64 RowID;
+    typedef sqlite3_int64 RowID;
 
     /**
      * Synchronization object used to synchronize SQL connection
@@ -421,7 +421,7 @@ class SqlConnection {
     };
 
   protected:
-    sqlcipher3 *m_connection;
+    sqlite3 *m_connection;
 
     // Options
 
@@ -467,7 +467,7 @@ class SqlConnection {
     /**
      * Added extension for encryption functionality:
      *
-     * SetKey gives sqlcipher key, which will be used to encrypt the database
+     * SetKey gives sqlite key, which will be used to encrypt the database
      * This function will only fail because of invalid arguments. To check if
      * database can be opened with provided key, it is necessary to perform
      * some operation on the database (i.e. read from it) and confirm if it

@@ -13,6 +13,7 @@ PKG_CHECK_MODULES(KEY_MANAGER_DEP
     cynara-client-async
     cynara-creds-socket
     pkgmgr
+    sqlcipher
     )
 FIND_PACKAGE(Threads REQUIRED)
 
@@ -70,7 +71,6 @@ SET(KEY_MANAGER_SOURCES
     ${KEY_MANAGER_PATH}/dpl/core/src/assert.cpp
     ${KEY_MANAGER_PATH}/dpl/db/src/sql_connection.cpp
     ${KEY_MANAGER_PATH}/dpl/db/src/naive_synchronization_object.cpp
-    ${KEY_MANAGER_PATH}/sqlcipher/sqlcipher.c
     ${KEY_MANAGER_PATH}/crypto/sw-backend/obj.cpp
     ${KEY_MANAGER_PATH}/crypto/sw-backend/internals.cpp
     ${KEY_MANAGER_PATH}/crypto/sw-backend/store.cpp
@@ -97,7 +97,6 @@ INCLUDE_DIRECTORIES(
     ${KEY_MANAGER_PATH}/common
     ${KEY_MANAGER_PATH}/service
     ${KEY_MANAGER_PATH}/initial-values
-    ${KEY_MANAGER_PATH}/sqlcipher
     ${KEY_MANAGER_PATH}/dpl/core/include
     ${KEY_MANAGER_PATH}/dpl/log/include
     ${KEY_MANAGER_PATH}/dpl/db/include
