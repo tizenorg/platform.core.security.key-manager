@@ -60,6 +60,18 @@ BOOST_AUTO_TEST_CASE(sqlTestConversion){
     BOOST_CHECK(pass_check == pattern);
 }
 
+BOOST_AUTO_TEST_CASE(sqlTestConversionBig){
+    /* 192 ~ 208 in hex */
+    const std::string tmppattern = "c0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0";
+
+    auto pass = createPass(192, 209);
+    BOOST_REQUIRE_MESSAGE(pass.size() == 17, "Password size should be 17");
+
+    auto pass_hex = rawToHexString(pass);
+    BOOST_REQUIRE_MESSAGE(pass_hex.length() == 34, "Hexed password size should be 34");
+    BOOST_CHECK(pass_hex == tmppattern);
+}
+
 BOOST_AUTO_TEST_CASE(sqlTestSetKeyTooShort) {
     using namespace CKM::DB;
     BOOST_CHECK(unlink(encrypt_me_not) == 0 || errno == ENOENT);

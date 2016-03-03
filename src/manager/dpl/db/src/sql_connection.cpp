@@ -668,7 +668,7 @@ RawBuffer rawToHexString(const RawBuffer &raw)
     RawBuffer output;
     for (auto &e: raw) {
         char result[3];
-        snprintf(result, sizeof(result), "%02X", static_cast<unsigned int>(e));
+        snprintf(result, sizeof(result), "%02X", (e & 0xff));
         output.push_back(static_cast<unsigned char>(result[0]));
         output.push_back(static_cast<unsigned char>(result[1]));
     }
