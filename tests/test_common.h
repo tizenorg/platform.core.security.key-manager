@@ -30,6 +30,7 @@
 #endif
 
 CKM::RawBuffer createDefaultPass();
+CKM::RawBuffer createPass(std::size_t from, std::size_t to);
 CKM::RawBuffer createBigBlob(std::size_t size);
 
 const CKM::RawBuffer defaultPass = createDefaultPass();
