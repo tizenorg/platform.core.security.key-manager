@@ -42,10 +42,14 @@ RawBuffer createBigBlob(std::size_t size) {
 
 //raw to hex string conversion from SqlConnection
 std::string rawToHexString(const RawBuffer &raw) {
-    std::string dump(raw.size()*2, '0');
-    for(std::size_t i = 0; i < raw.size(); i++){
-        sprintf(&dump[2*i], "%02x", raw[i]);
+    std::string dump;
+
+    for (auto &e : raw) {
+        char buf[3];
+        snprintf(buf, sizeof(buf), "%02x", static_cast<unsigned int>(e));
+        dump.push_back(buf[0]);
+        dump.push_back(buf[1]);
     }
+
     return dump;
 }
-
