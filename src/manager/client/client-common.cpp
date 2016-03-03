@@ -103,7 +103,7 @@ int SockRAII::connectWrapper(int sock, const char *interface)
         return CKM_API_ERROR_INPUT_PARAM;
     }
 
-    strcpy(clientAddr.sun_path, interface);
+    strncpy(clientAddr.sun_path, interface, sizeof(clientAddr.sun_path) - 1);
     LogDebug("ClientAddr.sun_path = " << interface);
 
     int retval = TEMP_FAILURE_RETRY(::connect(sock, (struct sockaddr*)&clientAddr, SUN_LEN(&clientAddr)));
