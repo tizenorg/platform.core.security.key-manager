@@ -27,9 +27,7 @@ BuildRequires: pkgconfig(libtzplatform-config)
 BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: pkgconfig(pkgmgr)
 BuildRequires: boost-devel
-Requires(pre): pwdutils
-Requires(pre): tizen-platform-config-tools
-Requires(postun): pwdutils
+#Requires(pre): tizen-platform-config-tools
 Requires: libkey-manager-common = %{version}-%{release}
 %{?systemd_requires}
 
@@ -170,20 +168,19 @@ cp data/gumd/10_key-manager.post %{buildroot}%{etc_dir}/gumd/userdel.d/
 #    exit 1
 #fi
 
+## backup plan for manage key-manager user/group is deprecated b/c pwdutils package
+## would be excluded from binary
 # User/group (key-manager/key-manager) should be already added in passwd package.
 # This is our backup plan if passwd package will not be configured correctly.
-id -g %{group_name} > /dev/null 2>&1
-if [ $? -eq 1 ]; then
-    groupadd %{group_name} -r > /dev/null 2>&1
-fi
-
-id -u %{user_name} > /dev/null 2>&1
-if [ $? -eq 1 ]; then
-    useradd -d /var/lib/empty -s /sbin/nologin -r -g %{group_name} %{user_name} > /dev/null 2>&1
-fi
-
-%clean
-rm -rf %{buildroot}
+#id -g %{group_name} > /dev/null 2>&1
+#if [ $? -eq 1 ]; then
+#    groupadd %{group_name} -r > /dev/null 2>&1
+#fi
+#
+#id -u %{user_name} > /dev/null 2>&1
+#if [ $? -eq 1 ]; then
+#    useradd -d /var/lib/empty -s /sbin/nologin -r -g %{group_name} %{user_name} > /dev/null 2>&1
+#fi
 
 %post
 # move data from old path to new one
