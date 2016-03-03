@@ -561,7 +561,7 @@ int SocketManager::CreateDomainSocketHelp(
     sockaddr_un serverAddress;
     memset(&serverAddress, 0, sizeof(serverAddress));
     serverAddress.sun_family = AF_UNIX;
-    strcpy(serverAddress.sun_path, desc.serviceHandlerPath.c_str());
+    strncpy(serverAddress.sun_path, desc.serviceHandlerPath.c_str(), sizeof(serverAddress.sun_path) - 1);
     unlink(serverAddress.sun_path);
 
     mode_t originalUmask;
