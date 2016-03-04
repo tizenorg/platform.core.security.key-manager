@@ -47,7 +47,7 @@ typedef enum {
     CKMC_ERROR_BAD_RESPONSE             = TIZEN_ERROR_KEY_MANAGER | 0x03, /**< Invalid response from Central Key Manager */
     CKMC_ERROR_SEND_FAILED              = TIZEN_ERROR_KEY_MANAGER | 0x04, /**< Transmitting request failed */
     CKMC_ERROR_RECV_FAILED              = TIZEN_ERROR_KEY_MANAGER | 0x05, /**< Receiving response failed */
-    CKMC_ERROR_AUTHENTICATION_FAILED    = TIZEN_ERROR_KEY_MANAGER | 0x06, /**< Authentication between client and manager failed */
+    CKMC_ERROR_AUTHENTICATION_FAILED    = TIZEN_ERROR_KEY_MANAGER | 0x06, /**< Optional password which used when saving is incorrect */
     CKMC_ERROR_BUFFER_TOO_SMALL         = TIZEN_ERROR_KEY_MANAGER | 0x07, /**< The output buffer size which is passed as parameter is too small */
     CKMC_ERROR_SERVER_ERROR             = TIZEN_ERROR_KEY_MANAGER | 0x08, /**< Central Key Manager has been failed for some reason */
     CKMC_ERROR_DB_LOCKED                = TIZEN_ERROR_KEY_MANAGER | 0x09, /**< The database was not unlocked - user did not login */
@@ -57,7 +57,7 @@ typedef enum {
     CKMC_ERROR_VERIFICATION_FAILED      = TIZEN_ERROR_KEY_MANAGER | 0x0D, /**< CA certificate(s) were unknown and chain could not be created */
     CKMC_ERROR_INVALID_FORMAT           = TIZEN_ERROR_KEY_MANAGER | 0x0E, /**< A provided file or binary has not a valid format */
     CKMC_ERROR_FILE_ACCESS_DENIED       = TIZEN_ERROR_KEY_MANAGER | 0x0F, /**< A provided file doesn't exist or cannot be accessed in the file system */
-    CKMC_ERROR_NOT_EXPORTABLE           = TIZEN_ERROR_KEY_MANAGER | 0x10, /**< Key is not exportable. It could not be returned to client */
+    CKMC_ERROR_NOT_EXPORTABLE           = TIZEN_ERROR_KEY_MANAGER | 0x10, /**< The data is saved as unexportable so it cannot be leaked */
     CKMC_ERROR_FILE_SYSTEM              = TIZEN_ERROR_KEY_MANAGER | 0x11, /**< Save key/certificate/pkcs12 failed because of file system error */
     CKMC_ERROR_UNKNOWN                  = TIZEN_ERROR_KEY_MANAGER | 0xFF, /**< The error with unknown reason */
 } key_manager_error_e;
