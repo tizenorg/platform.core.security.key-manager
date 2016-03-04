@@ -1,6 +1,6 @@
 Name:       key-manager
 Summary:    Central Key Manager and utilities
-Version:    0.1.21
+Version:    0.1.22
 Release:    1
 Group:      System/Security
 License:    Apache-2.0 and BSL-1.0 and BSD-2.0
