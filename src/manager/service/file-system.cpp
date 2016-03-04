@@ -60,28 +60,28 @@ FileSystem::FileSystem(uid_t uid)
 std::string FileSystem::getDBPath() const
 {
     std::stringstream ss;
-    ss << RW_DATA_DIR << CKM_DB_PREFIX << m_uid;
+    ss << RW_DATA_DIR << "/" << CKM_DB_PREFIX << m_uid;
     return ss.str();
 }
 
 std::string FileSystem::getDKEKPath() const
 {
     std::stringstream ss;
-    ss << RW_DATA_DIR << CKM_KEY_PREFIX << m_uid;
+    ss << RW_DATA_DIR << "/" << CKM_KEY_PREFIX << m_uid;
     return ss.str();
 }
 
 std::string FileSystem::getDBDEKPath() const
 {
     std::stringstream ss;
-    ss << RW_DATA_DIR << CKM_DB_KEY_PREFIX << m_uid;
+    ss << RW_DATA_DIR << "/" << CKM_DB_KEY_PREFIX << m_uid;
     return ss.str();
 }
 
 std::string FileSystem::getRemovedAppsPath() const
 {
     std::stringstream ss;
-    ss << RW_DATA_DIR << CKM_REMOVED_APP_PREFIX << m_uid;
+    ss << RW_DATA_DIR << "/" << CKM_REMOVED_APP_PREFIX << m_uid;
     return ss.str();
 }
 
@@ -201,7 +201,7 @@ UidVector FileSystem::getUIDsFromDBFile()
     std::unique_ptr<struct dirent, std::function<void(void*)>>
         pEntry(static_cast<struct dirent*>(::malloc(len)), ::free);
 
-    if (!pEntry.get()) {
+    if (!pEntry) {
         LogError("Memory allocation failed.");
         return UidVector();
     }

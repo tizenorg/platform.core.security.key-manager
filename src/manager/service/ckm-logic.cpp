@@ -35,7 +35,7 @@
 #include <generic-backend/exception.h>
 
 namespace {
-const char * const CERT_SYSTEM_DIR          = "/etc/ssl/certs";
+const char * const CERT_SYSTEM_DIR          = CA_CERTS_DIR;
 const char * const SYSTEM_DB_PASSWD         = "cAtRugU7";
 
 bool isLabelValid(const CKM::Label &label)
