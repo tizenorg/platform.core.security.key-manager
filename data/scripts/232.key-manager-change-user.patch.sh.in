@@ -19,22 +19,16 @@
 # @author      Krzysztof Jackiewicz (k.jackiewicz@samsung.com)
 # @brief       Changes ckm data owner to key-manager:key-manager and smack label to "System"
 #
-
-USER_NAME=key-manager
-GROUP_NAME=key-manager
-SMACK_LABEL=System
-
-id -g $GROUP_NAME > /dev/null 2>&1
+id -g @GROUP_NAME@ > /dev/null 2>&1
 if [ $? -eq 1 ]; then
-    groupadd $GROUP_NAME -r > /dev/null 2>&1
+    groupadd @GROUP_NAME@ -r > /dev/null 2>&1
 fi
 
-id -u $USER_NAME > /dev/null 2>&1
+id -u @USER_NAME@ > /dev/null 2>&1
 if [ $? -eq 1 ]; then
-    useradd -d /var/lib/empty -s /sbin/nologin -r -g $GROUP_NAME $USER_NAME > /dev/null 2>&1
+    useradd -d /var/lib/empty -s @SBIN_DIR@/nologin -r -g @GROUP_NAME@ @USER_NAME@ > /dev/null 2>&1
 fi
 
 # In ckm version <= 0.1.18 all files were owned by root.
-find @RW_DATA_DIR@ -exec chsmack -a $SMACK_LABEL {} \;
-chown ${USER_NAME}:${GROUP_NAME} -R @RW_DATA_DIR@
-
+find @RW_DATA_DIR@ -exec chsmack -a @SMACK_DOMAIN_NAME@ {} \;
+chown @USER_NAME@:@GROUP_NAME@ -R @RW_DATA_DIR@
