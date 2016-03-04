@@ -27,7 +27,7 @@
 #include <InitialValuesFile.h>
 
 namespace {
-const char * const INIT_VALUES_XSD          = RO_DATA_DIR "initial_values.xsd";
+const char * const INIT_VALUES_XSD          = RO_DATA_DIR "/initial_values.xsd";
 const char * const INIT_VALUES_FILE_SUFFIX  = ".xml";
 } // namespace anonymous
 
@@ -51,7 +51,7 @@ void LoadFiles(CKMLogic &logic)
                 if (lowercaseFilename.find(INIT_VALUES_FILE_SUFFIX) == std::string::npos)
                     continue;
 
-                filesToParse.push_back(std::string(INITIAL_VALUES_DIR) + filename);
+                filesToParse.push_back(std::string(INITIAL_VALUES_DIR) + "/" + filename);
             }
             closedir(dp);
         }

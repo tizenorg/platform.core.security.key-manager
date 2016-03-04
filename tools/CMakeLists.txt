@@ -9,7 +9,7 @@ TARGET_LINK_LIBRARIES(${CKM_SO_LOADER} -ldl)
 
 #place for output file
 INSTALL(TARGETS ${CKM_SO_LOADER}
-    DESTINATION /usr/bin
+    DESTINATION ${BIN_DIR}
     PERMISSIONS OWNER_READ
                 OWNER_WRITE
                 OWNER_EXECUTE
@@ -36,7 +36,7 @@ TARGET_LINK_LIBRARIES(${CKM_TOOL}
 
 #place for output file
 INSTALL(TARGETS ${CKM_TOOL}
-    DESTINATION /usr/bin
+    DESTINATION ${BIN_DIR}
     PERMISSIONS OWNER_READ
                 OWNER_WRITE
                 OWNER_EXECUTE
@@ -45,5 +45,4 @@ INSTALL(TARGETS ${CKM_TOOL}
                 WORLD_READ
                 WORLD_EXECUTE
      )
-
 ADD_SUBDIRECTORY(ckm_db_tool)

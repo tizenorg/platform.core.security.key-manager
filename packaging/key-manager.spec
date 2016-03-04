@@ -9,7 +9,6 @@ Source1001: key-manager-pam-plugin.manifest
 Source1002: libkey-manager-client.manifest
 Source1003: libkey-manager-client-devel.manifest
 Source1004: libkey-manager-common.manifest
-Source1005: key-manager-tests.manifest
 BuildRequires: cmake
 BuildRequires: zip
 BuildRequires: pkgconfig(dlog)
@@ -27,6 +26,7 @@ BuildRequires: pkgconfig(libtzplatform-config)
 BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: pkgconfig(pkgmgr)
 BuildRequires: boost-devel
+BuildRequires: ca-certificates-devel
 #Requires(pre): tizen-platform-config-tools
 Requires: libkey-manager-common = %{version}-%{release}
 %{?systemd_requires}
@@ -35,12 +35,16 @@ Requires: libkey-manager-common = %{version}-%{release}
 %global group_name key-manager
 %global service_name key-manager
 %global smack_domain_name System
-%global rw_data_dir %{?TZ_SYS_DATA:%TZ_SYS_DATA/ckm/}%{!?TZ_SYS_DATA:/opt/data/ckm/}
-%global ro_data_dir %{?TZ_SYS_RO_SHARE:%TZ_SYS_RO_SHARE/ckm/}%{!?TZ_SYS_RO_SHARE:/usr/share/ckm/}
-%global db_test_dir %{?TZ_SYS_RO_SHARE:%TZ_SYS_RO_SHARE/ckm-db-test/}%{!?TZ_SYS_RO_SHARE:/usr/share/ckm-db-test/}
-%global etc_dir %{?TZ_SYS_RO_ETC:%TZ_SYS_RO_ETC/}%{!?TZ_SYS_RO_ETC:/etc/}
-%global run_dir %{?TZ_SYS_RUN:%TZ_SYS_RUN/}%{!?TZ_SYS_RUN:/var/run/}
-%global initial_values_dir %{rw_data_dir}initial_values/
+%global old_rw_data_dir /opt/data/ckm
+%global rw_data_dir %{?TZ_SYS_DATA:%TZ_SYS_DATA/ckm}%{!?TZ_SYS_DATA:%old_rw_data_dir}
+%global ro_data_dir %{?TZ_SYS_RO_SHARE:%TZ_SYS_RO_SHARE/ckm}%{!?TZ_SYS_RO_SHARE:%_datadir/ckm}
+%global db_test_dir %{?TZ_SYS_RO_SHARE:%TZ_SYS_RO_SHARE/ckm-db-test}%{!?TZ_SYS_RO_SHARE:%_datadir/ckm-db-test}
+%global bin_dir %{?TZ_SYS_BIN:%TZ_SYS_BIN}%{!?TZ_SYS_BIN:%_bindir}
+%global sbin_dir %{?TZ_SYS_SBIN:%TZ_SYS_SBIN}%{!?TZ_SYS_SBIN:%_sbindir}
+%global ro_etc_dir %{?TZ_SYS_RO_ETC:%TZ_SYS_RO_ETC}%{!?TZ_SYS_RO_ETC:/etc}
+%global run_dir %{?TZ_SYS_RUN:%TZ_SYS_RUN}%{!?TZ_SYS_RUN:/var/run}
+%global initial_values_dir %{rw_data_dir}/initial_values
+%global ca_certs_dir %{?TZ_SYS_CA_CERTS:%TZ_SYS_CA_CERTS}%{!?TZ_SYS_CA_CERTS:%ro_etc_dir/ssl/certs}
 
 %description
 Central Key Manager daemon could be used as secure storage
@@ -50,8 +54,8 @@ application to sign and verify (DSA/RSA/ECDSA) signatures.
 %package -n libkey-manager-common
 Summary:    Central Key Manager (common libraries)
 Group:      Development/Libraries
-Requires(post): /sbin/ldconfig
-Requires(postun): /sbin/ldconfig
+Requires(post): %{sbin_dir}/ldconfig
+Requires(postun): %{sbin_dir}/ldconfig
 
 %description -n libkey-manager-common
 Central Key Manager package (common library)
@@ -61,8 +65,8 @@ Summary:    Central Key Manager (client)
 Group:      Development/Libraries
 Requires:   key-manager = %{version}-%{release}
 Requires:   libkey-manager-common = %{version}-%{release}
-Requires(post): /sbin/ldconfig
-Requires(postun): /sbin/ldconfig
+Requires(post): %{sbin_dir}/ldconfig
+Requires(postun): %{sbin_dir}/ldconfig
 
 %description -n libkey-manager-client
 Central Key Manager package (client)
@@ -92,8 +96,8 @@ Summary:    CKM login/password module to PAM
 Group:      Development/Libraries
 BuildRequires: pam-devel
 Requires:   key-manager = %{version}-%{release}
-Requires(post): /sbin/ldconfig
-Requires(postun): /sbin/ldconfig
+Requires(post): %{sbin_dir}/ldconfig
+Requires(postun): %{sbin_dir}/ldconfig
 
 %description -n key-manager-pam-plugin
 CKM login/password module to PAM. Used to monitor user login/logout
@@ -106,7 +110,6 @@ cp -a %{SOURCE1001} .
 cp -a %{SOURCE1002} .
 cp -a %{SOURCE1003} .
 cp -a %{SOURCE1004} .
-cp -a %{SOURCE1005} .
 
 %build
 %if 0%{?sec_build_binary_debug_enable}
@@ -122,31 +125,26 @@ export LDFLAGS+="-Wl,--rpath=%{_libdir},-Bsymbolic-functions "
         -DCMAKE_BUILD_TYPE=%{?build_type:%build_type}%{!?build_type:RELEASE} \
         -DCMAKE_VERBOSE_MAKEFILE=ON \
         -DSYSTEMD_UNIT_DIR=%{_unitdir} \
-        -DSYSTEMD_ENV_FILE=%{etc_dir}"/sysconfig/central-key-manager" \
+        -DSYSTEMD_ENV_FILE=%{ro_etc_dir}"/sysconfig/central-key-manager" \
         -DRUN_DIR:PATH=%{run_dir} \
         -DSERVICE_NAME=%{service_name} \
         -DUSER_NAME=%{user_name} \
         -DGROUP_NAME=%{group_name} \
         -DSMACK_DOMAIN_NAME=%{smack_domain_name} \
         -DMOCKUP_SM=%{?mockup_sm:%mockup_sm}%{!?mockup_sm:OFF} \
+        -DOLD_RW_DATA_DIR=%{old_rw_data_dir} \
         -DRW_DATA_DIR=%{rw_data_dir} \
         -DRO_DATA_DIR=%{ro_data_dir} \
-        -DETC_DIR=%{etc_dir} \
+        -DRW_ETC_DIR=%{rw_etc_dir} \
+        -DRO_ETC_DIR=%{ro_etc_dir} \
+        -DBIN_DIR=%{bin_dir} \
         -DINITIAL_VALUES_DIR=%{initial_values_dir} \
-        -DDB_TEST_DIR=%{db_test_dir}
+        -DDB_TEST_DIR=%{db_test_dir} \
+        -DCA_CERTS_DIR=%{ca_certs_dir}
 
 make %{?jobs:-j%jobs}
 
 %install
-rm -rf %{buildroot}
-mkdir -p %{buildroot}%{initial_values_dir}
-mkdir -p %{buildroot}%{ro_data_dir}/scripts
-mkdir -p %{buildroot}%{etc_dir}/gumd/userdel.d/
-cp data/scripts/*.sql %{buildroot}%{ro_data_dir}/scripts
-cp doc/initial_values.xsd %{buildroot}%{ro_data_dir}
-cp doc/sw_key.xsd %{buildroot}%{ro_data_dir}
-cp data/gumd/10_key-manager.post %{buildroot}%{etc_dir}/gumd/userdel.d/
-
 %make_install
 %install_service multi-user.target.wants central-key-manager.service
 %install_service sockets.target.wants central-key-manager-api-control.socket
@@ -179,15 +177,16 @@ cp data/gumd/10_key-manager.post %{buildroot}%{etc_dir}/gumd/userdel.d/
 #
 #id -u %{user_name} > /dev/null 2>&1
 #if [ $? -eq 1 ]; then
-#    useradd -d /var/lib/empty -s /sbin/nologin -r -g %{group_name} %{user_name} > /dev/null 2>&1
+#    useradd -d /var/lib/empty -s %{sbin_dir}/nologin -r -g %{group_name} %{user_name} > /dev/null 2>&1
 #fi
 
 %post
 # move data from old path to new one
 # we have to assume that in case of TZ_SYS_DATA change some upgrade script will move all the data
-if [ -d "/opt/data/ckm/" ] && [ "%{rw_data_dir}" != "/opt/data/ckm/" ]
+if [ -d "%{old_rw_data_dir}" ] && [ "%{rw_data_dir}" != "%{old_rw_data_dir}" ]
 then
-    cp -a /opt/data/ckm/. %{rw_data_dir} && rm -rf /opt/data/ckm/
+    echo "Migrating old rw data to new rw data dir"
+    cp -a %{old_rw_data_dir}/. %{rw_data_dir}/ && rm -rf %{old_rw_data_dir}
 fi
 
 systemctl daemon-reload
@@ -218,17 +217,17 @@ if [ $1 = 0 ]; then
     systemctl daemon-reload
 fi
 
-%post -n libkey-manager-common -p /sbin/ldconfig
-%post -n libkey-manager-client -p /sbin/ldconfig
-%postun -n libkey-manager-common -p /sbin/ldconfig
-%postun -n libkey-manager-client -p /sbin/ldconfig
+%post -n libkey-manager-common -p %{sbin_dir}/ldconfig
+%post -n libkey-manager-client -p %{sbin_dir}/ldconfig
+%postun -n libkey-manager-common -p %{sbin_dir}/ldconfig
+%postun -n libkey-manager-client -p %{sbin_dir}/ldconfig
 
 %files -n key-manager
 %manifest key-manager.manifest
 %license LICENSE
 %license LICENSE.BSL-1.0
 %license LICENSE.BSD-2.0
-%{_bindir}/key-manager
+%{bin_dir}/key-manager
 %{_unitdir}/multi-user.target.wants/central-key-manager.service
 %{_unitdir}/central-key-manager.service
 %{_unitdir}/central-key-manager.target
@@ -241,17 +240,14 @@ fi
 %{_unitdir}/sockets.target.wants/central-key-manager-api-encryption.socket
 %{_unitdir}/central-key-manager-api-encryption.socket
 %dir %{ro_data_dir}
-%dir %{ro_data_dir}/scripts
-%{ro_data_dir}/initial_values.xsd
-%{ro_data_dir}/sw_key.xsd
-%{ro_data_dir}/scripts/*.sql
+%{ro_data_dir}/*
 %dir %attr(770, %{user_name}, %{group_name}) %{rw_data_dir}
 %dir %attr(770, %{user_name}, %{group_name}) %{initial_values_dir}
-%{etc_dir}/opt/upgrade/230.key-manager-change-data-dir.patch.sh
-%{etc_dir}/opt/upgrade/231.key-manager-migrate-dkek.patch.sh
-%{etc_dir}/opt/upgrade/232.key-manager-change-user.patch.sh
-%{etc_dir}/gumd/userdel.d/10_key-manager.post
-%{_bindir}/ckm_tool
+%{ro_etc_dir}/opt/upgrade/230.key-manager-change-data-dir.patch.sh
+%{ro_etc_dir}/opt/upgrade/231.key-manager-migrate-dkek.patch.sh
+%{ro_etc_dir}/opt/upgrade/232.key-manager-change-user.patch.sh
+%{ro_etc_dir}/gumd/userdel.d/10_key-manager.post
+%{bin_dir}/ckm_tool
 
 %files -n key-manager-pam-plugin
 %manifest key-manager-pam-plugin.manifest
@@ -290,8 +286,8 @@ fi
 
 %files -n key-manager-tests
 %manifest key-manager-tests.manifest
-%{_bindir}/ckm-tests-internal
-%{_bindir}/ckm_so_loader
-%{_bindir}/ckm_db_tool
-%{_bindir}/ckm_generate_db
+%{bin_dir}/ckm-tests-internal
+%{bin_dir}/ckm_so_loader
+%{bin_dir}/ckm_db_tool
+%{bin_dir}/ckm_generate_db
 %db_test_dir

@@ -30,10 +30,19 @@ CONFIGURE_FILE(232.key-manager-change-user.patch.sh.in
                @ONLY)
 
 INSTALL(FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/230.key-manager-change-data-dir.patch.sh
-        ${CMAKE_CURRENT_BINARY_DIR}/231.key-manager-migrate-dkek.patch.sh
-        ${CMAKE_CURRENT_BINARY_DIR}/232.key-manager-change-user.patch.sh
-        DESTINATION ${ETC_DIR}/opt/upgrade
-        PERMISSIONS OWNER_READ
-                    OWNER_WRITE
-                    OWNER_EXECUTE)
+        230.key-manager-change-data-dir.patch.sh
+        231.key-manager-migrate-dkek.patch.sh
+        232.key-manager-change-user.patch.sh
+    DESTINATION ${RO_ETC_DIR}/opt/upgrade
+    PERMISSIONS
+        OWNER_READ
+        OWNER_WRITE
+        OWNER_EXECUTE)
+
+INSTALL(FILES
+        create_schema.sql
+        drop_all.sql
+        migrate_1.sql
+        migrate_2.sql
+        migrate_3.sql
+    DESTINATION ${RO_DATA_DIR}/scripts)

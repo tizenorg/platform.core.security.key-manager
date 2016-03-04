@@ -1,0 +1,10 @@
+<manifest>
+	<request>
+		<domain name="_" />
+	</request>
+	<assign>
+		<filesystem path="@BIN_DIR@/ckm-tests-internal" exec_label="@SMACK_DOMAIN_NAME@" />
+		<filesystem path="@BIN_DIR@/ckm_db_tool" exec_label="@SMACK_DOMAIN_NAME@" />
+		<filesystem path="@BIN_DIR@/ckm_generate_db" exec_label="@SMACK_DOMAIN_NAME@" />
+	</assign>
+</manifest>

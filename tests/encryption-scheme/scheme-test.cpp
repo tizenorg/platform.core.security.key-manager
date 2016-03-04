@@ -268,8 +268,8 @@ gid_t getGid(const char *name) {
 void restoreFile(const string& filename) {
     static uid_t CKM_UID = getUid(USER_NAME);
     static gid_t CKM_GID = getGid(GROUP_NAME);
-    string sourcePath = string(DB_TEST_DIR) + filename;
-    string targetPath = string(RW_DATA_DIR) + filename;
+    string sourcePath = string(DB_TEST_DIR) + "/" + filename;
+    string targetPath = string(RW_DATA_DIR) + "/" + filename;
 
     int err, ret;
 

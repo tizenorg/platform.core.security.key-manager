@@ -3,6 +3,6 @@
 		<domain name="_" />
 	</request>
 	<assign>
-		<filesystem path="@RW_DATA_DIR_WITHOUT_END_SLASH@" label="System" type="transmutable" />
+		<filesystem path="@RW_DATA_DIR@" label="@SMACK_DOMAIN_NAME@" type="transmutable" />
 	</assign>
 </manifest>

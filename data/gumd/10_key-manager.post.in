@@ -4,4 +4,4 @@
 # $2 - uid
 # $3 - gid
 # call key-manager tool for locking the database and removing user entries
-ckm_tool -d $2
+@BIN_DIR@/ckm_tool -d $2

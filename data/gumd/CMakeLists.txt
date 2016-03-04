@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # Copyright (c) 2016 Samsung Electronics Co., Ltd All Rights Reserved
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,13 +12,14 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
-# @file        230.key-manager-change-data-dir.patch.sh.in
-# @author      Krzysztof Jackiewicz (k.jackiewicz@samsung.com)
-# @brief       Moves key-manager data to a location specified at compilation time
+# @file        CMakeLists.txt
+# @author      Kyungwook Tak (k.tak@samsung.com)
+# @brief
 #
+CONFIGURE_FILE(10_key-manager.post.in 10_key-manager.post @ONLY)
 
-# move data from old path to new one
-if [ -d "@OLD_RW_DATA_DIR@" ] && [ "@RW_DATA_DIR@" != "@OLD_RW_DATA_DIR@" ]
-then
-    cp -a @OLD_RW_DATA_DIR@/. @RW_DATA_DIR@ && rm -rf @OLD_RW_DATA_DIR@
-fi
+INSTALL(FILES 10_key-manager.post DESTINATION ${RO_ETC_DIR}/gumd/userdel.d
+    PERMISSIONS
+        OWNER_READ
+        OWNER_WRITE
+        OWNER_EXECUTE)
