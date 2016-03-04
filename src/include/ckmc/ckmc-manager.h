@@ -943,6 +943,10 @@ int ckmc_get_cert_chain_with_trustedcert(const ckmc_cert_s *cert,
  * @privlevel public
  * @privilege %http://tizen.org/privilege/internet
  *
+ * @remarks %http://tizen.org/privilege/internet (public level privilege) is required
+ *          to use this API instead of %http://tizen.org/privilege/keymanager (public
+ *          level privilege) since 3.0.
+ *
  * @param[in] pcert_chain_list   Valid certificate chain to perform OCSP check
  * @param[out] ocsp_status       The pointer to status result of OCSP check
  *
