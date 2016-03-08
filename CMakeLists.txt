@@ -19,7 +19,7 @@
 
 ############################# Check minimum CMake version #####################
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8.3)
 PROJECT("key-manager")
 
 ############################# cmake packages ##################################
@@ -28,62 +28,64 @@ INCLUDE(FindPkgConfig)
 
 ############################# compiler flags ##################################
 
-SET(CMAKE_C_FLAGS_PROFILING    "-g -O0 -pg -Wp,-U_FORTIFY_SOURCE")
-SET(CMAKE_CXX_FLAGS_PROFILING  "-g -std=c++0x -O0 -pg -Wp,-U_FORTIFY_SOURCE")
-SET(CMAKE_C_FLAGS_DEBUG        "-g -O0 -ggdb -Wp,-U_FORTIFY_SOURCE")
-SET(CMAKE_CXX_FLAGS_DEBUG      "-g -std=c++0x -O0 -ggdb -Wp,-U_FORTIFY_SOURCE")
-SET(CMAKE_C_FLAGS_RELEASE      "-g -O2")
-SET(CMAKE_CXX_FLAGS_RELEASE    "-g -std=c++0x -O2")
-SET(CMAKE_C_FLAGS_CCOV         "-g -O2 --coverage")
-SET(CMAKE_CXX_FLAGS_CCOV       "-g -std=c++0x -O2 --coverage")
+ADD_SUBDIRECTORY(base)
 
-# If supported for the target machine, emit position-independent code,suitable
-# for dynamic linking and avoiding any limit on the size of the global offset
-# table. This option makes a difference on the m68k, PowerPC and SPARC.
-# (BJ: our ARM too?)
-ADD_DEFINITIONS("-fPIC")
-
-# Set compiler warning flags
-ADD_DEFINITIONS("-Werror")                      # Make all warnings into errors.
-ADD_DEFINITIONS("-Wall")                        # Generate all warnings
-ADD_DEFINITIONS("-Wextra")                      # Generate even more extra warnings
-
-STRING(REGEX MATCH "([^.]*)" API_VERSION "${VERSION}")
-ADD_DEFINITIONS("-DAPI_VERSION=\"$(API_VERSION)\"")
-ADD_DEFINITIONS("-DSMACK_ENABLED")
-ADD_DEFINITIONS("-DSQLCIPHER_HAS_CODEC")
-ADD_DEFINITIONS("-DRUN_DIR=\"${RUN_DIR}\"")
-ADD_DEFINITIONS("-DSERVICE_NAME=\"${SERVICE_NAME}\"")
-ADD_DEFINITIONS("-DUSER_NAME=\"${USER_NAME}\"")
-ADD_DEFINITIONS("-DGROUP_NAME=\"${GROUP_NAME}\"")
-ADD_DEFINITIONS("-DSMACK_DOMAIN_NAME=\"${SMACK_DOMAIN_NAME}\"")
-ADD_DEFINITIONS("-DRW_DATA_DIR=\"${RW_DATA_DIR}\"")
-ADD_DEFINITIONS("-DRO_DATA_DIR=\"${RO_DATA_DIR}\"")
-ADD_DEFINITIONS("-DINITIAL_VALUES_DIR=\"${INITIAL_VALUES_DIR}\"")
-
-IF (CMAKE_BUILD_TYPE MATCHES "DEBUG")
-    ADD_DEFINITIONS("-DTIZEN_DEBUG_ENABLE")
-    ADD_DEFINITIONS("-DBUILD_TYPE_DEBUG")
-ENDIF (CMAKE_BUILD_TYPE MATCHES "DEBUG")
-
-IF (DEFINED SYSTEMD_ENV_FILE)
-    ADD_DEFINITIONS(-DSYSTEMD_ENV_FILE="${SYSTEMD_ENV_FILE}")
-ENDIF (DEFINED SYSTEMD_ENV_FILE)
-
-SET(TARGET_KEY_MANAGER "key-manager")
-SET(TARGET_KEY_MANAGER_CLIENT "key-manager-client")
-SET(TARGET_KEY_MANAGER_CONTROL_CLIENT "key-manager-control-client")
-SET(TARGET_KEY_MANAGER_COMMON "key-manager-common")
-SET(TARGET_PAM_KEY_MANAGER_PLUGIN "pam_key_manager_plugin")
-
-SET(TARGET_TEST_MERGED "ckm-tests-internal")
-
-STRING(REGEX REPLACE "/$" "" RW_DATA_DIR_WITHOUT_END_SLASH "${RW_DATA_DIR}")
-CONFIGURE_FILE(packaging/key-manager.manifest.in key-manager.manifest @ONLY)
-
-ADD_SUBDIRECTORY(data/scripts)
-ADD_SUBDIRECTORY(src)
-ADD_SUBDIRECTORY(build)
-ADD_SUBDIRECTORY(systemd)
-ADD_SUBDIRECTORY(tests)
-ADD_SUBDIRECTORY(tools)
+#SET(CMAKE_C_FLAGS_PROFILING    "-g -O0 -pg -Wp,-U_FORTIFY_SOURCE")
+#SET(CMAKE_CXX_FLAGS_PROFILING  "-g -std=c++0x -O0 -pg -Wp,-U_FORTIFY_SOURCE")
+#SET(CMAKE_C_FLAGS_DEBUG        "-g -O0 -ggdb -Wp,-U_FORTIFY_SOURCE")
+#SET(CMAKE_CXX_FLAGS_DEBUG      "-g -std=c++0x -O0 -ggdb -Wp,-U_FORTIFY_SOURCE")
+#SET(CMAKE_C_FLAGS_RELEASE      "-g -O2")
+#SET(CMAKE_CXX_FLAGS_RELEASE    "-g -std=c++0x -O2")
+#SET(CMAKE_C_FLAGS_CCOV         "-g -O2 --coverage")
+#SET(CMAKE_CXX_FLAGS_CCOV       "-g -std=c++0x -O2 --coverage")
+#
+## If supported for the target machine, emit position-independent code,suitable
+## for dynamic linking and avoiding any limit on the size of the global offset
+## table. This option makes a difference on the m68k, PowerPC and SPARC.
+## (BJ: our ARM too?)
+#ADD_DEFINITIONS("-fPIC")
+#
+## Set compiler warning flags
+#ADD_DEFINITIONS("-Werror")                      # Make all warnings into errors.
+#ADD_DEFINITIONS("-Wall")                        # Generate all warnings
+#ADD_DEFINITIONS("-Wextra")                      # Generate even more extra warnings
+#
+#STRING(REGEX MATCH "([^.]*)" API_VERSION "${VERSION}")
+#ADD_DEFINITIONS("-DAPI_VERSION=\"$(API_VERSION)\"")
+#ADD_DEFINITIONS("-DSMACK_ENABLED")
+#ADD_DEFINITIONS("-DSQLCIPHER_HAS_CODEC")
+#ADD_DEFINITIONS("-DRUN_DIR=\"${RUN_DIR}\"")
+#ADD_DEFINITIONS("-DSERVICE_NAME=\"${SERVICE_NAME}\"")
+#ADD_DEFINITIONS("-DUSER_NAME=\"${USER_NAME}\"")
+#ADD_DEFINITIONS("-DGROUP_NAME=\"${GROUP_NAME}\"")
+#ADD_DEFINITIONS("-DSMACK_DOMAIN_NAME=\"${SMACK_DOMAIN_NAME}\"")
+#ADD_DEFINITIONS("-DRW_DATA_DIR=\"${RW_DATA_DIR}\"")
+#ADD_DEFINITIONS("-DRO_DATA_DIR=\"${RO_DATA_DIR}\"")
+#ADD_DEFINITIONS("-DINITIAL_VALUES_DIR=\"${INITIAL_VALUES_DIR}\"")
+#
+#IF (CMAKE_BUILD_TYPE MATCHES "DEBUG")
+#    ADD_DEFINITIONS("-DTIZEN_DEBUG_ENABLE")
+#    ADD_DEFINITIONS("-DBUILD_TYPE_DEBUG")
+#ENDIF (CMAKE_BUILD_TYPE MATCHES "DEBUG")
+#
+#IF (DEFINED SYSTEMD_ENV_FILE)
+#    ADD_DEFINITIONS(-DSYSTEMD_ENV_FILE="${SYSTEMD_ENV_FILE}")
+#ENDIF (DEFINED SYSTEMD_ENV_FILE)
+#
+#SET(TARGET_KEY_MANAGER "key-manager")
+#SET(TARGET_KEY_MANAGER_CLIENT "key-manager-client")
+#SET(TARGET_KEY_MANAGER_CONTROL_CLIENT "key-manager-control-client")
+#SET(TARGET_KEY_MANAGER_COMMON "key-manager-common")
+#SET(TARGET_PAM_KEY_MANAGER_PLUGIN "pam_key_manager_plugin")
+#
+#SET(TARGET_TEST_MERGED "ckm-tests-internal")
+#
+#STRING(REGEX REPLACE "/$" "" RW_DATA_DIR_WITHOUT_END_SLASH "${RW_DATA_DIR}")
+#CONFIGURE_FILE(packaging/key-manager.manifest.in key-manager.manifest @ONLY)
+#
+#ADD_SUBDIRECTORY(data/scripts)
+#ADD_SUBDIRECTORY(src)
+#ADD_SUBDIRECTORY(build)
+#ADD_SUBDIRECTORY(systemd)
+#ADD_SUBDIRECTORY(tests)
+#ADD_SUBDIRECTORY(tools)
