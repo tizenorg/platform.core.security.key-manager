@@ -24,6 +24,7 @@
 #include <ckm/ckm-error.h>
 #include <message-buffer.h>
 #include <client-common.h>
+#include <exception.h>
 
 #include <client-manager-async-impl.h>
 
@@ -49,8 +50,8 @@ void ManagerAsync::Impl::saveKey(const ObserverPtr &observer,
 	try {
 		saveBinaryData(observer, alias, DataType(key->getType()), key->getDER(),
 					   policy);
-	} catch (const DataType::Exception::Base &) {
-		observer->ReceivedError(CKM_API_ERROR_INPUT_PARAM);
+	} catch (const Exc::Exception &e) {
+		observer->ReceivedError(e.error());
 	}
 }
 

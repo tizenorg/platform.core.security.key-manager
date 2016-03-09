@@ -556,16 +556,14 @@ Data createKeyAES(const int sizeBits)
 {
 	// check the parameters of functions
 	if (sizeBits != 128 && sizeBits != 192 && sizeBits != 256) {
-		LogError("Error in AES input size");
-		ThrowMsg(Exc::Crypto::InputParam, "Error in AES input size");
+		ThrowErr(Exc::Crypto::InputParam, "Error in AES input size");
 	}
 
 	uint8_t key[32];
 	int sizeBytes = sizeBits / 8;
 
 	if (!RAND_bytes(key, sizeBytes)) {
-		LogError("Error in AES key generation");
-		ThrowMsg(Exc::Crypto::InternalError, "Error in AES key generation");
+		ThrowErr(Exc::Crypto::InternalError, "Error in AES key generation");
 	}
 
 	return { DataType(KeyType::KEY_AES), CKM::RawBuffer(key, key + sizeBytes)};

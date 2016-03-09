@@ -23,6 +23,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include <ckm/ckm-type.h>
+#include <exception.h>
 
 using CKM::DataType;
 using CKM::KeyType;
@@ -33,9 +34,9 @@ BOOST_AUTO_TEST_SUITE(DATA_TYPE_TEST)
 BOOST_AUTO_TEST_CASE(CONSTRUCTOR)
 {
 	BOOST_REQUIRE_THROW(DataType(static_cast<DataType::Type>(999)),
-						DataType::Exception::OutOfRange);
+						CKM::Exc::InputParam);
 	BOOST_REQUIRE_THROW(DataType(static_cast<KeyType>(999)),
-						DataType::Exception::OutOfRange);
+						CKM::Exc::InputParam);
 
 	std::vector<DataType> types;
 
@@ -77,7 +78,7 @@ BOOST_AUTO_TEST_CASE(CONSTRUCTOR)
 
 	BOOST_REQUIRE_THROW(
 		DataType(static_cast<AlgoType>(-1)),
-		DataType::Exception::OutOfRange);
+		CKM::Exc::InputParam);
 }
 
 BOOST_AUTO_TEST_CASE(KEY_TYPE_CASTING)
@@ -161,7 +162,7 @@ BOOST_AUTO_TEST_CASE(GET_CHAIN_TYPE)
 	BOOST_REQUIRE(type.getChainDatatype(13) == DataType(DataType::CHAIN_CERT_13));
 	BOOST_REQUIRE(type.getChainDatatype(15) == DataType(DataType::DB_CHAIN_LAST));
 
-	BOOST_REQUIRE_THROW(type.getChainDatatype(16), DataType::Exception::OutOfRange);
+	BOOST_REQUIRE_THROW(type.getChainDatatype(16), CKM::Exc::InputParam);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

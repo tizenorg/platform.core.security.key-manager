@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2000 - 2015 Samsung Electronics Co., Ltd All Rights Reserved
+ *  Copyright (c) 2000 - 2016 Samsung Electronics Co., Ltd All Rights Reserved
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
  */
 
 #include <data-type.h>
+#include <exception.h>
 
 namespace CKM {
 
@@ -32,8 +33,8 @@ DataType::DataType(Type data)
 	: m_dataType(data)
 {
 	if (!isInRange(data))
-		ThrowMsg(Exception::OutOfRange,
-				 "Invalid conversion from DataType=" << static_cast<int>(data) <<
+		ThrowErr(Exc::InputParam,
+				 "Invalid conversion from DataType=", static_cast<int>(data),
 				 " to DBDataType");
 }
 
@@ -69,8 +70,8 @@ DataType::DataType(KeyType key)
 		break;
 
 	default:
-		ThrowMsg(Exception::OutOfRange,
-				 "Invalid conversion from KeyType=" << static_cast<int>(key) <<
+		ThrowErr(Exc::InputParam,
+				 "Invalid conversion from KeyType=", static_cast<int>(key),
 				 " to DBDataType");
 	}
 }
@@ -103,8 +104,8 @@ DataType::DataType(AlgoType algorithmType)
 		break;
 
 	default:
-		ThrowMsg(Exception::OutOfRange,
-				 "Invalid conversion from AlgoType=" << static_cast<int>(algorithmType) <<
+		ThrowErr(Exc::InputParam,
+				 "Invalid conversion from AlgoType=", static_cast<int>(algorithmType),
 				 " to DBDataType");
 	}
 }
@@ -113,8 +114,7 @@ DataType::DataType(int data) :
 	m_dataType(static_cast<Type>(data))
 {
 	if (!isInRange(data))
-		ThrowMsg(Exception::OutOfRange,
-				 "Invalid conversion from int=" << data << " to DBDataType");
+		ThrowErr(Exc::InputParam, "Invalid conversion from int=", data, " to DBDataType");
 }
 
 DataType::operator int () const
@@ -147,8 +147,8 @@ DataType::operator KeyType() const
 		return KeyType::KEY_AES;
 
 	default:
-		ThrowMsg(Exception::OutOfRange,
-				 "Invalid conversion from DBDataType=" << static_cast<int>(m_dataType) <<
+		ThrowErr(Exc::InputParam,
+				 "Invalid conversion from DBDataType=", static_cast<int>(m_dataType),
 				 " to KeyType");
 	}
 }
@@ -231,7 +231,7 @@ DataType DataType::getChainDatatype(unsigned int index)
 	DataType result(static_cast<int>(index) + DB_CHAIN_FIRST);
 
 	if (!result.isChainCert())
-		ThrowMsg(Exception::OutOfRange, "Certificate number is out of range");
+		ThrowErr(Exc::InputParam, "Certificate number is out of range");
 
 	return result;
 }
