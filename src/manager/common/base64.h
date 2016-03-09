@@ -17,7 +17,6 @@
 #define _BASE64_H_
 
 #include <string>
-#include <dpl/exception.h>
 
 #include <ckm/ckm-type.h>
 #include <noncopyable.h>
@@ -32,13 +31,6 @@ class COMMON_API Base64Encoder {
   public:
     NONCOPYABLE(Base64Encoder)
 
-    class Exception {
-      public:
-        DECLARE_EXCEPTION_TYPE(CKM::Exception, Base)
-        DECLARE_EXCEPTION_TYPE(Base, InternalError)
-        DECLARE_EXCEPTION_TYPE(Base, NotFinalized)
-        DECLARE_EXCEPTION_TYPE(Base, AlreadyFinalized)
-    };
     Base64Encoder();
     void append(const RawBuffer &data);
     void finalize();
@@ -56,13 +48,6 @@ class COMMON_API Base64Decoder {
   public:
     NONCOPYABLE(Base64Decoder)
 
-    class Exception {
-      public:
-        DECLARE_EXCEPTION_TYPE(CKM::Exception, Base)
-        DECLARE_EXCEPTION_TYPE(Base, InternalError)
-        DECLARE_EXCEPTION_TYPE(Base, NotFinalized)
-        DECLARE_EXCEPTION_TYPE(Base, AlreadyFinalized)
-    };
     Base64Decoder();
     void append(const RawBuffer &data);
 

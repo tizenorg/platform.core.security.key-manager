@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2000 - 2015 Samsung Electronics Co., Ltd All Rights Reserved
+ *  Copyright (c) 2000 - 2016 Samsung Electronics Co., Ltd All Rights Reserved
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
  */
 
 #include <data-type.h>
+#include <exception.h>
 
 namespace CKM {
 
@@ -32,8 +33,8 @@ DataType::DataType(Type data)
   : m_dataType(data)
 {
     if (!isInRange(data))
-        ThrowMsg(Exception::OutOfRange,
-                 "Invalid conversion from DataType=" << static_cast<int>(data) << " to DBDataType");
+        ThrowErr(Exc::InputParam,
+                 "Invalid conversion from DataType=", static_cast<int>(data), " to DBDataType");
 }
 
 DataType::DataType(KeyType key) {
@@ -46,8 +47,8 @@ DataType::DataType(KeyType key) {
     case KeyType::KEY_ECDSA_PRIVATE: m_dataType = DataType::KEY_ECDSA_PRIVATE; break;
     case KeyType::KEY_AES:           m_dataType = DataType::KEY_AES;           break;
     default:
-        ThrowMsg(Exception::OutOfRange,
-                 "Invalid conversion from KeyType=" << static_cast<int>(key) << " to DBDataType");
+        ThrowErr(Exc::InputParam,
+                 "Invalid conversion from KeyType=", static_cast<int>(key), " to DBDataType");
     }
 }
 
@@ -67,8 +68,8 @@ DataType::DataType(AlgoType algorithmType)
     case AlgoType::ECDSA_SV:
     case AlgoType::ECDSA_GEN:       m_dataType = DataType::KEY_ECDSA_PUBLIC;    break;
     default:
-        ThrowMsg(Exception::OutOfRange,
-                 "Invalid conversion from AlgoType=" << static_cast<int>(algorithmType) <<
+        ThrowErr(Exc::InputParam,
+                 "Invalid conversion from AlgoType=", static_cast<int>(algorithmType),
                  " to DBDataType");
     }
 }
@@ -77,7 +78,7 @@ DataType::DataType(int data) :
     m_dataType(static_cast<Type>(data))
 {
     if (!isInRange(data))
-        ThrowMsg(Exception::OutOfRange, "Invalid conversion from int=" << data << " to DBDataType");
+        ThrowErr(Exc::InputParam, "Invalid conversion from int=", data, " to DBDataType");
 }
 
 DataType::operator int () const
@@ -96,8 +97,8 @@ DataType::operator KeyType () const
     case DataType::KEY_ECDSA_PUBLIC: return KeyType::KEY_ECDSA_PUBLIC;
     case DataType::KEY_AES: return KeyType::KEY_AES;
     default:
-        ThrowMsg(Exception::OutOfRange,
-                 "Invalid conversion from DBDataType=" << static_cast<int>(m_dataType) <<
+        ThrowErr(Exc::InputParam,
+                 "Invalid conversion from DBDataType=", static_cast<int>(m_dataType),
                  " to KeyType");
     }
 }
@@ -174,7 +175,7 @@ DataType DataType::getChainDatatype(unsigned int index)
     DataType result(static_cast<int>(index) + DB_CHAIN_FIRST);
 
     if ( !result.isChainCert() )
-        ThrowMsg(Exception::OutOfRange, "Certificate number is out of range");
+        ThrowErr(Exc::InputParam, "Certificate number is out of range");
 
     return result;
 }
