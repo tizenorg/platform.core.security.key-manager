@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2000 - 2015 Samsung Electronics Co., Ltd All Rights Reserved
+ *  Copyright (c) 2000 - 2016 Samsung Electronics Co., Ltd All Rights Reserved
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,19 +22,13 @@
 #pragma once
 
 #include <ckm/ckm-type.h>
-#include <dpl/exception.h>
+#include <exception.h>
 #include <symbol-visibility.h>
 
 namespace CKM {
 
 class COMMON_API DataType {
 public:
-    class Exception {
-    public:
-        DECLARE_EXCEPTION_TYPE(CKM::Exception, Base)
-        DECLARE_EXCEPTION_TYPE(Base, OutOfRange)
-    };
-
     enum Type {
         KEY_RSA_PUBLIC,
         KEY_RSA_PRIVATE,
