@@ -98,8 +98,6 @@ bool CKMService::ProcessOne(
 		LogError("Broken protocol. Closing socket: " << e.DumpToString());
 	} catch (const Exception::BrokenProtocol &e) {
 		LogError("Broken protocol. Closing socket: " << e.DumpToString());
-	} catch (const DataType::Exception::Base &e) {
-		LogError("Closing socket. DBDataType::Exception: " << e.DumpToString());
 	} catch (const std::string &e) {
 		LogError("String exception(" << e << "). Closing socket");
 	} catch (const std::exception &e) {

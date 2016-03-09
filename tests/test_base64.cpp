@@ -25,6 +25,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include <ckm/ckm-type.h>
+#include <exception.h>
 
 using CKM::Base64Encoder;
 using CKM::Base64Decoder;
@@ -77,30 +78,30 @@ BOOST_AUTO_TEST_CASE(THROW_SOMETHING)
 {
 	/* encode data */
 	Base64Encoder encoder;
-	BOOST_REQUIRE_THROW(encoder.get(), Base64Encoder::Exception::NotFinalized);
+	BOOST_REQUIRE_THROW(encoder.get(), CKM::Exc::InternalError);
 
 	BOOST_REQUIRE_NO_THROW(encoder.append(rawbuf));
 	BOOST_REQUIRE_NO_THROW(encoder.finalize());
 
 	BOOST_REQUIRE_THROW(encoder.append(rawbuf),
-						Base64Encoder::Exception::AlreadyFinalized);
+						CKM::Exc::InternalError);
 	BOOST_REQUIRE_THROW(encoder.finalize(),
-						Base64Encoder::Exception::AlreadyFinalized);
+						CKM::Exc::InternalError);
 
 	RawBuffer encdata;
 	BOOST_REQUIRE_NO_THROW(encdata = encoder.get());
 
 	/* decode data */
 	Base64Decoder decoder;
-	BOOST_REQUIRE_THROW(decoder.get(), Base64Decoder::Exception::NotFinalized);
+	BOOST_REQUIRE_THROW(decoder.get(), CKM::Exc::InternalError);
 
 	BOOST_REQUIRE_NO_THROW(decoder.append(encdata));
 	BOOST_REQUIRE_NO_THROW(decoder.finalize());
 
 	BOOST_REQUIRE_THROW(decoder.append(encdata),
-						Base64Decoder::Exception::AlreadyFinalized);
+						CKM::Exc::InternalError);
 	BOOST_REQUIRE_THROW(decoder.finalize(),
-						Base64Decoder::Exception::AlreadyFinalized);
+						CKM::Exc::InternalError);
 
 	RawBuffer decdata;
 	BOOST_REQUIRE_NO_THROW(decdata = decoder.get());

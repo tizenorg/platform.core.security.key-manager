@@ -23,6 +23,7 @@
 
 #include <dpl/log/log.h>
 
+#include <exception.h>
 #include <base64.h>
 
 namespace CKM {
@@ -37,8 +38,7 @@ Base64Encoder::Base64Encoder() :
 void Base64Encoder::append(const RawBuffer &data)
 {
 	if (m_finalized) {
-		LogWarning("Already finalized.");
-		ThrowMsg(Exception::AlreadyFinalized, "Already finalized");
+		ThrowErr(Exc::InternalError, "Already finalized");
 	}
 
 	if (!m_b64)
@@ -50,8 +50,7 @@ void Base64Encoder::append(const RawBuffer &data)
 void Base64Encoder::finalize()
 {
 	if (m_finalized) {
-		LogWarning("Already finalized.");
-		ThrowMsg(Exception::AlreadyFinalized, "Already finalized.");
+		ThrowErr(Exc::InternalError, "Already finalized.");
 	}
 
 	m_finalized = true;
@@ -61,16 +60,14 @@ void Base64Encoder::finalize()
 RawBuffer Base64Encoder::get()
 {
 	if (!m_finalized) {
-		LogWarning("Not finalized");
-		ThrowMsg(Exception::NotFinalized, "Not finalized");
+		ThrowErr(Exc::InternalError, "Not finalized");
 	}
 
 	BUF_MEM *bptr = nullptr;
 	BIO_get_mem_ptr(m_b64, &bptr);
 
 	if (!bptr) {
-		LogError("Bio internal error");
-		ThrowMsg(Exception::InternalError, "Bio internal error");
+		ThrowErr(Exc::InternalError, "Bio internal error");
 	}
 
 	if (bptr->length > 0)
@@ -87,9 +84,7 @@ void Base64Encoder::reset()
 	m_bmem = BIO_new(BIO_s_mem());
 
 	if (!m_b64 || !m_bmem) {
-		LogError("Error during allocation memory in BIO");
-		ThrowMsg(Exception::InternalError,
-				 "Error during allocation memory in BIO");
+		ThrowErr(Exc::InternalError, "Error during allocation memory in BIO");
 	}
 
 	BIO_set_flags(m_b64, BIO_FLAGS_BASE64_NO_NL);
@@ -109,8 +104,7 @@ Base64Decoder::Base64Decoder() :
 void Base64Decoder::append(const RawBuffer &data)
 {
 	if (m_finalized) {
-		LogWarning("Already finalized.");
-		ThrowMsg(Exception::AlreadyFinalized, "Already finalized.");
+		ThrowErr(Exc::InternalError, "Already finalized.");
 	}
 
 	std::copy(data.begin(), data.end(), std::back_inserter(m_input));
@@ -124,8 +118,7 @@ static bool whiteCharacter(char a)
 bool Base64Decoder::finalize()
 {
 	if (m_finalized) {
-		LogWarning("Already finalized.");
-		ThrowMsg(Exception::AlreadyFinalized, "Already finalized.");
+		ThrowErr(Exc::InternalError, "Already finalized.");
 	}
 
 	m_finalized = true;
@@ -152,16 +145,14 @@ bool Base64Decoder::finalize()
 	RawBuffer buffer(len);
 
 	if (!buffer.data()) {
-		LogError("Error in malloc.");
-		ThrowMsg(Exception::InternalError, "Error in malloc.");
+		ThrowErr(Exc::InternalError, "Error in malloc.");
 	}
 
 	memset(buffer.data(), 0, buffer.size());
 	b64 = BIO_new(BIO_f_base64());
 
 	if (!b64) {
-		LogError("Couldn't create BIO object.");
-		ThrowMsg(Exception::InternalError, "Couldn't create BIO object.");
+		ThrowErr(Exc::InternalError, "Couldn't create BIO object.");
 	}
 
 	BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
@@ -172,16 +163,14 @@ bool Base64Decoder::finalize()
 
 	if (!bmem) {
 		BIO_free(b64);
-		LogError("Internal error in BIO");
-		ThrowMsg(Exception::InternalError, "Internal error in BIO");
+		ThrowErr(Exc::InternalError, "Internal error in BIO");
 	}
 
 	bmem = BIO_push(b64, bmem);
 
 	if (!bmem) {
 		BIO_free(b64);
-		LogError("Internal error in BIO");
-		ThrowMsg(Exception::InternalError, "Internal error in BIO");
+		ThrowErr(Exc::InternalError, "Internal error in BIO");
 	}
 
 	int readlen = BIO_read(bmem, buffer.data(), buffer.size());
@@ -203,8 +192,7 @@ bool Base64Decoder::finalize()
 RawBuffer Base64Decoder::get() const
 {
 	if (!m_finalized) {
-		LogWarning("Not finalized.");
-		ThrowMsg(Exception::NotFinalized, "Not finalized");
+		ThrowErr(Exc::InternalError, "Not finalized");
 	}
 
 	return m_output;

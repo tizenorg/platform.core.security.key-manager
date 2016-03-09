@@ -26,6 +26,7 @@
 #include <crypto-init.h>
 #include <client-manager-impl.h>
 #include <client-common.h>
+#include <exception.h>
 #include <message-buffer.h>
 #include <protocols.h>
 #include <key-impl.h>
@@ -147,11 +148,10 @@ int Manager::Impl::saveKey(const Alias &alias, const KeyShPtr &key,
 
 	try {
 		return saveBinaryData(alias, DataType(key->getType()), key->getDER(), policy);
-	} catch (const DataType::Exception::Base &) {
-		LogError("Error in key conversion. Could not convert KeyType::NONE to DBDataType!");
+	} catch (const Exc::Exception &e) {
+		LogError("Exception: " << e.what());
+		return e.error();
 	}
-
-	return CKM_API_ERROR_INPUT_PARAM;
 }
 
 int Manager::Impl::saveCertificate(
