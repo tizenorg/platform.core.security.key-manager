@@ -40,7 +40,9 @@ Requires: libkey-manager-common = %{version}-%{release}
 %global ro_data_dir %{?TZ_SYS_RO_SHARE:%TZ_SYS_RO_SHARE/ckm}%{!?TZ_SYS_RO_SHARE:%_datadir/ckm}
 %global db_test_dir %{?TZ_SYS_RO_SHARE:%TZ_SYS_RO_SHARE/ckm-db-test}%{!?TZ_SYS_RO_SHARE:%_datadir/ckm-db-test}
 %global bin_dir %{?TZ_SYS_BIN:%TZ_SYS_BIN}%{!?TZ_SYS_BIN:%_bindir}
-%global sbin_dir %{?TZ_SYS_SBIN:%TZ_SYS_SBIN}%{!?TZ_SYS_SBIN:%_sbindir}
+# image creation error occured if /usr/sbin used for ldconfig
+#%global sbin_dir %{?TZ_SYS_SBIN:%TZ_SYS_SBIN}%{!?TZ_SYS_SBIN:%_sbindir}
+%global sbin_dir /sbin
 %global ro_etc_dir %{?TZ_SYS_RO_ETC:%TZ_SYS_RO_ETC}%{!?TZ_SYS_RO_ETC:/etc}
 %global run_dir %{?TZ_SYS_RUN:%TZ_SYS_RUN}%{!?TZ_SYS_RUN:/var/run}
 %global initial_values_dir %{rw_data_dir}/initial_values
