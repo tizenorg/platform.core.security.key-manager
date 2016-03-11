@@ -32,6 +32,7 @@
 #include <mutex>
 #include <thread>
 #include <functional>
+#include <ctime>
 
 #include <dpl/exception.h>
 
@@ -100,7 +101,9 @@ protected:
 
         SocketDescription()
           : interfaceID(-1)
-          , service(NULL)
+          , service(nullptr)
+          , timeout(::time(nullptr))
+          , counter(0)
           , m_flags(0)
         {
         }

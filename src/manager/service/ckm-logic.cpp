@@ -414,15 +414,16 @@ int CKMLogic::verifyAndSaveDataHelper(
         // check if data is correct
         Crypto::Data binaryData;
         retCode = toBinaryData(data, binaryData);
-        if (retCode == CKM_API_SUCCESS)
-            retCode = saveDataHelper(cred, name, label, binaryData, policy);
+        if (retCode != CKM_API_SUCCESS)
+            return retCode;
+        else
+            return saveDataHelper(cred, name, label, binaryData, policy);
     } catch (const Exc::Exception &e) {
-        retCode = e.error();
+        return e.error();
     } catch (const CKM::Exception &e) {
         LogError("CKM::Exception: " << e.GetMessage());
-        retCode = CKM_API_ERROR_SERVER_ERROR;
+        return CKM_API_ERROR_SERVER_ERROR;
     }
-    return retCode;
 }
 
 int CKMLogic::getKeyForService(
@@ -474,19 +475,21 @@ int CKMLogic::extractPKCS12Data(
     DB::RowVector &output) const
 {
     // private key is mandatory
-    if (!pkcs.getKey())
+    auto key = pkcs.getKey();
+    if (!key)
         return CKM_API_ERROR_INVALID_FORMAT;
-    Key* keyPtr = pkcs.getKey().get();
-    Crypto::Data keyData(DataType(keyPtr->getType()), keyPtr->getDER());
+
+    Crypto::Data keyData(DataType(key->getType()), key->getDER());
     int retCode = verifyBinaryData(keyData);
     if (retCode != CKM_API_SUCCESS)
         return retCode;
     output.push_back(createEncryptedRow(crypto, name, ownerLabel, keyData, keyPolicy));
 
     // certificate is mandatory
-    if (!pkcs.getCertificate())
+    auto cert = pkcs.getCertificate();
+    if (!cert)
         return CKM_API_ERROR_INVALID_FORMAT;
-    Crypto::Data certData(DataType::CERTIFICATE, pkcs.getCertificate().get()->getDER());
+    Crypto::Data certData(DataType::CERTIFICATE, cert->getDER());
     retCode = verifyBinaryData(certData);
     if (retCode != CKM_API_SUCCESS)
         return retCode;

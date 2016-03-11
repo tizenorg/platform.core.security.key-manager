@@ -33,6 +33,7 @@
 #include <test_watched-thread.h>
 
 #include <descriptor-set.h>
+#include <dpl/errno_string.h>
 
 using namespace CKM;
 
@@ -57,7 +58,7 @@ void closePipe(int* fd) {
  */
 #define PIPE(fd) \
     int (fd)[2]; \
-    BOOST_REQUIRE_MESSAGE(0 == pipe((fd)),"Pipe creation failed: " << strerror(errno)); \
+    BOOST_REQUIRE_MESSAGE(0 == pipe((fd)),"Pipe creation failed: " << GetErrnoString()); \
     PipePtr fd##Ptr((fd), closePipe);
 
 void unexpectedCallback(int, short) {
@@ -69,14 +70,14 @@ void readFd(int fd, int expectedFd, short revents) {
     BOOST_REQUIRE_MESSAGE(fd == expectedFd, "Unexpected descriptor");
     BOOST_REQUIRE_MESSAGE(revents & POLLIN, "Unexpected event");
     BOOST_REQUIRE_MESSAGE(1 == TEMP_FAILURE_RETRY(read(fd,buf,1)),
-                          "Pipe read failed" << strerror(errno));
+                          "Pipe read failed" << GetErrnoString());
 }
 
 void writeFd(int fd, int expectedFd, short revents) {
     BOOST_REQUIRE_MESSAGE(fd == expectedFd, "Unexpected descriptor");
     BOOST_REQUIRE_MESSAGE(revents & POLLOUT, "Unexpected event");
     BOOST_REQUIRE_MESSAGE(1 == TEMP_FAILURE_RETRY(write(fd,"j",1)),
-                          "Pipe writing failed" << strerror(errno));
+                          "Pipe writing failed" << GetErrnoString());
 }
 
 } // anonymous namespace
@@ -193,7 +194,7 @@ BOOST_AUTO_TEST_CASE(T070_Write) {
         {
             char buf[1];
             ssize_t tmp = TEMP_FAILURE_RETRY(read(fd[0], buf, 1));
-            THREAD_REQUIRE_MESSAGE(tmp == 1, "Pipe reading failed " << strerror(errno));
+            THREAD_REQUIRE_MESSAGE(tmp == 1, "Pipe reading failed " << GetErrnoString());
         });
 
         BOOST_REQUIRE_NO_THROW(descriptors.wait(POLL_TIMEOUT));
@@ -221,7 +222,7 @@ BOOST_AUTO_TEST_CASE(T080_Read) {
         auto thread = CreateWatchedThread([fd]
         {
             ssize_t tmp = TEMP_FAILURE_RETRY(write(fd[1], "j", 1));
-            THREAD_REQUIRE_MESSAGE(tmp == 1, "Pipe writing failed " << strerror(errno));
+            THREAD_REQUIRE_MESSAGE(tmp == 1, "Pipe writing failed " << GetErrnoString());
         });
 
         BOOST_REQUIRE_NO_THROW(descriptors.wait(POLL_TIMEOUT));
@@ -260,11 +261,11 @@ BOOST_AUTO_TEST_CASE(T090_WriteAfterRead) {
         auto thread = CreateWatchedThread([fd,fd2]
         {
             ssize_t tmp = TEMP_FAILURE_RETRY(write(fd[1], "j", 1));
-            BOOST_REQUIRE_MESSAGE(tmp == 1, "Pipe writing failed " << strerror(errno));
+            BOOST_REQUIRE_MESSAGE(tmp == 1, "Pipe writing failed " << GetErrnoString());
 
             char buf[1];
             tmp = TEMP_FAILURE_RETRY(read(fd2[0], buf, 1));
-            THREAD_REQUIRE_MESSAGE(tmp == 1, "Pipe reading failed " << strerror(errno));
+            THREAD_REQUIRE_MESSAGE(tmp == 1, "Pipe reading failed " << GetErrnoString());
         });
 
         BOOST_REQUIRE_NO_THROW(descriptors.wait(POLL_TIMEOUT));

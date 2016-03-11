@@ -42,6 +42,7 @@
 #include <key-provider.h>
 #include <db-row.h>
 #include <crypto-init.h>
+#include <dpl/errno_string.h>
 
 using namespace CKM;
 using namespace std;
@@ -254,15 +255,39 @@ struct FdCloser {
 typedef std::unique_ptr<int, FdCloser> FdPtr;
 
 uid_t getUid(const char *name) {
-    passwd *p = getpwnam(name);
-    BOOST_REQUIRE_MESSAGE(p, "getpwnam failed");
-    return p->pw_uid;
+    struct passwd pwd;
+    struct passwd *result = nullptr;
+    int bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
+    if (bufsize <= 0)
+        bufsize = 16384; /* should be more than enough */
+
+    memset(&pwd, 0x00, sizeof(pwd));
+
+    std::unique_ptr<char> buf(new char[bufsize]);
+    BOOST_REQUIRE_MESSAGE(buf, "failed to allocate mem for buf for getpwname_r");
+
+    int ret = getpwnam_r(name, &pwd, buf.get(), bufsize, &result);
+    BOOST_REQUIRE_MESSAGE(ret == 0 && result, "getpwnam_r failed");
+
+    return pwd.pw_uid;
 }
 
 gid_t getGid(const char *name) {
-    group *g = getgrnam(name);
-    BOOST_REQUIRE_MESSAGE(g, "getgrnam failed");
-    return g->gr_gid;
+    struct group grp;
+    struct group *result = nullptr;
+    size_t bufsize = sysconf(_SC_GETGR_R_SIZE_MAX);
+    if (bufsize <= 0)
+        bufsize = 16384; /* should be more than enough */
+
+    memset(&grp, 0x00, sizeof(grp));
+
+    std::unique_ptr<char> buf(new char[bufsize]);
+    BOOST_REQUIRE_MESSAGE(buf, "failed to allocate mem for buf for getgrnam_r");
+
+    int ret = getgrnam_r(name, &grp, buf.get(), bufsize, &result);
+    BOOST_REQUIRE_MESSAGE(ret == 0 && result, "getgrnam_r failed");
+
+    return grp.gr_gid;
 }
 
 void restoreFile(const string& filename) {
@@ -275,36 +300,32 @@ void restoreFile(const string& filename) {
 
     int sourceFd = TEMP_FAILURE_RETRY(open(sourcePath.c_str(), O_RDONLY));
     err = errno;
-    BOOST_REQUIRE_MESSAGE(sourceFd > 0, "Opening " << sourcePath << " failed: " << strerror(err));
+    BOOST_REQUIRE_MESSAGE(sourceFd > 0, "Opening " << sourcePath << " failed: " << GetErrnoString(err));
 
     FdPtr sourceFdPtr(&sourceFd);
 
     int targetFd = TEMP_FAILURE_RETRY(creat(targetPath.c_str(), 0644));
     err = errno;
-    BOOST_REQUIRE_MESSAGE(targetFd > 0, "Creating " << targetPath << " failed: " << strerror(err));
+    BOOST_REQUIRE_MESSAGE(targetFd > 0, "Creating " << targetPath << " failed: " << GetErrnoString(err));
 
     ret = fchown(targetFd, CKM_UID, CKM_GID);
     err = errno;
-    BOOST_REQUIRE_MESSAGE(ret != -1, "fchown() failed: " << strerror(err));
+    BOOST_REQUIRE_MESSAGE(ret != -1, "fchown() failed: " << GetErrnoString(err));
 
     FdPtr targetFdPtr(&targetFd);
 
     struct stat sourceStat;
     ret = fstat(sourceFd, &sourceStat);
     err = errno;
-    BOOST_REQUIRE_MESSAGE(ret != -1, "fstat() failed: " << strerror(err));
+    BOOST_REQUIRE_MESSAGE(ret != -1, "fstat() failed: " << GetErrnoString(err));
 
     ret = sendfile(targetFd, sourceFd, 0, sourceStat.st_size);
     err = errno;
-    BOOST_REQUIRE_MESSAGE(ret != -1, "sendfile() failed: " << strerror(err));
+    BOOST_REQUIRE_MESSAGE(ret != -1, "sendfile() failed: " << GetErrnoString(err));
 
     ret = fsync(targetFd);
     err = errno;
-    BOOST_REQUIRE_MESSAGE(ret != -1, "fsync() failed: " << strerror(err));
-
-    // TODO scoped close
-    close(targetFd);
-    close(sourceFd);
+    BOOST_REQUIRE_MESSAGE(ret != -1, "fsync() failed: " << GetErrnoString(err));
 }
 
 void generateRandom(size_t random_bytes, unsigned char *output)

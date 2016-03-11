@@ -37,7 +37,10 @@ class Crypto;
 } // CKM
 
 struct Item {
-    Item() {}
+    Item() : type(CKM::DataType::Type::DB_LAST)
+    {
+    }
+
     Item(const CKM::Alias& alias,
          const CKM::DataType::Type type,
          const CKM::Policy& policy)

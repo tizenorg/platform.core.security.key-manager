@@ -31,7 +31,6 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <errno.h>
-#include <time.h>
 
 #include <systemd/sd-daemon.h>
 
@@ -168,6 +167,7 @@ SocketManager::CreateDefaultReadSocketDescription(int sock, bool timeout)
 
 SocketManager::SocketManager() :
     m_maxDesc(0),
+    m_working(true),
     m_counter(0)
 {
     FD_ZERO(&m_readSet);

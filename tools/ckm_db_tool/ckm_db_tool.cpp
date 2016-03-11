@@ -118,13 +118,13 @@ void DbWrapper::process(const string& acmd)
             displayRow(row, trim);
         }
     } catch (const DB::SqlConnection::Exception::Base& e) {
-        cout << e.GetMessage() << endl;
+        cerr << e.GetMessage() << endl;
     } catch (const Exc::Exception &e) {
-        cout << e.message() << endl;
+        cerr << e.message() << endl;
     } catch (const std::exception &e) {
-        cout << e.what() << endl;
+        cerr << e.what() << endl;
     } catch (...) {
-        cout << "Unexpected exception occurred" << endl;
+        cerr << "Unexpected exception occurred" << endl;
     }
 }
 
@@ -166,70 +166,76 @@ void internalHelp() {
 
 int main(int argc, char* argv[])
 {
-    if(argc < 2 || !argv[1]) {
-        usage();
-        return -1;
-    }
-
-    // read uid
-    stringstream ss(argv[1]);
-    uid_t uid;
-    if(!(ss >> uid)) {
-        usage();
-        return -1;
-    }
-
-    int idx = 2;
-
-    // read password
-    Password pass;
-    if(uid >= 5000) {
-        if(argc > idx) {
-            pass = argv[idx];
-            idx++;
+    try {
+        if (argc < 2 || !argv[1]) {
+            usage();
+            return -1;
         }
-    }
 
-    // read sqlite3 command
-    string argcmd;
-    if(argc > idx)
-        argcmd = argv[idx];
+        // read uid
+        stringstream ss(argv[1]);
+        uid_t uid;
+        if (!(ss >> uid)) {
+            usage();
+            return -1;
+        }
 
-    // unlock db
-    DbWrapper dbw(uid, pass);
-    int retCode = dbw.unlock();
-    if (retCode != CKM_API_SUCCESS ) {
-        cout << "Unlocking database failed: " << retCode << endl;
-        return -1;
-    }
-    cout << "Database unlocked" << endl;
+        int idx = 2;
 
-    for(;;) {
-        string cmd;
-        if (argcmd.empty()) {
-            cout << "> ";
-            if(!getline(cin, cmd)) {
-                cout << "exit" << endl;
-                break; // EOF
+        // read password
+        Password pass;
+        if (uid >= 5000) {
+            if (argc > idx) {
+                pass = argv[idx];
+                idx++;
             }
-        } else {
-            cmd = argcmd;
         }
 
-        if(cmd == "exit")
-            break;
-        if(cmd == "help") {
-            internalHelp();
-            continue;
+        // read sqlite3 command
+        string argcmd;
+        if (argc > idx)
+            argcmd = argv[idx];
+
+        // unlock db
+        DbWrapper dbw(uid, pass);
+        int retCode = dbw.unlock();
+        if (retCode != CKM_API_SUCCESS ) {
+            cerr << "Unlocking database failed: " << retCode << endl;
+            return -1;
+        }
+        cout << "Database unlocked" << endl;
+
+        while (true) {
+            string cmd;
+            if (argcmd.empty()) {
+                cout << "> ";
+                if(!getline(cin, cmd)) {
+                    cout << "exit" << endl;
+                    break; // EOF
+                }
+            } else {
+                cmd = argcmd;
+            }
+
+            if(cmd == "exit")
+                break;
+            if(cmd == "help") {
+                internalHelp();
+                continue;
+            }
+
+            dbw.process(cmd);
+
+            if(!argcmd.empty())
+                break;
         }
 
-        dbw.process(cmd);
+        dbw.lock();
+        cout << "Database locked" << endl;
 
-        if(!argcmd.empty())
-            break;
+        return 0;
+    } catch (...) {
+        cerr << "Unexpected exception occurred" << endl;
+        return -1;
     }
-    dbw.lock();
-    cout << "Database locked" << endl;
-
-    return 0;
 }

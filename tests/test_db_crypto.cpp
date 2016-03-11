@@ -133,7 +133,7 @@ BOOST_AUTO_TEST_CASE(DBperfLookupAliasByOwner)
     performance_start("getRow");
     for(unsigned int t=0; t<c_test_retries; t++)
     {
-        int label_num = rand() % num_labels;
+        int label_num = rand_r(&t) % num_labels;
         generate_label(label_num, label);
 
         unsigned int start_name = label_num*c_names_per_label;
@@ -160,10 +160,10 @@ BOOST_AUTO_TEST_CASE(DBperfLookupAliasRandomOwnershipNoPermissions)
     performance_start("getRow");
     for(unsigned int t=0; t<c_test_retries; t++)
     {
-        int name_idx = rand()%c_num_names;
+        int name_idx = rand_r(&t)%c_num_names;
         generate_name(name_idx, name);
         generate_label(name_idx/c_names_per_label, owner_label);
-        generate_label(rand()%num_labels, smack_label);
+        generate_label(rand_r(&t)%num_labels, smack_label);
 
         // do not care of result
         m_db.getRow(name, owner_label, DataType::BINARY_DATA);
@@ -226,7 +226,7 @@ BOOST_AUTO_TEST_CASE(DBperfGetAliasList)
     for(unsigned int t=0; t<(c_test_retries/num_labels); t++)
     {
         LabelNameVector ret_list;
-        generate_label(rand()%num_labels, label);
+        generate_label(rand_r(&t)%num_labels, label);
 
         BOOST_REQUIRE_NO_THROW(m_db.listNames(label, ret_list, DataType::BINARY_DATA));
         BOOST_REQUIRE(c_num_names == ret_list.size());

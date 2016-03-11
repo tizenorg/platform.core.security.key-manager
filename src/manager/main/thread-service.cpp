@@ -24,7 +24,7 @@
 
 namespace CKM {
 
-ThreadService::ThreadService()
+ThreadService::ThreadService() : m_connectionInfoMap()
 {
 }
 

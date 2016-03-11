@@ -33,6 +33,9 @@ int main()
     } catch (const std::runtime_error& e) {
         std::cerr << e.what() << std::endl;
         return -1;
+    } catch (...) {
+        std::cerr << "Unknown exception occured!" << std::endl;
+        return -1;
     }
 }
 

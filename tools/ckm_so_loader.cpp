@@ -43,7 +43,7 @@ void clear_cache()
     sync();
     ofstream of("/proc/sys/vm/drop_caches");
     if (of.bad()) {
-        cerr << "Cache clearing failed: " << strerror(errno) << endl;
+        cerr << "Cache clearing failed with errno: " << errno << endl;
         return;
     }
     of << "3";
@@ -89,36 +89,39 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    int flags = stoi(argv[1]); // let it throw
-    int repeats = stoi(argv[2]); // let it throw
-    string so_path(argv[3]);
-    string symbol(argv[4]);
+    try {
+        int flags = stoi(argv[1]); // let it throw
+        int repeats = stoi(argv[2]); // let it throw
+        string so_path(argv[3]);
+        string symbol(argv[4]);
 
-    cout << "dlopen[us];dlsym[us]" << endl;
-    for (int cnt = 0 ; cnt < repeats; cnt++)
-    {
-        /*
-         * It has to be a different process each time. Glibc somehow caches the library information
-         * and consecutive calls are faster
-         */
-        pid_t pid = fork();
-        if (pid < 0) {
-            cerr << "fork failed: " << strerror(errno) << endl;
-            return -1;
-        }
-        if (pid == 0) {
-            test(flags, so_path, symbol);
-            exit(0);
-        }
-        else
-        {
-            int status;
-            pid_t ret = waitpid(pid,&status, 0);
-            if (ret != pid) {
-                cerr << "waitpid failed: " << strerror(errno) << endl;
-                exit(1);
+        cout << "dlopen[us];dlsym[us]" << endl;
+        for (int cnt = 0 ; cnt < repeats; cnt++) {
+            /*
+             * It has to be a different process each time. Glibc somehow caches the library information
+             * and consecutive calls are faster
+             */
+            pid_t pid = fork();
+            if (pid < 0) {
+                cerr << "fork failed with errno: " << errno << endl;
+                return -1;
+            } else if (pid == 0) {
+                test(flags, so_path, symbol);
+                exit(0);
+            } else {
+
+                int status;
+                pid_t ret = waitpid(pid, &status, 0);
+                if (ret != pid) {
+                    cerr << "waitpid failed with errno: " << errno << endl;
+                    exit(1);
+                }
             }
         }
+
+        return 0;
+    } catch (...) {
+        cerr << "Unexpected exception occured" << endl;
+        return -1;
     }
-    return 0;
 }

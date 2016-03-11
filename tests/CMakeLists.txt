@@ -54,6 +54,7 @@ SET(TEST_MERGED_SOURCES
     ${KEY_MANAGER_PATH}/client-async/descriptor-set.cpp
     ${KEY_MANAGER_PATH}/dpl/core/src/assert.cpp
     ${KEY_MANAGER_PATH}/dpl/core/src/colors.cpp
+    ${KEY_MANAGER_PATH}/dpl/core/src/errno_string.cpp
     ${KEY_MANAGER_PATH}/dpl/db/src/sql_connection.cpp
     ${KEY_MANAGER_PATH}/dpl/db/src/naive_synchronization_object.cpp
     ${KEY_MANAGER_PATH}/sqlcipher/sqlcipher.c
