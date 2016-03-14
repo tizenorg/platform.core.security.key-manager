@@ -19,11 +19,10 @@
  * @version     1.0
  * @brief
  */
-#include <dirent.h>
-
 #include <initial-value-loader.h>
 
 #include <ckm-logic.h>
+#include <for-each-file.h>
 #include <InitialValuesFile.h>
 
 namespace {
@@ -38,23 +37,16 @@ void LoadFiles(CKMLogic &logic)
 {
     try {
         std::vector<std::string> filesToParse;
-        DIR *dp = opendir(INITIAL_VALUES_DIR);
-        if (dp) {
-            struct dirent *entry;
-            while ((entry = readdir(dp))) {
-                std::string filename = std::string(entry->d_name);
 
-                // check if XML file
-                std::string lowercaseFilename = filename;
-                std::transform(lowercaseFilename.begin(), lowercaseFilename.end(), lowercaseFilename.begin(), ::tolower);
+        forEachFile(INITIAL_VALUES_DIR, [&filesToParse](const std::string &filename) {
+            std::string lowercaseFilename = filename;
+            std::transform(lowercaseFilename.begin(), lowercaseFilename.end(), lowercaseFilename.begin(), ::tolower);
 
-                if (lowercaseFilename.find(INIT_VALUES_FILE_SUFFIX) == std::string::npos)
-                    continue;
+            if (lowercaseFilename.find(INIT_VALUES_FILE_SUFFIX) == std::string::npos)
+                return;
 
-                filesToParse.push_back(std::string(INITIAL_VALUES_DIR) + "/" + filename);
-            }
-            closedir(dp);
-        }
+            filesToParse.emplace_back(std::string(INITIAL_VALUES_DIR) + "/" + filename);
+        });
 
         // parse
         for (const auto & file : filesToParse) {

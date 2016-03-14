@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2000 - 2014 Samsung Electronics Co., Ltd All Rights Reserved
+ *  Copyright (c) 2000 - 2016 Samsung Electronics Co., Ltd All Rights Reserved
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,17 +14,16 @@
  *  limitations under the License
  *
  *
- * @file        FileSystem.cpp
+ * @file        file-system.cpp
  * @author      Bartlomiej Grzelewski (b.grzelewski@samsung.com)
  * @version     1.0
- * @brief       Sample service implementation.
+ * @brief       File related operations.
  */
 #include <string.h>
 #include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <dirent.h>
 
 #include <cstdlib>
 #include <string>
@@ -38,6 +37,7 @@
 #include <dpl/log/log.h>
 
 #include <exception.h>
+#include <for-each-file.h>
 #include <file-system.h>
 
 namespace {
@@ -188,42 +188,26 @@ int FileSystem::init()
 UidVector FileSystem::getUIDsFromDBFile()
 {
     UidVector uids;
-    std::unique_ptr<DIR, std::function<int(DIR*)>>
-        dirp(::opendir(RW_DATA_DIR), ::closedir);
 
-    if (!dirp.get()) {
-        int err = errno;
-        LogError("Error in opendir. Data directory could not be read. Error: " << GetErrnoString(err));
-        return UidVector();
-    }
+    forEachFile(RW_DATA_DIR, [&uids](const std::string &filename) {
+        if (strncmp(filename.c_str(), CKM_KEY_PREFIX.c_str(), CKM_KEY_PREFIX.size()))
+            return;
 
-    size_t len = offsetof(struct dirent, d_name) + pathconf(RW_DATA_DIR, _PC_NAME_MAX) + 1;
-    std::unique_ptr<struct dirent, std::function<void(void*)>>
-        pEntry(static_cast<struct dirent*>(::malloc(len)), ::free);
-
-    if (!pEntry) {
-        LogError("Memory allocation failed.");
-        return UidVector();
-    }
-
-    struct dirent* pDirEntry = NULL;
-
-    while ( (!readdir_r(dirp.get(), pEntry.get(), &pDirEntry)) && pDirEntry ) {
-        // Ignore files with diffrent prefix
-        if (strncmp(pDirEntry->d_name, CKM_KEY_PREFIX.c_str(), CKM_KEY_PREFIX.size()))
-            continue;
-
-        // We find database. Let's extract user id.
         try {
-            uids.push_back(static_cast<uid_t>(std::stoi((pDirEntry->d_name)+CKM_KEY_PREFIX.size())));
+            uids.emplace_back(static_cast<uid_t>(std::stoi((filename.c_str())
+                    + CKM_KEY_PREFIX.size())));
         } catch (const std::invalid_argument) {
-            LogDebug("Error in extracting uid from db file. Error=std::invalid_argument."
-                "This will be ignored.File=" << pDirEntry->d_name << "");
+            LogDebug("Error in extracting uid from db file. "
+                "Error=std::invalid_argument. "
+                "This will be ignored.File=" << filename);
         } catch(const std::out_of_range) {
-            LogDebug("Error in extracting uid from db file. Error=std::out_of_range."
-                "This will be ignored. File="<< pDirEntry->d_name << "");
+            LogDebug("Error in extracting uid from db file. "
+                "Error=std::out_of_range. "
+                "This will be ignored. File="<< filename);
         }
-    }
+
+        return;
+    });
 
     return uids;
 }

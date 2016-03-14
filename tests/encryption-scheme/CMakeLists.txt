@@ -32,13 +32,14 @@ SET(ENCRYPTION_SCHEME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/smack-access.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/scheme-test.cpp
 
-    ${KEY_MANAGER_PATH}/service/file-lock.cpp
-    ${KEY_MANAGER_PATH}/service/key-provider.cpp
-    ${KEY_MANAGER_PATH}/service/db-crypto.cpp
-    ${KEY_MANAGER_PATH}/service/file-system.cpp
     ${KEY_MANAGER_PATH}/dpl/core/src/assert.cpp
-    ${KEY_MANAGER_PATH}/dpl/db/src/sql_connection.cpp
     ${KEY_MANAGER_PATH}/dpl/db/src/naive_synchronization_object.cpp
+    ${KEY_MANAGER_PATH}/dpl/db/src/sql_connection.cpp
+    ${KEY_MANAGER_PATH}/service/db-crypto.cpp
+    ${KEY_MANAGER_PATH}/service/file-lock.cpp
+    ${KEY_MANAGER_PATH}/service/file-system.cpp
+    ${KEY_MANAGER_PATH}/service/for-each-file.cpp
+    ${KEY_MANAGER_PATH}/service/key-provider.cpp
     ${KEY_MANAGER_PATH}/sqlcipher/sqlcipher.c
 )
 
