@@ -33,28 +33,29 @@ ENDIF (MOCKUP_SM MATCHES "ON")
 
 SET(KEY_MANAGER_SOURCES
     ${KEY_MANAGER_PATH}/main/generic-socket-manager.cpp
-    ${KEY_MANAGER_PATH}/main/socket-manager.cpp
     ${KEY_MANAGER_PATH}/main/key-manager-main.cpp
     ${KEY_MANAGER_PATH}/main/smack-check.cpp
-    ${KEY_MANAGER_PATH}/main/thread-service.cpp
     ${KEY_MANAGER_PATH}/main/socket-2-id.cpp
-    ${KEY_MANAGER_PATH}/service/certificate-store.cpp
-    ${KEY_MANAGER_PATH}/service/certificate-config.cpp
-    ${KEY_MANAGER_PATH}/service/file-lock.cpp
+    ${KEY_MANAGER_PATH}/main/socket-manager.cpp
+    ${KEY_MANAGER_PATH}/main/thread-service.cpp
     ${KEY_MANAGER_PATH}/service/access-control.cpp
-    ${KEY_MANAGER_PATH}/service/ckm-service.cpp
+    ${KEY_MANAGER_PATH}/service/certificate-config.cpp
+    ${KEY_MANAGER_PATH}/service/certificate-store.cpp
     ${KEY_MANAGER_PATH}/service/ckm-logic.cpp
-    ${KEY_MANAGER_PATH}/service/glib-service.cpp
+    ${KEY_MANAGER_PATH}/service/ckm-service.cpp
+    ${KEY_MANAGER_PATH}/service/crypto-logic.cpp
+    ${KEY_MANAGER_PATH}/service/db-crypto.cpp
+    ${KEY_MANAGER_PATH}/service/encryption-logic.cpp
+    ${KEY_MANAGER_PATH}/service/encryption-service.cpp
+    ${KEY_MANAGER_PATH}/service/file-lock.cpp
+    ${KEY_MANAGER_PATH}/service/file-system.cpp
+    ${KEY_MANAGER_PATH}/service/for-each-file.cpp
     ${KEY_MANAGER_PATH}/service/glib-logic.cpp
+    ${KEY_MANAGER_PATH}/service/glib-service.cpp
     ${KEY_MANAGER_PATH}/service/key-provider.cpp
     ${KEY_MANAGER_PATH}/service/ocsp.cpp
-    ${KEY_MANAGER_PATH}/service/crypto-logic.cpp
-    ${KEY_MANAGER_PATH}/service/file-system.cpp
-    ${KEY_MANAGER_PATH}/service/db-crypto.cpp
-    ${KEY_MANAGER_PATH}/service/ocsp-service.cpp
     ${KEY_MANAGER_PATH}/service/ocsp-logic.cpp
-    ${KEY_MANAGER_PATH}/service/encryption-service.cpp
-    ${KEY_MANAGER_PATH}/service/encryption-logic.cpp
+    ${KEY_MANAGER_PATH}/service/ocsp-service.cpp
     ${KEY_MANAGER_PATH}/initial-values/parser.cpp
     ${KEY_MANAGER_PATH}/initial-values/BufferHandler.cpp
     ${KEY_MANAGER_PATH}/initial-values/CertHandler.cpp

@@ -33,43 +33,43 @@ SET(CKM_DB_TOOL_SOURCES
     ${PROJECT_SOURCE_DIR}/tools/ckm_db_tool/ckm_db_tool.cpp
     ${PROJECT_SOURCE_DIR}/tools/ckm_db_tool/db-crypto-ext.cpp
     ${PROJECT_SOURCE_DIR}/tools/ckm_db_tool/ckm-logic-ext.cpp
-    ${KEY_MANAGER_PATH}/initial-values/SWKeyFile.cpp
-
-    ${KEY_MANAGER_PATH}/main/cynara.cpp
-    ${KEY_MANAGER_PATH}/main/generic-socket-manager.cpp
-    ${KEY_MANAGER_PATH}/main/socket-manager.cpp
-    ${KEY_MANAGER_PATH}/main/smack-check.cpp
-    ${KEY_MANAGER_PATH}/main/thread-service.cpp
-    ${KEY_MANAGER_PATH}/main/socket-2-id.cpp
-    ${KEY_MANAGER_PATH}/service/certificate-store.cpp
-    ${KEY_MANAGER_PATH}/service/certificate-config.cpp
-    ${KEY_MANAGER_PATH}/service/file-lock.cpp
-    ${KEY_MANAGER_PATH}/service/access-control.cpp
-    ${KEY_MANAGER_PATH}/service/ckm-logic.cpp
-    ${KEY_MANAGER_PATH}/service/key-provider.cpp
-    ${KEY_MANAGER_PATH}/service/crypto-logic.cpp
-    ${KEY_MANAGER_PATH}/service/db-crypto.cpp
-    ${KEY_MANAGER_PATH}/service/file-system.cpp
-    ${KEY_MANAGER_PATH}/initial-values/parser.cpp
+    ${KEY_MANAGER_PATH}/crypto/platform/decider.cpp
+    ${KEY_MANAGER_PATH}/crypto/sw-backend/internals.cpp
+    ${KEY_MANAGER_PATH}/crypto/sw-backend/obj.cpp
+    ${KEY_MANAGER_PATH}/crypto/sw-backend/store.cpp
+    ${KEY_MANAGER_PATH}/crypto/tz-backend/store.cpp
+    ${KEY_MANAGER_PATH}/dpl/core/src/assert.cpp
+    ${KEY_MANAGER_PATH}/dpl/db/src/naive_synchronization_object.cpp
+    ${KEY_MANAGER_PATH}/dpl/db/src/sql_connection.cpp
     ${KEY_MANAGER_PATH}/initial-values/BufferHandler.cpp
     ${KEY_MANAGER_PATH}/initial-values/CertHandler.cpp
     ${KEY_MANAGER_PATH}/initial-values/DataHandler.cpp
-    ${KEY_MANAGER_PATH}/initial-values/KeyHandler.cpp
-    ${KEY_MANAGER_PATH}/initial-values/PermissionHandler.cpp
     ${KEY_MANAGER_PATH}/initial-values/InitialValueHandler.cpp
     ${KEY_MANAGER_PATH}/initial-values/InitialValuesFile.cpp
+    ${KEY_MANAGER_PATH}/initial-values/KeyHandler.cpp
     ${KEY_MANAGER_PATH}/initial-values/NoCharactersHandler.cpp
+    ${KEY_MANAGER_PATH}/initial-values/parser.cpp
+    ${KEY_MANAGER_PATH}/initial-values/PermissionHandler.cpp
+    ${KEY_MANAGER_PATH}/initial-values/SWKeyFile.cpp
     ${KEY_MANAGER_PATH}/initial-values/xml-utils.cpp
-    ${KEY_MANAGER_PATH}/dpl/core/src/assert.cpp
-    ${KEY_MANAGER_PATH}/dpl/db/src/sql_connection.cpp
-    ${KEY_MANAGER_PATH}/dpl/db/src/naive_synchronization_object.cpp
-    ${KEY_MANAGER_PATH}/sqlcipher/sqlcipher.c
-    ${KEY_MANAGER_PATH}/crypto/sw-backend/obj.cpp
-    ${KEY_MANAGER_PATH}/crypto/sw-backend/internals.cpp
-    ${KEY_MANAGER_PATH}/crypto/sw-backend/store.cpp
-    ${KEY_MANAGER_PATH}/crypto/platform/decider.cpp
-    ${KEY_MANAGER_PATH}/crypto/tz-backend/store.cpp
+    ${KEY_MANAGER_PATH}/main/cynara.cpp
+    ${KEY_MANAGER_PATH}/main/generic-socket-manager.cpp
+    ${KEY_MANAGER_PATH}/main/smack-check.cpp
+    ${KEY_MANAGER_PATH}/main/socket-2-id.cpp
     ${KEY_MANAGER_PATH}/main/socket-2-id-mockup.cpp
+    ${KEY_MANAGER_PATH}/main/socket-manager.cpp
+    ${KEY_MANAGER_PATH}/main/thread-service.cpp
+    ${KEY_MANAGER_PATH}/service/access-control.cpp
+    ${KEY_MANAGER_PATH}/service/certificate-config.cpp
+    ${KEY_MANAGER_PATH}/service/certificate-store.cpp
+    ${KEY_MANAGER_PATH}/service/ckm-logic.cpp
+    ${KEY_MANAGER_PATH}/service/crypto-logic.cpp
+    ${KEY_MANAGER_PATH}/service/db-crypto.cpp
+    ${KEY_MANAGER_PATH}/service/file-lock.cpp
+    ${KEY_MANAGER_PATH}/service/file-system.cpp
+    ${KEY_MANAGER_PATH}/service/for-each-file.cpp
+    ${KEY_MANAGER_PATH}/service/key-provider.cpp
+    ${KEY_MANAGER_PATH}/sqlcipher/sqlcipher.c
     )
 
 ADD_EXECUTABLE( ${CKM_DB_TOOL} ${CKM_DB_TOOL_SOURCES} )

@@ -34,29 +34,31 @@ INCLUDE_DIRECTORIES(
     )
 
 SET(TEST_MERGED_SOURCES
-    ${KEY_MANAGER_TEST_MERGED_SRC}/main.cpp
-    ${KEY_MANAGER_TEST_MERGED_SRC}/test_common.cpp
-    ${KEY_MANAGER_TEST_MERGED_SRC}/DBFixture.cpp
     ${KEY_MANAGER_TEST_MERGED_SRC}/colour_log_formatter.cpp
+    ${KEY_MANAGER_TEST_MERGED_SRC}/DBFixture.cpp
+    ${KEY_MANAGER_TEST_MERGED_SRC}/main.cpp
+    ${KEY_MANAGER_TEST_MERGED_SRC}/test_comm-manager.cpp
+    ${KEY_MANAGER_TEST_MERGED_SRC}/test_common.cpp
     ${KEY_MANAGER_TEST_MERGED_SRC}/test_db_crypto.cpp
-    ${KEY_MANAGER_TEST_MERGED_SRC}/test_sql.cpp
+    ${KEY_MANAGER_TEST_MERGED_SRC}/test_descriptor-set.cpp
+    ${KEY_MANAGER_TEST_MERGED_SRC}/test_encryption-scheme.cpp
+    ${KEY_MANAGER_TEST_MERGED_SRC}/test_for-each-file.cpp
     ${KEY_MANAGER_TEST_MERGED_SRC}/test-key-provider.cpp
     ${KEY_MANAGER_TEST_MERGED_SRC}/test_safe-buffer.cpp
-    ${KEY_MANAGER_TEST_MERGED_SRC}/test_descriptor-set.cpp
-    ${KEY_MANAGER_TEST_MERGED_SRC}/test_comm-manager.cpp
     ${KEY_MANAGER_TEST_MERGED_SRC}/test_serialization.cpp
+    ${KEY_MANAGER_TEST_MERGED_SRC}/test_sql.cpp
     ${KEY_MANAGER_TEST_MERGED_SRC}/test_xml-parser.cpp
-    ${KEY_MANAGER_TEST_MERGED_SRC}/test_encryption-scheme.cpp
-    ${KEY_MANAGER_PATH}/service/db-crypto.cpp
-    ${KEY_MANAGER_PATH}/service/key-provider.cpp
-    ${KEY_MANAGER_PATH}/initial-values/parser.cpp
-    ${KEY_MANAGER_PATH}/initial-values/xml-utils.cpp
     ${KEY_MANAGER_PATH}/client-async/descriptor-set.cpp
     ${KEY_MANAGER_PATH}/dpl/core/src/assert.cpp
     ${KEY_MANAGER_PATH}/dpl/core/src/colors.cpp
     ${KEY_MANAGER_PATH}/dpl/core/src/errno_string.cpp
-    ${KEY_MANAGER_PATH}/dpl/db/src/sql_connection.cpp
     ${KEY_MANAGER_PATH}/dpl/db/src/naive_synchronization_object.cpp
+    ${KEY_MANAGER_PATH}/dpl/db/src/sql_connection.cpp
+    ${KEY_MANAGER_PATH}/initial-values/parser.cpp
+    ${KEY_MANAGER_PATH}/initial-values/xml-utils.cpp
+    ${KEY_MANAGER_PATH}/service/db-crypto.cpp
+    ${KEY_MANAGER_PATH}/service/for-each-file.cpp
+    ${KEY_MANAGER_PATH}/service/key-provider.cpp
     ${KEY_MANAGER_PATH}/sqlcipher/sqlcipher.c
     )
 
@@ -92,5 +94,7 @@ INSTALL(
         resources/testme_ver3.db
     DESTINATION ${DB_TEST_DIR}
     )
+
+INSTALL(DIRECTORY resources/traverse DESTINATION ${DB_TEST_DIR})
 
 ADD_SUBDIRECTORY(encryption-scheme)
