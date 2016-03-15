@@ -35,39 +35,41 @@ namespace {
 const CKM::CertificateShPtrVector EMPTY_CERT_VECTOR;
 const CKM::AliasVector EMPTY_ALIAS_VECTOR;
 
-CKM::Password _tostring(const char *str)
+inline CKM::Password _tostring(const char *str)
 {
-    if (str == NULL)
-        return CKM::Password();
-    return CKM::Password(str);
+    return (str == nullptr) ? CKM::Password() : CKM::Password(str);
 }
 
-CKM::KeyShPtr _toCkmKey(const ckmc_key_s *key)
+inline CKM::Policy _toCkmPolicy(const ckmc_policy_s &policy)
 {
-    if (key) {
-        CKM::RawBuffer buffer(key->raw_key, key->raw_key + key->key_size);
-        return CKM::Key::create(buffer, _tostring(key->password));
-    }
-    return CKM::KeyShPtr();
+    return CKM::Policy(_tostring(policy.password), policy.extractable);
 }
 
-CKM::CertificateShPtr _toCkmCertificate(const ckmc_cert_s *cert)
+inline CKM::KeyShPtr _toCkmKey(const ckmc_key_s *key)
 {
-    if (cert) {
-        CKM::RawBuffer buffer(cert->raw_cert, cert->raw_cert + cert->cert_size);
-        CKM::DataFormat dataFormat = static_cast<CKM::DataFormat>(static_cast<int>(cert->data_format));
-        return CKM::Certificate::create(buffer, dataFormat);
-    }
-    return CKM::CertificateShPtr();
+    return (key == nullptr) ?
+        CKM::KeyShPtr() :
+        CKM::Key::create(
+                CKM::RawBuffer(key->raw_key, key->raw_key + key->key_size),
+                _tostring(key->password));
+}
+
+inline CKM::CertificateShPtr _toCkmCertificate(const ckmc_cert_s *cert)
+{
+    return (cert == nullptr) ?
+        CKM::CertificateShPtr() :
+        CKM::Certificate::create(
+                CKM::RawBuffer(cert->raw_cert, cert->raw_cert + cert->cert_size),
+                static_cast<CKM::DataFormat>(static_cast<int>(cert->data_format)));
 }
 
 CKM::CertificateShPtrVector _toCkmCertificateVector(const ckmc_cert_list_s *list)
 {
     CKM::CertificateShPtrVector certs;
-    ckmc_cert_list_s *current = const_cast<ckmc_cert_list_s *>(list);
-    while (current != NULL) {
-        if (current->cert != NULL)
-            certs.push_back(_toCkmCertificate(current->cert));
+    auto current = list;
+    while (current != nullptr) {
+        if (current->cert != nullptr)
+            certs.emplace_back(_toCkmCertificate(current->cert));
         current = current->next;
     }
     return certs;
@@ -76,10 +78,10 @@ CKM::CertificateShPtrVector _toCkmCertificateVector(const ckmc_cert_list_s *list
 CKM::AliasVector _toCkmAliasVector(const ckmc_alias_list_s *list)
 {
     CKM::AliasVector aliases;
-    ckmc_alias_list_s *current = const_cast<ckmc_alias_list_s *>(list);
-    while (current != NULL) {
-        if (current->alias != NULL)
-            aliases.push_back(CKM::Alias(current->alias));
+    auto current = list;
+    while (current != nullptr) {
+        if (current->alias != nullptr)
+            aliases.emplace_back(CKM::Alias(current->alias));
         current = current->next;
     }
     return aliases;
@@ -87,28 +89,28 @@ CKM::AliasVector _toCkmAliasVector(const ckmc_alias_list_s *list)
 
 ckmc_cert_list_s *_toNewCkmCertList(const CKM::CertificateShPtrVector &certVector)
 {
-    int ret;
-    ckmc_cert_list_s *start = NULL;
-    ckmc_cert_list_s *plist = NULL;
+    ckmc_cert_list_s *start = nullptr;
+    ckmc_cert_list_s *plist = nullptr;
+
     for (const auto &e : certVector) {
-        CKM::RawBuffer rawBuffer = e->getDER();
-        ckmc_cert_s *pcert = NULL;
-        ret = ckmc_cert_new(rawBuffer.data(), rawBuffer.size(), CKMC_FORM_DER, &pcert);
-        if (pcert == NULL) {
+        auto rawBuffer = e->getDER();
+        ckmc_cert_s *pcert = nullptr;
+        int ret = ckmc_cert_new(rawBuffer.data(), rawBuffer.size(), CKMC_FORM_DER, &pcert);
+        if (ret != CKMC_ERROR_NONE || pcert == nullptr) {
             ckmc_cert_list_all_free(start);
-            return NULL;
+            return nullptr;
         }
-        if (plist == NULL) {
-            ret = ckmc_cert_list_new(pcert, &plist);
-            start = plist; // save the pointer of the first element
-        } else {
-            ret = ckmc_cert_list_add(plist, pcert, &plist);
-        }
+
+        ret = ckmc_cert_list_add(plist, pcert, &plist);
         if (ret != CKMC_ERROR_NONE) {
             ckmc_cert_list_all_free(start);
-            return NULL;
+            return nullptr;
         }
+
+        if (start == nullptr)
+            start = plist;
     }
+
     return start;
 }
 
@@ -140,8 +142,7 @@ int _cryptoOperation(cryptoFn operation,
     CKM::RawBuffer inBuffer(in.data, in.data + in.size);
     CKM::RawBuffer outBuffer;
 
-    // operation
-    CKM::ManagerShPtr mgr = CKM::Manager::create();
+    auto mgr = CKM::Manager::create();
     int ret = ((*mgr).*operation)(*ca, key_alias, pass, inBuffer, outBuffer);
     if (ret != CKM_API_SUCCESS)
         return to_ckmc_error(ret);
@@ -171,19 +172,14 @@ KEY_MANAGER_CAPI
 int ckmc_save_key(const char *alias, const ckmc_key_s key, const ckmc_policy_s policy)
 {
     return try_catch_enclosure([&]()->int {
-        CKM::ManagerShPtr mgr = CKM::Manager::create();
+        auto mgr = CKM::Manager::create();
 
-        if (alias == NULL)
-            return CKMC_ERROR_INVALID_PARAMETER;
-
-        CKM::Alias ckmAlias(alias);
-
-        if (key.raw_key == NULL || key.key_size <= 0)
+        if (alias == nullptr || key.raw_key == nullptr || key.key_size == 0)
             return CKMC_ERROR_INVALID_PARAMETER;
 
         CKM::RawBuffer buffer(key.raw_key, key.raw_key + key.key_size);
-
         CKM::KeyShPtr ckmKey;
+
         if (key.key_type == CKMC_KEY_AES) {
             if (key.password)
                 return CKMC_ERROR_INVALID_PARAMETER;
@@ -192,13 +188,10 @@ int ckmc_save_key(const char *alias, const ckmc_key_s key, const ckmc_policy_s p
             ckmKey = CKM::Key::create(buffer, _tostring(key.password));
         }
 
-        if (ckmKey.get() == NULL)
+        if (!ckmKey)
             return CKMC_ERROR_INVALID_FORMAT;
 
-        CKM::Policy storePolicy(_tostring(policy.password), policy.extractable);
-
-        int ret =  mgr->saveKey(ckmAlias, ckmKey, storePolicy);
-        return to_ckmc_error(ret);
+        return to_ckmc_error(mgr->saveKey(CKM::Alias(alias), ckmKey, _toCkmPolicy(policy)));
     });
 }
 
@@ -213,22 +206,23 @@ KEY_MANAGER_CAPI
 int ckmc_get_key(const char *alias, const char *password, ckmc_key_s **key)
 {
     return try_catch_enclosure([&]()->int {
-        int ret;
-        CKM::KeyShPtr ckmKey;
 
-        if (alias == NULL || key == NULL)
+        if (alias == nullptr || key == nullptr)
             return CKMC_ERROR_INVALID_PARAMETER;
 
-        CKM::ManagerShPtr mgr = CKM::Manager::create();
+        int ret;
+        CKM::KeyShPtr ckmKey;
+        auto mgr = CKM::Manager::create();
         if ((ret = mgr->getKey(alias, _tostring(password), ckmKey)) != CKM_API_SUCCESS)
             return to_ckmc_error(ret);
 
-        CKM::RawBuffer buffer = ckmKey->getDER();
-        ckmc_key_type_e keyType = static_cast<ckmc_key_type_e>(static_cast<int>(ckmKey->getType()));
-
-        ret = ckmc_key_new(buffer.data(), buffer.size(), keyType, NULL, key);
-
-        return to_ckmc_error(ret);
+        auto buffer = ckmKey->getDER();
+        return ckmc_key_new(
+            buffer.data(),
+            buffer.size(),
+            static_cast<ckmc_key_type_e>(static_cast<int>(ckmKey->getType())),
+            nullptr,
+            key);
     });
 }
 
@@ -238,36 +232,37 @@ int ckmc_get_key_alias_list(ckmc_alias_list_s** alias_list)
     return try_catch_enclosure([&]()->int {
         int ret;
 
-        if (alias_list == NULL)
+        if (alias_list == nullptr)
             return CKMC_ERROR_INVALID_PARAMETER;
 
         CKM::AliasVector aliasVector;
-        CKM::ManagerShPtr mgr = CKM::Manager::create();
+        auto mgr = CKM::Manager::create();
 
         if ((ret = mgr->getKeyAliasVector(aliasVector)) != CKM_API_SUCCESS)
             return to_ckmc_error(ret);
 
-        ckmc_alias_list_s *plist = NULL;
+        ckmc_alias_list_s *start = nullptr;
+        ckmc_alias_list_s *plist = nullptr;
 
-        for (const auto it : aliasVector) {
+        for (const auto &it : aliasVector) {
             char *alias = strndup(it.c_str(), it.size());
 
-            if (plist == NULL) { // first
-                ret = ckmc_alias_list_new(alias, &plist);
-                *alias_list = plist; // save the pointer of the first element
-            } else {
-                ret = ckmc_alias_list_add(plist, alias, &plist);
-            }
+            ret = ckmc_alias_list_add(plist, alias, &plist);
 
             if (ret != CKMC_ERROR_NONE) {
                 free(alias);
-                ckmc_alias_list_all_free(*alias_list);
+                ckmc_alias_list_all_free(start);
                 return ret;
             }
+
+            if (start == nullptr)
+                start = plist;
         }
 
-        if (plist == NULL) // if the alias_list size is zero
+        if (plist == nullptr) // if the alias_list size is zero
             return CKMC_ERROR_DB_ALIAS_UNKNOWN;
+
+        *alias_list = start;
 
         return CKMC_ERROR_NONE;
     });
@@ -277,31 +272,22 @@ KEY_MANAGER_CAPI
 int ckmc_save_cert(const char *alias, const ckmc_cert_s cert, const ckmc_policy_s policy)
 {
     return try_catch_enclosure([&]()->int {
-        if (alias == NULL)
+        if (alias == nullptr || cert.raw_cert == nullptr || cert.cert_size == 0)
             return CKMC_ERROR_INVALID_PARAMETER;
 
-        CKM::Alias ckmAlias(alias);
-
-        if (cert.raw_cert == NULL || cert.cert_size <= 0)
-                return CKMC_ERROR_INVALID_PARAMETER;
-
-        CKM::CertificateShPtr ckmCert = _toCkmCertificate(&cert);
-        if (ckmCert.get() == NULL)
+        auto ckmCert = _toCkmCertificate(&cert);
+        if (!ckmCert)
             return CKMC_ERROR_INVALID_FORMAT;
 
-        CKM::Policy storePolicy(_tostring(policy.password), policy.extractable);
-
-        CKM::ManagerShPtr mgr = CKM::Manager::create();
-        int ret = mgr->saveCertificate(ckmAlias, ckmCert, storePolicy);
-
-        return to_ckmc_error(ret);
+        auto mgr = CKM::Manager::create();
+        return to_ckmc_error(mgr->saveCertificate(CKM::Alias(alias), ckmCert, _toCkmPolicy(policy)));
     });
 }
 
 KEY_MANAGER_CAPI
 int ckmc_remove_cert(const char *alias)
 {
-        return ckmc_remove_alias(alias);
+    return ckmc_remove_alias(alias);
 }
 
 KEY_MANAGER_CAPI
@@ -311,17 +297,15 @@ int ckmc_get_cert(const char *alias, const char *password, ckmc_cert_s **cert)
         CKM::CertificateShPtr ckmCert;
         int ret;
 
-        if (alias == NULL || cert == NULL)
+        if (alias == nullptr || cert == nullptr)
             return CKMC_ERROR_INVALID_PARAMETER;
 
-        CKM::ManagerShPtr mgr = CKM::Manager::create();
+        auto mgr = CKM::Manager::create();
         if ((ret = mgr->getCertificate(alias, _tostring(password), ckmCert)) != CKM_API_SUCCESS)
             return to_ckmc_error(ret);
 
-        CKM::RawBuffer buffer = ckmCert->getDER();
-        ret = ckmc_cert_new(buffer.data(), buffer.size(), CKMC_FORM_DER, cert);
-
-        return ret;
+        auto buffer = ckmCert->getDER();
+        return ckmc_cert_new(buffer.data(), buffer.size(), CKMC_FORM_DER, cert);
     });
 }
 
@@ -329,39 +313,37 @@ KEY_MANAGER_CAPI
 int ckmc_get_cert_alias_list(ckmc_alias_list_s** alias_list)
 {
     return try_catch_enclosure([&]()->int {
-        int ret;
-
-        if (alias_list == NULL)
+        if (alias_list == nullptr)
             return CKMC_ERROR_INVALID_PARAMETER;
 
-        *alias_list = NULL;
-
         CKM::AliasVector aliasVector;
-        CKM::ManagerShPtr mgr = CKM::Manager::create();
+        int ret;
+        auto mgr = CKM::Manager::create();
         if ((ret = mgr->getCertificateAliasVector(aliasVector)) != CKM_API_SUCCESS)
             return to_ckmc_error(ret);
 
-        ckmc_alias_list_s *plist = NULL;
+        ckmc_alias_list_s *start = nullptr;
+        ckmc_alias_list_s *plist = nullptr;
 
-        for (const auto it : aliasVector) {
+        for (const auto &it : aliasVector) {
             char *alias = strndup(it.c_str(), it.size());
 
-            if (plist == NULL) { // first
-                ret  = ckmc_alias_list_new(alias, &plist);
-                *alias_list = plist; // save the pointer of the first element
-            } else {
-                ret = ckmc_alias_list_add(plist, alias, &plist);
-            }
+            ret = ckmc_alias_list_add(plist, alias, &plist);
 
             if (ret != CKMC_ERROR_NONE) {
                 free(alias);
-                ckmc_alias_list_all_free(*alias_list);
+                ckmc_alias_list_all_free(start);
                 return ret;
             }
+
+            if (start == nullptr)
+                start = plist;
         }
 
-        if (plist == NULL) // if the alias_list size is zero
+        if (plist == nullptr) // if the alias_list size is zero
             return CKMC_ERROR_DB_ALIAS_UNKNOWN;
+
+        *alias_list = start;
 
         return CKMC_ERROR_NONE;
     });
@@ -371,27 +353,20 @@ KEY_MANAGER_CAPI
 int ckmc_save_pkcs12(const char *alias, const ckmc_pkcs12_s *ppkcs, const ckmc_policy_s key_policy, const ckmc_policy_s cert_policy)
 {
     return try_catch_enclosure([&]()->int {
-        CKM::KeyShPtr private_key;
-        CKM::CertificateShPtr cert;
-        CKM::CertificateShPtrVector ca_cert_list;
-
-        if (alias == NULL || ppkcs == NULL)
+        if (alias == nullptr || ppkcs == nullptr)
             return CKMC_ERROR_INVALID_PARAMETER;
 
-        CKM::Alias ckmAlias(alias);
-        private_key = _toCkmKey(ppkcs->priv_key);
-        cert = _toCkmCertificate(ppkcs->cert);
-        ca_cert_list = _toCkmCertificateVector(ppkcs->ca_chain);
+        CKM::PKCS12ShPtr pkcs12(new CKM::PKCS12Impl(
+                _toCkmKey(ppkcs->priv_key),
+                _toCkmCertificate(ppkcs->cert),
+                _toCkmCertificateVector(ppkcs->ca_chain)));
 
-        CKM::Policy keyPolicy(_tostring(key_policy.password), key_policy.extractable);
-        CKM::Policy certPolicy(_tostring(cert_policy.password), cert_policy.extractable);
-
-        CKM::PKCS12ShPtr pkcs12(new CKM::PKCS12Impl(private_key, cert, ca_cert_list));
-
-        CKM::ManagerShPtr mgr = CKM::Manager::create();
-        int ret = mgr->savePKCS12(ckmAlias, pkcs12, keyPolicy, certPolicy);
-
-        return to_ckmc_error(ret);
+        auto mgr = CKM::Manager::create();
+        return to_ckmc_error(mgr->savePKCS12(
+            CKM::Alias(alias),
+            pkcs12,
+            _toCkmPolicy(key_policy),
+            _toCkmPolicy(cert_policy)));
     });
 }
 
@@ -399,39 +374,29 @@ KEY_MANAGER_CAPI
 int ckmc_get_pkcs12(const char *alias, const char *key_password, const char *cert_password, ckmc_pkcs12_s **pkcs12)
 {
     return try_catch_enclosure([&]()->int {
-        int ret;
-        CKM::PKCS12ShPtr pkcs;
-        CKM::Password keyPass, certPass;
-        ckmc_key_s *private_key = NULL;
-        ckmc_cert_s *cert = NULL;
-        ckmc_cert_list_s *ca_cert_list = 0;
-
         if (!alias || !pkcs12)
             return CKMC_ERROR_INVALID_PARAMETER;
 
-        if (key_password)
-            keyPass = key_password;
-
-        if (cert_password)
-            certPass = cert_password;
-
+        int ret;
+        CKM::PKCS12ShPtr pkcs;
         auto mgr = CKM::Manager::create();
-
-        if ((ret = mgr->getPKCS12(alias, keyPass, certPass, pkcs)) != CKM_API_SUCCESS)
+        if ((ret = mgr->getPKCS12(alias, _tostring(key_password), _tostring(cert_password), pkcs)) != CKM_API_SUCCESS)
             return to_ckmc_error(ret);
 
         if (!pkcs)
             return CKMC_ERROR_BAD_RESPONSE;
 
+        ckmc_key_s *private_key = nullptr;
         auto pkcsKey = pkcs->getKey();
         if (pkcsKey) {
-            CKM::RawBuffer buffer = pkcsKey->getDER();
+            auto buffer = pkcsKey->getDER();
             ckmc_key_type_e keyType = static_cast<ckmc_key_type_e>(pkcsKey->getType());
-            ret = ckmc_key_new(buffer.data(), buffer.size(), keyType, NULL, &private_key);
+            ret = ckmc_key_new(buffer.data(), buffer.size(), keyType, nullptr, &private_key);
             if (ret != CKMC_ERROR_NONE)
                 return ret;
         }
 
+        ckmc_cert_s *cert = nullptr;
         auto pkcsCert = pkcs->getCertificate();
         if (pkcsCert) {
             CKM::RawBuffer buffer = pkcsCert->getDER();
@@ -442,7 +407,7 @@ int ckmc_get_pkcs12(const char *alias, const char *key_password, const char *cer
             }
         }
 
-        ca_cert_list = _toNewCkmCertList(pkcs->getCaCertificateShPtrVector());
+        auto ca_cert_list = _toNewCkmCertList(pkcs->getCaCertificateShPtrVector());
 
         ret = ckmc_pkcs12_new(private_key, cert, ca_cert_list, pkcs12);
         if (ret != CKMC_ERROR_NONE) {
@@ -450,6 +415,7 @@ int ckmc_get_pkcs12(const char *alias, const char *key_password, const char *cer
             ckmc_cert_free(cert);
             ckmc_cert_list_free(ca_cert_list);
         }
+
         return ret;
     });
 }
@@ -459,48 +425,37 @@ KEY_MANAGER_CAPI
 int ckmc_save_data(const char *alias, ckmc_raw_buffer_s data, const ckmc_policy_s policy)
 {
     return try_catch_enclosure([&]()->int {
-        if (alias == NULL)
+        if (alias == nullptr || data.data == nullptr || data.size == 0)
             return CKMC_ERROR_INVALID_PARAMETER;
 
-        CKM::Alias ckmAlias(alias);
-
-        if (data.data == NULL || data.size <= 0)
-                return CKMC_ERROR_INVALID_PARAMETER;
-
-        CKM::RawBuffer buffer(data.data, data.data + data.size);
-
-        CKM::Policy storePolicy(_tostring(policy.password), policy.extractable);
-
-        CKM::ManagerShPtr mgr = CKM::Manager::create();
-        int ret = mgr->saveData(ckmAlias, buffer, storePolicy);
-
-        return to_ckmc_error(ret);
+        auto mgr = CKM::Manager::create();
+        return to_ckmc_error(mgr->saveData(
+            CKM::Alias(alias),
+            CKM::RawBuffer(data.data, data.data + data.size),
+            _toCkmPolicy(policy)));
     });
 }
 
 KEY_MANAGER_CAPI
 int ckmc_remove_data(const char *alias)
 {
-        return ckmc_remove_alias(alias);
+    return ckmc_remove_alias(alias);
 }
 
 KEY_MANAGER_CAPI
 int ckmc_get_data(const char *alias, const char *password, ckmc_raw_buffer_s **data)
 {
     return try_catch_enclosure([&]()->int {
-        CKM::RawBuffer ckmBuff;
-        int ret;
-
-        if (alias == NULL || data == NULL)
+        if (alias == nullptr || data == nullptr)
             return CKMC_ERROR_INVALID_PARAMETER;
 
-        CKM::ManagerShPtr mgr = CKM::Manager::create();
+        int ret;
+        CKM::RawBuffer ckmBuff;
+        auto mgr = CKM::Manager::create();
         if ((ret = mgr->getData(alias, _tostring(password), ckmBuff)) != CKM_API_SUCCESS)
             return to_ckmc_error(ret);
 
-        ret = ckmc_buffer_new(ckmBuff.data(), ckmBuff.size(), data);
-
-        return ret;
+        return ckmc_buffer_new(ckmBuff.data(), ckmBuff.size(), data);
     });
 }
 
@@ -508,39 +463,37 @@ KEY_MANAGER_CAPI
 int ckmc_get_data_alias_list(ckmc_alias_list_s** alias_list)
 {
     return try_catch_enclosure([&]()->int {
-        int ret;
-
-        if (alias_list == NULL)
+        if (alias_list == nullptr)
             return CKMC_ERROR_INVALID_PARAMETER;
 
-        *alias_list = NULL;
-
+        int ret;
         CKM::AliasVector aliasVector;
-        CKM::ManagerShPtr mgr = CKM::Manager::create();
+        auto mgr = CKM::Manager::create();
         if ((ret = mgr->getDataAliasVector(aliasVector)) != CKM_API_SUCCESS)
             return to_ckmc_error(ret);
 
-        ckmc_alias_list_s *plist = NULL;
+        ckmc_alias_list_s *start = nullptr;
+        ckmc_alias_list_s *plist = nullptr;
 
-        for (const auto it : aliasVector) {
+        for (const auto &it : aliasVector) {
             char *alias = strndup(it.c_str(), it.size());
 
-            if (plist == NULL) { // first
-                ret = ckmc_alias_list_new(alias, &plist);
-                *alias_list = plist; // save the pointer of the first element
-            } else {
-                ret = ckmc_alias_list_add(plist, alias, &plist);
-            }
+            ret = ckmc_alias_list_add(plist, alias, &plist);
 
             if (ret != CKMC_ERROR_NONE) {
                 free(alias);
-                ckmc_alias_list_all_free(*alias_list);
+                ckmc_alias_list_all_free(start);
                 return ret;
             }
+
+            if (start == nullptr)
+                start = plist;
         }
 
-        if (plist == NULL) // if the alias_list size is zero
+        if (plist == nullptr) // if the alias_list size is zero
             return CKMC_ERROR_DB_ALIAS_UNKNOWN;
+
+        *alias_list = start;
 
         return CKMC_ERROR_NONE;
     });
@@ -548,73 +501,65 @@ int ckmc_get_data_alias_list(ckmc_alias_list_s** alias_list)
 
 KEY_MANAGER_CAPI
 int ckmc_create_key_pair_rsa(const size_t size,
-                            const char *private_key_alias,
-                            const char *public_key_alias,
-                            const ckmc_policy_s policy_private_key,
-                            const ckmc_policy_s policy_public_key)
+                             const char *private_key_alias,
+                             const char *public_key_alias,
+                             const ckmc_policy_s policy_private_key,
+                             const ckmc_policy_s policy_public_key)
 {
     return try_catch_enclosure([&]()->int {
-        int ret;
-        CKM::ManagerShPtr mgr = CKM::Manager::create();
+        auto mgr = CKM::Manager::create();
 
-        if (private_key_alias == NULL || public_key_alias == NULL)
+        if (private_key_alias == nullptr || public_key_alias == nullptr)
             return CKMC_ERROR_INVALID_PARAMETER;
 
-        CKM::Alias ckmPrivakeKeyAlias(private_key_alias);
-        CKM::Alias ckmPublicKeyAlias(public_key_alias);
-        CKM::Policy ckmPrivateKeyPolicy(_tostring(policy_private_key.password), policy_private_key.extractable);
-        CKM::Policy ckmPublicKeyPolicy(_tostring(policy_public_key.password), policy_public_key.extractable);
-
-        ret = mgr->createKeyPairRSA(static_cast<int>(size), ckmPrivakeKeyAlias, ckmPublicKeyAlias, ckmPrivateKeyPolicy, ckmPublicKeyPolicy);
-        return to_ckmc_error(ret);
+        return to_ckmc_error(mgr->createKeyPairRSA(
+                static_cast<int>(size),
+                CKM::Alias(private_key_alias),
+                CKM::Alias(public_key_alias),
+                _toCkmPolicy(policy_private_key),
+                _toCkmPolicy(policy_public_key)));
     });
 }
 
 KEY_MANAGER_CAPI
 int ckmc_create_key_pair_dsa(const size_t size,
-                            const char *private_key_alias,
-                            const char *public_key_alias,
-                            const ckmc_policy_s policy_private_key,
-                            const ckmc_policy_s policy_public_key)
+                             const char *private_key_alias,
+                             const char *public_key_alias,
+                             const ckmc_policy_s policy_private_key,
+                             const ckmc_policy_s policy_public_key)
 {
     return try_catch_enclosure([&]()->int {
-        int ret;
-        CKM::ManagerShPtr mgr = CKM::Manager::create();
-
-        if (private_key_alias == NULL || public_key_alias == NULL)
+        if (private_key_alias == nullptr || public_key_alias == nullptr)
             return CKMC_ERROR_INVALID_PARAMETER;
 
-        CKM::Alias ckmPrivakeKeyAlias(private_key_alias);
-        CKM::Alias ckmPublicKeyAlias(public_key_alias);
-        CKM::Policy ckmPrivateKeyPolicy(_tostring(policy_private_key.password), policy_private_key.extractable);
-        CKM::Policy ckmPublicKeyPolicy(_tostring(policy_public_key.password), policy_public_key.extractable);
-
-        ret = mgr->createKeyPairDSA(static_cast<int>(size), ckmPrivakeKeyAlias, ckmPublicKeyAlias, ckmPrivateKeyPolicy, ckmPublicKeyPolicy);
-        return to_ckmc_error(ret);
+        auto mgr = CKM::Manager::create();
+        return to_ckmc_error(mgr->createKeyPairDSA(
+            static_cast<int>(size),
+            CKM::Alias(private_key_alias),
+            CKM::Alias(public_key_alias),
+            _toCkmPolicy(policy_private_key),
+            _toCkmPolicy(policy_public_key)));
     });
 }
 
 KEY_MANAGER_CAPI
 int ckmc_create_key_pair_ecdsa(const ckmc_ec_type_e type,
-                            const char *private_key_alias,
-                            const char *public_key_alias,
-                            const ckmc_policy_s policy_private_key,
-                            const ckmc_policy_s policy_public_key)
+                               const char *private_key_alias,
+                               const char *public_key_alias,
+                               const ckmc_policy_s policy_private_key,
+                               const ckmc_policy_s policy_public_key)
 {
     return try_catch_enclosure([&]()->int {
-        CKM::ManagerShPtr mgr = CKM::Manager::create();
-
-        if (private_key_alias == NULL || public_key_alias == NULL)
+        if (private_key_alias == nullptr || public_key_alias == nullptr)
             return CKMC_ERROR_INVALID_PARAMETER;
 
-        CKM::ElipticCurve ckmType = static_cast<CKM::ElipticCurve>(static_cast<int>(type));
-        CKM::Alias ckmPrivakeKeyAlias(private_key_alias);
-        CKM::Alias ckmPublicKeyAlias(public_key_alias);
-        CKM::Policy ckmPrivateKeyPolicy(_tostring(policy_private_key.password), policy_private_key.extractable);
-        CKM::Policy ckmPublicKeyPolicy(_tostring(policy_public_key.password), policy_public_key.extractable);
-
-        int ret = mgr->createKeyPairECDSA(ckmType, ckmPrivakeKeyAlias, ckmPublicKeyAlias, ckmPrivateKeyPolicy, ckmPublicKeyPolicy);
-        return to_ckmc_error(ret);
+        auto mgr = CKM::Manager::create();
+        return to_ckmc_error(mgr->createKeyPairECDSA(
+            static_cast<CKM::ElipticCurve>(static_cast<int>(type)),
+            CKM::Alias(private_key_alias),
+            CKM::Alias(public_key_alias),
+            _toCkmPolicy(policy_private_key),
+            _toCkmPolicy(policy_public_key)));
     });
 }
 
@@ -624,83 +569,63 @@ int ckmc_create_key_aes(size_t size,
                         ckmc_policy_s key_policy)
 {
     return try_catch_enclosure([&]()->int {
-        CKM::ManagerShPtr mgr = CKM::Manager::create();
-
-        if (key_alias == NULL)
+        if (key_alias == nullptr)
             return CKMC_ERROR_INVALID_PARAMETER;
 
-        CKM::Alias ckmKeyAlias(key_alias);
-        CKM::Policy ckmKeyPolicy(_tostring(key_policy.password), key_policy.extractable);
-
-        int ret = mgr->createKeyAES(size, ckmKeyAlias, ckmKeyPolicy);
-        return to_ckmc_error(ret);
+        auto mgr = CKM::Manager::create();
+        return to_ckmc_error(mgr->createKeyAES(size, CKM::Alias(key_alias), _toCkmPolicy(key_policy)));
     });
 }
 
 KEY_MANAGER_CAPI
 int ckmc_create_signature(const char *private_key_alias,
-                            const char *password,
-                            const ckmc_raw_buffer_s message,
-                            const ckmc_hash_algo_e hash,
-                            const ckmc_rsa_padding_algo_e padding,
-                            ckmc_raw_buffer_s **signature)
+                          const char *password,
+                          const ckmc_raw_buffer_s message,
+                          const ckmc_hash_algo_e hash,
+                          const ckmc_rsa_padding_algo_e padding,
+                          ckmc_raw_buffer_s **signature)
 {
     return try_catch_enclosure([&]()->int {
-        int ret;
-        CKM::ManagerShPtr mgr = CKM::Manager::create();
-        CKM::RawBuffer ckmSignature;
-
-        if (private_key_alias == NULL || signature == NULL)
+        if (private_key_alias == nullptr || signature == nullptr)
             return CKMC_ERROR_INVALID_PARAMETER;
 
-        CKM::Alias ckmPrivakeKeyAlias(private_key_alias);
-        CKM::RawBuffer ckmMessage(message.data, message.data + message.size);
-        CKM::HashAlgorithm ckmHashAlgo = static_cast<CKM::HashAlgorithm>(static_cast<int>(hash));
-        CKM::RSAPaddingAlgorithm ckmPadding = static_cast<CKM::RSAPaddingAlgorithm>(static_cast<int>(padding));
-
+        int ret;
+        CKM::RawBuffer ckmSignature;
+        auto mgr = CKM::Manager::create();
         if ((ret = mgr->createSignature(
-                ckmPrivakeKeyAlias,
+                CKM::Alias(private_key_alias),
                 _tostring(password),
-                ckmMessage,
-                ckmHashAlgo,
-                ckmPadding,
+                CKM::RawBuffer(message.data, message.data + message.size),
+                static_cast<CKM::HashAlgorithm>(static_cast<int>(hash)),
+                static_cast<CKM::RSAPaddingAlgorithm>(static_cast<int>(padding)),
                 ckmSignature)) != CKM_API_SUCCESS)
             return to_ckmc_error(ret);
 
-        ret = ckmc_buffer_new(ckmSignature.data(), ckmSignature.size(), signature);
-
-        return ret;
+        return ckmc_buffer_new(ckmSignature.data(), ckmSignature.size(), signature);
     });
 }
 
 KEY_MANAGER_CAPI
 int ckmc_verify_signature(const char *public_key_alias,
-                            const char *password,
-                            const ckmc_raw_buffer_s message,
-                            const ckmc_raw_buffer_s signature,
-                            const ckmc_hash_algo_e hash,
-                            const ckmc_rsa_padding_algo_e padding)
+                          const char *password,
+                          const ckmc_raw_buffer_s message,
+                          const ckmc_raw_buffer_s signature,
+                          const ckmc_hash_algo_e hash,
+                          const ckmc_rsa_padding_algo_e padding)
 {
     return try_catch_enclosure([&]()->int {
-        int ret;
-        CKM::ManagerShPtr mgr = CKM::Manager::create();
-
-        if (public_key_alias == NULL)
+        if (public_key_alias == nullptr)
             return CKMC_ERROR_INVALID_PARAMETER;
 
-        CKM::Alias ckmPublicKeyAlias(public_key_alias);
-        CKM::RawBuffer ckmMessage(message.data, message.data + message.size);
-        CKM::RawBuffer ckmSignature(signature.data, signature.data + signature.size);
-        CKM::HashAlgorithm ckmHashAlgo = static_cast<CKM::HashAlgorithm>(static_cast<int>(hash));
-        CKM::RSAPaddingAlgorithm ckmPadding = static_cast<CKM::RSAPaddingAlgorithm>(static_cast<int>(padding));
-
+        int ret;
+        auto mgr = CKM::Manager::create();
         if ((ret = mgr->verifySignature(
-                ckmPublicKeyAlias,
+                CKM::Alias(public_key_alias),
                 _tostring(password),
-                ckmMessage,
-                ckmSignature,
-                ckmHashAlgo,
-                ckmPadding)) != CKM_API_SUCCESS)
+                CKM::RawBuffer(message.data, message.data + message.size),
+                CKM::RawBuffer(signature.data, signature.data + signature.size),
+                static_cast<CKM::HashAlgorithm>(static_cast<int>(hash)),
+                static_cast<CKM::RSAPaddingAlgorithm>(static_cast<int>(padding)))) != CKM_API_SUCCESS)
             return to_ckmc_error(ret);
 
         return CKMC_ERROR_NONE;
@@ -711,18 +636,21 @@ KEY_MANAGER_CAPI
 int ckmc_get_cert_chain(const ckmc_cert_s *cert, const ckmc_cert_list_s *untrustedcerts, ckmc_cert_list_s **cert_chain_list)
 {
     return try_catch_enclosure([&]()->int {
-        int ret;
-        CKM::ManagerShPtr mgr = CKM::Manager::create();
-        CKM::CertificateShPtrVector ckmCertChain;
-
-        if (cert == NULL || cert->raw_cert == NULL || cert->cert_size <= 0 || cert_chain_list == NULL)
+        if (cert == nullptr || cert->raw_cert == nullptr || cert->cert_size == 0 || cert_chain_list == nullptr)
             return CKMC_ERROR_INVALID_PARAMETER;
 
-        CKM::CertificateShPtr ckmCert = _toCkmCertificate(cert);
+        auto ckmCert = _toCkmCertificate(cert);
+        if (!ckmCert)
+            return CKMC_ERROR_INVALID_FORMAT;
 
-        CKM::CertificateShPtrVector ckmUntrustedCerts = _toCkmCertificateVector(untrustedcerts);
-
-        ret = mgr->getCertificateChain(ckmCert, ckmUntrustedCerts, EMPTY_CERT_VECTOR, true, ckmCertChain);
+        CKM::CertificateShPtrVector ckmCertChain;
+        auto mgr = CKM::Manager::create();
+        int ret = mgr->getCertificateChain(
+                ckmCert,
+                _toCkmCertificateVector(untrustedcerts),
+                EMPTY_CERT_VECTOR,
+                true,
+                ckmCertChain);
         if (ret != CKM_API_SUCCESS)
             return to_ckmc_error(ret);
 
@@ -736,21 +664,16 @@ KEY_MANAGER_CAPI
 int ckmc_get_cert_chain_with_alias(const ckmc_cert_s *cert, const ckmc_alias_list_s *untrustedcerts, ckmc_cert_list_s **cert_chain_list)
 {
     return try_catch_enclosure([&]()->int {
-        int ret;
-        CKM::ManagerShPtr mgr = CKM::Manager::create();
-        CKM::CertificateShPtrVector ckmCertChain;
-
-
-        if (cert == NULL || cert->raw_cert == NULL || cert->cert_size <= 0 || cert_chain_list == NULL)
+        if (cert == nullptr || cert->raw_cert == nullptr || cert->cert_size == 0 || cert_chain_list == nullptr)
             return CKMC_ERROR_INVALID_PARAMETER;
 
-        CKM::CertificateShPtr ckmCert = _toCkmCertificate(cert);
-        if (ckmCert.get() == NULL)
+        auto ckmCert = _toCkmCertificate(cert);
+        if (!ckmCert)
             return CKMC_ERROR_INVALID_FORMAT;
 
-        CKM::AliasVector ckmUntrustedAliases = _toCkmAliasVector(untrustedcerts);
-
-        ret = mgr->getCertificateChain(ckmCert, ckmUntrustedAliases, EMPTY_ALIAS_VECTOR, true, ckmCertChain);
+        CKM::CertificateShPtrVector ckmCertChain;
+        auto mgr = CKM::Manager::create();
+        int ret = mgr->getCertificateChain(ckmCert, _toCkmAliasVector(untrustedcerts),EMPTY_ALIAS_VECTOR, true, ckmCertChain);
         if (ret != CKM_API_SUCCESS)
             return to_ckmc_error(ret);
 
@@ -768,25 +691,25 @@ int ckmc_get_cert_chain_with_trustedcert(const ckmc_cert_s* cert,
                                          ckmc_cert_list_s** ppcert_chain_list)
 {
     return try_catch_enclosure([&]()->int {
-        int ret;
-        CKM::ManagerShPtr mgr = CKM::Manager::create();
-        CKM::CertificateShPtrVector ckm_cert_chain;
-
-        if (cert == NULL || cert->raw_cert == NULL || cert->cert_size <= 0 || ppcert_chain_list == NULL)
+        if (cert == nullptr || cert->raw_cert == nullptr || cert->cert_size == 0 || ppcert_chain_list == nullptr)
             return CKMC_ERROR_INVALID_PARAMETER;
 
-        CKM::CertificateShPtr ckm_cert = _toCkmCertificate(cert);
-        if (ckm_cert.get() == NULL)
+        auto ckmCert = _toCkmCertificate(cert);
+        if (!ckmCert)
             return CKMC_ERROR_INVALID_PARAMETER;
 
-        CKM::CertificateShPtrVector ckm_untrusted = _toCkmCertificateVector(untrustedcerts);
-        CKM::CertificateShPtrVector ckm_trusted = _toCkmCertificateVector(trustedcerts);
-
-        ret = mgr->getCertificateChain(ckm_cert, ckm_untrusted, ckm_trusted, sys_certs, ckm_cert_chain);
+        CKM::CertificateShPtrVector ckmCertChain;
+        auto mgr = CKM::Manager::create();
+        int ret = mgr->getCertificateChain(
+                ckmCert,
+                _toCkmCertificateVector(untrustedcerts),
+                _toCkmCertificateVector(trustedcerts),
+                sys_certs,
+                ckmCertChain);
         if (ret != CKM_API_SUCCESS)
             return to_ckmc_error(ret);
 
-        *ppcert_chain_list = _toNewCkmCertList(ckm_cert_chain);
+        *ppcert_chain_list = _toNewCkmCertList(ckmCertChain);
 
         return CKMC_ERROR_NONE;
     });
@@ -796,19 +719,19 @@ KEY_MANAGER_CAPI
 int ckmc_ocsp_check(const ckmc_cert_list_s *pcert_chain_list, ckmc_ocsp_status_e *ocsp_status)
 {
     return try_catch_enclosure([&]()->int {
-        if (pcert_chain_list == NULL
-            || pcert_chain_list->cert == NULL
-            || pcert_chain_list->cert->raw_cert == NULL
-            || pcert_chain_list->cert->cert_size <= 0
-            || ocsp_status == NULL)
+        if (pcert_chain_list == nullptr
+            || pcert_chain_list->cert == nullptr
+            || pcert_chain_list->cert->raw_cert == nullptr
+            || pcert_chain_list->cert->cert_size == 0
+            || ocsp_status == nullptr)
             return CKMC_ERROR_INVALID_PARAMETER;
 
         int tmpOcspStatus = -1;
-        CKM::ManagerShPtr mgr = CKM::Manager::create();
-        CKM::CertificateShPtrVector ckmCertChain = _toCkmCertificateVector(pcert_chain_list);
+        auto mgr = CKM::Manager::create();
+        int ret = mgr->ocspCheck(_toCkmCertificateVector(pcert_chain_list), tmpOcspStatus);
 
-        int ret = mgr->ocspCheck(ckmCertChain, tmpOcspStatus);
         *ocsp_status = to_ckmc_ocsp_status(tmpOcspStatus);
+
         return to_ckmc_error(ret);
     });
 }
@@ -817,10 +740,10 @@ KEY_MANAGER_CAPI
 int ckmc_allow_access(const char *alias, const char *accessor, ckmc_access_right_e granted)
 {
     return try_catch_enclosure([&]()->int {
-        int ec, permissionMask;
-        ec = access_to_permission_mask(granted, permissionMask);
-        if (ec != CKMC_ERROR_NONE)
-            return ec;
+        int permissionMask;
+        int ret = access_to_permission_mask(granted, permissionMask);
+        if (ret != CKMC_ERROR_NONE)
+            return ret;
 
         return ckmc_set_permission(alias, accessor, permissionMask);
     });
@@ -833,7 +756,7 @@ int ckmc_set_permission(const char *alias, const char *accessor, int permissions
         if (!alias || !accessor)
             return CKMC_ERROR_INVALID_PARAMETER;
 
-        CKM::ManagerShPtr mgr = CKM::Manager::create();
+        auto mgr = CKM::Manager::create();
         return to_ckmc_error(mgr->setPermission(alias, accessor, permissions));
     });
 }
@@ -845,7 +768,7 @@ int ckmc_deny_access(const char *alias, const char *accessor)
         if (!alias || !accessor)
             return CKMC_ERROR_INVALID_PARAMETER;
 
-        CKM::ManagerShPtr mgr = CKM::Manager::create();
+        auto mgr = CKM::Manager::create();
         return to_ckmc_error(mgr->setPermission(alias, accessor, CKM::Permission::NONE));
     });
 }
@@ -857,9 +780,8 @@ int ckmc_remove_alias(const char *alias)
         if (!alias)
             return CKMC_ERROR_INVALID_PARAMETER;
 
-        CKM::ManagerShPtr mgr = CKM::Manager::create();
-        int ret =  mgr->removeAlias(alias);
-        return to_ckmc_error(ret);
+        auto mgr = CKM::Manager::create();
+        return to_ckmc_error(mgr->removeAlias(alias));
     });
 }
 
