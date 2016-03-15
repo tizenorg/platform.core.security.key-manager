@@ -135,7 +135,6 @@ INCLUDE_DIRECTORIES(
 
 SET(KEY_MANAGER_CLIENT_SOURCES
     ${KEY_MANAGER_CLIENT_SRC_PATH}/client-common.cpp
-    ${KEY_MANAGER_CLIENT_SRC_PATH}/client-error.cpp
     ${KEY_MANAGER_CLIENT_SRC_PATH}/client-manager.cpp
     ${KEY_MANAGER_CLIENT_SRC_PATH}/client-manager-impl.cpp
     ${KEY_MANAGER_CLIENT_ASYNC_SRC_PATH}/client-manager-async.cpp
@@ -148,7 +147,6 @@ SET(KEY_MANAGER_CLIENT_SOURCES
     ${KEY_MANAGER_CLIENT_ASYNC_SRC_PATH}/encryption-receiver.cpp
     ${KEY_MANAGER_CLIENT_ASYNC_SRC_PATH}/descriptor-set.cpp
     ${KEY_MANAGER_CLIENT_CAPI_SRC_PATH}/ckmc-type.cpp
-    ${KEY_MANAGER_CLIENT_CAPI_SRC_PATH}/ckmc-error.cpp
     ${KEY_MANAGER_CLIENT_CAPI_SRC_PATH}/ckmc-manager.cpp
     ${KEY_MANAGER_CLIENT_CAPI_SRC_PATH}/ckmc-type-converter.cpp
     )

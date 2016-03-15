@@ -108,8 +108,6 @@ enum Permission: int {
     // keep in sync with ckmc_permission_e !
 };
 
-const char * ErrorToString(int error);
-
 // algorithm parameters
 enum class ParamName : int {
     ALGO_TYPE = 1,      // If there's no such param, the service will try to deduce the algorithm
