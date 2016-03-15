@@ -34,7 +34,8 @@ public:
     typedef std::shared_ptr<EVP_PKEY> EvpShPtr;
 
     KeyImpl();
-    KeyImpl(const KeyImpl &second);
+    KeyImpl(const KeyImpl &second) = delete;
+    KeyImpl &operator=(const KeyImpl &second) = delete;
     KeyImpl(const RawBuffer& buffer, const Password &password = Password());
     KeyImpl(EvpShPtr pkey, KeyType type);
 

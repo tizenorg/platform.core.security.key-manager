@@ -476,8 +476,10 @@ int CKMLogic::extractPKCS12Data(
 {
     // private key is mandatory
     auto key = pkcs.getKey();
-    if (!key)
+    if (!key) {
+        LogError("Failed to get private key from pkcs");
         return CKM_API_ERROR_INVALID_FORMAT;
+    }
 
     Crypto::Data keyData(DataType(key->getType()), key->getDER());
     int retCode = verifyBinaryData(keyData);
@@ -487,8 +489,10 @@ int CKMLogic::extractPKCS12Data(
 
     // certificate is mandatory
     auto cert = pkcs.getCertificate();
-    if (!cert)
+    if (!cert) {
+        LogError("Failed to get certificate from pkcs");
         return CKM_API_ERROR_INVALID_FORMAT;
+    }
     Crypto::Data certData(DataType::CERTIFICATE, cert->getDER());
     retCode = verifyBinaryData(certData);
     if (retCode != CKM_API_SUCCESS)
@@ -936,7 +940,7 @@ RawBuffer CKMLogic::getPKCS12(
 
         // prepare response
         if (retCode == CKM_API_SUCCESS)
-            output = PKCS12Serializable(privKey, cert, caChain);
+            output = PKCS12Serializable(std::move(privKey), std::move(cert), std::move(caChain));
     } catch (const Exc::Exception &e) {
         retCode = e.error();
     } catch (const CKM::Exception &e) {

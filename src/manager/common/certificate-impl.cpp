@@ -11,12 +11,12 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License
- *
- *
- * @file        client-certificate-impl.cpp
+ */
+/*
+ * @file        certificate-impl.cpp
  * @author      Bartlomiej Grzelewski (b.grzelewski@samsung.com)
  * @version     1.0
- * @brief       Key implementation.
+ * @brief       Certificate implementation.
  */
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
@@ -31,12 +31,8 @@
 namespace CKM {
 
 CertificateImpl::CertificateImpl(const RawBuffer &der, DataFormat format)
-  : m_x509(nullptr)
+    : m_x509(nullptr)
 {
-    int size;
-    const unsigned char *ptr;
-    RawBuffer tmp;
-
     LogDebug("Certificate to parse. Size: " << der.size());
 
     if (DataFormat::FORM_DER_BASE64 == format) {
@@ -44,16 +40,16 @@ CertificateImpl::CertificateImpl(const RawBuffer &der, DataFormat format)
         base64.reset();
         base64.append(der);
         base64.finalize();
-        tmp = base64.get();
-        ptr = reinterpret_cast<const unsigned char*>(tmp.data());
-        size = static_cast<int>(tmp.size());
+        auto tmp = base64.get();
+        auto ptr = reinterpret_cast<const unsigned char *>(tmp.data());
+        auto size = static_cast<int>(tmp.size());
         m_x509 = d2i_X509(nullptr, &ptr, size);
     } else if (DataFormat::FORM_DER == format) {
-        ptr = reinterpret_cast<const unsigned char*>(der.data());
-        size = static_cast<int>(der.size());
+        auto ptr = reinterpret_cast<const unsigned char *>(der.data());
+        auto size = static_cast<int>(der.size());
         m_x509 = d2i_X509(nullptr, &ptr, size);
     } else if (DataFormat::FORM_PEM == format) {
-        BIO *buff = BIO_new(BIO_s_mem());
+        auto buff = BIO_new(BIO_s_mem());
         BIO_write(buff, der.data(), der.size());
         m_x509 = PEM_read_bio_X509(buff, nullptr, nullptr, nullptr);
         BIO_free_all(buff);
@@ -78,11 +74,6 @@ CertificateImpl::CertificateImpl(X509 *x509, bool duplicate)
         m_x509 = x509;
 }
 
-CertificateImpl::CertificateImpl(const CertificateImpl &second)
-{
-    m_x509 = X509_dup(second.m_x509);
-}
-
 CertificateImpl::CertificateImpl(CertificateImpl &&second)
 {
     m_x509 = second.m_x509;
@@ -99,16 +90,6 @@ CertificateImpl& CertificateImpl::operator=(CertificateImpl &&second)
     m_x509 = second.m_x509;
     second.m_x509 = nullptr;
     LogDebug("Certificate moved: " << (void*)m_x509);
-    return *this;
-}
-
-CertificateImpl& CertificateImpl::operator=(const CertificateImpl &second)
-{
-    if (this == &second)
-        return *this;
-    if (m_x509)
-        X509_free(m_x509);
-    m_x509 = X509_dup(second.m_x509);
     return *this;
 }
 

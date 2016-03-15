@@ -84,22 +84,22 @@ PKCS12Impl::PKCS12Impl(const RawBuffer &buffer, const Password &password)
     if (pkey) {
         KeyImpl::EvpShPtr ptr(pkey, EVP_PKEY_free);
         switch (EVP_PKEY_type(pkey->type)) {
-            case EVP_PKEY_RSA:
-                m_pkey = std::make_shared<KeyImpl>(ptr, KeyType::KEY_RSA_PRIVATE);
-                break;
+        case EVP_PKEY_RSA:
+            m_pkey = std::make_shared<KeyImpl>(ptr, KeyType::KEY_RSA_PRIVATE);
+            break;
 
-            case EVP_PKEY_DSA:
-                m_pkey = std::make_shared<KeyImpl>(ptr, KeyType::KEY_DSA_PRIVATE);
-                break;
+        case EVP_PKEY_DSA:
+            m_pkey = std::make_shared<KeyImpl>(ptr, KeyType::KEY_DSA_PRIVATE);
+            break;
 
-            case EVP_PKEY_EC:
-                m_pkey = std::make_shared<KeyImpl>(ptr, KeyType::KEY_ECDSA_PRIVATE);
-                break;
+        case EVP_PKEY_EC:
+            m_pkey = std::make_shared<KeyImpl>(ptr, KeyType::KEY_ECDSA_PRIVATE);
+            break;
 
-            default:
-                LogError("Unsupported private key type.");
-                EVP_PKEY_free(pkey);
-                break;
+        default:
+            LogError("Unsupported private key type.");
+            EVP_PKEY_free(pkey);
+            break;
         }
     }
 
@@ -116,13 +116,6 @@ PKCS12Impl::PKCS12Impl(const RawBuffer &buffer, const Password &password)
     }
 }
 
-PKCS12Impl::PKCS12Impl(const PKCS12 &other) :
-    m_pkey(other.getKey()),
-    m_cert(other.getCertificate()),
-    m_ca(other.getCaCertificateShPtrVector())
-{
-}
-
 PKCS12Impl::PKCS12Impl(PKCS12Impl &&other) :
     m_pkey(std::move(other.m_pkey)),
     m_cert(std::move(other.m_cert)),
@@ -130,21 +123,23 @@ PKCS12Impl::PKCS12Impl(PKCS12Impl &&other) :
 {
 }
 
-PKCS12Impl::PKCS12Impl(const PKCS12Impl &other) :
+PKCS12Impl &PKCS12Impl::operator=(PKCS12Impl &&other)
+{
+    if (this == &other)
+        return *this;
+
+    m_pkey = std::move(other.m_pkey);
+    m_cert = std::move(other.m_cert);
+    m_ca = std::move(other.m_ca);
+
+    return *this;
+}
+
+PKCS12Impl::PKCS12Impl(const PKCS12 &other) :
     m_pkey(other.getKey()),
     m_cert(other.getCertificate()),
     m_ca(other.getCaCertificateShPtrVector())
 {
-}
-
-PKCS12Impl& PKCS12Impl::operator=(const PKCS12Impl &other)
-{
-    if (this != &other) {
-        m_pkey = other.getKey();
-        m_cert = other.getCertificate();
-        m_ca = other.getCaCertificateShPtrVector();
-    }
-    return *this;
 }
 
 KeyShPtr PKCS12Impl::getKey() const

@@ -31,13 +31,15 @@ class COMMON_API PKCS12Impl : public PKCS12 {
 public:
     PKCS12Impl() {}
     explicit PKCS12Impl(const PKCS12 &);
-    PKCS12Impl(PKCS12Impl &&);
-    PKCS12Impl(const PKCS12Impl &);
     PKCS12Impl(const RawBuffer &, const Password &);
     PKCS12Impl(const KeyShPtr &, const CertificateShPtr &, const CertificateShPtrVector &);
 
-    PKCS12Impl& operator=(const PKCS12Impl &);
-    PKCS12Impl& operator=(PKCS12Impl &&) = delete;
+    PKCS12Impl(PKCS12Impl &&);
+    PKCS12Impl& operator=(PKCS12Impl &&);
+
+    PKCS12Impl(const PKCS12Impl &) = delete;
+    PKCS12Impl& operator=(const PKCS12Impl &) = delete;
+
 
     virtual KeyShPtr getKey() const;
     virtual CertificateShPtr getCertificate() const;

@@ -11,9 +11,9 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License
- *
- *
- * @file        client-certificate-impl.h
+ */
+/*
+ * @file        certificate-impl.h
  * @author      Barlomiej Grzelewski (b.grzelewski@samsung.com)
  * @version     1.0
  * @brief       Certificate Implmentation.
@@ -33,12 +33,14 @@ namespace CKM {
 
 class COMMON_API CertificateImpl : public Certificate {
 public:
-    CertificateImpl() : m_x509(NULL) {}
+    CertificateImpl() : m_x509(nullptr) {}
     explicit CertificateImpl(X509* x509, bool duplicate = true);
     CertificateImpl(const RawBuffer &data, DataFormat format);
-    CertificateImpl(const CertificateImpl &);
+
+    CertificateImpl(const CertificateImpl &) = delete;
+    CertificateImpl &operator=(const CertificateImpl &) = delete;
+
     CertificateImpl(CertificateImpl &&);
-    CertificateImpl& operator=(const CertificateImpl &);
     CertificateImpl& operator=(CertificateImpl &&);
 
     virtual RawBuffer getDER() const;
@@ -57,4 +59,3 @@ protected:
 typedef std::vector<CertificateImpl> CertificateImplVector;
 
 } // namespace CKM
-

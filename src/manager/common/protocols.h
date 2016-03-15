@@ -103,12 +103,18 @@ struct COMMON_API PolicySerializable : public Policy, ISerializable {
 
 struct COMMON_API PKCS12Serializable : public PKCS12Impl, ISerializable {
     PKCS12Serializable();
+
+    PKCS12Serializable(const PKCS12Serializable &) = delete;
+    PKCS12Serializable &operator=(const PKCS12Serializable &) = delete;
+
+    PKCS12Serializable(PKCS12Serializable &&);
+    PKCS12Serializable &operator=(PKCS12Serializable &&);
+
     explicit PKCS12Serializable(const PKCS12 &);
     explicit PKCS12Serializable(IStream &);
-    PKCS12Serializable(
-            const KeyShPtr &privKey,
-            const CertificateShPtr &cert,
-            const CertificateShPtrVector &chainCerts);
+    PKCS12Serializable(KeyShPtr &&privKey,
+            CertificateShPtr &&cert,
+            CertificateShPtrVector &&chainCerts);
     void Serialize(IStream &) const;
 };
 
