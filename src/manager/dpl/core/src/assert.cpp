@@ -19,12 +19,11 @@
  * @version     1.0
  * @brief       This file is the implementation file of assert
  */
-#include <stddef.h>
-#include <dpl/assert.h>
-#include <dpl/colors.h>
-#include <dpl/log/log.h>
-#include <dpl/exception.h>
+#include "dpl/assert.h"
+
+#include <iostream>
 #include <cstdlib>
+#include <dpl/log/log.h>
 
 namespace CKM {
 void AssertProc(const char *condition,
@@ -32,31 +31,17 @@ void AssertProc(const char *condition,
                 int line,
                 const char *function)
 {
-#define INTERNAL_LOG(message)                                          \
-    do {                                                               \
-        std::ostringstream platformLog;                                \
-        platformLog << message;                                        \
-        CKM::Log::LogSystemSingleton::Instance().Log(                  \
-            CKM::Log::AbstractLogProvider::LogLevel::Pedantic,         \
-            platformLog.str().c_str(),                                 \
-            __FILE__, __LINE__, __FUNCTION__);                         \
-    } while (0)
-
-    // Try to log failed assertion to log system
-    Try {
-        INTERNAL_LOG(
+    try {
+        LogError(
+            "################################################################################" << std::endl <<
+            "###                          CKM assertion failed!                           ###" << std::endl <<
+            "################################################################################" << std::endl <<
+            "### Condition: " << condition << std::endl <<
+            "### File: " << file << std::endl <<
+            "### Line: " << line << std::endl <<
+            "### Function: " << function <<
             "################################################################################");
-        INTERNAL_LOG(
-            "###                          CKM assertion failed!                           ###");
-        INTERNAL_LOG(
-            "################################################################################");
-        INTERNAL_LOG("### Condition: " << condition);
-        INTERNAL_LOG("### File: " << file);
-        INTERNAL_LOG("### Line: " << line);
-        INTERNAL_LOG("### Function: " << function);
-        INTERNAL_LOG(
-            "################################################################################");
-    } catch (Exception) {
+    } catch (...) {
         // Just ignore possible double errors
     }
 

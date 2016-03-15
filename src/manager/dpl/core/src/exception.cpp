@@ -19,10 +19,10 @@
  * @version     1.0
  * @brief       This file is the implementation of exception system
  */
-#include <stddef.h>
-#include <dpl/exception.h>
+#include "dpl/exception.h"
+
+#include <cstddef>
 #include <dpl/log/log.h>
-#include <cstdio>
 
 namespace CKM {
 Exception* Exception::m_lastException = NULL;
@@ -31,11 +31,7 @@ void (*Exception::m_terminateHandler)() = NULL;
 
 void LogUnhandledException(const std::string &str)
 {
-    // Logging to console
-    printf("%s\n", str.c_str());
-
-    // Logging to dlog
-    LogPedantic(str);
+    LogError(str);
 }
 
 void LogUnhandledException(const std::string &str,
@@ -43,18 +39,14 @@ void LogUnhandledException(const std::string &str,
                            int line,
                            const char *function)
 {
-    // Logging to console
-    std::ostringstream msg;
-    msg << "\033[1;5;31m\n=== [" << filename << ":" << line << "] " <<
-    function << " ===\033[m";
-    msg << str;
-    printf("%s\n", msg.str().c_str());
-
-    // Logging to dlog
-    CKM::Log::LogSystemSingleton::Instance().Log(CKM::Log::AbstractLogProvider::LogLevel::Error,
-                                                 str.c_str(),
-                                                 filename,
-                                                 line,
-                                                 function);
+    LogError(
+        "################################################################################" << std::endl <<
+        "###                   CKM Unhandled Exception Occured!                       ###" << std::endl <<
+        "################################################################################" << std::endl <<
+        "### Condition: " << str << std::endl <<
+        "### File: " << filename << std::endl <<
+        "### Line: " << line << std::endl <<
+        "### Function: " << function <<
+        "################################################################################");
 }
 } // namespace CKM
