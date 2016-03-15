@@ -43,11 +43,13 @@ public:
     virtual RawBuffer getDERPUB() const;
     virtual RawBuffer getDERPRV() const;
     virtual EvpShPtr getEvpShPtr() const;
+    /* //TODO
     virtual ElipticCurve getCurve() const
     {
-        // TODO
         return ElipticCurve::prime192v1;
     }
+    */
+
     virtual int getSize() const
     {
         // TODO
