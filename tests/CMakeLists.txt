@@ -37,8 +37,10 @@ SET(TEST_MERGED_SOURCES
     ${KEY_MANAGER_TEST_MERGED_SRC}/colour_log_formatter.cpp
     ${KEY_MANAGER_TEST_MERGED_SRC}/DBFixture.cpp
     ${KEY_MANAGER_TEST_MERGED_SRC}/main.cpp
+    ${KEY_MANAGER_TEST_MERGED_SRC}/test_base64.cpp
     ${KEY_MANAGER_TEST_MERGED_SRC}/test_comm-manager.cpp
     ${KEY_MANAGER_TEST_MERGED_SRC}/test_common.cpp
+    ${KEY_MANAGER_TEST_MERGED_SRC}/test_data-type.cpp
     ${KEY_MANAGER_TEST_MERGED_SRC}/test_db_crypto.cpp
     ${KEY_MANAGER_TEST_MERGED_SRC}/test_descriptor-set.cpp
     ${KEY_MANAGER_TEST_MERGED_SRC}/test_encryption-scheme.cpp
@@ -48,6 +50,8 @@ SET(TEST_MERGED_SOURCES
     ${KEY_MANAGER_TEST_MERGED_SRC}/test_serialization.cpp
     ${KEY_MANAGER_TEST_MERGED_SRC}/test_sql.cpp
     ${KEY_MANAGER_TEST_MERGED_SRC}/test_xml-parser.cpp
+
+    # duplicated srcs to test hidden symbols
     ${KEY_MANAGER_PATH}/client-async/descriptor-set.cpp
     ${KEY_MANAGER_PATH}/dpl/core/src/assert.cpp
     ${KEY_MANAGER_PATH}/dpl/core/src/colors.cpp
