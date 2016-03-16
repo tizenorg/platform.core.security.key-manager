@@ -103,7 +103,8 @@ KeyImpl::KeyImpl(const RawBuffer &buf, const Password &password) :
     }
 
     if (!pkey && buf[0] != '-') {
-        BIO_reset(bio.get());
+        /* cast to void of return val to ignore unused-value warning */
+        static_cast<void>(BIO_reset(bio.get()));
         BIO_write(bio.get(), buf.data(), buf.size());
         pkey = d2i_PrivateKey_bio(bio.get(), nullptr);
         isPrivate = true;
@@ -111,7 +112,8 @@ KeyImpl::KeyImpl(const RawBuffer &buf, const Password &password) :
     }
 
     if (!pkey && buf[0] == '-') {
-        BIO_reset(bio.get());
+        /* cast to void of return val to ignore unused-value warning */
+        static_cast<void>(BIO_reset(bio.get()));
         BIO_write(bio.get(), buf.data(), buf.size());
         pkey = PEM_read_bio_PUBKEY(bio.get(), nullptr, passcb, const_cast<Password*>(&password));
         isPrivate = false;
@@ -119,7 +121,8 @@ KeyImpl::KeyImpl(const RawBuffer &buf, const Password &password) :
     }
 
     if (!pkey && buf[0] == '-') {
-        BIO_reset(bio.get());
+        /* cast to void of return val to ignore unused-value warning */
+        static_cast<void>(BIO_reset(bio.get()));
         BIO_write(bio.get(), buf.data(), buf.size());
         pkey = PEM_read_bio_PrivateKey(bio.get(), nullptr, passcb, const_cast<Password*>(&password));
         isPrivate = true;
