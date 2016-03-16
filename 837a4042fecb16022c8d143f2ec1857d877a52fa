@@ -1,0 +1,8 @@
+Code-Review-1: Build Bot <b.bot@partner.samsung.com>
+Code-Review+2: Dong Sun Lee <ds73.lee@samsung.com>
+Verified+1: Dong Sun Lee <ds73.lee@samsung.com>
+Submitted-by: Dong Sun Lee <ds73.lee@samsung.com>
+Submitted-at: Tue, 15 Mar 2016 20:03:43 -0700
+Reviewed-on: https://review.tizen.org/gerrit/62390
+Project: platform/core/security/key-manager
+Branch: refs/heads/tizen
