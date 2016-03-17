@@ -29,9 +29,8 @@ namespace InitialValues {
 
 CertHandler::~CertHandler() {}
 
-DataType CertHandler::getDataType() const
-{
-    return DataType::CERTIFICATE;
+DataType CertHandler::getDataType() const {
+	return DataType::CERTIFICATE;
 }
 
 }

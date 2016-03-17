@@ -34,94 +34,95 @@
 using namespace std;
 
 enum {
-    CLEAR_CACHE = 1,
-    LAZY = 2
+	CLEAR_CACHE = 1,
+	LAZY = 2
 };
 
-void clear_cache()
-{
-    sync();
-    ofstream of("/proc/sys/vm/drop_caches");
-    if (of.bad()) {
-        cerr << "Cache clearing failed with errno: " << errno << endl;
-        return;
-    }
-    of << "3";
+void clear_cache() {
+	sync();
+	ofstream of("/proc/sys/vm/drop_caches");
+
+	if (of.bad()) {
+		cerr << "Cache clearing failed with errno: " << errno << endl;
+		return;
+	}
+
+	of << "3";
 }
 
-void test(int flags, const string& library, const string& symbol)
-{
-    bool lazy = (flags & LAZY);
-    if (flags & CLEAR_CACHE)
-        clear_cache();
+void test(int flags, const string &library, const string &symbol) {
+	bool lazy = (flags & LAZY);
 
-    chrono::time_point<chrono::high_resolution_clock> tp[4];
+	if (flags & CLEAR_CACHE)
+		clear_cache();
 
-    tp[0] = chrono::high_resolution_clock::now();
-    void* handle = dlopen(library.c_str(), (lazy?RTLD_LAZY:RTLD_NOW));
-    tp[1] = chrono::high_resolution_clock::now();
-    if (!handle) {
-        cerr << "dlopen failed: " << dlerror() << endl;
-        exit(1);
-    }
+	chrono::time_point<chrono::high_resolution_clock> tp[4];
+	tp[0] = chrono::high_resolution_clock::now();
+	void *handle = dlopen(library.c_str(), (lazy ? RTLD_LAZY : RTLD_NOW));
+	tp[1] = chrono::high_resolution_clock::now();
 
-    if (!symbol.empty())
-    {
-        tp[2] = chrono::high_resolution_clock::now();
-        void* sym = dlsym(handle, symbol.c_str());
-        tp[3] = chrono::high_resolution_clock::now();
-        if (!sym) {
-            cerr << "dlsym failed: " << dlerror() << endl;
-            exit(1);
-        }
-    }
-    dlclose(handle);
+	if (!handle) {
+		cerr << "dlopen failed: " << dlerror() << endl;
+		exit(1);
+	}
 
-    cout << (tp[1] - tp[0]).count() << ";" << (tp[3] - tp[2]).count() << endl;
+	if (!symbol.empty()) {
+		tp[2] = chrono::high_resolution_clock::now();
+		void *sym = dlsym(handle, symbol.c_str());
+		tp[3] = chrono::high_resolution_clock::now();
+
+		if (!sym) {
+			cerr << "dlsym failed: " << dlerror() << endl;
+			exit(1);
+		}
+	}
+
+	dlclose(handle);
+	cout << (tp[1] - tp[0]).count() << ";" << (tp[3] - tp[2]).count() << endl;
 }
 
-int main(int argc, char* argv[])
-{
-    if (argc < 5) {
-        cerr << "Usage: ckm_so_loader [flags] [repeats] [library] [symbol]" << endl;
-        cerr << " flags: 1-clear cache, 2-lazy binding" << endl;
-        cerr << "Example: ckm_so_loader 3 100 /usr/lib/libkey-manager-client.so ckmc_save_key" << endl;
-        return -1;
-    }
+int main(int argc, char *argv[]) {
+	if (argc < 5) {
+		cerr << "Usage: ckm_so_loader [flags] [repeats] [library] [symbol]" << endl;
+		cerr << " flags: 1-clear cache, 2-lazy binding" << endl;
+		cerr << "Example: ckm_so_loader 3 100 /usr/lib/libkey-manager-client.so ckmc_save_key" << endl;
+		return -1;
+	}
 
-    try {
-        int flags = stoi(argv[1]); // let it throw
-        int repeats = stoi(argv[2]); // let it throw
-        string so_path(argv[3]);
-        string symbol(argv[4]);
+	try {
+		int flags = stoi(argv[1]); // let it throw
+		int repeats = stoi(argv[2]); // let it throw
+		string so_path(argv[3]);
+		string symbol(argv[4]);
+		cout << "dlopen[us];dlsym[us]" << endl;
 
-        cout << "dlopen[us];dlsym[us]" << endl;
-        for (int cnt = 0 ; cnt < repeats; cnt++) {
-            /*
-             * It has to be a different process each time. Glibc somehow caches the library information
-             * and consecutive calls are faster
-             */
-            pid_t pid = fork();
-            if (pid < 0) {
-                cerr << "fork failed with errno: " << errno << endl;
-                return -1;
-            } else if (pid == 0) {
-                test(flags, so_path, symbol);
-                exit(0);
-            } else {
+		for (int cnt = 0 ; cnt < repeats; cnt++) {
+			/*
+			 * It has to be a different process each time. Glibc somehow caches the library information
+			 * and consecutive calls are faster
+			 */
+			pid_t pid = fork();
 
-                int status;
-                pid_t ret = waitpid(pid, &status, 0);
-                if (ret != pid) {
-                    cerr << "waitpid failed with errno: " << errno << endl;
-                    exit(1);
-                }
-            }
-        }
+			if (pid < 0) {
+				cerr << "fork failed with errno: " << errno << endl;
+				return -1;
+			} else if (pid == 0) {
+				test(flags, so_path, symbol);
+				exit(0);
+			} else {
+				int status;
+				pid_t ret = waitpid(pid, &status, 0);
 
-        return 0;
-    } catch (...) {
-        cerr << "Unexpected exception occured" << endl;
-        return -1;
-    }
+				if (ret != pid) {
+					cerr << "waitpid failed with errno: " << errno << endl;
+					exit(1);
+				}
+			}
+		}
+
+		return 0;
+	} catch (...) {
+		cerr << "Unexpected exception occured" << endl;
+		return -1;
+	}
 }

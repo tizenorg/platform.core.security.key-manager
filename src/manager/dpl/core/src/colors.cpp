@@ -26,25 +26,25 @@
 namespace CKM {
 namespace Colors {
 namespace Text {
-const char* BOLD_GREEN_BEGIN = "\033[1;32m";
-const char* BOLD_GREEN_END = "\033[m";
-const char* RED_BEGIN = "\033[0;31m";
-const char* RED_END = "\033[m";
-const char* PURPLE_BEGIN = "\033[0;35m";
-const char* PURPLE_END = "\033[m";
-const char* GREEN_BEGIN = "\033[0;32m";
-const char* GREEN_END = "\033[m";
-const char* CYAN_BEGIN = "\033[0;36m";
-const char* CYAN_END = "\033[m";
-const char* BOLD_RED_BEGIN = "\033[1;31m";
-const char* BOLD_RED_END = "\033[m";
-const char* BOLD_YELLOW_BEGIN = "\033[1;33m";
-const char* BOLD_YELLOW_END = "\033[m";
-const char* BOLD_GOLD_BEGIN = "\033[0;33m";
-const char* BOLD_GOLD_END = "\033[m";
-const char* BOLD_WHITE_BEGIN = "\033[1;37m";
-const char* BOLD_WHITE_END = "\033[m";
-const char* COLOR_END = "\033[m";
+const char *BOLD_GREEN_BEGIN = "\033[1;32m";
+const char *BOLD_GREEN_END = "\033[m";
+const char *RED_BEGIN = "\033[0;31m";
+const char *RED_END = "\033[m";
+const char *PURPLE_BEGIN = "\033[0;35m";
+const char *PURPLE_END = "\033[m";
+const char *GREEN_BEGIN = "\033[0;32m";
+const char *GREEN_END = "\033[m";
+const char *CYAN_BEGIN = "\033[0;36m";
+const char *CYAN_END = "\033[m";
+const char *BOLD_RED_BEGIN = "\033[1;31m";
+const char *BOLD_RED_END = "\033[m";
+const char *BOLD_YELLOW_BEGIN = "\033[1;33m";
+const char *BOLD_YELLOW_END = "\033[m";
+const char *BOLD_GOLD_BEGIN = "\033[0;33m";
+const char *BOLD_GOLD_END = "\033[m";
+const char *BOLD_WHITE_BEGIN = "\033[1;37m";
+const char *BOLD_WHITE_END = "\033[m";
+const char *COLOR_END = "\033[m";
 } //namespace Text
 } //namespace Colors
 } //namespace CKM

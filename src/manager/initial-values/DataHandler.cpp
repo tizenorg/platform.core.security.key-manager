@@ -29,9 +29,8 @@ namespace InitialValues {
 
 DataHandler::~DataHandler() {}
 
-DataType DataHandler::getDataType() const
-{
-    return DataType::BINARY_DATA;
+DataType DataHandler::getDataType() const {
+	return DataType::BINARY_DATA;
 }
 
 }

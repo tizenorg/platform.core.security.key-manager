@@ -202,10 +202,10 @@ int ckmc_reset_user_password(uid_t user, const char *new_password);
  * @see ckmc_set_permission()
  */
 int ckmc_allow_access_by_adm(uid_t user,
-                             const char *owner,
-                             const char *alias,
-                             const char *accessor,
-                             ckmc_access_right_e granted);
+							 const char *owner,
+							 const char *alias,
+							 const char *accessor,
+							 ckmc_access_right_e granted);
 
 /**
  * @brief Allows another application to access client's application data

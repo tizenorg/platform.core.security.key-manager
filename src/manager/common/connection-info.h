@@ -31,14 +31,14 @@
 #include <message-buffer.h>
 
 namespace CKM {
-    struct ConnectionInfo {
-        InterfaceID interfaceID;
-        MessageBuffer buffer;
-        Credentials credentials;
-        bool checkInProgress;
-    };
+struct ConnectionInfo {
+	InterfaceID interfaceID;
+	MessageBuffer buffer;
+	Credentials credentials;
+	bool checkInProgress;
+};
 
-    typedef std::map<int, ConnectionInfo> ConnectionInfoMap;
+typedef std::map<int, ConnectionInfo> ConnectionInfoMap;
 } //namespace CKM
 
 #endif //_CONNECTION_INFO_H_

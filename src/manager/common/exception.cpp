@@ -26,23 +26,21 @@ namespace CKM {
 namespace Exc {
 
 PrintError::PrintError(
-       const std::string &path,
-       const std::string &function,
-       int line,
-       int error,
-       const std::string &message)
-{
-    LogErrorPosition(message << " (Error: " << error << ")", path.c_str(), line, function.c_str());
+	const std::string &path,
+	const std::string &function,
+	int line,
+	int error,
+	const std::string &message) {
+	LogErrorPosition(message << " (Error: " << error << ")", path.c_str(), line, function.c_str());
 }
 
 PrintDebug::PrintDebug(
-       const std::string &path,
-       const std::string &function,
-       int line,
-       int error,
-       const std::string &message)
-{
-    LogDebugPosition(message << " (Error: " << error << ")", path.c_str(), line, function.c_str());
+	const std::string &path,
+	const std::string &function,
+	int line,
+	int error,
+	const std::string &message) {
+	LogDebugPosition(message << " (Error: " << error << ")", path.c_str(), line, function.c_str());
 }
 
 } // namespace Exc

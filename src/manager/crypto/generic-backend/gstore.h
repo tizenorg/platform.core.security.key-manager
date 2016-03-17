@@ -33,58 +33,51 @@ namespace Crypto {
 
 // Data is very generic and does not say anything about content.
 struct Data {
-    Data() {};
-    Data(const DataType& t, RawBuffer d) : type(t), data(std::move(d)) {}
-    DataType type;
-    RawBuffer data; // buffer will be better?
+	Data() {};
+	Data(const DataType &t, RawBuffer d) : type(t), data(std::move(d)) {}
+	DataType type;
+	RawBuffer data; // buffer will be better?
 };
 
 // Too generic. The name does not say anything aobut content.
 struct DataEncryption {
-    DataEncryption() {};
-    DataEncryption(RawBuffer encKey, RawBuffer ivector)
-      : encryptedKey(std::move(encKey))
-      , iv(std::move(ivector))
-    {}
-    RawBuffer encryptedKey;
-    RawBuffer iv;
+	DataEncryption() {};
+	DataEncryption(RawBuffer encKey, RawBuffer ivector)
+		: encryptedKey(std::move(encKey))
+		, iv(std::move(ivector)) {
+	}
+	RawBuffer encryptedKey;
+	RawBuffer iv;
 };
 
 class GStore {
-public:
-    virtual GObjUPtr getObject(const Token &, const Password &)
-    {
-        ThrowErr(Exc::Crypto::OperationNotSupported);
-    }
-    virtual TokenPair generateAKey(const CryptoAlgorithm &, const Password &, const Password &)
-    {
-        ThrowErr(Exc::Crypto::OperationNotSupported);
-    }
-    virtual Token generateSKey(const CryptoAlgorithm &, const Password &)
-    {
-        ThrowErr(Exc::Crypto::OperationNotSupported);
-    }
-    virtual Token import(const Data &, const Password &)
-    {
-        ThrowErr(Exc::Crypto::OperationNotSupported);
-    }
-    virtual Token importEncrypted(const Data &, const Password &, const DataEncryption &)
-    {
-        ThrowErr(Exc::Crypto::OperationNotSupported);
-    }
-    virtual void destroy(const Token &)
-    {
-        ThrowErr(Exc::Crypto::OperationNotSupported);
-    }
-    virtual ~GStore() {}
+  public:
+	virtual GObjUPtr getObject(const Token &, const Password &) {
+		ThrowErr(Exc::Crypto::OperationNotSupported);
+	}
+	virtual TokenPair generateAKey(const CryptoAlgorithm &, const Password &, const Password &) {
+		ThrowErr(Exc::Crypto::OperationNotSupported);
+	}
+	virtual Token generateSKey(const CryptoAlgorithm &, const Password &) {
+		ThrowErr(Exc::Crypto::OperationNotSupported);
+	}
+	virtual Token import(const Data &, const Password &) {
+		ThrowErr(Exc::Crypto::OperationNotSupported);
+	}
+	virtual Token importEncrypted(const Data &, const Password &, const DataEncryption &) {
+		ThrowErr(Exc::Crypto::OperationNotSupported);
+	}
+	virtual void destroy(const Token &) {
+		ThrowErr(Exc::Crypto::OperationNotSupported);
+	}
+	virtual ~GStore() {}
 
-protected:
-    explicit GStore(CryptoBackend backendId) :
-        m_backendId(backendId)
-    {
-    }
+  protected:
+	explicit GStore(CryptoBackend backendId) :
+		m_backendId(backendId) {
+	}
 
-    CryptoBackend m_backendId;
+	CryptoBackend m_backendId;
 };
 
 } // namespace Crypto

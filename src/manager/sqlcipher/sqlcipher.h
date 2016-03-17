@@ -161,8 +161,8 @@ extern "C" {
 ** function is provided for use in DLLs since DLL users usually do not have
 ** direct access to string constants within the DLL.  ^The
 ** sqlcipher3_libversion_number() function returns an integer equal to
-** [SQLCIPHER_VERSION_NUMBER].  ^The sqlcipher3_sourceid() function returns 
-** a pointer to a string constant whose value is the same as the 
+** [SQLCIPHER_VERSION_NUMBER].  ^The sqlcipher3_sourceid() function returns
+** a pointer to a string constant whose value is the same as the
 ** [SQLCIPHER_SOURCE_ID] C preprocessor macro.
 **
 ** See also: [sqlcipher_version()] and [sqlcipher_source_id()].
@@ -175,20 +175,20 @@ SQLCIPHER_API int sqlcipher3_libversion_number(void);
 /*
 ** CAPI3REF: Run-Time Library Compilation Options Diagnostics
 **
-** ^The sqlcipher3_compileoption_used() function returns 0 or 1 
-** indicating whether the specified option was defined at 
-** compile time.  ^The SQLCIPHER_ prefix may be omitted from the 
-** option name passed to sqlcipher3_compileoption_used().  
+** ^The sqlcipher3_compileoption_used() function returns 0 or 1
+** indicating whether the specified option was defined at
+** compile time.  ^The SQLCIPHER_ prefix may be omitted from the
+** option name passed to sqlcipher3_compileoption_used().
 **
 ** ^The sqlcipher3_compileoption_get() function allows iterating
 ** over the list of options that were defined at compile time by
 ** returning the N-th compile time option string.  ^If N is out of range,
-** sqlcipher3_compileoption_get() returns a NULL pointer.  ^The SQLCIPHER_ 
-** prefix is omitted from any strings returned by 
+** sqlcipher3_compileoption_get() returns a NULL pointer.  ^The SQLCIPHER_
+** prefix is omitted from any strings returned by
 ** sqlcipher3_compileoption_get().
 **
 ** ^Support for the diagnostic functions sqlcipher3_compileoption_used()
-** and sqlcipher3_compileoption_get() may be omitted by specifying the 
+** and sqlcipher3_compileoption_get() may be omitted by specifying the
 ** [SQLCIPHER_OMIT_COMPILEOPTION_DIAGS] option at compile time.
 **
 ** See also: SQL functions [sqlcipher_compileoption_used()] and
@@ -209,7 +209,7 @@ SQLCIPHER_API const char *sqlcipher3_compileoption_get(int N);
 ** SQLite can be compiled with or without mutexes.  When
 ** the [SQLCIPHER_THREADSAFE] C preprocessor macro is 1 or 2, mutexes
 ** are enabled and SQLite is threadsafe.  When the
-** [SQLCIPHER_THREADSAFE] macro is 0, 
+** [SQLCIPHER_THREADSAFE] macro is 0,
 ** the mutexes are omitted.  Without the mutexes, it is not safe
 ** to use SQLite concurrently from more than one thread.
 **
@@ -265,18 +265,18 @@ typedef struct sqlcipher3 sqlcipher3;
 **
 ** ^The sqlcipher3_int64 and sqlcipher_int64 types can store integer values
 ** between -9223372036854775808 and +9223372036854775807 inclusive.  ^The
-** sqlcipher3_uint64 and sqlcipher_uint64 types can store integer values 
+** sqlcipher3_uint64 and sqlcipher_uint64 types can store integer values
 ** between 0 and +18446744073709551615 inclusive.
 */
 #ifdef SQLCIPHER_INT64_TYPE
-  typedef SQLCIPHER_INT64_TYPE sqlcipher_int64;
-  typedef unsigned SQLCIPHER_INT64_TYPE sqlcipher_uint64;
+typedef SQLCIPHER_INT64_TYPE sqlcipher_int64;
+typedef unsigned SQLCIPHER_INT64_TYPE sqlcipher_uint64;
 #elif defined(_MSC_VER) || defined(__BORLANDC__)
-  typedef __int64 sqlcipher_int64;
-  typedef unsigned __int64 sqlcipher_uint64;
+typedef __int64 sqlcipher_int64;
+typedef unsigned __int64 sqlcipher_uint64;
 #else
-  typedef long long int sqlcipher_int64;
-  typedef unsigned long long int sqlcipher_uint64;
+typedef long long int sqlcipher_int64;
+typedef unsigned long long int sqlcipher_uint64;
 #endif
 typedef sqlcipher_int64 sqlcipher3_int64;
 typedef sqlcipher_uint64 sqlcipher3_uint64;
@@ -310,7 +310,7 @@ typedef sqlcipher_uint64 sqlcipher3_uint64;
 ** pointer or an [sqlcipher3] object pointer obtained
 ** from [sqlcipher3_open()], [sqlcipher3_open16()], or
 ** [sqlcipher3_open_v2()], and not previously closed.
-** ^Calling sqlcipher3_close() with a NULL pointer argument is a 
+** ^Calling sqlcipher3_close() with a NULL pointer argument is a
 ** harmless no-op.
 */
 SQLCIPHER_API int sqlcipher3_close(sqlcipher3 *);
@@ -320,7 +320,7 @@ SQLCIPHER_API int sqlcipher3_close(sqlcipher3 *);
 ** This is legacy and deprecated.  It is included for historical
 ** compatibility and is not documented.
 */
-typedef int (*sqlcipher3_callback)(void*,int,char**, char**);
+typedef int (*sqlcipher3_callback)(void *, int, char **, char **);
 
 /*
 ** CAPI3REF: One-Step Query Execution Interface
@@ -328,7 +328,7 @@ typedef int (*sqlcipher3_callback)(void*,int,char**, char**);
 ** The sqlcipher3_exec() interface is a convenience wrapper around
 ** [sqlcipher3_prepare_v2()], [sqlcipher3_step()], and [sqlcipher3_finalize()],
 ** that allows an application to run multiple statements of SQL
-** without having to use a lot of C code. 
+** without having to use a lot of C code.
 **
 ** ^The sqlcipher3_exec() interface runs zero or more UTF-8 encoded,
 ** semicolon-separate SQL statements passed into its 2nd argument,
@@ -368,7 +368,7 @@ typedef int (*sqlcipher3_callback)(void*,int,char**, char**);
 ** from [sqlcipher3_column_name()].
 **
 ** ^If the 2nd parameter to sqlcipher3_exec() is a NULL pointer, a pointer
-** to an empty string, or a pointer that contains only whitespace and/or 
+** to an empty string, or a pointer that contains only whitespace and/or
 ** SQL comments, then no SQL statements are evaluated and the database
 ** is not changed.
 **
@@ -384,11 +384,11 @@ typedef int (*sqlcipher3_callback)(void*,int,char**, char**);
 ** </ul>
 */
 SQLCIPHER_API int sqlcipher3_exec(
-  sqlcipher3*,                                  /* An open database */
-  const char *sql,                           /* SQL to be evaluated */
-  int (*callback)(void*,int,char**,char**),  /* Callback function */
-  void *,                                    /* 1st argument to callback */
-  char **errmsg                              /* Error msg written here */
+	sqlcipher3 *,                                 /* An open database */
+	const char *sql,                           /* SQL to be evaluated */
+	int (*callback)(void *, int, char **, char **), /* Callback function */
+	void *,                                    /* 1st argument to callback */
+	char **errmsg                              /* Error msg written here */
 );
 
 /*
@@ -596,7 +596,7 @@ SQLCIPHER_API int sqlcipher3_exec(
 /*
 ** CAPI3REF: OS Interface Open File Handle
 **
-** An [sqlcipher3_file] object represents an open file in the 
+** An [sqlcipher3_file] object represents an open file in the
 ** [sqlcipher3_vfs | OS interface layer].  Individual OS interface
 ** implementations will
 ** want to subclass this object by appending additional fields
@@ -606,7 +606,7 @@ SQLCIPHER_API int sqlcipher3_exec(
 */
 typedef struct sqlcipher3_file sqlcipher3_file;
 struct sqlcipher3_file {
-  const struct sqlcipher3_io_methods *pMethods;  /* Methods for an open file */
+	const struct sqlcipher3_io_methods *pMethods;  /* Methods for an open file */
 };
 
 /*
@@ -618,7 +618,7 @@ struct sqlcipher3_file {
 ** This object defines the methods used to perform various operations
 ** against the open file represented by the [sqlcipher3_file] object.
 **
-** If the [sqlcipher3_vfs.xOpen] method sets the sqlcipher3_file.pMethods element 
+** If the [sqlcipher3_vfs.xOpen] method sets the sqlcipher3_file.pMethods element
 ** to a non-NULL pointer, then the sqlcipher3_io_methods.xClose method
 ** may be invoked even if the [sqlcipher3_vfs.xOpen] reported that it failed.  The
 ** only way to prevent a call to xClose following a failed [sqlcipher3_vfs.xOpen]
@@ -701,26 +701,26 @@ struct sqlcipher3_file {
 */
 typedef struct sqlcipher3_io_methods sqlcipher3_io_methods;
 struct sqlcipher3_io_methods {
-  int iVersion;
-  int (*xClose)(sqlcipher3_file*);
-  int (*xRead)(sqlcipher3_file*, void*, int iAmt, sqlcipher3_int64 iOfst);
-  int (*xWrite)(sqlcipher3_file*, const void*, int iAmt, sqlcipher3_int64 iOfst);
-  int (*xTruncate)(sqlcipher3_file*, sqlcipher3_int64 size);
-  int (*xSync)(sqlcipher3_file*, int flags);
-  int (*xFileSize)(sqlcipher3_file*, sqlcipher3_int64 *pSize);
-  int (*xLock)(sqlcipher3_file*, int);
-  int (*xUnlock)(sqlcipher3_file*, int);
-  int (*xCheckReservedLock)(sqlcipher3_file*, int *pResOut);
-  int (*xFileControl)(sqlcipher3_file*, int op, void *pArg);
-  int (*xSectorSize)(sqlcipher3_file*);
-  int (*xDeviceCharacteristics)(sqlcipher3_file*);
-  /* Methods above are valid for version 1 */
-  int (*xShmMap)(sqlcipher3_file*, int iPg, int pgsz, int, void volatile**);
-  int (*xShmLock)(sqlcipher3_file*, int offset, int n, int flags);
-  void (*xShmBarrier)(sqlcipher3_file*);
-  int (*xShmUnmap)(sqlcipher3_file*, int deleteFlag);
-  /* Methods above are valid for version 2 */
-  /* Additional methods may be added in future releases */
+	int iVersion;
+	int (*xClose)(sqlcipher3_file *);
+	int (*xRead)(sqlcipher3_file *, void *, int iAmt, sqlcipher3_int64 iOfst);
+	int (*xWrite)(sqlcipher3_file *, const void *, int iAmt, sqlcipher3_int64 iOfst);
+	int (*xTruncate)(sqlcipher3_file *, sqlcipher3_int64 size);
+	int (*xSync)(sqlcipher3_file *, int flags);
+	int (*xFileSize)(sqlcipher3_file *, sqlcipher3_int64 *pSize);
+	int (*xLock)(sqlcipher3_file *, int);
+	int (*xUnlock)(sqlcipher3_file *, int);
+	int (*xCheckReservedLock)(sqlcipher3_file *, int *pResOut);
+	int (*xFileControl)(sqlcipher3_file *, int op, void *pArg);
+	int (*xSectorSize)(sqlcipher3_file *);
+	int (*xDeviceCharacteristics)(sqlcipher3_file *);
+	/* Methods above are valid for version 1 */
+	int (*xShmMap)(sqlcipher3_file *, int iPg, int pgsz, int, void volatile **);
+	int (*xShmLock)(sqlcipher3_file *, int offset, int n, int flags);
+	void (*xShmBarrier)(sqlcipher3_file *);
+	int (*xShmUnmap)(sqlcipher3_file *, int deleteFlag);
+	/* Methods above are valid for version 2 */
+	/* Additional methods may be added in future releases */
 };
 
 /*
@@ -747,7 +747,7 @@ struct sqlcipher3_io_methods {
 **
 ** The [SQLCIPHER_FCNTL_CHUNK_SIZE] opcode is used to request that the VFS
 ** extends and truncates the database file in chunks of a size specified
-** by the user. The fourth argument to [sqlcipher3_file_control()] should 
+** by the user. The fourth argument to [sqlcipher3_file_control()] should
 ** point to an integer (type int) containing the new chunk-size to use
 ** for the nominated database. Allocating database file space in large
 ** chunks (say 1MB at a time), may reduce file-system fragmentation and
@@ -762,11 +762,11 @@ struct sqlcipher3_io_methods {
 ** SQLite and sent to all VFSes in place of a call to the xSync method
 ** when the database connection has [PRAGMA synchronous] set to OFF.)^
 ** Some specialized VFSes need this signal in order to operate correctly
-** when [PRAGMA synchronous | PRAGMA synchronous=OFF] is set, but most 
+** when [PRAGMA synchronous | PRAGMA synchronous=OFF] is set, but most
 ** VFSes do not need this signal and should silently ignore this opcode.
 ** Applications should not call [sqlcipher3_file_control()] with this
 ** opcode as doing so may disrupt the operation of the specialized VFSes
-** that do require it.  
+** that do require it.
 **
 ** ^The [SQLCIPHER_FCNTL_WIN32_AV_RETRY] opcode is used to configure automatic
 ** retry counts and intervals for certain disk I/O operations for the
@@ -800,7 +800,7 @@ struct sqlcipher3_io_methods {
 **
 ** ^The [SQLCIPHER_FCNTL_OVERWRITE] opcode is invoked by SQLite after opening
 ** a write transaction to indicate that, unless it is rolled back for some
-** reason, the entire database file will be overwritten by the current 
+** reason, the entire database file will be overwritten by the current
 ** transaction. This is used by VACUUM operations.
 */
 #define SQLCIPHER_FCNTL_LOCKSTATE        1
@@ -875,14 +875,14 @@ typedef struct sqlcipher3_mutex sqlcipher3_mutex;
 ** the [sqlcipher3_file] can safely store a pointer to the
 ** filename if it needs to remember the filename for some reason.
 ** If the zFilename parameter to xOpen is a NULL pointer then xOpen
-** must invent its own temporary name for the file.  ^Whenever the 
+** must invent its own temporary name for the file.  ^Whenever the
 ** xFilename parameter is NULL it will also be the case that the
 ** flags parameter will include [SQLCIPHER_OPEN_DELETEONCLOSE].
 **
 ** The flags argument to xOpen() includes all bits set in
 ** the flags argument to [sqlcipher3_open_v2()].  Or if [sqlcipher3_open()]
 ** or [sqlcipher3_open16()] is used, then flags includes at least
-** [SQLCIPHER_OPEN_READWRITE] | [SQLCIPHER_OPEN_CREATE]. 
+** [SQLCIPHER_OPEN_READWRITE] | [SQLCIPHER_OPEN_CREATE].
 ** If xOpen() opens a file read-only then it sets *pOutFlags to
 ** include [SQLCIPHER_OPEN_READONLY].  Other bits in *pOutFlags may be set.
 **
@@ -924,10 +924,10 @@ typedef struct sqlcipher3_mutex sqlcipher3_mutex;
 ** ^The [SQLCIPHER_OPEN_EXCLUSIVE] flag is always used in conjunction
 ** with the [SQLCIPHER_OPEN_CREATE] flag, which are both directly
 ** analogous to the O_EXCL and O_CREAT flags of the POSIX open()
-** API.  The SQLCIPHER_OPEN_EXCLUSIVE flag, when paired with the 
+** API.  The SQLCIPHER_OPEN_EXCLUSIVE flag, when paired with the
 ** SQLCIPHER_OPEN_CREATE, is used to indicate that file should always
 ** be created, and that it is an error if it already exists.
-** It is <i>not</i> used to indicate the file should be opened 
+** It is <i>not</i> used to indicate the file should be opened
 ** for exclusive access.
 **
 ** ^At least szOsFile bytes of memory are allocated by SQLite
@@ -965,16 +965,16 @@ typedef struct sqlcipher3_mutex sqlcipher3_mutex;
 ** method returns a Julian Day Number for the current date and time as
 ** a floating point value.
 ** ^The xCurrentTimeInt64() method returns, as an integer, the Julian
-** Day Number multiplied by 86400000 (the number of milliseconds in 
-** a 24-hour day).  
+** Day Number multiplied by 86400000 (the number of milliseconds in
+** a 24-hour day).
 ** ^SQLite will use the xCurrentTimeInt64() method to get the current
-** date and time if that method is available (if iVersion is 2 or 
+** date and time if that method is available (if iVersion is 2 or
 ** greater and the function pointer is not NULL) and will fall back
 ** to xCurrentTime() if xCurrentTimeInt64() is unavailable.
 **
 ** ^The xSetSystemCall(), xGetSystemCall(), and xNestSystemCall() interfaces
 ** are not used by the SQLite core.  These optional interfaces are provided
-** by some VFSes to facilitate testing of the VFS code. By overriding 
+** by some VFSes to facilitate testing of the VFS code. By overriding
 ** system calls with functions under its control, a test program can
 ** simulate faults and error conditions that would otherwise be difficult
 ** or impossible to induce.  The set of system calls that can be overridden
@@ -987,42 +987,42 @@ typedef struct sqlcipher3_mutex sqlcipher3_mutex;
 typedef struct sqlcipher3_vfs sqlcipher3_vfs;
 typedef void (*sqlcipher3_syscall_ptr)(void);
 struct sqlcipher3_vfs {
-  int iVersion;            /* Structure version number (currently 3) */
-  int szOsFile;            /* Size of subclassed sqlcipher3_file */
-  int mxPathname;          /* Maximum file pathname length */
-  sqlcipher3_vfs *pNext;      /* Next registered VFS */
-  const char *zName;       /* Name of this virtual file system */
-  void *pAppData;          /* Pointer to application-specific data */
-  int (*xOpen)(sqlcipher3_vfs*, const char *zName, sqlcipher3_file*,
-               int flags, int *pOutFlags);
-  int (*xDelete)(sqlcipher3_vfs*, const char *zName, int syncDir);
-  int (*xAccess)(sqlcipher3_vfs*, const char *zName, int flags, int *pResOut);
-  int (*xFullPathname)(sqlcipher3_vfs*, const char *zName, int nOut, char *zOut);
-  void *(*xDlOpen)(sqlcipher3_vfs*, const char *zFilename);
-  void (*xDlError)(sqlcipher3_vfs*, int nByte, char *zErrMsg);
-  void (*(*xDlSym)(sqlcipher3_vfs*,void*, const char *zSymbol))(void);
-  void (*xDlClose)(sqlcipher3_vfs*, void*);
-  int (*xRandomness)(sqlcipher3_vfs*, int nByte, char *zOut);
-  int (*xSleep)(sqlcipher3_vfs*, int microseconds);
-  int (*xCurrentTime)(sqlcipher3_vfs*, double*);
-  int (*xGetLastError)(sqlcipher3_vfs*, int, char *);
-  /*
-  ** The methods above are in version 1 of the sqlcipher_vfs object
-  ** definition.  Those that follow are added in version 2 or later
-  */
-  int (*xCurrentTimeInt64)(sqlcipher3_vfs*, sqlcipher3_int64*);
-  /*
-  ** The methods above are in versions 1 and 2 of the sqlcipher_vfs object.
-  ** Those below are for version 3 and greater.
-  */
-  int (*xSetSystemCall)(sqlcipher3_vfs*, const char *zName, sqlcipher3_syscall_ptr);
-  sqlcipher3_syscall_ptr (*xGetSystemCall)(sqlcipher3_vfs*, const char *zName);
-  const char *(*xNextSystemCall)(sqlcipher3_vfs*, const char *zName);
-  /*
-  ** The methods above are in versions 1 through 3 of the sqlcipher_vfs object.
-  ** New fields may be appended in figure versions.  The iVersion
-  ** value will increment whenever this happens. 
-  */
+	int iVersion;            /* Structure version number (currently 3) */
+	int szOsFile;            /* Size of subclassed sqlcipher3_file */
+	int mxPathname;          /* Maximum file pathname length */
+	sqlcipher3_vfs *pNext;      /* Next registered VFS */
+	const char *zName;       /* Name of this virtual file system */
+	void *pAppData;          /* Pointer to application-specific data */
+	int (*xOpen)(sqlcipher3_vfs *, const char *zName, sqlcipher3_file *,
+				 int flags, int *pOutFlags);
+	int (*xDelete)(sqlcipher3_vfs *, const char *zName, int syncDir);
+	int (*xAccess)(sqlcipher3_vfs *, const char *zName, int flags, int *pResOut);
+	int (*xFullPathname)(sqlcipher3_vfs *, const char *zName, int nOut, char *zOut);
+	void *(*xDlOpen)(sqlcipher3_vfs *, const char *zFilename);
+	void (*xDlError)(sqlcipher3_vfs *, int nByte, char *zErrMsg);
+	void (*(*xDlSym)(sqlcipher3_vfs *, void *, const char *zSymbol))(void);
+	void (*xDlClose)(sqlcipher3_vfs *, void *);
+	int (*xRandomness)(sqlcipher3_vfs *, int nByte, char *zOut);
+	int (*xSleep)(sqlcipher3_vfs *, int microseconds);
+	int (*xCurrentTime)(sqlcipher3_vfs *, double *);
+	int (*xGetLastError)(sqlcipher3_vfs *, int, char *);
+	/*
+	** The methods above are in version 1 of the sqlcipher_vfs object
+	** definition.  Those that follow are added in version 2 or later
+	*/
+	int (*xCurrentTimeInt64)(sqlcipher3_vfs *, sqlcipher3_int64 *);
+	/*
+	** The methods above are in versions 1 and 2 of the sqlcipher_vfs object.
+	** Those below are for version 3 and greater.
+	*/
+	int (*xSetSystemCall)(sqlcipher3_vfs *, const char *zName, sqlcipher3_syscall_ptr);
+	sqlcipher3_syscall_ptr(*xGetSystemCall)(sqlcipher3_vfs *, const char *zName);
+	const char *(*xNextSystemCall)(sqlcipher3_vfs *, const char *zName);
+	/*
+	** The methods above are in versions 1 through 3 of the sqlcipher_vfs object.
+	** New fields may be appended in figure versions.  The iVersion
+	** value will increment whenever this happens.
+	*/
 };
 
 /*
@@ -1065,7 +1065,7 @@ struct sqlcipher3_vfs {
 ** </ul>
 **
 ** When unlocking, the same SHARED or EXCLUSIVE flag must be supplied as
-** was given no the corresponding lock.  
+** was given no the corresponding lock.
 **
 ** The xShmLock method can transition between unlocked and SHARED or
 ** between unlocked and EXCLUSIVE.  It cannot transition between SHARED
@@ -1207,14 +1207,14 @@ SQLCIPHER_API int sqlcipher3_config(int, ...);
 ** [database connection] (specified in the first argument).
 **
 ** The second argument to sqlcipher3_db_config(D,V,...)  is the
-** [SQLCIPHER_DBCONFIG_LOOKASIDE | configuration verb] - an integer code 
+** [SQLCIPHER_DBCONFIG_LOOKASIDE | configuration verb] - an integer code
 ** that indicates what aspect of the [database connection] is being configured.
 ** Subsequent arguments vary depending on the configuration verb.
 **
 ** ^Calls to sqlcipher3_db_config() return SQLCIPHER_OK if and only if
 ** the call is considered successful.
 */
-SQLCIPHER_API int sqlcipher3_db_config(sqlcipher3*, int op, ...);
+SQLCIPHER_API int sqlcipher3_db_config(sqlcipher3 *, int op, ...);
 
 /*
 ** CAPI3REF: Memory Allocation Routines
@@ -1225,7 +1225,7 @@ SQLCIPHER_API int sqlcipher3_db_config(sqlcipher3*, int op, ...);
 ** This object is used in only one place in the SQLite interface.
 ** A pointer to an instance of this object is the argument to
 ** [sqlcipher3_config()] when the configuration option is
-** [SQLCIPHER_CONFIG_MALLOC] or [SQLCIPHER_CONFIG_GETMALLOC].  
+** [SQLCIPHER_CONFIG_MALLOC] or [SQLCIPHER_CONFIG_GETMALLOC].
 ** By creating an instance of this object
 ** and passing it to [sqlcipher3_config]([SQLCIPHER_CONFIG_MALLOC])
 ** during configuration, an application can specify an alternative
@@ -1255,7 +1255,7 @@ SQLCIPHER_API int sqlcipher3_db_config(sqlcipher3*, int op, ...);
 ** allocators round up memory allocations at least to the next multiple
 ** of 8.  Some allocators round up to a larger multiple or to a power of 2.
 ** Every memory allocation request coming in through [sqlcipher3_malloc()]
-** or [sqlcipher3_realloc()] first calls xRoundup.  If xRoundup returns 0, 
+** or [sqlcipher3_realloc()] first calls xRoundup.  If xRoundup returns 0,
 ** that causes the corresponding memory allocation to fail.
 **
 ** The xInit method initializes the memory allocator.  (For example,
@@ -1281,14 +1281,14 @@ SQLCIPHER_API int sqlcipher3_db_config(sqlcipher3*, int op, ...);
 */
 typedef struct sqlcipher3_mem_methods sqlcipher3_mem_methods;
 struct sqlcipher3_mem_methods {
-  void *(*xMalloc)(int);         /* Memory allocation function */
-  void (*xFree)(void*);          /* Free a prior allocation */
-  void *(*xRealloc)(void*,int);  /* Resize an allocation */
-  int (*xSize)(void*);           /* Return the size of an allocation */
-  int (*xRoundup)(int);          /* Round up request size to allocation size */
-  int (*xInit)(void*);           /* Initialize the memory allocator */
-  void (*xShutdown)(void*);      /* Deinitialize the memory allocator */
-  void *pAppData;                /* Argument to xInit() and xShutdown() */
+	void *(*xMalloc)(int);         /* Memory allocation function */
+	void (*xFree)(void *);         /* Free a prior allocation */
+	void *(*xRealloc)(void *, int); /* Resize an allocation */
+	int (*xSize)(void *);          /* Return the size of an allocation */
+	int (*xRoundup)(int);          /* Round up request size to allocation size */
+	int (*xInit)(void *);          /* Initialize the memory allocator */
+	void (*xShutdown)(void *);     /* Deinitialize the memory allocator */
+	void *pAppData;                /* Argument to xInit() and xShutdown() */
 };
 
 /*
@@ -1313,7 +1313,7 @@ struct sqlcipher3_mem_methods {
 ** by a single thread.   ^If SQLite is compiled with
 ** the [SQLCIPHER_THREADSAFE | SQLCIPHER_THREADSAFE=0] compile-time option then
 ** it is not possible to change the [threading mode] from its default
-** value of Single-thread and so [sqlcipher3_config()] will return 
+** value of Single-thread and so [sqlcipher3_config()] will return
 ** [SQLCIPHER_ERROR] if called with the SQLCIPHER_CONFIG_SINGLETHREAD
 ** configuration option.</dd>
 **
@@ -1364,9 +1364,9 @@ struct sqlcipher3_mem_methods {
 ** tracks memory usage, for example. </dd>
 **
 ** [[SQLCIPHER_CONFIG_MEMSTATUS]] <dt>SQLCIPHER_CONFIG_MEMSTATUS</dt>
-** <dd> ^This option takes single argument of type int, interpreted as a 
-** boolean, which enables or disables the collection of memory allocation 
-** statistics. ^(When memory allocation statistics are disabled, the 
+** <dd> ^This option takes single argument of type int, interpreted as a
+** boolean, which enables or disables the collection of memory allocation
+** statistics. ^(When memory allocation statistics are disabled, the
 ** following SQLite interfaces become non-operational:
 **   <ul>
 **   <li> [sqlcipher3_memory_used()]
@@ -1392,12 +1392,12 @@ struct sqlcipher3_mem_methods {
 ** N should be set to twice the expected maximum number of threads.
 ** ^SQLite will never require a scratch buffer that is more than 6
 ** times the database page size. ^If SQLite needs needs additional
-** scratch memory beyond what is provided by this configuration option, then 
+** scratch memory beyond what is provided by this configuration option, then
 ** [sqlcipher3_malloc()] will be used to obtain the memory needed.</dd>
 **
 ** [[SQLCIPHER_CONFIG_PAGECACHE]] <dt>SQLCIPHER_CONFIG_PAGECACHE</dt>
 ** <dd> ^This option specifies a static memory buffer that SQLite can use for
-** the database page cache with the default page cache implementation.  
+** the database page cache with the default page cache implementation.
 ** This configuration should not be used if an application-define page
 ** cache implementation is loaded using the SQLCIPHER_CONFIG_PCACHE option.
 ** There are three arguments to this option: A pointer to 8-byte aligned
@@ -1481,7 +1481,7 @@ struct sqlcipher3_mem_methods {
 **
 ** [[SQLCIPHER_CONFIG_LOG]] <dt>SQLCIPHER_CONFIG_LOG</dt>
 ** <dd> ^The SQLCIPHER_CONFIG_LOG option takes two arguments: a pointer to a
-** function with a call signature of void(*)(void*,int,const char*), 
+** function with a call signature of void(*)(void*,int,const char*),
 ** and a pointer to void. ^If the function pointer is not NULL, it is
 ** invoked by [sqlcipher3_log()] to process each logging event.  ^If the
 ** function pointer is NULL, the [sqlcipher3_log()] interface becomes a no-op.
@@ -1522,7 +1522,7 @@ struct sqlcipher3_mem_methods {
 #define SQLCIPHER_CONFIG_MEMSTATUS     9  /* boolean */
 #define SQLCIPHER_CONFIG_MUTEX        10  /* sqlcipher3_mutex_methods* */
 #define SQLCIPHER_CONFIG_GETMUTEX     11  /* sqlcipher3_mutex_methods* */
-/* previously SQLCIPHER_CONFIG_CHUNKALLOC 12 which is now unused. */ 
+/* previously SQLCIPHER_CONFIG_CHUNKALLOC 12 which is now unused. */
 #define SQLCIPHER_CONFIG_LOOKASIDE    13  /* int int */
 #define SQLCIPHER_CONFIG_PCACHE       14  /* sqlcipher3_pcache_methods* */
 #define SQLCIPHER_CONFIG_GETPCACHE    15  /* sqlcipher3_pcache_methods* */
@@ -1544,7 +1544,7 @@ struct sqlcipher3_mem_methods {
 **
 ** <dl>
 ** <dt>SQLCIPHER_DBCONFIG_LOOKASIDE</dt>
-** <dd> ^This option takes three additional arguments that determine the 
+** <dd> ^This option takes three additional arguments that determine the
 ** [lookaside memory allocator] configuration for the [database connection].
 ** ^The first argument (the third parameter to [sqlcipher3_db_config()] is a
 ** pointer to a memory buffer to use for lookaside memory.
@@ -1562,7 +1562,7 @@ struct sqlcipher3_mem_methods {
 ** when the "current value" returned by
 ** [sqlcipher3_db_status](D,[SQLCIPHER_CONFIG_LOOKASIDE],...) is zero.
 ** Any attempt to change the lookaside memory configuration when lookaside
-** memory is in use leaves the configuration unchanged and returns 
+** memory is in use leaves the configuration unchanged and returns
 ** [SQLCIPHER_BUSY].)^</dd>
 **
 ** <dt>SQLCIPHER_DBCONFIG_ENABLE_FKEY</dt>
@@ -1599,7 +1599,7 @@ struct sqlcipher3_mem_methods {
 ** [extended result codes] feature of SQLite. ^The extended result
 ** codes are disabled by default for historical compatibility.
 */
-SQLCIPHER_API int sqlcipher3_extended_result_codes(sqlcipher3*, int onoff);
+SQLCIPHER_API int sqlcipher3_extended_result_codes(sqlcipher3 *, int onoff);
 
 /*
 ** CAPI3REF: Last Insert Rowid
@@ -1621,7 +1621,7 @@ SQLCIPHER_API int sqlcipher3_extended_result_codes(sqlcipher3*, int onoff);
 ** ^(If an [INSERT] occurs within a trigger or within a [virtual table]
 ** method, then this routine will return the [rowid] of the inserted
 ** row as long as the trigger or virtual table method is running.
-** But once the trigger or virtual table method ends, the value returned 
+** But once the trigger or virtual table method ends, the value returned
 ** by this routine reverts to what it was before the trigger or virtual
 ** table method began.)^
 **
@@ -1648,7 +1648,7 @@ SQLCIPHER_API int sqlcipher3_extended_result_codes(sqlcipher3*, int onoff);
 ** unpredictable and might not equal either the old or the new
 ** last insert [rowid].
 */
-SQLCIPHER_API sqlcipher3_int64 sqlcipher3_last_insert_rowid(sqlcipher3*);
+SQLCIPHER_API sqlcipher3_int64 sqlcipher3_last_insert_rowid(sqlcipher3 *);
 
 /*
 ** CAPI3REF: Count The Number Of Rows Modified
@@ -1672,7 +1672,7 @@ SQLCIPHER_API sqlcipher3_int64 sqlcipher3_last_insert_rowid(sqlcipher3*);
 ** mechanisms do not count as direct row changes.)^
 **
 ** A "trigger context" is a scope of execution that begins and
-** ends with the script of a [CREATE TRIGGER | trigger]. 
+** ends with the script of a [CREATE TRIGGER | trigger].
 ** Most SQL statements are
 ** evaluated outside of any trigger.  This is the "top level"
 ** trigger context.  If a trigger fires from the top level, a
@@ -1702,7 +1702,7 @@ SQLCIPHER_API sqlcipher3_int64 sqlcipher3_last_insert_rowid(sqlcipher3*);
 ** while [sqlcipher3_changes()] is running then the value returned
 ** is unpredictable and not meaningful.
 */
-SQLCIPHER_API int sqlcipher3_changes(sqlcipher3*);
+SQLCIPHER_API int sqlcipher3_changes(sqlcipher3 *);
 
 /*
 ** CAPI3REF: Total Number Of Rows Modified
@@ -1715,7 +1715,7 @@ SQLCIPHER_API int sqlcipher3_changes(sqlcipher3*);
 ** the count does not include changes used to implement [REPLACE] constraints,
 ** do rollbacks or ABORT processing, or [DROP TABLE] processing.  The
 ** count does not include rows of views that fire an [INSTEAD OF trigger],
-** though if the INSTEAD OF trigger makes changes of its own, those changes 
+** though if the INSTEAD OF trigger makes changes of its own, those changes
 ** are counted.)^
 ** ^The sqlcipher3_total_changes() function counts the changes as soon as
 ** the statement that makes them is completed (when the statement handle
@@ -1728,7 +1728,7 @@ SQLCIPHER_API int sqlcipher3_changes(sqlcipher3*);
 ** while [sqlcipher3_total_changes()] is running then the value
 ** returned is unpredictable and not meaningful.
 */
-SQLCIPHER_API int sqlcipher3_total_changes(sqlcipher3*);
+SQLCIPHER_API int sqlcipher3_total_changes(sqlcipher3 *);
 
 /*
 ** CAPI3REF: Interrupt A Long-Running Query
@@ -1755,7 +1755,7 @@ SQLCIPHER_API int sqlcipher3_total_changes(sqlcipher3*);
 **
 ** ^The sqlcipher3_interrupt(D) call is in effect until all currently running
 ** SQL statements on [database connection] D complete.  ^Any new SQL statements
-** that are started after the sqlcipher3_interrupt() call and before the 
+** that are started after the sqlcipher3_interrupt() call and before the
 ** running statements reaches zero are interrupted as if they had been
 ** running prior to the sqlcipher3_interrupt() call.  ^New SQL statements
 ** that are started after the running statement count reaches zero are
@@ -1767,7 +1767,7 @@ SQLCIPHER_API int sqlcipher3_total_changes(sqlcipher3*);
 ** If the database connection closes while [sqlcipher3_interrupt()]
 ** is running then bad things will likely happen.
 */
-SQLCIPHER_API void sqlcipher3_interrupt(sqlcipher3*);
+SQLCIPHER_API void sqlcipher3_interrupt(sqlcipher3 *);
 
 /*
 ** CAPI3REF: Determine If An SQL Statement Is Complete
@@ -1790,7 +1790,7 @@ SQLCIPHER_API void sqlcipher3_interrupt(sqlcipher3*);
 ** ^These routines do not parse the SQL statements thus
 ** will not detect syntactically incorrect SQL.
 **
-** ^(If SQLite has not been initialized using [sqlcipher3_initialize()] prior 
+** ^(If SQLite has not been initialized using [sqlcipher3_initialize()] prior
 ** to invoking sqlcipher3_complete16() then sqlcipher3_initialize() is invoked
 ** automatically by sqlcipher3_complete16().  If that initialization fails,
 ** then the return value from sqlcipher3_complete16() will be non-zero
@@ -1865,11 +1865,11 @@ SQLCIPHER_API int sqlcipher3_complete16(const void *sql);
 ** The busy callback should not take any actions which modify the
 ** database connection that invoked the busy handler.  Any such actions
 ** result in undefined behavior.
-** 
+**
 ** A busy handler must not close the database connection
 ** or [prepared statement] that invoked the busy handler.
 */
-SQLCIPHER_API int sqlcipher3_busy_handler(sqlcipher3*, int(*)(void*,int), void*);
+SQLCIPHER_API int sqlcipher3_busy_handler(sqlcipher3 *, int(*)(void *, int), void *);
 
 /*
 ** CAPI3REF: Set A Busy Timeout
@@ -1889,7 +1889,7 @@ SQLCIPHER_API int sqlcipher3_busy_handler(sqlcipher3*, int(*)(void*,int), void*)
 ** was defined  (using [sqlcipher3_busy_handler()]) prior to calling
 ** this routine, that other busy handler is cleared.)^
 */
-SQLCIPHER_API int sqlcipher3_busy_timeout(sqlcipher3*, int ms);
+SQLCIPHER_API int sqlcipher3_busy_timeout(sqlcipher3 *, int ms);
 
 /*
 ** CAPI3REF: Convenience Routines For Running Queries
@@ -1964,12 +1964,12 @@ SQLCIPHER_API int sqlcipher3_busy_timeout(sqlcipher3*, int ms);
 ** [sqlcipher3_errmsg()].
 */
 SQLCIPHER_API int sqlcipher3_get_table(
-  sqlcipher3 *db,          /* An open database */
-  const char *zSql,     /* SQL to be evaluated */
-  char ***pazResult,    /* Results of the query */
-  int *pnRow,           /* Number of result rows written here */
-  int *pnColumn,        /* Number of result columns written here */
-  char **pzErrmsg       /* Error msg written here */
+	sqlcipher3 *db,          /* An open database */
+	const char *zSql,     /* SQL to be evaluated */
+	char ***pazResult,    /* Results of the query */
+	int *pnRow,           /* Number of result rows written here */
+	int *pnColumn,        /* Number of result columns written here */
+	char **pzErrmsg       /* Error msg written here */
 );
 SQLCIPHER_API void sqlcipher3_free_table(char **result);
 
@@ -2067,10 +2067,10 @@ SQLCIPHER_API void sqlcipher3_free_table(char **result);
 ** addition that after the string has been read and copied into
 ** the result, [sqlcipher3_free()] is called on the input string.)^
 */
-SQLCIPHER_API char *sqlcipher3_mprintf(const char*,...);
-SQLCIPHER_API char *sqlcipher3_vmprintf(const char*, va_list);
-SQLCIPHER_API char *sqlcipher3_snprintf(int,char*,const char*, ...);
-SQLCIPHER_API char *sqlcipher3_vsnprintf(int,char*,const char*, va_list);
+SQLCIPHER_API char *sqlcipher3_mprintf(const char *, ...);
+SQLCIPHER_API char *sqlcipher3_vmprintf(const char *, va_list);
+SQLCIPHER_API char *sqlcipher3_snprintf(int, char *, const char *, ...);
+SQLCIPHER_API char *sqlcipher3_vsnprintf(int, char *, const char *, va_list);
 
 /*
 ** CAPI3REF: Memory Allocation Subsystem
@@ -2143,8 +2143,8 @@ SQLCIPHER_API char *sqlcipher3_vsnprintf(int,char*,const char*, va_list);
 ** [sqlcipher3_free()] or [sqlcipher3_realloc()].
 */
 SQLCIPHER_API void *sqlcipher3_malloc(int);
-SQLCIPHER_API void *sqlcipher3_realloc(void*, int);
-SQLCIPHER_API void sqlcipher3_free(void*);
+SQLCIPHER_API void *sqlcipher3_realloc(void *, int);
+SQLCIPHER_API void sqlcipher3_free(void *);
 
 /*
 ** CAPI3REF: Memory Allocator Statistics
@@ -2215,7 +2215,7 @@ SQLCIPHER_API void sqlcipher3_randomness(int N, void *P);
 ** requested is ok.  ^When the callback returns [SQLCIPHER_DENY], the
 ** [sqlcipher3_prepare_v2()] or equivalent call that triggered the
 ** authorizer will fail with an error message explaining that
-** access is denied. 
+** access is denied.
 **
 ** ^The first parameter to the authorizer callback is a copy of the third
 ** parameter to the sqlcipher3_set_authorizer() interface. ^The second parameter
@@ -2262,7 +2262,7 @@ SQLCIPHER_API void sqlcipher3_randomness(int N, void *P);
 ** database connections for the meaning of "modify" in this paragraph.
 **
 ** ^When [sqlcipher3_prepare_v2()] is used to prepare a statement, the
-** statement might be re-prepared during [sqlcipher3_step()] due to a 
+** statement might be re-prepared during [sqlcipher3_step()] due to a
 ** schema change.  Hence, the application should ensure that the
 ** correct authorizer callback remains in place during the [sqlcipher3_step()].
 **
@@ -2273,9 +2273,9 @@ SQLCIPHER_API void sqlcipher3_randomness(int N, void *P);
 ** sqlcipher3_prepare_v2() to reprepare a statement after a schema change.
 */
 SQLCIPHER_API int sqlcipher3_set_authorizer(
-  sqlcipher3*,
-  int (*xAuth)(void*,int,const char*,const char*,const char*,const char*),
-  void *pUserData
+	sqlcipher3 *,
+	int (*xAuth)(void *, int, const char *, const char *, const char *, const char *),
+	void *pUserData
 );
 
 /*
@@ -2372,9 +2372,9 @@ SQLCIPHER_API int sqlcipher3_set_authorizer(
 ** sqlcipher3_profile() function is considered experimental and is
 ** subject to change in future versions of SQLite.
 */
-SQLCIPHER_API void *sqlcipher3_trace(sqlcipher3*, void(*xTrace)(void*,const char*), void*);
-SQLCIPHER_API SQLCIPHER_EXPERIMENTAL void *sqlcipher3_profile(sqlcipher3*,
-   void(*xProfile)(void*,const char*,sqlcipher3_uint64), void*);
+SQLCIPHER_API void *sqlcipher3_trace(sqlcipher3 *, void(*xTrace)(void *, const char *), void *);
+SQLCIPHER_API SQLCIPHER_EXPERIMENTAL void *sqlcipher3_profile(sqlcipher3 *,
+		void(*xProfile)(void *, const char *, sqlcipher3_uint64), void *);
 
 /*
 ** CAPI3REF: Query Progress Callbacks
@@ -2385,8 +2385,8 @@ SQLCIPHER_API SQLCIPHER_EXPERIMENTAL void *sqlcipher3_profile(sqlcipher3*,
 ** database connection D.  An example use for this
 ** interface is to keep a GUI updated during a large query.
 **
-** ^The parameter P is passed through as the only parameter to the 
-** callback function X.  ^The parameter N is the number of 
+** ^The parameter P is passed through as the only parameter to the
+** callback function X.  ^The parameter N is the number of
 ** [virtual machine instructions] that are evaluated between successive
 ** invocations of the callback X.
 **
@@ -2406,12 +2406,12 @@ SQLCIPHER_API SQLCIPHER_EXPERIMENTAL void *sqlcipher3_profile(sqlcipher3*,
 ** database connections for the meaning of "modify" in this paragraph.
 **
 */
-SQLCIPHER_API void sqlcipher3_progress_handler(sqlcipher3*, int, int(*)(void*), void*);
+SQLCIPHER_API void sqlcipher3_progress_handler(sqlcipher3 *, int, int(*)(void *), void *);
 
 /*
 ** CAPI3REF: Opening A New Database Connection
 **
-** ^These routines open an SQLite database file as specified by the 
+** ^These routines open an SQLite database file as specified by the
 ** filename argument. ^The filename argument is interpreted as UTF-8 for
 ** sqlcipher3_open() and sqlcipher3_open_v2() and as UTF-16 in the native byte
 ** order for sqlcipher3_open16(). ^(A [database connection] handle is usually
@@ -2436,7 +2436,7 @@ SQLCIPHER_API void sqlcipher3_progress_handler(sqlcipher3*, int, int(*)(void*), 
 ** except that it accepts two additional parameters for additional control
 ** over the new database connection.  ^(The flags parameter to
 ** sqlcipher3_open_v2() can take one of
-** the following three values, optionally combined with the 
+** the following three values, optionally combined with the
 ** [SQLCIPHER_OPEN_NOMUTEX], [SQLCIPHER_OPEN_FULLMUTEX], [SQLCIPHER_OPEN_SHAREDCACHE],
 ** [SQLCIPHER_OPEN_PRIVATECACHE], and/or [SQLCIPHER_OPEN_URI] flags:)^
 **
@@ -2504,17 +2504,17 @@ SQLCIPHER_API void sqlcipher3_progress_handler(sqlcipher3*, int, int(*)(void*), 
 ** information.
 **
 ** URI filenames are parsed according to RFC 3986. ^If the URI contains an
-** authority, then it must be either an empty string or the string 
-** "localhost". ^If the authority is not an empty string or "localhost", an 
-** error is returned to the caller. ^The fragment component of a URI, if 
+** authority, then it must be either an empty string or the string
+** "localhost". ^If the authority is not an empty string or "localhost", an
+** error is returned to the caller. ^The fragment component of a URI, if
 ** present, is ignored.
 **
 ** ^SQLite uses the path component of the URI as the name of the disk file
-** which contains the database. ^If the path begins with a '/' character, 
-** then it is interpreted as an absolute path. ^If the path does not begin 
+** which contains the database. ^If the path begins with a '/' character,
+** then it is interpreted as an absolute path. ^If the path does not begin
 ** with a '/' (meaning that the authority section is omitted from the URI)
-** then the path is interpreted as a relative path. 
-** ^On windows, the first component of an absolute path 
+** then the path is interpreted as a relative path.
+** ^On windows, the first component of an absolute path
 ** is a drive specification (e.g. "C:").
 **
 ** [[core URI query parameters]]
@@ -2532,22 +2532,22 @@ SQLCIPHER_API void sqlcipher3_progress_handler(sqlcipher3*, int, int(*)(void*), 
 **     the value passed as the fourth parameter to sqlcipher3_open_v2().
 **
 **   <li> <b>mode</b>: ^(The mode parameter may be set to either "ro", "rw" or
-**     "rwc". Attempting to set it to any other value is an error)^. 
-**     ^If "ro" is specified, then the database is opened for read-only 
-**     access, just as if the [SQLCIPHER_OPEN_READONLY] flag had been set in the 
-**     third argument to sqlcipher3_prepare_v2(). ^If the mode option is set to 
-**     "rw", then the database is opened for read-write (but not create) 
-**     access, as if SQLCIPHER_OPEN_READWRITE (but not SQLCIPHER_OPEN_CREATE) had 
-**     been set. ^Value "rwc" is equivalent to setting both 
-**     SQLCIPHER_OPEN_READWRITE and SQLCIPHER_OPEN_CREATE. ^If sqlcipher3_open_v2() is 
-**     used, it is an error to specify a value for the mode parameter that is 
-**     less restrictive than that specified by the flags passed as the third 
+**     "rwc". Attempting to set it to any other value is an error)^.
+**     ^If "ro" is specified, then the database is opened for read-only
+**     access, just as if the [SQLCIPHER_OPEN_READONLY] flag had been set in the
+**     third argument to sqlcipher3_prepare_v2(). ^If the mode option is set to
+**     "rw", then the database is opened for read-write (but not create)
+**     access, as if SQLCIPHER_OPEN_READWRITE (but not SQLCIPHER_OPEN_CREATE) had
+**     been set. ^Value "rwc" is equivalent to setting both
+**     SQLCIPHER_OPEN_READWRITE and SQLCIPHER_OPEN_CREATE. ^If sqlcipher3_open_v2() is
+**     used, it is an error to specify a value for the mode parameter that is
+**     less restrictive than that specified by the flags passed as the third
 **     parameter.
 **
 **   <li> <b>cache</b>: ^The cache parameter may be set to either "shared" or
 **     "private". ^Setting it to "shared" is equivalent to setting the
 **     SQLCIPHER_OPEN_SHAREDCACHE bit in the flags argument passed to
-**     sqlcipher3_open_v2(). ^Setting the cache parameter to "private" is 
+**     sqlcipher3_open_v2(). ^Setting the cache parameter to "private" is
 **     equivalent to setting the SQLCIPHER_OPEN_PRIVATECACHE bit.
 **     ^If sqlcipher3_open_v2() is used and the "cache" parameter is present in
 **     a URI filename, its value overrides any behaviour requested by setting
@@ -2563,35 +2563,35 @@ SQLCIPHER_API void sqlcipher3_progress_handler(sqlcipher3*, int, int(*)(void*), 
 **
 ** <table border="1" align=center cellpadding=5>
 ** <tr><th> URI filenames <th> Results
-** <tr><td> file:data.db <td> 
+** <tr><td> file:data.db <td>
 **          Open the file "data.db" in the current directory.
 ** <tr><td> file:/home/fred/data.db<br>
-**          file:///home/fred/data.db <br> 
-**          file://localhost/home/fred/data.db <br> <td> 
+**          file:///home/fred/data.db <br>
+**          file://localhost/home/fred/data.db <br> <td>
 **          Open the database file "/home/fred/data.db".
-** <tr><td> file://darkstar/home/fred/data.db <td> 
+** <tr><td> file://darkstar/home/fred/data.db <td>
 **          An error. "darkstar" is not a recognized authority.
-** <tr><td style="white-space:nowrap"> 
+** <tr><td style="white-space:nowrap">
 **          file:///C:/Documents%20and%20Settings/fred/Desktop/data.db
 **     <td> Windows only: Open the file "data.db" on fred's desktop on drive
-**          C:. Note that the %20 escaping in this example is not strictly 
+**          C:. Note that the %20 escaping in this example is not strictly
 **          necessary - space characters can be used literally
 **          in URI filenames.
-** <tr><td> file:data.db?mode=ro&cache=private <td> 
+** <tr><td> file:data.db?mode=ro&cache=private <td>
 **          Open file "data.db" in the current directory for read-only access.
 **          Regardless of whether or not shared-cache mode is enabled by
 **          default, use a private cache.
 ** <tr><td> file:/home/fred/data.db?vfs=unix-nolock <td>
 **          Open file "/home/fred/data.db". Use the special VFS "unix-nolock".
-** <tr><td> file:data.db?mode=readonly <td> 
+** <tr><td> file:data.db?mode=readonly <td>
 **          An error. "readonly" is not a valid option for the "mode" parameter.
 ** </table>
 **
 ** ^URI hexadecimal escape sequences (%HH) are supported within the path and
 ** query components of a URI. A hexadecimal escape sequence consists of a
-** percent sign - "%" - followed by exactly two hexadecimal digits 
+** percent sign - "%" - followed by exactly two hexadecimal digits
 ** specifying an octet value. ^Before the path or query components of a
-** URI filename are interpreted, they are encoded using UTF-8 and all 
+** URI filename are interpreted, they are encoded using UTF-8 and all
 ** hexadecimal escape sequences replaced by a single byte containing the
 ** corresponding octet. If this process generates an invalid UTF-8 encoding,
 ** the results are undefined.
@@ -2603,25 +2603,25 @@ SQLCIPHER_API void sqlcipher3_progress_handler(sqlcipher3*, int, int(*)(void*), 
 ** sqlcipher3_open() or sqlcipher3_open_v2().
 */
 SQLCIPHER_API int sqlcipher3_open(
-  const char *filename,   /* Database filename (UTF-8) */
-  sqlcipher3 **ppDb          /* OUT: SQLite db handle */
+	const char *filename,   /* Database filename (UTF-8) */
+	sqlcipher3 **ppDb          /* OUT: SQLite db handle */
 );
 SQLCIPHER_API int sqlcipher3_open16(
-  const void *filename,   /* Database filename (UTF-16) */
-  sqlcipher3 **ppDb          /* OUT: SQLite db handle */
+	const void *filename,   /* Database filename (UTF-16) */
+	sqlcipher3 **ppDb          /* OUT: SQLite db handle */
 );
 SQLCIPHER_API int sqlcipher3_open_v2(
-  const char *filename,   /* Database filename (UTF-8) */
-  sqlcipher3 **ppDb,         /* OUT: SQLite db handle */
-  int flags,              /* Flags */
-  const char *zVfs        /* Name of VFS module to use */
+	const char *filename,   /* Database filename (UTF-8) */
+	sqlcipher3 **ppDb,         /* OUT: SQLite db handle */
+	int flags,              /* Flags */
+	const char *zVfs        /* Name of VFS module to use */
 );
 
 /*
 ** CAPI3REF: Obtain Values For URI Parameters
 **
 ** This is a utility routine, useful to VFS implementations, that checks
-** to see if a database file was a URI that contained a specific query 
+** to see if a database file was a URI that contained a specific query
 ** parameter, and if so obtains the value of the query parameter.
 **
 ** The zFilename argument is the filename pointer passed into the xOpen()
@@ -2645,7 +2645,7 @@ SQLCIPHER_API const char *sqlcipher3_uri_parameter(const char *zFilename, const 
 ** associated with a [database connection]. If a prior API call failed
 ** but the most recent API call succeeded, the return value from
 ** sqlcipher3_errcode() is undefined.  ^The sqlcipher3_extended_errcode()
-** interface is the same except that it always returns the 
+** interface is the same except that it always returns the
 ** [extended result code] even when extended result codes are
 ** disabled.
 **
@@ -2672,8 +2672,8 @@ SQLCIPHER_API const char *sqlcipher3_uri_parameter(const char *zFilename, const 
 */
 SQLCIPHER_API int sqlcipher3_errcode(sqlcipher3 *db);
 SQLCIPHER_API int sqlcipher3_extended_errcode(sqlcipher3 *db);
-SQLCIPHER_API const char *sqlcipher3_errmsg(sqlcipher3*);
-SQLCIPHER_API const void *sqlcipher3_errmsg16(sqlcipher3*);
+SQLCIPHER_API const char *sqlcipher3_errmsg(sqlcipher3 *);
+SQLCIPHER_API const void *sqlcipher3_errmsg16(sqlcipher3 *);
 
 /*
 ** CAPI3REF: SQL Statement Object
@@ -2712,7 +2712,7 @@ typedef struct sqlcipher3_stmt sqlcipher3_stmt;
 ** new limit for that construct.)^
 **
 ** ^If the new limit is a negative number, the limit is unchanged.
-** ^(For each limit category SQLCIPHER_LIMIT_<i>NAME</i> there is a 
+** ^(For each limit category SQLCIPHER_LIMIT_<i>NAME</i> there is a
 ** [limits | hard upper bound]
 ** set at compile-time by a C preprocessor macro called
 ** [limits | SQLCIPHER_MAX_<i>NAME</i>].
@@ -2720,7 +2720,7 @@ typedef struct sqlcipher3_stmt sqlcipher3_stmt;
 ** ^Attempts to increase a limit above its hard upper bound are
 ** silently truncated to the hard upper bound.
 **
-** ^Regardless of whether or not the limit was changed, the 
+** ^Regardless of whether or not the limit was changed, the
 ** [sqlcipher3_limit()] interface returns the prior value of the limit.
 ** ^Hence, to find the current value of a limit without changing it,
 ** simply invoke this interface with the third parameter set to -1.
@@ -2740,7 +2740,7 @@ typedef struct sqlcipher3_stmt sqlcipher3_stmt;
 **
 ** New run-time limit categories may be added in future releases.
 */
-SQLCIPHER_API int sqlcipher3_limit(sqlcipher3*, int id, int newVal);
+SQLCIPHER_API int sqlcipher3_limit(sqlcipher3 *, int id, int newVal);
 
 /*
 ** CAPI3REF: Run-Time Limit Categories
@@ -2874,46 +2874,46 @@ SQLCIPHER_API int sqlcipher3_limit(sqlcipher3*, int id, int newVal);
 ** </li>
 **
 ** <li>
-** ^If the specific value bound to [parameter | host parameter] in the 
+** ^If the specific value bound to [parameter | host parameter] in the
 ** WHERE clause might influence the choice of query plan for a statement,
-** then the statement will be automatically recompiled, as if there had been 
+** then the statement will be automatically recompiled, as if there had been
 ** a schema change, on the first  [sqlcipher3_step()] call following any change
-** to the [sqlcipher3_bind_text | bindings] of that [parameter]. 
-** ^The specific value of WHERE-clause [parameter] might influence the 
+** to the [sqlcipher3_bind_text | bindings] of that [parameter].
+** ^The specific value of WHERE-clause [parameter] might influence the
 ** choice of query plan if the parameter is the left-hand side of a [LIKE]
 ** or [GLOB] operator or if the parameter is compared to an indexed column
 ** and the [SQLCIPHER_ENABLE_STAT3] compile-time option is enabled.
-** the 
+** the
 ** </li>
 ** </ol>
 */
 SQLCIPHER_API int sqlcipher3_prepare(
-  sqlcipher3 *db,            /* Database handle */
-  const char *zSql,       /* SQL statement, UTF-8 encoded */
-  int nByte,              /* Maximum length of zSql in bytes. */
-  sqlcipher3_stmt **ppStmt,  /* OUT: Statement handle */
-  const char **pzTail     /* OUT: Pointer to unused portion of zSql */
+	sqlcipher3 *db,            /* Database handle */
+	const char *zSql,       /* SQL statement, UTF-8 encoded */
+	int nByte,              /* Maximum length of zSql in bytes. */
+	sqlcipher3_stmt **ppStmt,  /* OUT: Statement handle */
+	const char **pzTail     /* OUT: Pointer to unused portion of zSql */
 );
 SQLCIPHER_API int sqlcipher3_prepare_v2(
-  sqlcipher3 *db,            /* Database handle */
-  const char *zSql,       /* SQL statement, UTF-8 encoded */
-  int nByte,              /* Maximum length of zSql in bytes. */
-  sqlcipher3_stmt **ppStmt,  /* OUT: Statement handle */
-  const char **pzTail     /* OUT: Pointer to unused portion of zSql */
+	sqlcipher3 *db,            /* Database handle */
+	const char *zSql,       /* SQL statement, UTF-8 encoded */
+	int nByte,              /* Maximum length of zSql in bytes. */
+	sqlcipher3_stmt **ppStmt,  /* OUT: Statement handle */
+	const char **pzTail     /* OUT: Pointer to unused portion of zSql */
 );
 SQLCIPHER_API int sqlcipher3_prepare16(
-  sqlcipher3 *db,            /* Database handle */
-  const void *zSql,       /* SQL statement, UTF-16 encoded */
-  int nByte,              /* Maximum length of zSql in bytes. */
-  sqlcipher3_stmt **ppStmt,  /* OUT: Statement handle */
-  const void **pzTail     /* OUT: Pointer to unused portion of zSql */
+	sqlcipher3 *db,            /* Database handle */
+	const void *zSql,       /* SQL statement, UTF-16 encoded */
+	int nByte,              /* Maximum length of zSql in bytes. */
+	sqlcipher3_stmt **ppStmt,  /* OUT: Statement handle */
+	const void **pzTail     /* OUT: Pointer to unused portion of zSql */
 );
 SQLCIPHER_API int sqlcipher3_prepare16_v2(
-  sqlcipher3 *db,            /* Database handle */
-  const void *zSql,       /* SQL statement, UTF-16 encoded */
-  int nByte,              /* Maximum length of zSql in bytes. */
-  sqlcipher3_stmt **ppStmt,  /* OUT: Statement handle */
-  const void **pzTail     /* OUT: Pointer to unused portion of zSql */
+	sqlcipher3 *db,            /* Database handle */
+	const void *zSql,       /* SQL statement, UTF-16 encoded */
+	int nByte,              /* Maximum length of zSql in bytes. */
+	sqlcipher3_stmt **ppStmt,  /* OUT: Statement handle */
+	const void **pzTail     /* OUT: Pointer to unused portion of zSql */
 );
 
 /*
@@ -2933,8 +2933,8 @@ SQLCIPHER_API const char *sqlcipher3_sql(sqlcipher3_stmt *pStmt);
 ** the content of the database file.
 **
 ** Note that [application-defined SQL functions] or
-** [virtual tables] might change the database indirectly as a side effect.  
-** ^(For example, if an application defines a function "eval()" that 
+** [virtual tables] might change the database indirectly as a side effect.
+** ^(For example, if an application defines a function "eval()" that
 ** calls [sqlcipher3_exec()], then the following SQL statement would
 ** change the database file through side-effects:
 **
@@ -2948,10 +2948,10 @@ SQLCIPHER_API const char *sqlcipher3_sql(sqlcipher3_stmt *pStmt);
 ** ^Transaction control statements such as [BEGIN], [COMMIT], [ROLLBACK],
 ** [SAVEPOINT], and [RELEASE] cause sqlcipher3_stmt_readonly() to return true,
 ** since the statements themselves do not actually modify the database but
-** rather they control the timing of when other statements modify the 
+** rather they control the timing of when other statements modify the
 ** database.  ^The [ATTACH] and [DETACH] statements also cause
 ** sqlcipher3_stmt_readonly() to return true since, while those statements
-** change the configuration of a database connection, they do not make 
+** change the configuration of a database connection, they do not make
 ** changes to the content of the database files on disk.
 */
 SQLCIPHER_API int sqlcipher3_stmt_readonly(sqlcipher3_stmt *pStmt);
@@ -2976,7 +2976,7 @@ SQLCIPHER_API int sqlcipher3_stmt_readonly(sqlcipher3_stmt *pStmt);
 ** sqlcipher3_value object but no mutex is held for an unprotected
 ** sqlcipher3_value object.  If SQLite is compiled to be single-threaded
 ** (with [SQLCIPHER_THREADSAFE=0] and with [sqlcipher3_threadsafe()] returning 0)
-** or if SQLite is run in one of reduced mutex modes 
+** or if SQLite is run in one of reduced mutex modes
 ** [SQLCIPHER_CONFIG_SINGLETHREAD] or [SQLCIPHER_CONFIG_MULTITHREAD]
 ** then there is no distinction between protected and unprotected
 ** sqlcipher3_value objects and they can be used interchangeably.  However,
@@ -3055,7 +3055,7 @@ typedef struct sqlcipher3_context sqlcipher3_context;
 ** If a non-negative fourth parameter is provided to sqlcipher3_bind_text()
 ** or sqlcipher3_bind_text16() then that parameter must be the byte offset
 ** where the NUL terminator would occur assuming the string were NUL
-** terminated.  If any NUL characters occur at byte offsets less than 
+** terminated.  If any NUL characters occur at byte offsets less than
 ** the value of the fourth parameter then the resulting string value will
 ** contain embedded NULs.  The result of expressions involving strings
 ** with embedded NULs is undefined.
@@ -3064,7 +3064,7 @@ typedef struct sqlcipher3_context sqlcipher3_context;
 ** sqlcipher3_bind_text16() is a destructor used to dispose of the BLOB or
 ** string after SQLite has finished with it.  ^The destructor is called
 ** to dispose of the BLOB or string even if the call to sqlcipher3_bind_blob(),
-** sqlcipher3_bind_text(), or sqlcipher3_bind_text16() fails.  
+** sqlcipher3_bind_text(), or sqlcipher3_bind_text16() fails.
 ** ^If the fifth argument is
 ** the special value [SQLCIPHER_STATIC], then SQLite assumes that the
 ** information is in static, unmanaged space and does not need to be freed.
@@ -3098,15 +3098,18 @@ typedef struct sqlcipher3_context sqlcipher3_context;
 ** See also: [sqlcipher3_bind_parameter_count()],
 ** [sqlcipher3_bind_parameter_name()], and [sqlcipher3_bind_parameter_index()].
 */
-SQLCIPHER_API int sqlcipher3_bind_blob(sqlcipher3_stmt*, int, const void*, int n, void(*)(void*));
-SQLCIPHER_API int sqlcipher3_bind_double(sqlcipher3_stmt*, int, double);
-SQLCIPHER_API int sqlcipher3_bind_int(sqlcipher3_stmt*, int, int);
-SQLCIPHER_API int sqlcipher3_bind_int64(sqlcipher3_stmt*, int, sqlcipher3_int64);
-SQLCIPHER_API int sqlcipher3_bind_null(sqlcipher3_stmt*, int);
-SQLCIPHER_API int sqlcipher3_bind_text(sqlcipher3_stmt*, int, const char*, int n, void(*)(void*));
-SQLCIPHER_API int sqlcipher3_bind_text16(sqlcipher3_stmt*, int, const void*, int, void(*)(void*));
-SQLCIPHER_API int sqlcipher3_bind_value(sqlcipher3_stmt*, int, const sqlcipher3_value*);
-SQLCIPHER_API int sqlcipher3_bind_zeroblob(sqlcipher3_stmt*, int, int n);
+SQLCIPHER_API int sqlcipher3_bind_blob(sqlcipher3_stmt *, int, const void *, int n,
+									   void(*)(void *));
+SQLCIPHER_API int sqlcipher3_bind_double(sqlcipher3_stmt *, int, double);
+SQLCIPHER_API int sqlcipher3_bind_int(sqlcipher3_stmt *, int, int);
+SQLCIPHER_API int sqlcipher3_bind_int64(sqlcipher3_stmt *, int, sqlcipher3_int64);
+SQLCIPHER_API int sqlcipher3_bind_null(sqlcipher3_stmt *, int);
+SQLCIPHER_API int sqlcipher3_bind_text(sqlcipher3_stmt *, int, const char *, int n,
+									   void(*)(void *));
+SQLCIPHER_API int sqlcipher3_bind_text16(sqlcipher3_stmt *, int, const void *, int,
+		void(*)(void *));
+SQLCIPHER_API int sqlcipher3_bind_value(sqlcipher3_stmt *, int, const sqlcipher3_value *);
+SQLCIPHER_API int sqlcipher3_bind_zeroblob(sqlcipher3_stmt *, int, int n);
 
 /*
 ** CAPI3REF: Number Of SQL Parameters
@@ -3126,7 +3129,7 @@ SQLCIPHER_API int sqlcipher3_bind_zeroblob(sqlcipher3_stmt*, int, int n);
 ** [sqlcipher3_bind_parameter_name()], and
 ** [sqlcipher3_bind_parameter_index()].
 */
-SQLCIPHER_API int sqlcipher3_bind_parameter_count(sqlcipher3_stmt*);
+SQLCIPHER_API int sqlcipher3_bind_parameter_count(sqlcipher3_stmt *);
 
 /*
 ** CAPI3REF: Name Of A Host Parameter
@@ -3153,7 +3156,7 @@ SQLCIPHER_API int sqlcipher3_bind_parameter_count(sqlcipher3_stmt*);
 ** [sqlcipher3_bind_parameter_count()], and
 ** [sqlcipher3_bind_parameter_index()].
 */
-SQLCIPHER_API const char *sqlcipher3_bind_parameter_name(sqlcipher3_stmt*, int);
+SQLCIPHER_API const char *sqlcipher3_bind_parameter_name(sqlcipher3_stmt *, int);
 
 /*
 ** CAPI3REF: Index Of A Parameter With A Given Name
@@ -3169,7 +3172,7 @@ SQLCIPHER_API const char *sqlcipher3_bind_parameter_name(sqlcipher3_stmt*, int);
 ** [sqlcipher3_bind_parameter_count()], and
 ** [sqlcipher3_bind_parameter_index()].
 */
-SQLCIPHER_API int sqlcipher3_bind_parameter_index(sqlcipher3_stmt*, const char *zName);
+SQLCIPHER_API int sqlcipher3_bind_parameter_index(sqlcipher3_stmt *, const char *zName);
 
 /*
 ** CAPI3REF: Reset All Bindings On A Prepared Statement
@@ -3178,7 +3181,7 @@ SQLCIPHER_API int sqlcipher3_bind_parameter_index(sqlcipher3_stmt*, const char *
 ** the [sqlcipher3_bind_blob | bindings] on a [prepared statement].
 ** ^Use this routine to reset all host parameters to NULL.
 */
-SQLCIPHER_API int sqlcipher3_clear_bindings(sqlcipher3_stmt*);
+SQLCIPHER_API int sqlcipher3_clear_bindings(sqlcipher3_stmt *);
 
 /*
 ** CAPI3REF: Number Of Columns In A Result Set
@@ -3217,8 +3220,8 @@ SQLCIPHER_API int sqlcipher3_column_count(sqlcipher3_stmt *pStmt);
 ** then the name of the column is unspecified and may change from
 ** one release of SQLite to the next.
 */
-SQLCIPHER_API const char *sqlcipher3_column_name(sqlcipher3_stmt*, int N);
-SQLCIPHER_API const void *sqlcipher3_column_name16(sqlcipher3_stmt*, int N);
+SQLCIPHER_API const char *sqlcipher3_column_name(sqlcipher3_stmt *, int N);
+SQLCIPHER_API const void *sqlcipher3_column_name16(sqlcipher3_stmt *, int N);
 
 /*
 ** CAPI3REF: Source Of Data In A Query Result
@@ -3265,12 +3268,12 @@ SQLCIPHER_API const void *sqlcipher3_column_name16(sqlcipher3_stmt*, int N);
 ** for the same [prepared statement] and result column
 ** at the same time then the results are undefined.
 */
-SQLCIPHER_API const char *sqlcipher3_column_database_name(sqlcipher3_stmt*,int);
-SQLCIPHER_API const void *sqlcipher3_column_database_name16(sqlcipher3_stmt*,int);
-SQLCIPHER_API const char *sqlcipher3_column_table_name(sqlcipher3_stmt*,int);
-SQLCIPHER_API const void *sqlcipher3_column_table_name16(sqlcipher3_stmt*,int);
-SQLCIPHER_API const char *sqlcipher3_column_origin_name(sqlcipher3_stmt*,int);
-SQLCIPHER_API const void *sqlcipher3_column_origin_name16(sqlcipher3_stmt*,int);
+SQLCIPHER_API const char *sqlcipher3_column_database_name(sqlcipher3_stmt *, int);
+SQLCIPHER_API const void *sqlcipher3_column_database_name16(sqlcipher3_stmt *, int);
+SQLCIPHER_API const char *sqlcipher3_column_table_name(sqlcipher3_stmt *, int);
+SQLCIPHER_API const void *sqlcipher3_column_table_name16(sqlcipher3_stmt *, int);
+SQLCIPHER_API const char *sqlcipher3_column_origin_name(sqlcipher3_stmt *, int);
+SQLCIPHER_API const void *sqlcipher3_column_origin_name16(sqlcipher3_stmt *, int);
 
 /*
 ** CAPI3REF: Declared Datatype Of A Query Result
@@ -3301,8 +3304,8 @@ SQLCIPHER_API const void *sqlcipher3_column_origin_name16(sqlcipher3_stmt*,int);
 ** is associated with individual values, not with the containers
 ** used to hold those values.
 */
-SQLCIPHER_API const char *sqlcipher3_column_decltype(sqlcipher3_stmt*,int);
-SQLCIPHER_API const void *sqlcipher3_column_decltype16(sqlcipher3_stmt*,int);
+SQLCIPHER_API const char *sqlcipher3_column_decltype(sqlcipher3_stmt *, int);
+SQLCIPHER_API const void *sqlcipher3_column_decltype16(sqlcipher3_stmt *, int);
 
 /*
 ** CAPI3REF: Evaluate An SQL Statement
@@ -3360,7 +3363,7 @@ SQLCIPHER_API const void *sqlcipher3_column_decltype16(sqlcipher3_stmt*,int);
 ** For all versions of SQLite up to and including 3.6.23.1, a call to
 ** [sqlcipher3_reset()] was required after sqlcipher3_step() returned anything
 ** other than [SQLCIPHER_ROW] before any subsequent invocation of
-** sqlcipher3_step().  Failure to reset the prepared statement using 
+** sqlcipher3_step().  Failure to reset the prepared statement using
 ** [sqlcipher3_reset()] would result in an [SQLCIPHER_MISUSE] return from
 ** sqlcipher3_step().  But after version 3.6.23.1, sqlcipher3_step() began
 ** calling [sqlcipher3_reset()] automatically in this circumstance rather
@@ -3381,7 +3384,7 @@ SQLCIPHER_API const void *sqlcipher3_column_decltype16(sqlcipher3_stmt*,int);
 ** then the more specific [error codes] are returned directly
 ** by sqlcipher3_step().  The use of the "v2" interface is recommended.
 */
-SQLCIPHER_API int sqlcipher3_step(sqlcipher3_stmt*);
+SQLCIPHER_API int sqlcipher3_step(sqlcipher3_stmt *);
 
 /*
 ** CAPI3REF: Number of columns in a result set
@@ -3490,7 +3493,7 @@ SQLCIPHER_API int sqlcipher3_data_count(sqlcipher3_stmt *pStmt);
 ** the number of bytes in that string.
 ** ^If the result is NULL, then sqlcipher3_column_bytes16() returns zero.
 **
-** ^The values returned by [sqlcipher3_column_bytes()] and 
+** ^The values returned by [sqlcipher3_column_bytes()] and
 ** [sqlcipher3_column_bytes16()] do not include the zero terminators at the end
 ** of the string.  ^For clarity: the values returned by
 ** [sqlcipher3_column_bytes()] and [sqlcipher3_column_bytes16()] are the number of
@@ -3597,16 +3600,16 @@ SQLCIPHER_API int sqlcipher3_data_count(sqlcipher3_stmt *pStmt);
 ** pointer.  Subsequent calls to [sqlcipher3_errcode()] will return
 ** [SQLCIPHER_NOMEM].)^
 */
-SQLCIPHER_API const void *sqlcipher3_column_blob(sqlcipher3_stmt*, int iCol);
-SQLCIPHER_API int sqlcipher3_column_bytes(sqlcipher3_stmt*, int iCol);
-SQLCIPHER_API int sqlcipher3_column_bytes16(sqlcipher3_stmt*, int iCol);
-SQLCIPHER_API double sqlcipher3_column_double(sqlcipher3_stmt*, int iCol);
-SQLCIPHER_API int sqlcipher3_column_int(sqlcipher3_stmt*, int iCol);
-SQLCIPHER_API sqlcipher3_int64 sqlcipher3_column_int64(sqlcipher3_stmt*, int iCol);
-SQLCIPHER_API const unsigned char *sqlcipher3_column_text(sqlcipher3_stmt*, int iCol);
-SQLCIPHER_API const void *sqlcipher3_column_text16(sqlcipher3_stmt*, int iCol);
-SQLCIPHER_API int sqlcipher3_column_type(sqlcipher3_stmt*, int iCol);
-SQLCIPHER_API sqlcipher3_value *sqlcipher3_column_value(sqlcipher3_stmt*, int iCol);
+SQLCIPHER_API const void *sqlcipher3_column_blob(sqlcipher3_stmt *, int iCol);
+SQLCIPHER_API int sqlcipher3_column_bytes(sqlcipher3_stmt *, int iCol);
+SQLCIPHER_API int sqlcipher3_column_bytes16(sqlcipher3_stmt *, int iCol);
+SQLCIPHER_API double sqlcipher3_column_double(sqlcipher3_stmt *, int iCol);
+SQLCIPHER_API int sqlcipher3_column_int(sqlcipher3_stmt *, int iCol);
+SQLCIPHER_API sqlcipher3_int64 sqlcipher3_column_int64(sqlcipher3_stmt *, int iCol);
+SQLCIPHER_API const unsigned char *sqlcipher3_column_text(sqlcipher3_stmt *, int iCol);
+SQLCIPHER_API const void *sqlcipher3_column_text16(sqlcipher3_stmt *, int iCol);
+SQLCIPHER_API int sqlcipher3_column_type(sqlcipher3_stmt *, int iCol);
+SQLCIPHER_API sqlcipher3_value *sqlcipher3_column_value(sqlcipher3_stmt *, int iCol);
 
 /*
 ** CAPI3REF: Destroy A Prepared Statement Object
@@ -3683,7 +3686,7 @@ SQLCIPHER_API int sqlcipher3_reset(sqlcipher3_stmt *pStmt);
 ** ^The second parameter is the name of the SQL function to be created or
 ** redefined.  ^The length of the name is limited to 255 bytes in a UTF-8
 ** representation, exclusive of the zero-terminator.  ^Note that the name
-** length limit is in UTF-8 bytes, not characters nor UTF-16 bytes.  
+** length limit is in UTF-8 bytes, not characters nor UTF-16 bytes.
 ** ^Any attempt to create a function with a longer name
 ** will result in [SQLCIPHER_MISUSE] being returned.
 **
@@ -3720,13 +3723,13 @@ SQLCIPHER_API int sqlcipher3_reset(sqlcipher3_stmt *pStmt);
 ** callbacks.
 **
 ** ^(If the ninth parameter to sqlcipher3_create_function_v2() is not NULL,
-** then it is destructor for the application data pointer. 
+** then it is destructor for the application data pointer.
 ** The destructor is invoked when the function is deleted, either by being
 ** overloaded or when the database connection closes.)^
 ** ^The destructor is also invoked if the call to
 ** sqlcipher3_create_function_v2() fails.
 ** ^When the destructor callback of the tenth parameter is invoked, it
-** is passed a single argument which is a copy of the application data 
+** is passed a single argument which is a copy of the application data
 ** pointer which was the fifth parameter to sqlcipher3_create_function_v2().
 **
 ** ^It is permitted to register multiple implementations of the same
@@ -3737,7 +3740,7 @@ SQLCIPHER_API int sqlcipher3_reset(sqlcipher3_stmt *pStmt);
 ** nArg parameter is a better match than a function implementation with
 ** a negative nArg.  ^A function where the preferred text encoding
 ** matches the database encoding is a better
-** match than a function where the encoding is different.  
+** match than a function where the encoding is different.
 ** ^A function where the encoding difference is between UTF16le and UTF16be
 ** is a closer match than a function where the encoding difference is
 ** between UTF8 and UTF16.
@@ -3750,35 +3753,35 @@ SQLCIPHER_API int sqlcipher3_reset(sqlcipher3_stmt *pStmt);
 ** statement in which the function is running.
 */
 SQLCIPHER_API int sqlcipher3_create_function(
-  sqlcipher3 *db,
-  const char *zFunctionName,
-  int nArg,
-  int eTextRep,
-  void *pApp,
-  void (*xFunc)(sqlcipher3_context*,int,sqlcipher3_value**),
-  void (*xStep)(sqlcipher3_context*,int,sqlcipher3_value**),
-  void (*xFinal)(sqlcipher3_context*)
+	sqlcipher3 *db,
+	const char *zFunctionName,
+	int nArg,
+	int eTextRep,
+	void *pApp,
+	void (*xFunc)(sqlcipher3_context *, int, sqlcipher3_value **),
+	void (*xStep)(sqlcipher3_context *, int, sqlcipher3_value **),
+	void (*xFinal)(sqlcipher3_context *)
 );
 SQLCIPHER_API int sqlcipher3_create_function16(
-  sqlcipher3 *db,
-  const void *zFunctionName,
-  int nArg,
-  int eTextRep,
-  void *pApp,
-  void (*xFunc)(sqlcipher3_context*,int,sqlcipher3_value**),
-  void (*xStep)(sqlcipher3_context*,int,sqlcipher3_value**),
-  void (*xFinal)(sqlcipher3_context*)
+	sqlcipher3 *db,
+	const void *zFunctionName,
+	int nArg,
+	int eTextRep,
+	void *pApp,
+	void (*xFunc)(sqlcipher3_context *, int, sqlcipher3_value **),
+	void (*xStep)(sqlcipher3_context *, int, sqlcipher3_value **),
+	void (*xFinal)(sqlcipher3_context *)
 );
 SQLCIPHER_API int sqlcipher3_create_function_v2(
-  sqlcipher3 *db,
-  const char *zFunctionName,
-  int nArg,
-  int eTextRep,
-  void *pApp,
-  void (*xFunc)(sqlcipher3_context*,int,sqlcipher3_value**),
-  void (*xStep)(sqlcipher3_context*,int,sqlcipher3_value**),
-  void (*xFinal)(sqlcipher3_context*),
-  void(*xDestroy)(void*)
+	sqlcipher3 *db,
+	const char *zFunctionName,
+	int nArg,
+	int eTextRep,
+	void *pApp,
+	void (*xFunc)(sqlcipher3_context *, int, sqlcipher3_value **),
+	void (*xStep)(sqlcipher3_context *, int, sqlcipher3_value **),
+	void (*xFinal)(sqlcipher3_context *),
+	void(*xDestroy)(void *)
 );
 
 /*
@@ -3799,18 +3802,20 @@ SQLCIPHER_API int sqlcipher3_create_function_v2(
 ** DEPRECATED
 **
 ** These functions are [deprecated].  In order to maintain
-** backwards compatibility with older code, these functions continue 
+** backwards compatibility with older code, these functions continue
 ** to be supported.  However, new applications should avoid
 ** the use of these functions.  To help encourage people to avoid
 ** using these functions, we are not going to tell you what they do.
 */
 #ifndef SQLCIPHER_OMIT_DEPRECATED
-SQLCIPHER_API SQLCIPHER_DEPRECATED int sqlcipher3_aggregate_count(sqlcipher3_context*);
-SQLCIPHER_API SQLCIPHER_DEPRECATED int sqlcipher3_expired(sqlcipher3_stmt*);
-SQLCIPHER_API SQLCIPHER_DEPRECATED int sqlcipher3_transfer_bindings(sqlcipher3_stmt*, sqlcipher3_stmt*);
+SQLCIPHER_API SQLCIPHER_DEPRECATED int sqlcipher3_aggregate_count(sqlcipher3_context *);
+SQLCIPHER_API SQLCIPHER_DEPRECATED int sqlcipher3_expired(sqlcipher3_stmt *);
+SQLCIPHER_API SQLCIPHER_DEPRECATED int sqlcipher3_transfer_bindings(sqlcipher3_stmt *,
+		sqlcipher3_stmt *);
 SQLCIPHER_API SQLCIPHER_DEPRECATED int sqlcipher3_global_recover(void);
 SQLCIPHER_API SQLCIPHER_DEPRECATED void sqlcipher3_thread_cleanup(void);
-SQLCIPHER_API SQLCIPHER_DEPRECATED int sqlcipher3_memory_alarm(void(*)(void*,sqlcipher3_int64,int),void*,sqlcipher3_int64);
+SQLCIPHER_API SQLCIPHER_DEPRECATED int sqlcipher3_memory_alarm(void(*)(void *, sqlcipher3_int64,
+		int), void *, sqlcipher3_int64);
 #endif
 
 /*
@@ -3858,18 +3863,18 @@ SQLCIPHER_API SQLCIPHER_DEPRECATED int sqlcipher3_memory_alarm(void(*)(void*,sql
 ** These routines must be called from the same thread as
 ** the SQL function that supplied the [sqlcipher3_value*] parameters.
 */
-SQLCIPHER_API const void *sqlcipher3_value_blob(sqlcipher3_value*);
-SQLCIPHER_API int sqlcipher3_value_bytes(sqlcipher3_value*);
-SQLCIPHER_API int sqlcipher3_value_bytes16(sqlcipher3_value*);
-SQLCIPHER_API double sqlcipher3_value_double(sqlcipher3_value*);
-SQLCIPHER_API int sqlcipher3_value_int(sqlcipher3_value*);
-SQLCIPHER_API sqlcipher3_int64 sqlcipher3_value_int64(sqlcipher3_value*);
-SQLCIPHER_API const unsigned char *sqlcipher3_value_text(sqlcipher3_value*);
-SQLCIPHER_API const void *sqlcipher3_value_text16(sqlcipher3_value*);
-SQLCIPHER_API const void *sqlcipher3_value_text16le(sqlcipher3_value*);
-SQLCIPHER_API const void *sqlcipher3_value_text16be(sqlcipher3_value*);
-SQLCIPHER_API int sqlcipher3_value_type(sqlcipher3_value*);
-SQLCIPHER_API int sqlcipher3_value_numeric_type(sqlcipher3_value*);
+SQLCIPHER_API const void *sqlcipher3_value_blob(sqlcipher3_value *);
+SQLCIPHER_API int sqlcipher3_value_bytes(sqlcipher3_value *);
+SQLCIPHER_API int sqlcipher3_value_bytes16(sqlcipher3_value *);
+SQLCIPHER_API double sqlcipher3_value_double(sqlcipher3_value *);
+SQLCIPHER_API int sqlcipher3_value_int(sqlcipher3_value *);
+SQLCIPHER_API sqlcipher3_int64 sqlcipher3_value_int64(sqlcipher3_value *);
+SQLCIPHER_API const unsigned char *sqlcipher3_value_text(sqlcipher3_value *);
+SQLCIPHER_API const void *sqlcipher3_value_text16(sqlcipher3_value *);
+SQLCIPHER_API const void *sqlcipher3_value_text16le(sqlcipher3_value *);
+SQLCIPHER_API const void *sqlcipher3_value_text16be(sqlcipher3_value *);
+SQLCIPHER_API int sqlcipher3_value_type(sqlcipher3_value *);
+SQLCIPHER_API int sqlcipher3_value_numeric_type(sqlcipher3_value *);
 
 /*
 ** CAPI3REF: Obtain Aggregate Function Context
@@ -3877,7 +3882,7 @@ SQLCIPHER_API int sqlcipher3_value_numeric_type(sqlcipher3_value*);
 ** Implementations of aggregate SQL functions use this
 ** routine to allocate memory for storing their state.
 **
-** ^The first time the sqlcipher3_aggregate_context(C,N) routine is called 
+** ^The first time the sqlcipher3_aggregate_context(C,N) routine is called
 ** for a particular aggregate function, SQLite
 ** allocates N of memory, zeroes out that memory, and returns a pointer
 ** to the new memory. ^On second and subsequent calls to
@@ -3899,7 +3904,7 @@ SQLCIPHER_API int sqlcipher3_value_numeric_type(sqlcipher3_value*);
 ** the same aggregate function instance will not resize the memory
 ** allocation.)^
 **
-** ^SQLite automatically frees the memory allocated by 
+** ^SQLite automatically frees the memory allocated by
 ** sqlcipher3_aggregate_context() when the aggregate query concludes.
 **
 ** The first parameter must be a copy of the
@@ -3910,7 +3915,7 @@ SQLCIPHER_API int sqlcipher3_value_numeric_type(sqlcipher3_value*);
 ** This routine must be called from the same thread in which
 ** the aggregate SQL function is running.
 */
-SQLCIPHER_API void *sqlcipher3_aggregate_context(sqlcipher3_context*, int nBytes);
+SQLCIPHER_API void *sqlcipher3_aggregate_context(sqlcipher3_context *, int nBytes);
 
 /*
 ** CAPI3REF: User Data For Functions
@@ -3924,7 +3929,7 @@ SQLCIPHER_API void *sqlcipher3_aggregate_context(sqlcipher3_context*, int nBytes
 ** This routine must be called from the same thread in which
 ** the application-defined function is running.
 */
-SQLCIPHER_API void *sqlcipher3_user_data(sqlcipher3_context*);
+SQLCIPHER_API void *sqlcipher3_user_data(sqlcipher3_context *);
 
 /*
 ** CAPI3REF: Database Connection For Functions
@@ -3935,7 +3940,7 @@ SQLCIPHER_API void *sqlcipher3_user_data(sqlcipher3_context*);
 ** and [sqlcipher3_create_function16()] routines that originally
 ** registered the application defined function.
 */
-SQLCIPHER_API sqlcipher3 *sqlcipher3_context_db_handle(sqlcipher3_context*);
+SQLCIPHER_API sqlcipher3 *sqlcipher3_context_db_handle(sqlcipher3_context *);
 
 /*
 ** CAPI3REF: Function Auxiliary Data
@@ -3979,8 +3984,8 @@ SQLCIPHER_API sqlcipher3 *sqlcipher3_context_db_handle(sqlcipher3_context*);
 ** These routines must be called from the same thread in which
 ** the SQL function is running.
 */
-SQLCIPHER_API void *sqlcipher3_get_auxdata(sqlcipher3_context*, int N);
-SQLCIPHER_API void sqlcipher3_set_auxdata(sqlcipher3_context*, int N, void*, void (*)(void*));
+SQLCIPHER_API void *sqlcipher3_get_auxdata(sqlcipher3_context *, int N);
+SQLCIPHER_API void sqlcipher3_set_auxdata(sqlcipher3_context *, int N, void *, void (*)(void *));
 
 
 /*
@@ -3997,7 +4002,7 @@ SQLCIPHER_API void sqlcipher3_set_auxdata(sqlcipher3_context*, int N, void*, voi
 ** The typedef is necessary to work around problems in certain
 ** C++ compilers.  See ticket #2191.
 */
-typedef void (*sqlcipher3_destructor_type)(void*);
+typedef void (*sqlcipher3_destructor_type)(void *);
 #define SQLCIPHER_STATIC      ((sqlcipher3_destructor_type)0)
 #define SQLCIPHER_TRANSIENT   ((sqlcipher3_destructor_type)-1)
 
@@ -4111,22 +4116,25 @@ typedef void (*sqlcipher3_destructor_type)(void*);
 ** than the one containing the application-defined function that received
 ** the [sqlcipher3_context] pointer, the results are undefined.
 */
-SQLCIPHER_API void sqlcipher3_result_blob(sqlcipher3_context*, const void*, int, void(*)(void*));
-SQLCIPHER_API void sqlcipher3_result_double(sqlcipher3_context*, double);
-SQLCIPHER_API void sqlcipher3_result_error(sqlcipher3_context*, const char*, int);
-SQLCIPHER_API void sqlcipher3_result_error16(sqlcipher3_context*, const void*, int);
-SQLCIPHER_API void sqlcipher3_result_error_toobig(sqlcipher3_context*);
-SQLCIPHER_API void sqlcipher3_result_error_nomem(sqlcipher3_context*);
-SQLCIPHER_API void sqlcipher3_result_error_code(sqlcipher3_context*, int);
-SQLCIPHER_API void sqlcipher3_result_int(sqlcipher3_context*, int);
-SQLCIPHER_API void sqlcipher3_result_int64(sqlcipher3_context*, sqlcipher3_int64);
-SQLCIPHER_API void sqlcipher3_result_null(sqlcipher3_context*);
-SQLCIPHER_API void sqlcipher3_result_text(sqlcipher3_context*, const char*, int, void(*)(void*));
-SQLCIPHER_API void sqlcipher3_result_text16(sqlcipher3_context*, const void*, int, void(*)(void*));
-SQLCIPHER_API void sqlcipher3_result_text16le(sqlcipher3_context*, const void*, int,void(*)(void*));
-SQLCIPHER_API void sqlcipher3_result_text16be(sqlcipher3_context*, const void*, int,void(*)(void*));
-SQLCIPHER_API void sqlcipher3_result_value(sqlcipher3_context*, sqlcipher3_value*);
-SQLCIPHER_API void sqlcipher3_result_zeroblob(sqlcipher3_context*, int n);
+SQLCIPHER_API void sqlcipher3_result_blob(sqlcipher3_context *, const void *, int, void(*)(void *));
+SQLCIPHER_API void sqlcipher3_result_double(sqlcipher3_context *, double);
+SQLCIPHER_API void sqlcipher3_result_error(sqlcipher3_context *, const char *, int);
+SQLCIPHER_API void sqlcipher3_result_error16(sqlcipher3_context *, const void *, int);
+SQLCIPHER_API void sqlcipher3_result_error_toobig(sqlcipher3_context *);
+SQLCIPHER_API void sqlcipher3_result_error_nomem(sqlcipher3_context *);
+SQLCIPHER_API void sqlcipher3_result_error_code(sqlcipher3_context *, int);
+SQLCIPHER_API void sqlcipher3_result_int(sqlcipher3_context *, int);
+SQLCIPHER_API void sqlcipher3_result_int64(sqlcipher3_context *, sqlcipher3_int64);
+SQLCIPHER_API void sqlcipher3_result_null(sqlcipher3_context *);
+SQLCIPHER_API void sqlcipher3_result_text(sqlcipher3_context *, const char *, int, void(*)(void *));
+SQLCIPHER_API void sqlcipher3_result_text16(sqlcipher3_context *, const void *, int,
+		void(*)(void *));
+SQLCIPHER_API void sqlcipher3_result_text16le(sqlcipher3_context *, const void *, int,
+		void(*)(void *));
+SQLCIPHER_API void sqlcipher3_result_text16be(sqlcipher3_context *, const void *, int,
+		void(*)(void *));
+SQLCIPHER_API void sqlcipher3_result_value(sqlcipher3_context *, sqlcipher3_value *);
+SQLCIPHER_API void sqlcipher3_result_zeroblob(sqlcipher3_context *, int n);
 
 /*
 ** CAPI3REF: Define New Collating Sequences
@@ -4166,7 +4174,7 @@ SQLCIPHER_API void sqlcipher3_result_zeroblob(sqlcipher3_context*, int n);
 ** deleted.  ^When all collating functions having the same name are deleted,
 ** that collation is no longer usable.
 **
-** ^The collating function callback is invoked with a copy of the pArg 
+** ^The collating function callback is invoked with a copy of the pArg
 ** application data pointer and with two strings in the encoding specified
 ** by the eTextRep argument.  The collating function must return an
 ** integer that is negative, zero, or positive
@@ -4196,38 +4204,38 @@ SQLCIPHER_API void sqlcipher3_result_zeroblob(sqlcipher3_context*, int n);
 ** calls to the collation creation functions or when the
 ** [database connection] is closed using [sqlcipher3_close()].
 **
-** ^The xDestroy callback is <u>not</u> called if the 
+** ^The xDestroy callback is <u>not</u> called if the
 ** sqlcipher3_create_collation_v2() function fails.  Applications that invoke
-** sqlcipher3_create_collation_v2() with a non-NULL xDestroy argument should 
+** sqlcipher3_create_collation_v2() with a non-NULL xDestroy argument should
 ** check the return code and dispose of the application data pointer
 ** themselves rather than expecting SQLite to deal with it for them.
-** This is different from every other SQLite interface.  The inconsistency 
-** is unfortunate but cannot be changed without breaking backwards 
+** This is different from every other SQLite interface.  The inconsistency
+** is unfortunate but cannot be changed without breaking backwards
 ** compatibility.
 **
 ** See also:  [sqlcipher3_collation_needed()] and [sqlcipher3_collation_needed16()].
 */
 SQLCIPHER_API int sqlcipher3_create_collation(
-  sqlcipher3*, 
-  const char *zName, 
-  int eTextRep, 
-  void *pArg,
-  int(*xCompare)(void*,int,const void*,int,const void*)
+	sqlcipher3 *,
+	const char *zName,
+	int eTextRep,
+	void *pArg,
+	int(*xCompare)(void *, int, const void *, int, const void *)
 );
 SQLCIPHER_API int sqlcipher3_create_collation_v2(
-  sqlcipher3*, 
-  const char *zName, 
-  int eTextRep, 
-  void *pArg,
-  int(*xCompare)(void*,int,const void*,int,const void*),
-  void(*xDestroy)(void*)
+	sqlcipher3 *,
+	const char *zName,
+	int eTextRep,
+	void *pArg,
+	int(*xCompare)(void *, int, const void *, int, const void *),
+	void(*xDestroy)(void *)
 );
 SQLCIPHER_API int sqlcipher3_create_collation16(
-  sqlcipher3*, 
-  const void *zName,
-  int eTextRep, 
-  void *pArg,
-  int(*xCompare)(void*,int,const void*,int,const void*)
+	sqlcipher3 *,
+	const void *zName,
+	int eTextRep,
+	void *pArg,
+	int(*xCompare)(void *, int, const void *, int, const void *)
 );
 
 /*
@@ -4257,14 +4265,14 @@ SQLCIPHER_API int sqlcipher3_create_collation16(
 ** [sqlcipher3_create_collation_v2()].
 */
 SQLCIPHER_API int sqlcipher3_collation_needed(
-  sqlcipher3*, 
-  void*, 
-  void(*)(void*,sqlcipher3*,int eTextRep,const char*)
+	sqlcipher3 *,
+	void *,
+	void(*)(void *, sqlcipher3 *, int eTextRep, const char *)
 );
 SQLCIPHER_API int sqlcipher3_collation_needed16(
-  sqlcipher3*, 
-  void*,
-  void(*)(void*,sqlcipher3*,int eTextRep,const void*)
+	sqlcipher3 *,
+	void *,
+	void(*)(void *, sqlcipher3 *, int eTextRep, const void *)
 );
 
 #ifdef SQLCIPHER_HAS_CODEC
@@ -4276,8 +4284,8 @@ SQLCIPHER_API int sqlcipher3_collation_needed16(
 ** of SQLite.
 */
 SQLCIPHER_API int sqlcipher3_key(
-  sqlcipher3 *db,                   /* Database to be rekeyed */
-  const void *pKey, int nKey     /* The key */
+	sqlcipher3 *db,                   /* Database to be rekeyed */
+	const void *pKey, int nKey     /* The key */
 );
 
 /*
@@ -4289,26 +4297,26 @@ SQLCIPHER_API int sqlcipher3_key(
 ** of SQLite.
 */
 SQLCIPHER_API int sqlcipher3_rekey(
-  sqlcipher3 *db,                   /* Database to be rekeyed */
-  const void *pKey, int nKey     /* The new key */
+	sqlcipher3 *db,                   /* Database to be rekeyed */
+	const void *pKey, int nKey     /* The new key */
 );
 
 /*
-** Specify the activation key for a SEE database.  Unless 
+** Specify the activation key for a SEE database.  Unless
 ** activated, none of the SEE routines will work.
 */
 SQLCIPHER_API void sqlcipher3_activate_see(
-  const char *zPassPhrase        /* Activation phrase */
+	const char *zPassPhrase        /* Activation phrase */
 );
 #endif
 
 #ifdef SQLCIPHER_ENABLE_CEROD
 /*
-** Specify the activation key for a CEROD database.  Unless 
+** Specify the activation key for a CEROD database.  Unless
 ** activated, none of the CEROD routines will work.
 */
 SQLCIPHER_API void sqlcipher3_activate_cerod(
-  const char *zPassPhrase        /* Activation phrase */
+	const char *zPassPhrase        /* Activation phrase */
 );
 #endif
 
@@ -4353,7 +4361,7 @@ SQLCIPHER_API int sqlcipher3_sleep(int);
 ** ^The [temp_store_directory pragma] may modify this variable and cause
 ** it to point to memory obtained from [sqlcipher3_malloc].  ^Furthermore,
 ** the [temp_store_directory pragma] always assumes that any string
-** that this variable points to is held in memory obtained from 
+** that this variable points to is held in memory obtained from
 ** [sqlcipher3_malloc] and the pragma may attempt to free that memory
 ** using [sqlcipher3_free].
 ** Hence, if this variable is modified directly, either it should be
@@ -4383,7 +4391,7 @@ SQLCIPHER_API SQLCIPHER_EXTERN char *sqlcipher3_temp_directory;
 ** connection while this routine is running, then the return value
 ** is undefined.
 */
-SQLCIPHER_API int sqlcipher3_get_autocommit(sqlcipher3*);
+SQLCIPHER_API int sqlcipher3_get_autocommit(sqlcipher3 *);
 
 /*
 ** CAPI3REF: Find The Database Handle Of A Prepared Statement
@@ -4395,7 +4403,7 @@ SQLCIPHER_API int sqlcipher3_get_autocommit(sqlcipher3*);
 ** to the [sqlcipher3_prepare_v2()] call (or its variants) that was used to
 ** create the statement in the first place.
 */
-SQLCIPHER_API sqlcipher3 *sqlcipher3_db_handle(sqlcipher3_stmt*);
+SQLCIPHER_API sqlcipher3 *sqlcipher3_db_handle(sqlcipher3_stmt *);
 
 /*
 ** CAPI3REF: Find the next prepared statement
@@ -4456,8 +4464,8 @@ SQLCIPHER_API sqlcipher3_stmt *sqlcipher3_next_stmt(sqlcipher3 *pDb, sqlcipher3_
 **
 ** See also the [sqlcipher3_update_hook()] interface.
 */
-SQLCIPHER_API void *sqlcipher3_commit_hook(sqlcipher3*, int(*)(void*), void*);
-SQLCIPHER_API void *sqlcipher3_rollback_hook(sqlcipher3*, void(*)(void *), void*);
+SQLCIPHER_API void *sqlcipher3_commit_hook(sqlcipher3 *, int(*)(void *), void *);
+SQLCIPHER_API void *sqlcipher3_rollback_hook(sqlcipher3 *, void(*)(void *), void *);
 
 /*
 ** CAPI3REF: Data Change Notification Callbacks
@@ -4506,9 +4514,9 @@ SQLCIPHER_API void *sqlcipher3_rollback_hook(sqlcipher3*, void(*)(void *), void*
 ** interfaces.
 */
 SQLCIPHER_API void *sqlcipher3_update_hook(
-  sqlcipher3*, 
-  void(*)(void *,int ,char const *,char const *,sqlcipher3_int64),
-  void*
+	sqlcipher3 *,
+	void(*)(void *, int , char const *, char const *, sqlcipher3_int64),
+	void *
 );
 
 /*
@@ -4564,7 +4572,7 @@ SQLCIPHER_API int sqlcipher3_release_memory(int);
 ** as heap memory usages approaches the limit.
 ** ^The soft heap limit is "soft" because even though SQLite strives to stay
 ** below the limit, it will exceed the limit rather than generate
-** an [SQLCIPHER_NOMEM] error.  In other words, the soft heap limit 
+** an [SQLCIPHER_NOMEM] error.  In other words, the soft heap limit
 ** is advisory only.
 **
 ** ^The return value from sqlcipher3_soft_heap_limit64() is the size of
@@ -4680,15 +4688,15 @@ SQLCIPHER_API SQLCIPHER_DEPRECATED void sqlcipher3_soft_heap_limit(int N);
 ** [SQLCIPHER_ENABLE_COLUMN_METADATA] C-preprocessor symbol defined.
 */
 SQLCIPHER_API int sqlcipher3_table_column_metadata(
-  sqlcipher3 *db,                /* Connection handle */
-  const char *zDbName,        /* Database name or NULL */
-  const char *zTableName,     /* Table name */
-  const char *zColumnName,    /* Column name */
-  char const **pzDataType,    /* OUTPUT: Declared data type */
-  char const **pzCollSeq,     /* OUTPUT: Collation sequence name */
-  int *pNotNull,              /* OUTPUT: True if NOT NULL constraint exists */
-  int *pPrimaryKey,           /* OUTPUT: True if column part of PK */
-  int *pAutoinc               /* OUTPUT: True if column is auto-increment */
+	sqlcipher3 *db,                /* Connection handle */
+	const char *zDbName,        /* Database name or NULL */
+	const char *zTableName,     /* Table name */
+	const char *zColumnName,    /* Column name */
+	char const **pzDataType,    /* OUTPUT: Declared data type */
+	char const **pzCollSeq,     /* OUTPUT: Collation sequence name */
+	int *pNotNull,              /* OUTPUT: True if NOT NULL constraint exists */
+	int *pPrimaryKey,           /* OUTPUT: True if column part of PK */
+	int *pAutoinc               /* OUTPUT: True if column is auto-increment */
 );
 
 /*
@@ -4717,10 +4725,10 @@ SQLCIPHER_API int sqlcipher3_table_column_metadata(
 ** See also the [load_extension() SQL function].
 */
 SQLCIPHER_API int sqlcipher3_load_extension(
-  sqlcipher3 *db,          /* Load the extension into this database connection */
-  const char *zFile,    /* Name of the shared library containing extension */
-  const char *zProc,    /* Entry point.  Derived from zFile if 0 */
-  char **pzErrMsg       /* Put error message here if not 0 */
+	sqlcipher3 *db,          /* Load the extension into this database connection */
+	const char *zFile,    /* Name of the shared library containing extension */
+	const char *zProc,    /* Entry point.  Derived from zFile if 0 */
+	char **pzErrMsg       /* Put error message here if not 0 */
 );
 
 /*
@@ -4804,8 +4812,8 @@ typedef struct sqlcipher3_module sqlcipher3_module;
 ** CAPI3REF: Virtual Table Object
 ** KEYWORDS: sqlcipher3_module {virtual table module}
 **
-** This structure, sometimes called a "virtual table module", 
-** defines the implementation of a [virtual tables].  
+** This structure, sometimes called a "virtual table module",
+** defines the implementation of a [virtual tables].
 ** This structure consists mostly of methods for the module.
 **
 ** ^A virtual table module is created by filling in a persistent
@@ -4817,38 +4825,38 @@ typedef struct sqlcipher3_module sqlcipher3_module;
 ** any database connection.
 */
 struct sqlcipher3_module {
-  int iVersion;
-  int (*xCreate)(sqlcipher3*, void *pAux,
-               int argc, const char *const*argv,
-               sqlcipher3_vtab **ppVTab, char**);
-  int (*xConnect)(sqlcipher3*, void *pAux,
-               int argc, const char *const*argv,
-               sqlcipher3_vtab **ppVTab, char**);
-  int (*xBestIndex)(sqlcipher3_vtab *pVTab, sqlcipher3_index_info*);
-  int (*xDisconnect)(sqlcipher3_vtab *pVTab);
-  int (*xDestroy)(sqlcipher3_vtab *pVTab);
-  int (*xOpen)(sqlcipher3_vtab *pVTab, sqlcipher3_vtab_cursor **ppCursor);
-  int (*xClose)(sqlcipher3_vtab_cursor*);
-  int (*xFilter)(sqlcipher3_vtab_cursor*, int idxNum, const char *idxStr,
-                int argc, sqlcipher3_value **argv);
-  int (*xNext)(sqlcipher3_vtab_cursor*);
-  int (*xEof)(sqlcipher3_vtab_cursor*);
-  int (*xColumn)(sqlcipher3_vtab_cursor*, sqlcipher3_context*, int);
-  int (*xRowid)(sqlcipher3_vtab_cursor*, sqlcipher3_int64 *pRowid);
-  int (*xUpdate)(sqlcipher3_vtab *, int, sqlcipher3_value **, sqlcipher3_int64 *);
-  int (*xBegin)(sqlcipher3_vtab *pVTab);
-  int (*xSync)(sqlcipher3_vtab *pVTab);
-  int (*xCommit)(sqlcipher3_vtab *pVTab);
-  int (*xRollback)(sqlcipher3_vtab *pVTab);
-  int (*xFindFunction)(sqlcipher3_vtab *pVtab, int nArg, const char *zName,
-                       void (**pxFunc)(sqlcipher3_context*,int,sqlcipher3_value**),
-                       void **ppArg);
-  int (*xRename)(sqlcipher3_vtab *pVtab, const char *zNew);
-  /* The methods above are in version 1 of the sqlcipher_module object. Those 
-  ** below are for version 2 and greater. */
-  int (*xSavepoint)(sqlcipher3_vtab *pVTab, int);
-  int (*xRelease)(sqlcipher3_vtab *pVTab, int);
-  int (*xRollbackTo)(sqlcipher3_vtab *pVTab, int);
+	int iVersion;
+	int (*xCreate)(sqlcipher3 *, void *pAux,
+				   int argc, const char *const *argv,
+				   sqlcipher3_vtab **ppVTab, char **);
+	int (*xConnect)(sqlcipher3 *, void *pAux,
+					int argc, const char *const *argv,
+					sqlcipher3_vtab **ppVTab, char **);
+	int (*xBestIndex)(sqlcipher3_vtab *pVTab, sqlcipher3_index_info *);
+	int (*xDisconnect)(sqlcipher3_vtab *pVTab);
+	int (*xDestroy)(sqlcipher3_vtab *pVTab);
+	int (*xOpen)(sqlcipher3_vtab *pVTab, sqlcipher3_vtab_cursor **ppCursor);
+	int (*xClose)(sqlcipher3_vtab_cursor *);
+	int (*xFilter)(sqlcipher3_vtab_cursor *, int idxNum, const char *idxStr,
+				   int argc, sqlcipher3_value **argv);
+	int (*xNext)(sqlcipher3_vtab_cursor *);
+	int (*xEof)(sqlcipher3_vtab_cursor *);
+	int (*xColumn)(sqlcipher3_vtab_cursor *, sqlcipher3_context *, int);
+	int (*xRowid)(sqlcipher3_vtab_cursor *, sqlcipher3_int64 *pRowid);
+	int (*xUpdate)(sqlcipher3_vtab *, int, sqlcipher3_value **, sqlcipher3_int64 *);
+	int (*xBegin)(sqlcipher3_vtab *pVTab);
+	int (*xSync)(sqlcipher3_vtab *pVTab);
+	int (*xCommit)(sqlcipher3_vtab *pVTab);
+	int (*xRollback)(sqlcipher3_vtab *pVTab);
+	int (*xFindFunction)(sqlcipher3_vtab *pVtab, int nArg, const char *zName,
+						 void (**pxFunc)(sqlcipher3_context *, int, sqlcipher3_value **),
+						 void **ppArg);
+	int (*xRename)(sqlcipher3_vtab *pVtab, const char *zNew);
+	/* The methods above are in version 1 of the sqlcipher_module object. Those
+	** below are for version 2 and greater. */
+	int (*xSavepoint)(sqlcipher3_vtab *pVTab, int);
+	int (*xRelease)(sqlcipher3_vtab *pVTab, int);
+	int (*xRollbackTo)(sqlcipher3_vtab *pVTab, int);
 };
 
 /*
@@ -4905,29 +4913,29 @@ struct sqlcipher3_module {
 ** cost of approximately log(N).
 */
 struct sqlcipher3_index_info {
-  /* Inputs */
-  int nConstraint;           /* Number of entries in aConstraint */
-  struct sqlcipher3_index_constraint {
-     int iColumn;              /* Column on left-hand side of constraint */
-     unsigned char op;         /* Constraint operator */
-     unsigned char usable;     /* True if this constraint is usable */
-     int iTermOffset;          /* Used internally - xBestIndex should ignore */
-  } *aConstraint;            /* Table of WHERE clause constraints */
-  int nOrderBy;              /* Number of terms in the ORDER BY clause */
-  struct sqlcipher3_index_orderby {
-     int iColumn;              /* Column number */
-     unsigned char desc;       /* True for DESC.  False for ASC. */
-  } *aOrderBy;               /* The ORDER BY clause */
-  /* Outputs */
-  struct sqlcipher3_index_constraint_usage {
-    int argvIndex;           /* if >0, constraint is part of argv to xFilter */
-    unsigned char omit;      /* Do not code a test for this constraint */
-  } *aConstraintUsage;
-  int idxNum;                /* Number used to identify the index */
-  char *idxStr;              /* String, possibly obtained from sqlcipher3_malloc */
-  int needToFreeIdxStr;      /* Free idxStr using sqlcipher3_free() if true */
-  int orderByConsumed;       /* True if output is already ordered */
-  double estimatedCost;      /* Estimated cost of using this index */
+	/* Inputs */
+	int nConstraint;           /* Number of entries in aConstraint */
+	struct sqlcipher3_index_constraint {
+		int iColumn;              /* Column on left-hand side of constraint */
+		unsigned char op;         /* Constraint operator */
+		unsigned char usable;     /* True if this constraint is usable */
+		int iTermOffset;          /* Used internally - xBestIndex should ignore */
+	} *aConstraint;            /* Table of WHERE clause constraints */
+	int nOrderBy;              /* Number of terms in the ORDER BY clause */
+	struct sqlcipher3_index_orderby {
+		int iColumn;              /* Column number */
+		unsigned char desc;       /* True for DESC.  False for ASC. */
+	} *aOrderBy;               /* The ORDER BY clause */
+	/* Outputs */
+	struct sqlcipher3_index_constraint_usage {
+		int argvIndex;           /* if >0, constraint is part of argv to xFilter */
+		unsigned char omit;      /* Do not code a test for this constraint */
+	} *aConstraintUsage;
+	int idxNum;                /* Number used to identify the index */
+	char *idxStr;              /* String, possibly obtained from sqlcipher3_malloc */
+	int needToFreeIdxStr;      /* Free idxStr using sqlcipher3_free() if true */
+	int orderByConsumed;       /* True if output is already ordered */
+	double estimatedCost;      /* Estimated cost of using this index */
 };
 
 /*
@@ -4954,7 +4962,7 @@ struct sqlcipher3_index_info {
 ** preexisting [virtual table] for the module.
 **
 ** ^The module name is registered on the [database connection] specified
-** by the first parameter.  ^The name of the module is given by the 
+** by the first parameter.  ^The name of the module is given by the
 ** second parameter.  ^The third parameter is a pointer to
 ** the implementation of the [virtual table module].   ^The fourth
 ** parameter is an arbitrary client data pointer that is passed through
@@ -4971,17 +4979,17 @@ struct sqlcipher3_index_info {
 ** destructor.
 */
 SQLCIPHER_API int sqlcipher3_create_module(
-  sqlcipher3 *db,               /* SQLite connection to register module with */
-  const char *zName,         /* Name of the module */
-  const sqlcipher3_module *p,   /* Methods for the module */
-  void *pClientData          /* Client data for xCreate/xConnect */
+	sqlcipher3 *db,               /* SQLite connection to register module with */
+	const char *zName,         /* Name of the module */
+	const sqlcipher3_module *p,   /* Methods for the module */
+	void *pClientData          /* Client data for xCreate/xConnect */
 );
 SQLCIPHER_API int sqlcipher3_create_module_v2(
-  sqlcipher3 *db,               /* SQLite connection to register module with */
-  const char *zName,         /* Name of the module */
-  const sqlcipher3_module *p,   /* Methods for the module */
-  void *pClientData,         /* Client data for xCreate/xConnect */
-  void(*xDestroy)(void*)     /* Module destructor function */
+	sqlcipher3 *db,               /* SQLite connection to register module with */
+	const char *zName,         /* Name of the module */
+	const sqlcipher3_module *p,   /* Methods for the module */
+	void *pClientData,         /* Client data for xCreate/xConnect */
+	void(*xDestroy)(void *)    /* Module destructor function */
 );
 
 /*
@@ -5003,10 +5011,10 @@ SQLCIPHER_API int sqlcipher3_create_module_v2(
 ** freed by sqlcipher3_free() and the zErrMsg field will be zeroed.
 */
 struct sqlcipher3_vtab {
-  const sqlcipher3_module *pModule;  /* The module for this virtual table */
-  int nRef;                       /* NO LONGER USED */
-  char *zErrMsg;                  /* Error message from sqlcipher3_mprintf() */
-  /* Virtual table implementations will typically add additional fields */
+	const sqlcipher3_module *pModule;  /* The module for this virtual table */
+	int nRef;                       /* NO LONGER USED */
+	char *zErrMsg;                  /* Error message from sqlcipher3_mprintf() */
+	/* Virtual table implementations will typically add additional fields */
 };
 
 /*
@@ -5027,8 +5035,8 @@ struct sqlcipher3_vtab {
 ** are common to all implementations.
 */
 struct sqlcipher3_vtab_cursor {
-  sqlcipher3_vtab *pVtab;      /* Virtual table of this cursor */
-  /* Virtual table implementations will typically add additional fields */
+	sqlcipher3_vtab *pVtab;      /* Virtual table of this cursor */
+	/* Virtual table implementations will typically add additional fields */
 };
 
 /*
@@ -5039,13 +5047,13 @@ struct sqlcipher3_vtab_cursor {
 ** to declare the format (the names and datatypes of the columns) of
 ** the virtual tables they implement.
 */
-SQLCIPHER_API int sqlcipher3_declare_vtab(sqlcipher3*, const char *zSQL);
+SQLCIPHER_API int sqlcipher3_declare_vtab(sqlcipher3 *, const char *zSQL);
 
 /*
 ** CAPI3REF: Overload A Function For A Virtual Table
 **
 ** ^(Virtual tables can provide alternative implementations of functions
-** using the [xFindFunction] method of the [virtual table module].  
+** using the [xFindFunction] method of the [virtual table module].
 ** But global versions of those functions
 ** must exist in order to be overloaded.)^
 **
@@ -5057,7 +5065,7 @@ SQLCIPHER_API int sqlcipher3_declare_vtab(sqlcipher3*, const char *zSQL);
 ** purpose is to be a placeholder function that can be overloaded
 ** by a [virtual table].
 */
-SQLCIPHER_API int sqlcipher3_overload_function(sqlcipher3*, const char *zFuncName, int nArg);
+SQLCIPHER_API int sqlcipher3_overload_function(sqlcipher3 *, const char *zFuncName, int nArg);
 
 /*
 ** The interface to the virtual-table mechanism defined above (back up
@@ -5096,8 +5104,8 @@ typedef struct sqlcipher3_blob sqlcipher3_blob;
 **
 ** ^If the flags parameter is non-zero, then the BLOB is opened for read
 ** and write access. ^If it is zero, the BLOB is opened for read access.
-** ^It is not possible to open a column that is part of an index or primary 
-** key for writing. ^If [foreign key constraints] are enabled, it is 
+** ^It is not possible to open a column that is part of an index or primary
+** key for writing. ^If [foreign key constraints] are enabled, it is
 ** not possible to open a column that is part of a [child key] for writing.
 **
 ** ^Note that the database name is not the filename that contains
@@ -5140,13 +5148,13 @@ typedef struct sqlcipher3_blob sqlcipher3_blob;
 ** be released by a call to [sqlcipher3_blob_close()].
 */
 SQLCIPHER_API int sqlcipher3_blob_open(
-  sqlcipher3*,
-  const char *zDb,
-  const char *zTable,
-  const char *zColumn,
-  sqlcipher3_int64 iRow,
-  int flags,
-  sqlcipher3_blob **ppBlob
+	sqlcipher3 *,
+	const char *zDb,
+	const char *zTable,
+	const char *zColumn,
+	sqlcipher3_int64 iRow,
+	int flags,
+	sqlcipher3_blob **ppBlob
 );
 
 /*
@@ -5171,7 +5179,8 @@ SQLCIPHER_API int sqlcipher3_blob_open(
 **
 ** ^This function sets the database handle error code and message.
 */
-SQLCIPHER_API SQLCIPHER_EXPERIMENTAL int sqlcipher3_blob_reopen(sqlcipher3_blob *, sqlcipher3_int64);
+SQLCIPHER_API SQLCIPHER_EXPERIMENTAL int sqlcipher3_blob_reopen(sqlcipher3_blob *,
+		sqlcipher3_int64);
 
 /*
 ** CAPI3REF: Close A BLOB Handle
@@ -5200,7 +5209,7 @@ SQLCIPHER_API int sqlcipher3_blob_close(sqlcipher3_blob *);
 /*
 ** CAPI3REF: Return The Size Of An Open BLOB
 **
-** ^Returns the size in bytes of the BLOB accessible via the 
+** ^Returns the size in bytes of the BLOB accessible via the
 ** successfully opened [BLOB handle] in its only argument.  ^The
 ** incremental blob I/O routines can only read or overwriting existing
 ** blob content; they cannot change the size of a blob.
@@ -5308,8 +5317,8 @@ SQLCIPHER_API int sqlcipher3_blob_write(sqlcipher3_blob *, const void *z, int n,
 ** the default.  The choice for the new VFS is arbitrary.)^
 */
 SQLCIPHER_API sqlcipher3_vfs *sqlcipher3_vfs_find(const char *zVfsName);
-SQLCIPHER_API int sqlcipher3_vfs_register(sqlcipher3_vfs*, int makeDflt);
-SQLCIPHER_API int sqlcipher3_vfs_unregister(sqlcipher3_vfs*);
+SQLCIPHER_API int sqlcipher3_vfs_register(sqlcipher3_vfs *, int makeDflt);
+SQLCIPHER_API int sqlcipher3_vfs_unregister(sqlcipher3_vfs *);
 
 /*
 ** CAPI3REF: Mutexes
@@ -5426,10 +5435,10 @@ SQLCIPHER_API int sqlcipher3_vfs_unregister(sqlcipher3_vfs*);
 ** See also: [sqlcipher3_mutex_held()] and [sqlcipher3_mutex_notheld()].
 */
 SQLCIPHER_API sqlcipher3_mutex *sqlcipher3_mutex_alloc(int);
-SQLCIPHER_API void sqlcipher3_mutex_free(sqlcipher3_mutex*);
-SQLCIPHER_API void sqlcipher3_mutex_enter(sqlcipher3_mutex*);
-SQLCIPHER_API int sqlcipher3_mutex_try(sqlcipher3_mutex*);
-SQLCIPHER_API void sqlcipher3_mutex_leave(sqlcipher3_mutex*);
+SQLCIPHER_API void sqlcipher3_mutex_free(sqlcipher3_mutex *);
+SQLCIPHER_API void sqlcipher3_mutex_enter(sqlcipher3_mutex *);
+SQLCIPHER_API int sqlcipher3_mutex_try(sqlcipher3_mutex *);
+SQLCIPHER_API void sqlcipher3_mutex_leave(sqlcipher3_mutex *);
 
 /*
 ** CAPI3REF: Mutex Methods Object
@@ -5498,15 +5507,15 @@ SQLCIPHER_API void sqlcipher3_mutex_leave(sqlcipher3_mutex*);
 */
 typedef struct sqlcipher3_mutex_methods sqlcipher3_mutex_methods;
 struct sqlcipher3_mutex_methods {
-  int (*xMutexInit)(void);
-  int (*xMutexEnd)(void);
-  sqlcipher3_mutex *(*xMutexAlloc)(int);
-  void (*xMutexFree)(sqlcipher3_mutex *);
-  void (*xMutexEnter)(sqlcipher3_mutex *);
-  int (*xMutexTry)(sqlcipher3_mutex *);
-  void (*xMutexLeave)(sqlcipher3_mutex *);
-  int (*xMutexHeld)(sqlcipher3_mutex *);
-  int (*xMutexNotheld)(sqlcipher3_mutex *);
+	int (*xMutexInit)(void);
+	int (*xMutexEnd)(void);
+	sqlcipher3_mutex *(*xMutexAlloc)(int);
+	void (*xMutexFree)(sqlcipher3_mutex *);
+	void (*xMutexEnter)(sqlcipher3_mutex *);
+	int (*xMutexTry)(sqlcipher3_mutex *);
+	void (*xMutexLeave)(sqlcipher3_mutex *);
+	int (*xMutexHeld)(sqlcipher3_mutex *);
+	int (*xMutexNotheld)(sqlcipher3_mutex *);
 };
 
 /*
@@ -5539,8 +5548,8 @@ struct sqlcipher3_mutex_methods {
 ** interface should also return 1 when given a NULL pointer.
 */
 #ifndef NDEBUG
-SQLCIPHER_API int sqlcipher3_mutex_held(sqlcipher3_mutex*);
-SQLCIPHER_API int sqlcipher3_mutex_notheld(sqlcipher3_mutex*);
+SQLCIPHER_API int sqlcipher3_mutex_held(sqlcipher3_mutex *);
+SQLCIPHER_API int sqlcipher3_mutex_notheld(sqlcipher3_mutex *);
 #endif
 
 /*
@@ -5567,13 +5576,13 @@ SQLCIPHER_API int sqlcipher3_mutex_notheld(sqlcipher3_mutex*);
 /*
 ** CAPI3REF: Retrieve the mutex for a database connection
 **
-** ^This interface returns a pointer the [sqlcipher3_mutex] object that 
+** ^This interface returns a pointer the [sqlcipher3_mutex] object that
 ** serializes access to the [database connection] given in the argument
 ** when the [threading mode] is Serialized.
 ** ^If the [threading mode] is Single-thread or Multi-thread then this
 ** routine returns a NULL pointer.
 */
-SQLCIPHER_API sqlcipher3_mutex *sqlcipher3_db_mutex(sqlcipher3*);
+SQLCIPHER_API sqlcipher3_mutex *sqlcipher3_db_mutex(sqlcipher3 *);
 
 /*
 ** CAPI3REF: Low-Level Control Of Database Files
@@ -5607,7 +5616,7 @@ SQLCIPHER_API sqlcipher3_mutex *sqlcipher3_db_mutex(sqlcipher3*);
 **
 ** See also: [SQLCIPHER_FCNTL_LOCKSTATE]
 */
-SQLCIPHER_API int sqlcipher3_file_control(sqlcipher3*, const char *zDbName, int op, void*);
+SQLCIPHER_API int sqlcipher3_file_control(sqlcipher3 *, const char *zDbName, int op, void *);
 
 /*
 ** CAPI3REF: Testing Interface
@@ -5711,7 +5720,7 @@ SQLCIPHER_API int sqlcipher3_status(int op, int *pCurrent, int *pHighwater, int 
 ** <dd>This parameter records the largest memory allocation request
 ** handed to [sqlcipher3_malloc()] or [sqlcipher3_realloc()] (or their
 ** internal equivalents).  Only the value returned in the
-** *pHighwater parameter to [sqlcipher3_status()] is of interest.  
+** *pHighwater parameter to [sqlcipher3_status()] is of interest.
 ** The value written into the *pCurrent parameter is undefined.</dd>)^
 **
 ** [[SQLCIPHER_STATUS_MALLOC_COUNT]] ^(<dt>SQLCIPHER_STATUS_MALLOC_COUNT</dt>
@@ -5720,11 +5729,11 @@ SQLCIPHER_API int sqlcipher3_status(int op, int *pCurrent, int *pHighwater, int 
 **
 ** [[SQLCIPHER_STATUS_PAGECACHE_USED]] ^(<dt>SQLCIPHER_STATUS_PAGECACHE_USED</dt>
 ** <dd>This parameter returns the number of pages used out of the
-** [pagecache memory allocator] that was configured using 
+** [pagecache memory allocator] that was configured using
 ** [SQLCIPHER_CONFIG_PAGECACHE].  The
 ** value returned is in pages, not in bytes.</dd>)^
 **
-** [[SQLCIPHER_STATUS_PAGECACHE_OVERFLOW]] 
+** [[SQLCIPHER_STATUS_PAGECACHE_OVERFLOW]]
 ** ^(<dt>SQLCIPHER_STATUS_PAGECACHE_OVERFLOW</dt>
 ** <dd>This parameter returns the number of bytes of page cache
 ** allocation which could not be satisfied by the [SQLCIPHER_CONFIG_PAGECACHE]
@@ -5737,7 +5746,7 @@ SQLCIPHER_API int sqlcipher3_status(int op, int *pCurrent, int *pHighwater, int 
 ** [[SQLCIPHER_STATUS_PAGECACHE_SIZE]] ^(<dt>SQLCIPHER_STATUS_PAGECACHE_SIZE</dt>
 ** <dd>This parameter records the largest memory allocation request
 ** handed to [pagecache memory allocator].  Only the value returned in the
-** *pHighwater parameter to [sqlcipher3_status()] is of interest.  
+** *pHighwater parameter to [sqlcipher3_status()] is of interest.
 ** The value written into the *pCurrent parameter is undefined.</dd>)^
 **
 ** [[SQLCIPHER_STATUS_SCRATCH_USED]] ^(<dt>SQLCIPHER_STATUS_SCRATCH_USED</dt>
@@ -5761,7 +5770,7 @@ SQLCIPHER_API int sqlcipher3_status(int op, int *pCurrent, int *pHighwater, int 
 ** [[SQLCIPHER_STATUS_SCRATCH_SIZE]] ^(<dt>SQLCIPHER_STATUS_SCRATCH_SIZE</dt>
 ** <dd>This parameter records the largest memory allocation request
 ** handed to [scratch memory allocator].  Only the value returned in the
-** *pHighwater parameter to [sqlcipher3_status()] is of interest.  
+** *pHighwater parameter to [sqlcipher3_status()] is of interest.
 ** The value written into the *pCurrent parameter is undefined.</dd>)^
 **
 ** [[SQLCIPHER_STATUS_PARSER_STACK]] ^(<dt>SQLCIPHER_STATUS_PARSER_STACK</dt>
@@ -5785,12 +5794,12 @@ SQLCIPHER_API int sqlcipher3_status(int op, int *pCurrent, int *pHighwater, int 
 /*
 ** CAPI3REF: Database Connection Status
 **
-** ^This interface is used to retrieve runtime status information 
+** ^This interface is used to retrieve runtime status information
 ** about a single [database connection].  ^The first argument is the
 ** database connection object to be interrogated.  ^The second argument
 ** is an integer constant, taken from the set of
 ** [SQLCIPHER_DBSTATUS options], that
-** determines the parameter to interrogate.  The set of 
+** determines the parameter to interrogate.  The set of
 ** [SQLCIPHER_DBSTATUS options] is likely
 ** to grow in future releases of SQLite.
 **
@@ -5804,7 +5813,7 @@ SQLCIPHER_API int sqlcipher3_status(int op, int *pCurrent, int *pHighwater, int 
 **
 ** See also: [sqlcipher3_status()] and [sqlcipher3_stmt_status()].
 */
-SQLCIPHER_API int sqlcipher3_db_status(sqlcipher3*, int op, int *pCur, int *pHiwtr, int resetFlg);
+SQLCIPHER_API int sqlcipher3_db_status(sqlcipher3 *, int op, int *pCur, int *pHiwtr, int resetFlg);
 
 /*
 ** CAPI3REF: Status Parameters for database connections
@@ -5825,7 +5834,7 @@ SQLCIPHER_API int sqlcipher3_db_status(sqlcipher3*, int op, int *pCur, int *pHiw
 ** checked out.</dd>)^
 **
 ** [[SQLCIPHER_DBSTATUS_LOOKASIDE_HIT]] ^(<dt>SQLCIPHER_DBSTATUS_LOOKASIDE_HIT</dt>
-** <dd>This parameter returns the number malloc attempts that were 
+** <dd>This parameter returns the number malloc attempts that were
 ** satisfied using lookaside memory. Only the high-water value is meaningful;
 ** the current value is always zero.)^
 **
@@ -5853,7 +5862,7 @@ SQLCIPHER_API int sqlcipher3_db_status(sqlcipher3*, int op, int *pCur, int *pHiw
 ** [[SQLCIPHER_DBSTATUS_SCHEMA_USED]] ^(<dt>SQLCIPHER_DBSTATUS_SCHEMA_USED</dt>
 ** <dd>This parameter returns the approximate number of of bytes of heap
 ** memory used to store the schema for all databases associated
-** with the connection - main, temp, and any [ATTACH]-ed databases.)^ 
+** with the connection - main, temp, and any [ATTACH]-ed databases.)^
 ** ^The full amount of memory used by the schemas is reported, even if the
 ** schema memory is shared with other database connections due to
 ** [shared cache mode] being enabled.
@@ -5868,13 +5877,13 @@ SQLCIPHER_API int sqlcipher3_db_status(sqlcipher3*, int op, int *pCur, int *pHiw
 **
 ** [[SQLCIPHER_DBSTATUS_CACHE_HIT]] ^(<dt>SQLCIPHER_DBSTATUS_CACHE_HIT</dt>
 ** <dd>This parameter returns the number of pager cache hits that have
-** occurred.)^ ^The highwater mark associated with SQLCIPHER_DBSTATUS_CACHE_HIT 
+** occurred.)^ ^The highwater mark associated with SQLCIPHER_DBSTATUS_CACHE_HIT
 ** is always 0.
 ** </dd>
 **
 ** [[SQLCIPHER_DBSTATUS_CACHE_MISS]] ^(<dt>SQLCIPHER_DBSTATUS_CACHE_MISS</dt>
 ** <dd>This parameter returns the number of pager cache misses that have
-** occurred.)^ ^The highwater mark associated with SQLCIPHER_DBSTATUS_CACHE_MISS 
+** occurred.)^ ^The highwater mark associated with SQLCIPHER_DBSTATUS_CACHE_MISS
 ** is always 0.
 ** </dd>
 ** </dl>
@@ -5901,7 +5910,7 @@ SQLCIPHER_API int sqlcipher3_db_status(sqlcipher3*, int op, int *pCur, int *pHiw
 ** statements.  For example, if the number of table steps greatly exceeds
 ** the number of table searches or result rows, that would tend to indicate
 ** that the prepared statement is using a full table scan rather than
-** an index.  
+** an index.
 **
 ** ^(This interface is used to retrieve and reset counter values from
 ** a [prepared statement].  The first argument is the prepared statement
@@ -5914,7 +5923,7 @@ SQLCIPHER_API int sqlcipher3_db_status(sqlcipher3*, int op, int *pCur, int *pHiw
 **
 ** See also: [sqlcipher3_status()] and [sqlcipher3_db_status()].
 */
-SQLCIPHER_API int sqlcipher3_stmt_status(sqlcipher3_stmt*, int op,int resetFlg);
+SQLCIPHER_API int sqlcipher3_stmt_status(sqlcipher3_stmt *, int op, int resetFlg);
 
 /*
 ** CAPI3REF: Status Parameters for prepared statements
@@ -5928,7 +5937,7 @@ SQLCIPHER_API int sqlcipher3_stmt_status(sqlcipher3_stmt*, int op,int resetFlg);
 ** [[SQLCIPHER_STMTSTATUS_FULLSCAN_STEP]] <dt>SQLCIPHER_STMTSTATUS_FULLSCAN_STEP</dt>
 ** <dd>^This is the number of times that SQLite has stepped forward in
 ** a table as part of a full table scan.  Large numbers for this counter
-** may indicate opportunities for performance improvement through 
+** may indicate opportunities for performance improvement through
 ** careful use of indices.</dd>
 **
 ** [[SQLCIPHER_STMTSTATUS_SORT]] <dt>SQLCIPHER_STMTSTATUS_SORT</dt>
@@ -5966,15 +5975,15 @@ typedef struct sqlcipher3_pcache sqlcipher3_pcache;
 ** KEYWORDS: {page cache}
 **
 ** ^(The [sqlcipher3_config]([SQLCIPHER_CONFIG_PCACHE], ...) interface can
-** register an alternative page cache implementation by passing in an 
+** register an alternative page cache implementation by passing in an
 ** instance of the sqlcipher3_pcache_methods structure.)^
-** In many applications, most of the heap memory allocated by 
+** In many applications, most of the heap memory allocated by
 ** SQLite is used for the page cache.
-** By implementing a 
+** By implementing a
 ** custom page cache using this API, an application can better control
-** the amount of memory consumed by SQLite, the way in which 
-** that memory is allocated and released, and the policies used to 
-** determine exactly which parts of a database file are cached and for 
+** the amount of memory consumed by SQLite, the way in which
+** that memory is allocated and released, and the policies used to
+** determine exactly which parts of a database file are cached and for
 ** how long.
 **
 ** The alternative page cache mechanism is an
@@ -5987,19 +5996,19 @@ typedef struct sqlcipher3_pcache sqlcipher3_pcache;
 ** [sqlcipher3_config()] returns.)^
 **
 ** [[the xInit() page cache method]]
-** ^(The xInit() method is called once for each effective 
+** ^(The xInit() method is called once for each effective
 ** call to [sqlcipher3_initialize()])^
 ** (usually only once during the lifetime of the process). ^(The xInit()
 ** method is passed a copy of the sqlcipher3_pcache_methods.pArg value.)^
-** The intent of the xInit() method is to set up global data structures 
-** required by the custom page cache implementation. 
-** ^(If the xInit() method is NULL, then the 
+** The intent of the xInit() method is to set up global data structures
+** required by the custom page cache implementation.
+** ^(If the xInit() method is NULL, then the
 ** built-in default page cache is used instead of the application defined
 ** page cache.)^
 **
 ** [[the xShutdown() page cache method]]
 ** ^The xShutdown() method is called by [sqlcipher3_shutdown()].
-** It can be used to clean up 
+** It can be used to clean up
 ** any outstanding resources before process shutdown, if required.
 ** ^The xShutdown() method may be NULL.
 **
@@ -6033,7 +6042,7 @@ typedef struct sqlcipher3_pcache sqlcipher3_pcache;
 ** it is purely advisory.  ^On a cache where bPurgeable is false, SQLite will
 ** never invoke xUnpin() except to deliberately delete a page.
 ** ^In other words, calls to xUnpin() on a cache with bPurgeable set to
-** false will always have the "discard" flag set to true.  
+** false will always have the "discard" flag set to true.
 ** ^Hence, a cache created with bPurgeable false will
 ** never contain any unpinned pages.
 **
@@ -6048,13 +6057,13 @@ typedef struct sqlcipher3_pcache sqlcipher3_pcache;
 ** [[the xPagecount() page cache methods]]
 ** The xPagecount() method must return the number of pages currently
 ** stored in the cache, both pinned and unpinned.
-** 
+**
 ** [[the xFetch() page cache methods]]
-** The xFetch() method locates a page in the cache and returns a pointer to 
+** The xFetch() method locates a page in the cache and returns a pointer to
 ** the page, or a NULL pointer.
 ** A "page", in this context, means a buffer of szPage bytes aligned at an
 ** 8-byte boundary. The page to be fetched is determined by the key. ^The
-** minimum key value is 1.  After it has been retrieved using xFetch, the page 
+** minimum key value is 1.  After it has been retrieved using xFetch, the page
 ** is considered to be "pinned".
 **
 ** If the requested page is already in the page cache, then the page cache
@@ -6087,8 +6096,8 @@ typedef struct sqlcipher3_pcache sqlcipher3_pcache;
 ** page cache implementation. ^The page cache implementation
 ** may choose to evict unpinned pages at any time.
 **
-** The cache must not perform any reference counting. A single 
-** call to xUnpin() unpins the page regardless of the number of prior calls 
+** The cache must not perform any reference counting. A single
+** call to xUnpin() unpins the page regardless of the number of prior calls
 ** to xFetch().
 **
 ** [[the xRekey() page cache methods]]
@@ -6113,17 +6122,17 @@ typedef struct sqlcipher3_pcache sqlcipher3_pcache;
 */
 typedef struct sqlcipher3_pcache_methods sqlcipher3_pcache_methods;
 struct sqlcipher3_pcache_methods {
-  void *pArg;
-  int (*xInit)(void*);
-  void (*xShutdown)(void*);
-  sqlcipher3_pcache *(*xCreate)(int szPage, int bPurgeable);
-  void (*xCachesize)(sqlcipher3_pcache*, int nCachesize);
-  int (*xPagecount)(sqlcipher3_pcache*);
-  void *(*xFetch)(sqlcipher3_pcache*, unsigned key, int createFlag);
-  void (*xUnpin)(sqlcipher3_pcache*, void*, int discard);
-  void (*xRekey)(sqlcipher3_pcache*, void*, unsigned oldKey, unsigned newKey);
-  void (*xTruncate)(sqlcipher3_pcache*, unsigned iLimit);
-  void (*xDestroy)(sqlcipher3_pcache*);
+	void *pArg;
+	int (*xInit)(void *);
+	void (*xShutdown)(void *);
+	sqlcipher3_pcache *(*xCreate)(int szPage, int bPurgeable);
+	void (*xCachesize)(sqlcipher3_pcache *, int nCachesize);
+	int (*xPagecount)(sqlcipher3_pcache *);
+	void *(*xFetch)(sqlcipher3_pcache *, unsigned key, int createFlag);
+	void (*xUnpin)(sqlcipher3_pcache *, void *, int discard);
+	void (*xRekey)(sqlcipher3_pcache *, void *, unsigned oldKey, unsigned newKey);
+	void (*xTruncate)(sqlcipher3_pcache *, unsigned iLimit);
+	void (*xDestroy)(sqlcipher3_pcache *);
 };
 
 /*
@@ -6143,7 +6152,7 @@ typedef struct sqlcipher3_backup sqlcipher3_backup;
 **
 ** The backup API copies the content of one database into another.
 ** It is useful either for creating backups of databases or
-** for copying in-memory databases to or from persistent files. 
+** for copying in-memory databases to or from persistent files.
 **
 ** See Also: [Using the SQLite Online Backup API]
 **
@@ -6154,28 +6163,28 @@ typedef struct sqlcipher3_backup sqlcipher3_backup;
 ** ^Thus, the backup may be performed on a live source database without
 ** preventing other database connections from
 ** reading or writing to the source database while the backup is underway.
-** 
-** ^(To perform a backup operation: 
+**
+** ^(To perform a backup operation:
 **   <ol>
 **     <li><b>sqlcipher3_backup_init()</b> is called once to initialize the
-**         backup, 
-**     <li><b>sqlcipher3_backup_step()</b> is called one or more times to transfer 
+**         backup,
+**     <li><b>sqlcipher3_backup_step()</b> is called one or more times to transfer
 **         the data between the two databases, and finally
-**     <li><b>sqlcipher3_backup_finish()</b> is called to release all resources 
-**         associated with the backup operation. 
+**     <li><b>sqlcipher3_backup_finish()</b> is called to release all resources
+**         associated with the backup operation.
 **   </ol>)^
 ** There should be exactly one call to sqlcipher3_backup_finish() for each
 ** successful call to sqlcipher3_backup_init().
 **
 ** [[sqlcipher3_backup_init()]] <b>sqlcipher3_backup_init()</b>
 **
-** ^The D and N arguments to sqlcipher3_backup_init(D,N,S,M) are the 
-** [database connection] associated with the destination database 
+** ^The D and N arguments to sqlcipher3_backup_init(D,N,S,M) are the
+** [database connection] associated with the destination database
 ** and the database name, respectively.
 ** ^The database name is "main" for the main database, "temp" for the
 ** temporary database, or the name specified after the AS keyword in
 ** an [ATTACH] statement for an attached database.
-** ^The S and M arguments passed to 
+** ^The S and M arguments passed to
 ** sqlcipher3_backup_init(D,N,S,M) identify the [database connection]
 ** and database name of the source database, respectively.
 ** ^The source and destination [database connections] (parameters S and D)
@@ -6191,14 +6200,14 @@ typedef struct sqlcipher3_backup sqlcipher3_backup;
 ** ^A successful call to sqlcipher3_backup_init() returns a pointer to an
 ** [sqlcipher3_backup] object.
 ** ^The [sqlcipher3_backup] object may be used with the sqlcipher3_backup_step() and
-** sqlcipher3_backup_finish() functions to perform the specified backup 
+** sqlcipher3_backup_finish() functions to perform the specified backup
 ** operation.
 **
 ** [[sqlcipher3_backup_step()]] <b>sqlcipher3_backup_step()</b>
 **
-** ^Function sqlcipher3_backup_step(B,N) will copy up to N pages between 
+** ^Function sqlcipher3_backup_step(B,N) will copy up to N pages between
 ** the source and destination databases specified by [sqlcipher3_backup] object B.
-** ^If N is negative, all remaining source pages are copied. 
+** ^If N is negative, all remaining source pages are copied.
 ** ^If sqlcipher3_backup_step(B,N) successfully copies N pages and there
 ** are still more pages to be copied, then the function returns [SQLCIPHER_OK].
 ** ^If sqlcipher3_backup_step(B,N) successfully finishes copying all pages
@@ -6220,8 +6229,8 @@ typedef struct sqlcipher3_backup sqlcipher3_backup;
 **
 ** ^If sqlcipher3_backup_step() cannot obtain a required file-system lock, then
 ** the [sqlcipher3_busy_handler | busy-handler function]
-** is invoked (if one is specified). ^If the 
-** busy-handler returns non-zero before the lock is available, then 
+** is invoked (if one is specified). ^If the
+** busy-handler returns non-zero before the lock is available, then
 ** [SQLCIPHER_BUSY] is returned to the caller. ^In this case the call to
 ** sqlcipher3_backup_step() can be retried later. ^If the source
 ** [database connection]
@@ -6229,15 +6238,15 @@ typedef struct sqlcipher3_backup sqlcipher3_backup;
 ** is called, then [SQLCIPHER_LOCKED] is returned immediately. ^Again, in this
 ** case the call to sqlcipher3_backup_step() can be retried later on. ^(If
 ** [SQLCIPHER_IOERR_ACCESS | SQLCIPHER_IOERR_XXX], [SQLCIPHER_NOMEM], or
-** [SQLCIPHER_READONLY] is returned, then 
-** there is no point in retrying the call to sqlcipher3_backup_step(). These 
-** errors are considered fatal.)^  The application must accept 
-** that the backup operation has failed and pass the backup operation handle 
+** [SQLCIPHER_READONLY] is returned, then
+** there is no point in retrying the call to sqlcipher3_backup_step(). These
+** errors are considered fatal.)^  The application must accept
+** that the backup operation has failed and pass the backup operation handle
 ** to the sqlcipher3_backup_finish() to release associated resources.
 **
 ** ^The first call to sqlcipher3_backup_step() obtains an exclusive lock
-** on the destination file. ^The exclusive lock is not released until either 
-** sqlcipher3_backup_finish() is called or the backup operation is complete 
+** on the destination file. ^The exclusive lock is not released until either
+** sqlcipher3_backup_finish() is called or the backup operation is complete
 ** and sqlcipher3_backup_step() returns [SQLCIPHER_DONE].  ^Every call to
 ** sqlcipher3_backup_step() obtains a [shared lock] on the source database that
 ** lasts for the duration of the sqlcipher3_backup_step() call.
@@ -6246,18 +6255,18 @@ typedef struct sqlcipher3_backup sqlcipher3_backup;
 ** through the backup process.  ^If the source database is modified by an
 ** external process or via a database connection other than the one being
 ** used by the backup operation, then the backup will be automatically
-** restarted by the next call to sqlcipher3_backup_step(). ^If the source 
+** restarted by the next call to sqlcipher3_backup_step(). ^If the source
 ** database is modified by the using the same database connection as is used
 ** by the backup operation, then the backup database is automatically
 ** updated at the same time.
 **
 ** [[sqlcipher3_backup_finish()]] <b>sqlcipher3_backup_finish()</b>
 **
-** When sqlcipher3_backup_step() has returned [SQLCIPHER_DONE], or when the 
+** When sqlcipher3_backup_step() has returned [SQLCIPHER_DONE], or when the
 ** application wishes to abandon the backup operation, the application
 ** should destroy the [sqlcipher3_backup] by passing it to sqlcipher3_backup_finish().
 ** ^The sqlcipher3_backup_finish() interfaces releases all
-** resources associated with the [sqlcipher3_backup] object. 
+** resources associated with the [sqlcipher3_backup] object.
 ** ^If sqlcipher3_backup_step() has not yet returned [SQLCIPHER_DONE], then any
 ** active write-transaction on the destination database is rolled back.
 ** The [sqlcipher3_backup] object is invalid
@@ -6297,8 +6306,8 @@ typedef struct sqlcipher3_backup sqlcipher3_backup;
 ** connections, then the source database connection may be used concurrently
 ** from within other threads.
 **
-** However, the application must guarantee that the destination 
-** [database connection] is not passed to any other API (by any thread) after 
+** However, the application must guarantee that the destination
+** [database connection] is not passed to any other API (by any thread) after
 ** sqlcipher3_backup_init() is called and before the corresponding call to
 ** sqlcipher3_backup_finish().  SQLite does not currently check to see
 ** if the application incorrectly accesses the destination [database connection]
@@ -6309,11 +6318,11 @@ typedef struct sqlcipher3_backup sqlcipher3_backup;
 ** If running in [shared cache mode], the application must
 ** guarantee that the shared cache used by the destination database
 ** is not accessed while the backup is running. In practice this means
-** that the application must guarantee that the disk file being 
+** that the application must guarantee that the disk file being
 ** backed up to is not accessed by any connection within the process,
 ** not just the specific connection that was passed to sqlcipher3_backup_init().
 **
-** The [sqlcipher3_backup] object itself is partially threadsafe. Multiple 
+** The [sqlcipher3_backup] object itself is partially threadsafe. Multiple
 ** threads may safely make multiple concurrent calls to sqlcipher3_backup_step().
 ** However, the sqlcipher3_backup_remaining() and sqlcipher3_backup_pagecount()
 ** APIs are not strictly speaking threadsafe. If they are invoked at the
@@ -6321,10 +6330,10 @@ typedef struct sqlcipher3_backup sqlcipher3_backup;
 ** possible that they return invalid values.
 */
 SQLCIPHER_API sqlcipher3_backup *sqlcipher3_backup_init(
-  sqlcipher3 *pDest,                        /* Destination database handle */
-  const char *zDestName,                 /* Destination database name */
-  sqlcipher3 *pSource,                      /* Source database handle */
-  const char *zSourceName                /* Source database name */
+	sqlcipher3 *pDest,                        /* Destination database handle */
+	const char *zDestName,                 /* Destination database name */
+	sqlcipher3 *pSource,                      /* Source database handle */
+	const char *zSourceName                /* Source database name */
 );
 SQLCIPHER_API int sqlcipher3_backup_step(sqlcipher3_backup *p, int nPage);
 SQLCIPHER_API int sqlcipher3_backup_finish(sqlcipher3_backup *p);
@@ -6337,8 +6346,8 @@ SQLCIPHER_API int sqlcipher3_backup_pagecount(sqlcipher3_backup *p);
 ** ^When running in shared-cache mode, a database operation may fail with
 ** an [SQLCIPHER_LOCKED] error if the required locks on the shared-cache or
 ** individual tables within the shared-cache cannot be obtained. See
-** [SQLite Shared-Cache Mode] for a description of shared-cache locking. 
-** ^This API may be used to register a callback that SQLite will invoke 
+** [SQLite Shared-Cache Mode] for a description of shared-cache locking.
+** ^This API may be used to register a callback that SQLite will invoke
 ** when the connection currently holding the required lock relinquishes it.
 ** ^This API is only available if the library was compiled with the
 ** [SQLCIPHER_ENABLE_UNLOCK_NOTIFY] C-preprocessor symbol defined.
@@ -6346,14 +6355,14 @@ SQLCIPHER_API int sqlcipher3_backup_pagecount(sqlcipher3_backup *p);
 ** See Also: [Using the SQLite Unlock Notification Feature].
 **
 ** ^Shared-cache locks are released when a database connection concludes
-** its current transaction, either by committing it or rolling it back. 
+** its current transaction, either by committing it or rolling it back.
 **
 ** ^When a connection (known as the blocked connection) fails to obtain a
 ** shared-cache lock and SQLCIPHER_LOCKED is returned to the caller, the
 ** identity of the database connection (the blocking connection) that
-** has locked the required resource is stored internally. ^After an 
+** has locked the required resource is stored internally. ^After an
 ** application receives an SQLCIPHER_LOCKED error, it may call the
-** sqlcipher3_unlock_notify() method with the blocked connection handle as 
+** sqlcipher3_unlock_notify() method with the blocked connection handle as
 ** the first argument to register for a callback that will be invoked
 ** when the blocking connections current transaction is concluded. ^The
 ** callback is invoked from within the [sqlcipher3_step] or [sqlcipher3_close]
@@ -6367,15 +6376,15 @@ SQLCIPHER_API int sqlcipher3_backup_pagecount(sqlcipher3_backup *p);
 **
 ** ^If the blocked connection is attempting to obtain a write-lock on a
 ** shared-cache table, and more than one other connection currently holds
-** a read-lock on the same table, then SQLite arbitrarily selects one of 
+** a read-lock on the same table, then SQLite arbitrarily selects one of
 ** the other connections to use as the blocking connection.
 **
-** ^(There may be at most one unlock-notify callback registered by a 
+** ^(There may be at most one unlock-notify callback registered by a
 ** blocked connection. If sqlcipher3_unlock_notify() is called when the
 ** blocked connection already has a registered unlock-notify callback,
 ** then the new callback replaces the old.)^ ^If sqlcipher3_unlock_notify() is
 ** called with a NULL pointer as its second argument, then any existing
-** unlock-notify callback is canceled. ^The blocked connections 
+** unlock-notify callback is canceled. ^The blocked connections
 ** unlock-notify callback may also be canceled by closing the blocked
 ** connection using [sqlcipher3_close()].
 **
@@ -6388,7 +6397,7 @@ SQLCIPHER_API int sqlcipher3_backup_pagecount(sqlcipher3_backup *p);
 **
 ** <b>Callback Invocation Details</b>
 **
-** When an unlock-notify callback is registered, the application provides a 
+** When an unlock-notify callback is registered, the application provides a
 ** single void* pointer that is passed to the callback when it is invoked.
 ** However, the signature of the callback function allows SQLite to pass
 ** it an array of void* context pointers. The first argument passed to
@@ -6401,12 +6410,12 @@ SQLCIPHER_API int sqlcipher3_backup_pagecount(sqlcipher3_backup *p);
 ** same callback function, then instead of invoking the callback function
 ** multiple times, it is invoked once with the set of void* context pointers
 ** specified by the blocked connections bundled together into an array.
-** This gives the application an opportunity to prioritize any actions 
+** This gives the application an opportunity to prioritize any actions
 ** related to the set of unblocked database connections.
 **
 ** <b>Deadlock Detection</b>
 **
-** Assuming that after registering for an unlock-notify callback a 
+** Assuming that after registering for an unlock-notify callback a
 ** database waits for the callback to be issued before taking any further
 ** action (a reasonable assumption), then using this API may cause the
 ** application to deadlock. For example, if connection X is waiting for
@@ -6429,7 +6438,7 @@ SQLCIPHER_API int sqlcipher3_backup_pagecount(sqlcipher3_backup *p);
 **
 ** <b>The "DROP TABLE" Exception</b>
 **
-** When a call to [sqlcipher3_step()] returns SQLCIPHER_LOCKED, it is almost 
+** When a call to [sqlcipher3_step()] returns SQLCIPHER_LOCKED, it is almost
 ** always appropriate to call sqlcipher3_unlock_notify(). There is however,
 ** one exception. When executing a "DROP TABLE" or "DROP INDEX" statement,
 ** SQLite checks if there are any currently executing SELECT statements
@@ -6442,13 +6451,13 @@ SQLCIPHER_API int sqlcipher3_backup_pagecount(sqlcipher3_backup *p);
 ** One way around this problem is to check the extended error code returned
 ** by an sqlcipher3_step() call. ^(If there is a blocking connection, then the
 ** extended error code is set to SQLCIPHER_LOCKED_SHAREDCACHE. Otherwise, in
-** the special "DROP TABLE/INDEX" case, the extended error code is just 
+** the special "DROP TABLE/INDEX" case, the extended error code is just
 ** SQLCIPHER_LOCKED.)^
 */
 SQLCIPHER_API int sqlcipher3_unlock_notify(
-  sqlcipher3 *pBlocked,                          /* Waiting connection */
-  void (*xNotify)(void **apArg, int nArg),    /* Callback function to invoke */
-  void *pNotifyArg                            /* Argument to pass to xNotify */
+	sqlcipher3 *pBlocked,                          /* Waiting connection */
+	void (*xNotify)(void **apArg, int nArg),    /* Callback function to invoke */
+	void *pNotifyArg                            /* Argument to pass to xNotify */
 );
 
 
@@ -6457,7 +6466,7 @@ SQLCIPHER_API int sqlcipher3_unlock_notify(
 **
 ** ^The [sqlcipher3_strnicmp()] API allows applications and extensions to
 ** compare the contents of two buffers containing UTF-8 strings in a
-** case-independent fashion, using the same definition of case independence 
+** case-independent fashion, using the same definition of case independence
 ** that SQLite uses internally when comparing identifiers.
 */
 SQLCIPHER_API int sqlcipher3_strnicmp(const char *, const char *, int);
@@ -6491,10 +6500,10 @@ SQLCIPHER_API void sqlcipher3_log(int iErrCode, const char *zFormat, ...);
 ** ^The [sqlcipher3_wal_hook()] function is used to register a callback that
 ** will be invoked each time a database connection commits data to a
 ** [write-ahead log] (i.e. whenever a transaction is committed in
-** [journal_mode | journal_mode=WAL mode]). 
+** [journal_mode | journal_mode=WAL mode]).
 **
-** ^The callback is invoked by SQLite after the commit has taken place and 
-** the associated write-lock on the database released, so the implementation 
+** ^The callback is invoked by SQLite after the commit has taken place and
+** the associated write-lock on the database released, so the implementation
 ** may read, write or [checkpoint] the database as required.
 **
 ** ^The first parameter passed to the callback function when it is invoked
@@ -6513,7 +6522,7 @@ SQLCIPHER_API void sqlcipher3_log(int iErrCode, const char *zFormat, ...);
 ** that does not correspond to any valid SQLite error code, the results
 ** are undefined.
 **
-** A single database handle may have at most a single write-ahead log callback 
+** A single database handle may have at most a single write-ahead log callback
 ** registered at one time. ^Calling [sqlcipher3_wal_hook()] replaces any
 ** previously registered write-ahead log callback. ^Note that the
 ** [sqlcipher3_wal_autocheckpoint()] interface and the
@@ -6521,9 +6530,9 @@ SQLCIPHER_API void sqlcipher3_log(int iErrCode, const char *zFormat, ...);
 ** those overwrite any prior [sqlcipher3_wal_hook()] settings.
 */
 SQLCIPHER_API void *sqlcipher3_wal_hook(
-  sqlcipher3*, 
-  int(*)(void *,sqlcipher3*,const char*,int),
-  void*
+	sqlcipher3 *,
+	int(*)(void *, sqlcipher3 *, const char *, int),
+	void *
 );
 
 /*
@@ -6533,7 +6542,7 @@ SQLCIPHER_API void *sqlcipher3_wal_hook(
 ** [sqlcipher3_wal_hook()] that causes any database on [database connection] D
 ** to automatically [checkpoint]
 ** after committing a transaction if there are N or
-** more frames in the [write-ahead log] file.  ^Passing zero or 
+** more frames in the [write-ahead log] file.  ^Passing zero or
 ** a negative value as the nFrame parameter disables automatic
 ** checkpoints entirely.
 **
@@ -6574,15 +6583,15 @@ SQLCIPHER_API int sqlcipher3_wal_checkpoint(sqlcipher3 *db, const char *zDb);
 /*
 ** CAPI3REF: Checkpoint a database
 **
-** Run a checkpoint operation on WAL database zDb attached to database 
-** handle db. The specific operation is determined by the value of the 
+** Run a checkpoint operation on WAL database zDb attached to database
+** handle db. The specific operation is determined by the value of the
 ** eMode parameter:
 **
 ** <dl>
 ** <dt>SQLCIPHER_CHECKPOINT_PASSIVE<dd>
-**   Checkpoint as many frames as possible without waiting for any database 
+**   Checkpoint as many frames as possible without waiting for any database
 **   readers or writers to finish. Sync the db file if all frames in the log
-**   are checkpointed. This mode is the same as calling 
+**   are checkpointed. This mode is the same as calling
 **   sqlcipher3_wal_checkpoint(). The busy-handler callback is never invoked.
 **
 ** <dt>SQLCIPHER_CHECKPOINT_FULL<dd>
@@ -6593,10 +6602,10 @@ SQLCIPHER_API int sqlcipher3_wal_checkpoint(sqlcipher3 *db, const char *zDb);
 **   but not database readers.
 **
 ** <dt>SQLCIPHER_CHECKPOINT_RESTART<dd>
-**   This mode works the same way as SQLCIPHER_CHECKPOINT_FULL, except after 
+**   This mode works the same way as SQLCIPHER_CHECKPOINT_FULL, except after
 **   checkpointing the log file it blocks (calls the busy-handler callback)
-**   until all readers are reading from the database file only. This ensures 
-**   that the next client to write to the database file restarts the log file 
+**   until all readers are reading from the database file only. This ensures
+**   that the next client to write to the database file restarts the log file
 **   from the beginning. This call blocks database writers while it is running,
 **   but not database readers.
 ** </dl>
@@ -6610,30 +6619,30 @@ SQLCIPHER_API int sqlcipher3_wal_checkpoint(sqlcipher3 *db, const char *zDb);
 ** before returning to communicate this to the caller.
 **
 ** All calls obtain an exclusive "checkpoint" lock on the database file. If
-** any other process is running a checkpoint operation at the same time, the 
-** lock cannot be obtained and SQLCIPHER_BUSY is returned. Even if there is a 
+** any other process is running a checkpoint operation at the same time, the
+** lock cannot be obtained and SQLCIPHER_BUSY is returned. Even if there is a
 ** busy-handler configured, it will not be invoked in this case.
 **
-** The SQLCIPHER_CHECKPOINT_FULL and RESTART modes also obtain the exclusive 
+** The SQLCIPHER_CHECKPOINT_FULL and RESTART modes also obtain the exclusive
 ** "writer" lock on the database file. If the writer lock cannot be obtained
 ** immediately, and a busy-handler is configured, it is invoked and the writer
 ** lock retried until either the busy-handler returns 0 or the lock is
 ** successfully obtained. The busy-handler is also invoked while waiting for
 ** database readers as described above. If the busy-handler returns 0 before
 ** the writer lock is obtained or while waiting for database readers, the
-** checkpoint operation proceeds from that point in the same way as 
-** SQLCIPHER_CHECKPOINT_PASSIVE - checkpointing as many frames as possible 
+** checkpoint operation proceeds from that point in the same way as
+** SQLCIPHER_CHECKPOINT_PASSIVE - checkpointing as many frames as possible
 ** without blocking any further. SQLCIPHER_BUSY is returned in this case.
 **
 ** If parameter zDb is NULL or points to a zero length string, then the
 ** specified operation is attempted on all WAL databases. In this case the
-** values written to output parameters *pnLog and *pnCkpt are undefined. If 
-** an SQLCIPHER_BUSY error is encountered when processing one or more of the 
-** attached WAL databases, the operation is still attempted on any remaining 
-** attached databases and SQLCIPHER_BUSY is returned to the caller. If any other 
-** error occurs while processing an attached database, processing is abandoned 
-** and the error code returned to the caller immediately. If no error 
-** (SQLCIPHER_BUSY or otherwise) is encountered while processing the attached 
+** values written to output parameters *pnLog and *pnCkpt are undefined. If
+** an SQLCIPHER_BUSY error is encountered when processing one or more of the
+** attached WAL databases, the operation is still attempted on any remaining
+** attached databases and SQLCIPHER_BUSY is returned to the caller. If any other
+** error occurs while processing an attached database, processing is abandoned
+** and the error code returned to the caller immediately. If no error
+** (SQLCIPHER_BUSY or otherwise) is encountered while processing the attached
 ** databases, SQLCIPHER_OK is returned.
 **
 ** If database zDb is the name of an attached database that is not in WAL
@@ -6642,11 +6651,11 @@ SQLCIPHER_API int sqlcipher3_wal_checkpoint(sqlcipher3 *db, const char *zDb);
 ** attached database, SQLCIPHER_ERROR is returned to the caller.
 */
 SQLCIPHER_API int sqlcipher3_wal_checkpoint_v2(
-  sqlcipher3 *db,                    /* Database handle */
-  const char *zDb,                /* Name of attached database (or NULL) */
-  int eMode,                      /* SQLCIPHER_CHECKPOINT_* value */
-  int *pnLog,                     /* OUT: Size of WAL log in frames */
-  int *pnCkpt                     /* OUT: Total number of frames checkpointed */
+	sqlcipher3 *db,                    /* Database handle */
+	const char *zDb,                /* Name of attached database (or NULL) */
+	int eMode,                      /* SQLCIPHER_CHECKPOINT_* value */
+	int *pnLog,                     /* OUT: Size of WAL log in frames */
+	int *pnCkpt                     /* OUT: Total number of frames checkpointed */
 );
 
 /*
@@ -6675,7 +6684,7 @@ SQLCIPHER_API int sqlcipher3_wal_checkpoint_v2(
 ** this function. (See [SQLCIPHER_VTAB_CONSTRAINT_SUPPORT].)  Further options
 ** may be added in the future.
 */
-SQLCIPHER_API int sqlcipher3_vtab_config(sqlcipher3*, int op, ...);
+SQLCIPHER_API int sqlcipher3_vtab_config(sqlcipher3 *, int op, ...);
 
 /*
 ** CAPI3REF: Virtual Table Configuration Options
@@ -6699,20 +6708,20 @@ SQLCIPHER_API int sqlcipher3_vtab_config(sqlcipher3*, int op, ...);
 ** If X is non-zero, then the virtual table implementation guarantees
 ** that if [xUpdate] returns [SQLCIPHER_CONSTRAINT], it will do so before
 ** any modifications to internal or persistent data structures have been made.
-** If the [ON CONFLICT] mode is ABORT, FAIL, IGNORE or ROLLBACK, SQLite 
+** If the [ON CONFLICT] mode is ABORT, FAIL, IGNORE or ROLLBACK, SQLite
 ** is able to roll back a statement or database transaction, and abandon
-** or continue processing the current SQL statement as appropriate. 
+** or continue processing the current SQL statement as appropriate.
 ** If the ON CONFLICT mode is REPLACE and the [xUpdate] method returns
 ** [SQLCIPHER_CONSTRAINT], SQLite handles this as if the ON CONFLICT mode
 ** had been ABORT.
 **
 ** Virtual table implementations that are required to handle OR REPLACE
-** must do so within the [xUpdate] method. If a call to the 
-** [sqlcipher3_vtab_on_conflict()] function indicates that the current ON 
-** CONFLICT policy is REPLACE, the virtual table implementation should 
+** must do so within the [xUpdate] method. If a call to the
+** [sqlcipher3_vtab_on_conflict()] function indicates that the current ON
+** CONFLICT policy is REPLACE, the virtual table implementation should
 ** silently replace the appropriate rows within the xUpdate callback and
 ** return SQLCIPHER_OK. Or, if this is not possible, it may return
-** SQLCIPHER_CONSTRAINT, in which case SQLite falls back to OR ABORT 
+** SQLCIPHER_CONSTRAINT, in which case SQLite falls back to OR ABORT
 ** constraint handling.
 ** </dl>
 */
@@ -6792,10 +6801,10 @@ typedef struct sqlcipher3_rtree_geometry sqlcipher3_rtree_geometry;
 **   SELECT ... FROM <rtree> WHERE <rtree col> MATCH $zGeom(... params ...)
 */
 SQLCIPHER_API int sqlcipher3_rtree_geometry_callback(
-  sqlcipher3 *db,
-  const char *zGeom,
-  int (*xGeom)(sqlcipher3_rtree_geometry *, int nCoord, double *aCoord, int *pRes),
-  void *pContext
+	sqlcipher3 *db,
+	const char *zGeom,
+	int (*xGeom)(sqlcipher3_rtree_geometry *, int nCoord, double *aCoord, int *pRes),
+	void *pContext
 );
 
 
@@ -6804,11 +6813,11 @@ SQLCIPHER_API int sqlcipher3_rtree_geometry_callback(
 ** argument to callbacks registered using rtree_geometry_callback().
 */
 struct sqlcipher3_rtree_geometry {
-  void *pContext;                 /* Copy of pContext passed to s_r_g_c() */
-  int nParam;                     /* Size of array aParam[] */
-  double *aParam;                 /* Parameters passed to SQL geom function */
-  void *pUser;                    /* Callback implementation user data */
-  void (*xDelUser)(void *);       /* Called by SQLite to clean up pUser */
+	void *pContext;                 /* Copy of pContext passed to s_r_g_c() */
+	int nParam;                     /* Size of array aParam[] */
+	double *aParam;                 /* Parameters passed to SQL geom function */
+	void *pUser;                    /* Callback implementation user data */
+	void (*xDelUser)(void *);       /* Called by SQLite to clean up pUser */
 };
 
 

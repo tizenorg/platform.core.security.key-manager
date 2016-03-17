@@ -34,151 +34,143 @@
 namespace CKM {
 namespace {
 
-typedef std::unique_ptr<BIO, std::function<void(BIO*)>> BioUniquePtr;
+typedef std::unique_ptr<BIO, std::function<void(BIO *)>> BioUniquePtr;
 
 } // anonymous namespace
 
-PKCS12Impl::PKCS12Impl(const KeyShPtr &key, const CertificateShPtr &cert, const CertificateShPtrVector &caChain)
-    : m_pkey(key),
-      m_cert(cert),
-      m_ca(caChain)
-{
+PKCS12Impl::PKCS12Impl(const KeyShPtr &key, const CertificateShPtr &cert,
+					   const CertificateShPtrVector &caChain)
+	: m_pkey(key),
+	  m_cert(cert),
+	  m_ca(caChain) {
 }
 
-PKCS12Impl::PKCS12Impl(const RawBuffer &buffer, const Password &password)
-{
-    EVP_PKEY *pkey = NULL;
-    X509 *cert = NULL;
-    STACK_OF(X509) *ca = NULL;
-    ::PKCS12 *pkcs12 = NULL;
+PKCS12Impl::PKCS12Impl(const RawBuffer &buffer, const Password &password) {
+	EVP_PKEY *pkey = NULL;
+	X509 *cert = NULL;
+	STACK_OF(X509) *ca = NULL;
+	::PKCS12 *pkcs12 = NULL;
+	BioUniquePtr bio(BIO_new(BIO_s_mem()), BIO_free_all);
+	LogDebug("Start to parse PKCS12");
+	int result = BIO_write(bio.get(), buffer.data(), buffer.size());
 
-    BioUniquePtr bio(BIO_new(BIO_s_mem()), BIO_free_all);
-    LogDebug("Start to parse PKCS12");
+	if (result != static_cast<int>(buffer.size())) {
+		LogError("BIO_write failed. result = " << result << " Expected: " << buffer.size());
+		return;
+	}
 
-    int result = BIO_write(bio.get(), buffer.data(), buffer.size());
-    if (result != static_cast<int>(buffer.size())) {
-        LogError("BIO_write failed. result = " << result << " Expected: " << buffer.size());
-        return;
-    }
+	pkcs12 = d2i_PKCS12_bio(bio.get(), NULL);
 
-    pkcs12 = d2i_PKCS12_bio(bio.get(), NULL);
+	if (pkcs12 == NULL) {
+		LogDebug("d2i_PKCS12_bio failed.");
+		return;
+	}
 
-    if (pkcs12 == NULL) {
-        LogDebug("d2i_PKCS12_bio failed.");
-        return;
-    }
+	// needed if parsing is done before manager initialization
+	initOpenSslOnce();
 
-    // needed if parsing is done before manager initialization
-    initOpenSslOnce();
+	if (!PKCS12_verify_mac(pkcs12, password.c_str(), password.size())) {
+		LogDebug("Pkcs12 verify failed. Wrong password");
+		return;
+	}
 
-    if (!PKCS12_verify_mac(pkcs12, password.c_str(), password.size())) {
-        LogDebug("Pkcs12 verify failed. Wrong password");
-        return;
-    }
+	if (!PKCS12_parse(pkcs12, password.c_str(), &pkey, &cert, &ca)) {
+		LogError("PKCS12_parse failed");
+		return;
+	}
 
-    if (!PKCS12_parse(pkcs12, password.c_str(), &pkey, &cert, &ca)) {
-        LogError("PKCS12_parse failed");
-        return;
-    }
+	if (pkey) {
+		KeyImpl::EvpShPtr ptr(pkey, EVP_PKEY_free);
 
-    if (pkey) {
-        KeyImpl::EvpShPtr ptr(pkey, EVP_PKEY_free);
-        switch (EVP_PKEY_type(pkey->type)) {
-        case EVP_PKEY_RSA:
-            m_pkey = std::make_shared<KeyImpl>(ptr, KeyType::KEY_RSA_PRIVATE);
-            break;
+		switch (EVP_PKEY_type(pkey->type)) {
+		case EVP_PKEY_RSA:
+			m_pkey = std::make_shared<KeyImpl>(ptr, KeyType::KEY_RSA_PRIVATE);
+			break;
 
-        case EVP_PKEY_DSA:
-            m_pkey = std::make_shared<KeyImpl>(ptr, KeyType::KEY_DSA_PRIVATE);
-            break;
+		case EVP_PKEY_DSA:
+			m_pkey = std::make_shared<KeyImpl>(ptr, KeyType::KEY_DSA_PRIVATE);
+			break;
 
-        case EVP_PKEY_EC:
-            m_pkey = std::make_shared<KeyImpl>(ptr, KeyType::KEY_ECDSA_PRIVATE);
-            break;
+		case EVP_PKEY_EC:
+			m_pkey = std::make_shared<KeyImpl>(ptr, KeyType::KEY_ECDSA_PRIVATE);
+			break;
 
-        default:
-            LogError("Unsupported private key type.");
-            EVP_PKEY_free(pkey);
-            break;
-        }
-    }
+		default:
+			LogError("Unsupported private key type.");
+			EVP_PKEY_free(pkey);
+			break;
+		}
+	}
 
-    if (cert)
-        m_cert = std::make_shared<CertificateImpl>(cert, false);
+	if (cert)
+		m_cert = std::make_shared<CertificateImpl>(cert, false);
 
-    if (ca) {
-        while (sk_X509_num(ca) > 0) {
-            X509 *top = sk_X509_pop(ca);
-            m_ca.push_back(std::make_shared<CertificateImpl>(top, false));
-        }
+	if (ca) {
+		while (sk_X509_num(ca) > 0) {
+			X509 *top = sk_X509_pop(ca);
+			m_ca.push_back(std::make_shared<CertificateImpl>(top, false));
+		}
 
-        sk_X509_pop_free(ca, X509_free);
-    }
+		sk_X509_pop_free(ca, X509_free);
+	}
 }
 
 PKCS12Impl::PKCS12Impl(PKCS12Impl &&other) :
-    m_pkey(std::move(other.m_pkey)),
-    m_cert(std::move(other.m_cert)),
-    m_ca(std::move(other.m_ca))
-{
+	m_pkey(std::move(other.m_pkey)),
+	m_cert(std::move(other.m_cert)),
+	m_ca(std::move(other.m_ca)) {
 }
 
-PKCS12Impl &PKCS12Impl::operator=(PKCS12Impl &&other)
-{
-    if (this == &other)
-        return *this;
+PKCS12Impl &PKCS12Impl::operator=(PKCS12Impl &&other) {
+	if (this == &other)
+		return *this;
 
-    m_pkey = std::move(other.m_pkey);
-    m_cert = std::move(other.m_cert);
-    m_ca = std::move(other.m_ca);
-
-    return *this;
+	m_pkey = std::move(other.m_pkey);
+	m_cert = std::move(other.m_cert);
+	m_ca = std::move(other.m_ca);
+	return *this;
 }
 
 PKCS12Impl::PKCS12Impl(const PKCS12 &other) :
-    m_pkey(other.getKey()),
-    m_cert(other.getCertificate()),
-    m_ca(other.getCaCertificateShPtrVector())
-{
+	m_pkey(other.getKey()),
+	m_cert(other.getCertificate()),
+	m_ca(other.getCaCertificateShPtrVector()) {
 }
 
-KeyShPtr PKCS12Impl::getKey() const
-{
-    return m_pkey;
+KeyShPtr PKCS12Impl::getKey() const {
+	return m_pkey;
 }
 
-CertificateShPtr PKCS12Impl::getCertificate() const
-{
-    return m_cert;
+CertificateShPtr PKCS12Impl::getCertificate() const {
+	return m_cert;
 }
 
-CertificateShPtrVector PKCS12Impl::getCaCertificateShPtrVector() const
-{
-    return m_ca;
+CertificateShPtrVector PKCS12Impl::getCaCertificateShPtrVector() const {
+	return m_ca;
 }
 
-bool PKCS12Impl::empty() const
-{
-    return m_pkey.get() == NULL && m_cert.get() == NULL && m_ca.empty();
+bool PKCS12Impl::empty() const {
+	return m_pkey.get() == NULL && m_cert.get() == NULL && m_ca.empty();
 }
 
-PKCS12Impl::~PKCS12Impl()
-{
+PKCS12Impl::~PKCS12Impl() {
 }
 
-PKCS12ShPtr PKCS12::create(const RawBuffer &rawBuffer, const Password &password)
-{
-    try {
-        auto output = std::make_shared<PKCS12Impl>(rawBuffer, password);
-        if (output->empty())
-            output.reset();
-        return output;
-    } catch (const std::bad_alloc &e) {
-        LogDebug("Bad alloc was caught during PKCS12 creation");
-    } catch (...) {
-        LogError("Critical error: Unknown exception was caught during PCKS12Impl creation!");
-    }
-    return PKCS12ShPtr();
+PKCS12ShPtr PKCS12::create(const RawBuffer &rawBuffer, const Password &password) {
+	try {
+		auto output = std::make_shared<PKCS12Impl>(rawBuffer, password);
+
+		if (output->empty())
+			output.reset();
+
+		return output;
+	} catch (const std::bad_alloc &e) {
+		LogDebug("Bad alloc was caught during PKCS12 creation");
+	} catch (...) {
+		LogError("Critical error: Unknown exception was caught during PCKS12Impl creation!");
+	}
+
+	return PKCS12ShPtr();
 }
 
 } // namespace CKM

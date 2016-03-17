@@ -24,159 +24,196 @@
 namespace CKM {
 
 DataType::DataType() :
-    m_dataType(BINARY_DATA)
-{
+	m_dataType(BINARY_DATA) {
 }
 
 DataType::DataType(Type data)
-  : m_dataType(data)
-{
-    if (!isInRange(data))
-        ThrowMsg(Exception::OutOfRange,
-                 "Invalid conversion from DataType=" << static_cast<int>(data) << " to DBDataType");
+	: m_dataType(data) {
+	if (!isInRange(data))
+		ThrowMsg(Exception::OutOfRange,
+				 "Invalid conversion from DataType=" << static_cast<int>(data) << " to DBDataType");
 }
 
 DataType::DataType(KeyType key) {
-    switch (key) {
-    case KeyType::KEY_RSA_PUBLIC:    m_dataType = DataType::KEY_RSA_PUBLIC;    break;
-    case KeyType::KEY_RSA_PRIVATE:   m_dataType = DataType::KEY_RSA_PRIVATE;   break;
-    case KeyType::KEY_DSA_PUBLIC:    m_dataType = DataType::KEY_DSA_PUBLIC;    break;
-    case KeyType::KEY_DSA_PRIVATE:   m_dataType = DataType::KEY_DSA_PRIVATE;   break;
-    case KeyType::KEY_ECDSA_PUBLIC:  m_dataType = DataType::KEY_ECDSA_PUBLIC;  break;
-    case KeyType::KEY_ECDSA_PRIVATE: m_dataType = DataType::KEY_ECDSA_PRIVATE; break;
-    case KeyType::KEY_AES:           m_dataType = DataType::KEY_AES;           break;
-    default:
-        ThrowMsg(Exception::OutOfRange,
-                 "Invalid conversion from KeyType=" << static_cast<int>(key) << " to DBDataType");
-    }
+	switch (key) {
+	case KeyType::KEY_RSA_PUBLIC:
+		m_dataType = DataType::KEY_RSA_PUBLIC;
+		break;
+
+	case KeyType::KEY_RSA_PRIVATE:
+		m_dataType = DataType::KEY_RSA_PRIVATE;
+		break;
+
+	case KeyType::KEY_DSA_PUBLIC:
+		m_dataType = DataType::KEY_DSA_PUBLIC;
+		break;
+
+	case KeyType::KEY_DSA_PRIVATE:
+		m_dataType = DataType::KEY_DSA_PRIVATE;
+		break;
+
+	case KeyType::KEY_ECDSA_PUBLIC:
+		m_dataType = DataType::KEY_ECDSA_PUBLIC;
+		break;
+
+	case KeyType::KEY_ECDSA_PRIVATE:
+		m_dataType = DataType::KEY_ECDSA_PRIVATE;
+		break;
+
+	case KeyType::KEY_AES:
+		m_dataType = DataType::KEY_AES;
+		break;
+
+	default:
+		ThrowMsg(Exception::OutOfRange,
+				 "Invalid conversion from KeyType=" << static_cast<int>(key) << " to DBDataType");
+	}
 }
 
-DataType::DataType(AlgoType algorithmType)
-{
-    switch (algorithmType) {
-    case AlgoType::AES_CTR:
-    case AlgoType::AES_CBC:
-    case AlgoType::AES_GCM:
-    case AlgoType::AES_CFB:
-    case AlgoType::AES_GEN:         m_dataType = DataType::KEY_AES;             break;
-    case AlgoType::RSA_SV:
-    case AlgoType::RSA_OAEP:
-    case AlgoType::RSA_GEN:         m_dataType = DataType::KEY_RSA_PUBLIC;      break;
-    case AlgoType::DSA_SV:
-    case AlgoType::DSA_GEN:         m_dataType = DataType::KEY_DSA_PUBLIC;      break;
-    case AlgoType::ECDSA_SV:
-    case AlgoType::ECDSA_GEN:       m_dataType = DataType::KEY_ECDSA_PUBLIC;    break;
-    default:
-        ThrowMsg(Exception::OutOfRange,
-                 "Invalid conversion from AlgoType=" << static_cast<int>(algorithmType) <<
-                 " to DBDataType");
-    }
+DataType::DataType(AlgoType algorithmType) {
+	switch (algorithmType) {
+	case AlgoType::AES_CTR:
+	case AlgoType::AES_CBC:
+	case AlgoType::AES_GCM:
+	case AlgoType::AES_CFB:
+	case AlgoType::AES_GEN:
+		m_dataType = DataType::KEY_AES;
+		break;
+
+	case AlgoType::RSA_SV:
+	case AlgoType::RSA_OAEP:
+	case AlgoType::RSA_GEN:
+		m_dataType = DataType::KEY_RSA_PUBLIC;
+		break;
+
+	case AlgoType::DSA_SV:
+	case AlgoType::DSA_GEN:
+		m_dataType = DataType::KEY_DSA_PUBLIC;
+		break;
+
+	case AlgoType::ECDSA_SV:
+	case AlgoType::ECDSA_GEN:
+		m_dataType = DataType::KEY_ECDSA_PUBLIC;
+		break;
+
+	default:
+		ThrowMsg(Exception::OutOfRange,
+				 "Invalid conversion from AlgoType=" << static_cast<int>(algorithmType) <<
+				 " to DBDataType");
+	}
 }
 
 DataType::DataType(int data) :
-    m_dataType(static_cast<Type>(data))
-{
-    if (!isInRange(data))
-        ThrowMsg(Exception::OutOfRange, "Invalid conversion from int=" << data << " to DBDataType");
+	m_dataType(static_cast<Type>(data)) {
+	if (!isInRange(data))
+		ThrowMsg(Exception::OutOfRange, "Invalid conversion from int=" << data << " to DBDataType");
 }
 
-DataType::operator int () const
-{
-    return static_cast<int>(m_dataType);
+DataType::operator int () const {
+	return static_cast<int>(m_dataType);
 }
 
-DataType::operator KeyType () const
-{
-    switch (m_dataType) {
-    case DataType::KEY_RSA_PUBLIC: return KeyType::KEY_RSA_PUBLIC;
-    case DataType::KEY_RSA_PRIVATE: return KeyType::KEY_RSA_PRIVATE;
-    case DataType::KEY_DSA_PUBLIC: return KeyType::KEY_DSA_PUBLIC;
-    case DataType::KEY_DSA_PRIVATE: return KeyType::KEY_DSA_PRIVATE;
-    case DataType::KEY_ECDSA_PRIVATE: return KeyType::KEY_ECDSA_PRIVATE;
-    case DataType::KEY_ECDSA_PUBLIC: return KeyType::KEY_ECDSA_PUBLIC;
-    case DataType::KEY_AES: return KeyType::KEY_AES;
-    default:
-        ThrowMsg(Exception::OutOfRange,
-                 "Invalid conversion from DBDataType=" << static_cast<int>(m_dataType) <<
-                 " to KeyType");
-    }
+DataType::operator KeyType() const {
+	switch (m_dataType) {
+	case DataType::KEY_RSA_PUBLIC:
+		return KeyType::KEY_RSA_PUBLIC;
+
+	case DataType::KEY_RSA_PRIVATE:
+		return KeyType::KEY_RSA_PRIVATE;
+
+	case DataType::KEY_DSA_PUBLIC:
+		return KeyType::KEY_DSA_PUBLIC;
+
+	case DataType::KEY_DSA_PRIVATE:
+		return KeyType::KEY_DSA_PRIVATE;
+
+	case DataType::KEY_ECDSA_PRIVATE:
+		return KeyType::KEY_ECDSA_PRIVATE;
+
+	case DataType::KEY_ECDSA_PUBLIC:
+		return KeyType::KEY_ECDSA_PUBLIC;
+
+	case DataType::KEY_AES:
+		return KeyType::KEY_AES;
+
+	default:
+		ThrowMsg(Exception::OutOfRange,
+				 "Invalid conversion from DBDataType=" << static_cast<int>(m_dataType) <<
+				 " to KeyType");
+	}
 }
 
-bool DataType::operator==(const DataType &second) const
-{
-    return m_dataType == second.m_dataType;
+bool DataType::operator==(const DataType &second) const {
+	return m_dataType == second.m_dataType;
 }
 
-bool DataType::isKey() const
-{
-    if (DB_KEY_FIRST <= m_dataType && DB_KEY_LAST >= m_dataType)
-        return true;
-    return false;
+bool DataType::isKey() const {
+	if (DB_KEY_FIRST <= m_dataType && DB_KEY_LAST >= m_dataType)
+		return true;
+
+	return false;
 }
 
-bool DataType::isSKey() const
-{
-    return (KEY_AES == m_dataType);
+bool DataType::isSKey() const {
+	return (KEY_AES == m_dataType);
 }
 
-bool DataType::isChainCert() const
-{
-    if (DB_CHAIN_FIRST <= m_dataType && DB_CHAIN_LAST >= m_dataType)
-        return true;
-    return false;
+bool DataType::isChainCert() const {
+	if (DB_CHAIN_FIRST <= m_dataType && DB_CHAIN_LAST >= m_dataType)
+		return true;
+
+	return false;
 }
 
-bool DataType::isKeyPrivate() const
-{
-    switch (m_dataType) {
-    case KEY_RSA_PRIVATE:
-    case KEY_DSA_PRIVATE:
-    case KEY_ECDSA_PRIVATE:
-          return true;
-    default:
-          return false;
-    }
+bool DataType::isKeyPrivate() const {
+	switch (m_dataType) {
+	case KEY_RSA_PRIVATE:
+	case KEY_DSA_PRIVATE:
+	case KEY_ECDSA_PRIVATE:
+		return true;
+
+	default:
+		return false;
+	}
 }
 
-bool DataType::isKeyPublic() const
-{
-    switch (m_dataType) {
-    case KEY_RSA_PUBLIC:
-    case KEY_DSA_PUBLIC:
-    case KEY_ECDSA_PUBLIC:
-          return true;
-    default:
-          return false;
-    }
+bool DataType::isKeyPublic() const {
+	switch (m_dataType) {
+	case KEY_RSA_PUBLIC:
+	case KEY_DSA_PUBLIC:
+	case KEY_ECDSA_PUBLIC:
+		return true;
+
+	default:
+		return false;
+	}
 }
 
-bool DataType::isCertificate() const
-{
-    return m_dataType == CERTIFICATE;
+bool DataType::isCertificate() const {
+	return m_dataType == CERTIFICATE;
 }
 
-bool DataType::isBinaryData() const
-{
-    return m_dataType == BINARY_DATA;
+bool DataType::isBinaryData() const {
+	return m_dataType == BINARY_DATA;
 }
 
-bool DataType::isInRange(int data)
-{
-    if (data < static_cast<int>(DB_FIRST))
-        return false;
-    if (data > static_cast<int>(DB_LAST))
-        return false;
-    return true;
+bool DataType::isInRange(int data) {
+	if (data < static_cast<int>(DB_FIRST))
+		return false;
+
+	if (data > static_cast<int>(DB_LAST))
+		return false;
+
+	return true;
 }
 
-DataType DataType::getChainDatatype(unsigned int index)
-{
-    DataType result(static_cast<int>(index) + DB_CHAIN_FIRST);
+DataType DataType::getChainDatatype(unsigned int index) {
+	DataType result(static_cast<int>(index) + DB_CHAIN_FIRST);
 
-    if ( !result.isChainCert() )
-        ThrowMsg(Exception::OutOfRange, "Certificate number is out of range");
+	if (!result.isChainCert())
+		ThrowMsg(Exception::OutOfRange, "Certificate number is out of range");
 
-    return result;
+	return result;
 }
 
 } // namespace CKM

@@ -31,30 +31,30 @@
 namespace CKM {
 
 class Service {
-public:
-    Service(IDescriptorSet& descriptors, const std::string& interface);
+  public:
+	Service(IDescriptorSet &descriptors, const std::string &interface);
 
-    Service(Service&&) = default;
-    Service& operator=(Service&&) = default;
+	Service(Service &&) = default;
+	Service &operator=(Service &&) = default;
 
-    void addRequest(AsyncRequest&& req);
+	void addRequest(AsyncRequest &&req);
 
-    void serviceError(int error);
+	void serviceError(int error);
 
-private:
-    void socketReady(int sock, short revents);
+  private:
+	void socketReady(int sock, short revents);
 
-    void sendData();
-    void receiveData();
+	void sendData();
+	void receiveData();
 
-    void watch(short events);
+	void watch(short events);
 
-    std::string m_interface;
-    std::unique_ptr<SockRAII> m_socket;
-    IDescriptorSet& m_descriptors;
-    AsyncRequest::Queue m_sendQueue;
-    AsyncRequest::Map m_responseMap;
-    std::unique_ptr<MessageBuffer> m_responseBuffer;
+	std::string m_interface;
+	std::unique_ptr<SockRAII> m_socket;
+	IDescriptorSet &m_descriptors;
+	AsyncRequest::Queue m_sendQueue;
+	AsyncRequest::Map m_responseMap;
+	std::unique_ptr<MessageBuffer> m_responseBuffer;
 };
 
 } // namespace CKM

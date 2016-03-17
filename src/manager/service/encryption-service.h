@@ -30,50 +30,52 @@
 namespace CKM {
 
 class EncryptionService : public ThreadMessageService<MsgKeyResponse>, public IEncryptionService {
-public:
-    EncryptionService();
-    virtual ~EncryptionService();
-    NONCOPYABLE(EncryptionService);
+  public:
+	EncryptionService();
+	virtual ~EncryptionService();
+	NONCOPYABLE(EncryptionService);
 
-    // from ThreadService
-    ServiceDescriptionVector GetServiceDescription();
+	// from ThreadService
+	ServiceDescriptionVector GetServiceDescription();
 
-    // Custom add custom support for ReadEvent and SecurityEvent
-    // because we want to bypass security check in EncryptionService
-    virtual void Event(const ReadEvent &event)
-    {
-        CreateEvent([this, event]() { this->CustomHandle(event); });
-    }
+	// Custom add custom support for ReadEvent and SecurityEvent
+	// because we want to bypass security check in EncryptionService
+	virtual void Event(const ReadEvent &event) {
+		CreateEvent([this, event]() {
+			this->CustomHandle(event);
+		});
+	}
 
-    virtual void Event(const SecurityEvent &event)
-    {
-        CreateEvent([this, event]() { this->CustomHandle(event); });
-    }
+	virtual void Event(const SecurityEvent &event) {
+		CreateEvent([this, event]() {
+			this->CustomHandle(event);
+		});
+	}
 
-    void Start();
-    void Stop();
+	void Start();
+	void Stop();
 
-protected:
-    // CustomHandle is used to bypass security check
-    void CustomHandle(const ReadEvent &event);
-    void CustomHandle(const SecurityEvent &event);
+  protected:
+	// CustomHandle is used to bypass security check
+	void CustomHandle(const ReadEvent &event);
+	void CustomHandle(const SecurityEvent &event);
 
-private:
-    virtual void SetCommManager(CommMgr *manager);
+  private:
+	virtual void SetCommManager(CommMgr *manager);
 
-    bool ProcessOne(const ConnectionID &conn, ConnectionInfo &info, bool allowed);
-    void ProcessMessage(MsgKeyResponse msg);
-    void ProcessEncryption(const ConnectionID &conn,
-                           const Credentials &cred,
-                           MessageBuffer &buffer);
+	bool ProcessOne(const ConnectionID &conn, ConnectionInfo &info, bool allowed);
+	void ProcessMessage(MsgKeyResponse msg);
+	void ProcessEncryption(const ConnectionID &conn,
+						   const Credentials &cred,
+						   MessageBuffer &buffer);
 
-    // from IEncryptionService
-    virtual void RespondToClient(const CryptoRequest& request,
-                                 int retCode,
-                                 const RawBuffer& data = RawBuffer());
-    virtual void RequestKey(const CryptoRequest& request);
+	// from IEncryptionService
+	virtual void RespondToClient(const CryptoRequest &request,
+								 int retCode,
+								 const RawBuffer &data = RawBuffer());
+	virtual void RequestKey(const CryptoRequest &request);
 
-    EncryptionLogic m_logic;
+	EncryptionLogic m_logic;
 };
 
 } /* namespace CKM */

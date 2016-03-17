@@ -37,73 +37,73 @@
 #include <protocols.h>
 
 extern "C" {
-    struct msghdr;
+	struct msghdr;
 }
 
 namespace CKM {
 
 class AliasSupport {
-    public:
-        AliasSupport(const Alias &alias);
+  public:
+	AliasSupport(const Alias &alias);
 
-        const Label & getLabel() const;
-        const Name & getName() const;
-        bool isLabelEmpty() const;
+	const Label &getLabel() const;
+	const Name &getName() const;
+	bool isLabelEmpty() const;
 
-        static Alias merge(const Label &label, const Name &alias);
+	static Alias merge(const Label &label, const Name &alias);
 
-    private:
-        Name m_name;
-        Label m_label;
+  private:
+	Name m_name;
+	Label m_label;
 };
 
 class SockRAII {
-    public:
-        SockRAII();
+  public:
+	SockRAII();
 
-        NONCOPYABLE(SockRAII);
+	NONCOPYABLE(SockRAII);
 
-        virtual ~SockRAII();
+	virtual ~SockRAII();
 
-        int connect(const char * interface);
-        void disconnect();
-        bool isConnected() const;
-        int get() const;
-        int waitForSocket(int event, int timeout);
+	int connect(const char *interface);
+	void disconnect();
+	bool isConnected() const;
+	int get() const;
+	int waitForSocket(int event, int timeout);
 
-    protected:
-        int connectWrapper(int socket, const char *interface);
-        int m_sock;
+  protected:
+	int connectWrapper(int socket, const char *interface);
+	int m_sock;
 };
 
 class ServiceConnection {
-    public:
-        ServiceConnection(const char * service_interface);
+  public:
+	ServiceConnection(const char *service_interface);
 
-        // roundtrip: send and receive
-        int processRequest(const CKM::RawBuffer &send_buf,
-                           CKM::MessageBuffer &recv_buf);
+	// roundtrip: send and receive
+	int processRequest(const CKM::RawBuffer &send_buf,
+					   CKM::MessageBuffer &recv_buf);
 
-        // blocking
-        int send(const CKM::RawBuffer &send_buf);
-        int receive(CKM::MessageBuffer &recv_buf);
+	// blocking
+	int send(const CKM::RawBuffer &send_buf);
+	int receive(CKM::MessageBuffer &recv_buf);
 
-        virtual ~ServiceConnection();
+	virtual ~ServiceConnection();
 
-    protected:
-        int prepareConnection();
+  protected:
+	int prepareConnection();
 
-        SockRAII m_socket;
-        std::string m_serviceInterface;
+	SockRAII m_socket;
+	std::string m_serviceInterface;
 };
 
 /*
  * Decorator function that performs frequently repeated exception handling in
  * SS client API functions. Accepts lambda expression as an argument.
  */
-int try_catch(const std::function<int()>& func);
+int try_catch(const std::function<int()> &func);
 
-void try_catch_async(const std::function<void()>& func, const std::function<void(int)>& error);
+void try_catch_async(const std::function<void()> &func, const std::function<void(int)> &error);
 
 } // namespace CKM
 

@@ -29,10 +29,9 @@ namespace Log {
 
 void AbstractLogProvider::SetTag(const char *tag CKM_UNUSED) {}
 
-const char *AbstractLogProvider::LocateSourceFileName(const char *filename)
-{
-    const char *ptr = strrchr(filename, '/');
-    return ptr != NULL ? ptr + 1 : filename;
+const char *AbstractLogProvider::LocateSourceFileName(const char *filename) {
+	const char *ptr = strrchr(filename, '/');
+	return ptr != NULL ? ptr + 1 : filename;
 }
 }
 }

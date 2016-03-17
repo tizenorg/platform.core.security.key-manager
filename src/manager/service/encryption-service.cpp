@@ -34,116 +34,106 @@ const CKM::InterfaceID SOCKET_ID_ENCRYPTION = 0;
 namespace CKM {
 
 EncryptionService::EncryptionService() :
-    m_logic(*this)
-{
+	m_logic(*this) {
 }
 
-EncryptionService::~EncryptionService()
-{
+EncryptionService::~EncryptionService() {
 }
 
-void EncryptionService::RespondToClient(const CryptoRequest& request,
-                                        int retCode,
-                                        const RawBuffer& data)
-{
-    try {
-        RawBuffer response = MessageBuffer::Serialize(
-                static_cast<int>(request.command), request.msgId, retCode, data).Pop();
-        m_serviceManager->Write(request.conn, response);
-    } catch (...) {
-        LogError("Failed to send response to the client");
-    }
+void EncryptionService::RespondToClient(const CryptoRequest &request,
+										int retCode,
+										const RawBuffer &data) {
+	try {
+		RawBuffer response = MessageBuffer::Serialize(
+								 static_cast<int>(request.command), request.msgId, retCode, data).Pop();
+		m_serviceManager->Write(request.conn, response);
+	} catch (...) {
+		LogError("Failed to send response to the client");
+	}
 }
 
-void EncryptionService::RequestKey(const CryptoRequest& request)
-{
-    MsgKeyRequest kReq(request.msgId, request.cred, request.name, request.label, request.password);
-    if (!m_commMgr->SendMessage(kReq))
-        throw std::runtime_error("No listener found");// TODO
+void EncryptionService::RequestKey(const CryptoRequest &request) {
+	MsgKeyRequest kReq(request.msgId, request.cred, request.name, request.label, request.password);
+
+	if (!m_commMgr->SendMessage(kReq))
+		throw std::runtime_error("No listener found");// TODO
 }
 
-GenericSocketService::ServiceDescriptionVector EncryptionService::GetServiceDescription()
-{
-    return ServiceDescriptionVector {
-        {SERVICE_SOCKET_ENCRYPTION, "http://tizen.org/privilege/keymanager", SOCKET_ID_ENCRYPTION}
-    };
+GenericSocketService::ServiceDescriptionVector EncryptionService::GetServiceDescription() {
+	return ServiceDescriptionVector {
+		{SERVICE_SOCKET_ENCRYPTION, "http://tizen.org/privilege/keymanager", SOCKET_ID_ENCRYPTION}
+	};
 }
 
-void EncryptionService::Start()
-{
-    Create();
+void EncryptionService::Start() {
+	Create();
 }
 
-void EncryptionService::Stop()
-{
-    Join();
+void EncryptionService::Stop() {
+	Join();
 }
 
-void EncryptionService::SetCommManager(CommMgr *manager)
-{
-    ThreadService::SetCommManager(manager);
-    Register(*manager);
+void EncryptionService::SetCommManager(CommMgr *manager) {
+	ThreadService::SetCommManager(manager);
+	Register(*manager);
 }
 
 // Encryption Service does not support any kind of security-check
 // and 3rd parameter is not required
 bool EncryptionService::ProcessOne(
-    const ConnectionID &conn,
-    ConnectionInfo &info,
-    bool /*allowed*/)
-{
-    LogDebug("process One");
-    try {
-        if (!info.buffer.Ready())
-            return false;
+	const ConnectionID &conn,
+	ConnectionInfo &info,
+	bool /*allowed*/) {
+	LogDebug("process One");
 
-        ProcessEncryption(conn, info.credentials, info.buffer);
-        return true;
-    } catch (MessageBuffer::Exception::Base) {
-        LogError("Broken protocol. Closing socket.");
-    } catch (const std::exception &e) {
-        LogError("Std exception:: " << e.what());
-    } catch (...) {
-        LogError("Unknown exception. Closing socket.");
-    }
+	try {
+		if (!info.buffer.Ready())
+			return false;
 
-    m_serviceManager->Close(conn);
-    return false;
+		ProcessEncryption(conn, info.credentials, info.buffer);
+		return true;
+	} catch (MessageBuffer::Exception::Base) {
+		LogError("Broken protocol. Closing socket.");
+	} catch (const std::exception &e) {
+		LogError("Std exception:: " << e.what());
+	} catch (...) {
+		LogError("Unknown exception. Closing socket.");
+	}
+
+	m_serviceManager->Close(conn);
+	return false;
 }
 
-void EncryptionService::ProcessMessage(MsgKeyResponse msg)
-{
-    m_logic.KeyRetrieved(std::move(msg));
+void EncryptionService::ProcessMessage(MsgKeyResponse msg) {
+	m_logic.KeyRetrieved(std::move(msg));
 }
 
 void EncryptionService::ProcessEncryption(const ConnectionID &conn,
-                                          const Credentials &cred,
-                                          MessageBuffer &buffer)
-{
-    int tmpCmd = 0;
-    CryptoRequest req;
+		const Credentials &cred,
+		MessageBuffer &buffer) {
+	int tmpCmd = 0;
+	CryptoRequest req;
+	buffer.Deserialize(tmpCmd, req.msgId, req.cas, req.name, req.label, req.password, req.input);
+	req.command = static_cast<EncryptionCommand>(tmpCmd);
 
-    buffer.Deserialize(tmpCmd, req.msgId, req.cas, req.name, req.label, req.password, req.input);
-    req.command = static_cast<EncryptionCommand>(tmpCmd);
-    if (req.command != EncryptionCommand::ENCRYPT && req.command != EncryptionCommand::DECRYPT)
-        throw std::runtime_error("Unsupported command: " + tmpCmd);
+	if (req.command != EncryptionCommand::ENCRYPT && req.command != EncryptionCommand::DECRYPT)
+		throw std::runtime_error("Unsupported command: " + tmpCmd);
 
-    req.conn = conn;
-    req.cred = cred;
-    m_logic.Crypt(req);
+	req.conn = conn;
+	req.cred = cred;
+	m_logic.Crypt(req);
 }
 
-void EncryptionService::CustomHandle(const ReadEvent &event)
-{
-    LogDebug("Read event");
-    auto &info = m_connectionInfoMap[event.connectionID.counter];
-    info.buffer.Push(event.rawBuffer);
-    while (ProcessOne(event.connectionID, info, true));
+void EncryptionService::CustomHandle(const ReadEvent &event) {
+	LogDebug("Read event");
+	auto &info = m_connectionInfoMap[event.connectionID.counter];
+	info.buffer.Push(event.rawBuffer);
+
+	while (ProcessOne(event.connectionID, info, true));
 }
 
-void EncryptionService::CustomHandle(const SecurityEvent &/*event*/)
-{
-    LogError("This should not happend! SecurityEvent was called on EncryptionService!");
+void EncryptionService::CustomHandle(const SecurityEvent &/*event*/) {
+	LogError("This should not happend! SecurityEvent was called on EncryptionService!");
 }
 
 } /* namespace CKM */

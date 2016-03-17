@@ -24,31 +24,29 @@
 
 namespace CKM {
 
-OcspReceiver::OcspReceiver(MessageBuffer& buffer, AsyncRequest::Map& requests) :
-    m_buffer(buffer),
-    m_requests(requests)
-{
+OcspReceiver::OcspReceiver(MessageBuffer &buffer, AsyncRequest::Map &requests) :
+	m_buffer(buffer),
+	m_requests(requests) {
 }
 
-void OcspReceiver::processResponse()
-{
-    int id = 0, retCode = 0, ocspStatus = 0;
-    m_buffer.Deserialize(id, retCode, ocspStatus);
+void OcspReceiver::processResponse() {
+	int id = 0, retCode = 0, ocspStatus = 0;
+	m_buffer.Deserialize(id, retCode, ocspStatus);
+	auto it = m_requests.find(id);
 
-    auto it = m_requests.find(id);
-    if (it == m_requests.end()) {
-        LogError("Request with id " << id << " not found!");
-        ThrowMsg(BadResponse, "Request with id " << id << " not found!");
-    }
+	if (it == m_requests.end()) {
+		LogError("Request with id " << id << " not found!");
+		ThrowMsg(BadResponse, "Request with id " << id << " not found!");
+	}
 
-    // let it throw
-    AsyncRequest req = std::move(m_requests.at(id));
-    m_requests.erase(id);
+	// let it throw
+	AsyncRequest req = std::move(m_requests.at(id));
+	m_requests.erase(id);
 
-    if (retCode == CKM_API_SUCCESS)
-        req.observer->ReceivedOCSPCheck(ocspStatus);
-    else
-        req.observer->ReceivedError(retCode);
+	if (retCode == CKM_API_SUCCESS)
+		req.observer->ReceivedOCSPCheck(ocspStatus);
+	else
+		req.observer->ReceivedError(retCode);
 }
 
 } /* namespace CKM */

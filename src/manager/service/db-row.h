@@ -30,30 +30,29 @@ namespace CKM {
 namespace DB {
 
 struct Row : public Token {
-    Row() = default;
+	Row() = default;
 
-    Row(Token token,
-        const Name &pName,
-        const Label &pLabel,
-        int pExportable) :
-        Token(std::move(token))
-      , name(pName)
-      , ownerLabel(pLabel)
-      , exportable(pExportable)
-      , algorithmType(DBCMAlgType::NONE)
-      , encryptionScheme(0)
-      , dataSize(data.size())
-    {
-    }
+	Row(Token token,
+		const Name &pName,
+		const Label &pLabel,
+		int pExportable) :
+		Token(std::move(token))
+		, name(pName)
+		, ownerLabel(pLabel)
+		, exportable(pExportable)
+		, algorithmType(DBCMAlgType::NONE)
+		, encryptionScheme(0)
+		, dataSize(data.size()) {
+	}
 
-    Name name;
-    Label ownerLabel;
-    int exportable;
-    DBCMAlgType algorithmType;  // Algorithm type used for row data encryption
-    int encryptionScheme;       // for example: (ENCR_BASE64 | ENCR_PASSWORD)
-    RawBuffer iv;               // encoded in base64
-    int dataSize;               // size of information without hash and padding
-    RawBuffer tag;              // tag for Aes Gcm algorithm
+	Name name;
+	Label ownerLabel;
+	int exportable;
+	DBCMAlgType algorithmType;  // Algorithm type used for row data encryption
+	int encryptionScheme;       // for example: (ENCR_BASE64 | ENCR_PASSWORD)
+	RawBuffer iv;               // encoded in base64
+	int dataSize;               // size of information without hash and padding
+	RawBuffer tag;              // tag for Aes Gcm algorithm
 };
 
 typedef std::vector<Row> RowVector;

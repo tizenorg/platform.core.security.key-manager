@@ -30,12 +30,12 @@ namespace CKM {
 namespace InitialValues {
 
 class DataHandler : public InitialValueHandler {
-public:
-    explicit DataHandler(CKMLogic & db_logic, const CKM::RawBuffer &encryptedKey) :
-        InitialValueHandler(db_logic, encryptedKey) {}
-    virtual ~DataHandler();
+  public:
+	explicit DataHandler(CKMLogic &db_logic, const CKM::RawBuffer &encryptedKey) :
+		InitialValueHandler(db_logic, encryptedKey) {}
+	virtual ~DataHandler();
 
-    virtual DataType getDataType() const;
+	virtual DataType getDataType() const;
 };
 
 }

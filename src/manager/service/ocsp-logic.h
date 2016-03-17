@@ -26,19 +26,19 @@
 namespace CKM {
 
 class OCSPLogic {
-public:
-    OCSPLogic();
-    OCSPLogic(const OCSPLogic &) = delete;
-    OCSPLogic(OCSPLogic &&) = delete;
-    OCSPLogic& operator=(const OCSPLogic &) = delete;
-    OCSPLogic& operator=(OCSPLogic &&) = delete;
+  public:
+	OCSPLogic();
+	OCSPLogic(const OCSPLogic &) = delete;
+	OCSPLogic(OCSPLogic &&) = delete;
+	OCSPLogic &operator=(const OCSPLogic &) = delete;
+	OCSPLogic &operator=(OCSPLogic &&) = delete;
 
-    RawBuffer ocspCheck(int commandId, const RawBufferVector &rawChain, bool allowed);
-    virtual ~OCSPLogic() {}
+	RawBuffer ocspCheck(int commandId, const RawBufferVector &rawChain, bool allowed);
+	virtual ~OCSPLogic() {}
 
-private:
-    void setNetAvailable();
-    bool m_isNetAvailable;
+  private:
+	void setNetAvailable();
+	bool m_isNetAvailable;
 };
 } // namespace CKM
 

@@ -28,14 +28,14 @@ namespace CKM {
 namespace Log {
 class OldStyleLogProvider : public AbstractLogProvider {
   public:
-    OldStyleLogProvider();
-    virtual ~OldStyleLogProvider() {}
+	OldStyleLogProvider();
+	virtual ~OldStyleLogProvider() {}
 
-    virtual void Log(AbstractLogProvider::LogLevel level,
-                     const char *message,
-                     const char *fileName,
-                     int line,
-                     const char *function) const;
+	virtual void Log(AbstractLogProvider::LogLevel level,
+					 const char *message,
+					 const char *fileName,
+					 int line,
+					 const char *function) const;
 };
 }
 } // namespace CKM

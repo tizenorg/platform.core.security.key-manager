@@ -29,20 +29,20 @@ namespace CKM {
 namespace Log {
 class DLOGLogProvider : public AbstractLogProvider {
   public:
-    DLOGLogProvider();
-    virtual ~DLOGLogProvider();
+	DLOGLogProvider();
+	virtual ~DLOGLogProvider();
 
-    virtual void Log(AbstractLogProvider::LogLevel level,
-                     const char *message,
-                     const char *fileName,
-                     int line,
-                     const char *function) const;
+	virtual void Log(AbstractLogProvider::LogLevel level,
+					 const char *message,
+					 const char *fileName,
+					 int line,
+					 const char *function) const;
 
-    // Set global Tag according to DLOG
-    void SetTag(const char *tag);
+	// Set global Tag according to DLOG
+	void SetTag(const char *tag);
 
   private:
-    std::unique_ptr<char[]> m_tag;
+	std::unique_ptr<char[]> m_tag;
 };
 
 } // namespace Log

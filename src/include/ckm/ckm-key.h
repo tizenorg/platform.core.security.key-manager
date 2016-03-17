@@ -29,19 +29,19 @@ class Key;
 typedef std::shared_ptr<Key> KeyShPtr;
 
 class KEY_MANAGER_API Key {
-public:
-    virtual bool empty() const = 0;
-    virtual KeyType getType() const = 0;
-    virtual int getSize() const = 0;
-    virtual RawBuffer getDER() const = 0;
-    virtual ~Key() {}
+  public:
+	virtual bool empty() const = 0;
+	virtual KeyType getType() const = 0;
+	virtual int getSize() const = 0;
+	virtual RawBuffer getDER() const = 0;
+	virtual ~Key() {}
 
-    static KeyShPtr create(
-        const RawBuffer &rawBuffer,
-        const Password &password = Password());
+	static KeyShPtr create(
+		const RawBuffer &rawBuffer,
+		const Password &password = Password());
 
-    static KeyShPtr createAES(
-        const RawBuffer &rawBuffer);
+	static KeyShPtr createAES(
+		const RawBuffer &rawBuffer);
 };
 
 } // namespace CKM

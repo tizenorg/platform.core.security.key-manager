@@ -25,48 +25,50 @@
 
 namespace CKM {
 
-EncryptionReceiver::EncryptionReceiver(MessageBuffer& buffer, AsyncRequest::Map& requests) :
-    m_buffer(buffer),
-    m_requests(requests)
-{
+EncryptionReceiver::EncryptionReceiver(MessageBuffer &buffer, AsyncRequest::Map &requests) :
+	m_buffer(buffer),
+	m_requests(requests) {
 }
 
-void EncryptionReceiver::processResponse()
-{
-    int command = 0;
-    int id = 0;
-    int retCode;
-    RawBuffer output;
-    m_buffer.Deserialize(command, id, retCode, output);
+void EncryptionReceiver::processResponse() {
+	int command = 0;
+	int id = 0;
+	int retCode;
+	RawBuffer output;
+	m_buffer.Deserialize(command, id, retCode, output);
+	auto it = m_requests.find(id);
 
-    auto it = m_requests.find(id);
-    if (it == m_requests.end()) {
-        LogError("Request with id " << id << " not found!");
-        ThrowMsg(BadResponse, "Request with id " << id << " not found!");
-    }
+	if (it == m_requests.end()) {
+		LogError("Request with id " << id << " not found!");
+		ThrowMsg(BadResponse, "Request with id " << id << " not found!");
+	}
 
-    // let it throw
-    AsyncRequest req = std::move(m_requests.at(id));
-    m_requests.erase(id);
+	// let it throw
+	AsyncRequest req = std::move(m_requests.at(id));
+	m_requests.erase(id);
 
-    switch (static_cast<EncryptionCommand>(command)) {
-    case EncryptionCommand::ENCRYPT:
-        if (retCode == CKM_API_SUCCESS)
-            req.observer->ReceivedEncrypted(std::move(output));
-        else
-            req.observer->ReceivedError(retCode);
-        break;
-    case EncryptionCommand::DECRYPT:
-        if (retCode == CKM_API_SUCCESS)
-            req.observer->ReceivedDecrypted(std::move(output));
-        else
-            req.observer->ReceivedError(retCode);
-        break;
-    default:
-        LogError("Unknown command id: " << command);
-        ThrowMsg(BadResponse, "Unknown command id: " << command);
-        break;
-    }
+	switch (static_cast<EncryptionCommand>(command)) {
+	case EncryptionCommand::ENCRYPT:
+		if (retCode == CKM_API_SUCCESS)
+			req.observer->ReceivedEncrypted(std::move(output));
+		else
+			req.observer->ReceivedError(retCode);
+
+		break;
+
+	case EncryptionCommand::DECRYPT:
+		if (retCode == CKM_API_SUCCESS)
+			req.observer->ReceivedDecrypted(std::move(output));
+		else
+			req.observer->ReceivedError(retCode);
+
+		break;
+
+	default:
+		LogError("Unknown command id: " << command);
+		ThrowMsg(BadResponse, "Unknown command id: " << command);
+		break;
+	}
 }
 
 } /* namespace CKM */

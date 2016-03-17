@@ -38,57 +38,56 @@ namespace InitialValues {
 
 
 class SWKeyFile {
-public:
-    explicit SWKeyFile(const std::string &XML_filename);
+  public:
+	explicit SWKeyFile(const std::string &XML_filename);
 
-    int Validate(const std::string &XSD_file);
-    int Parse();
+	int Validate(const std::string &XSD_file);
+	int Parse();
 
-    Crypto::GObjShPtr getPrivKey()
-    {
-        return m_deviceKey;
-    }
+	Crypto::GObjShPtr getPrivKey() {
+		return m_deviceKey;
+	}
 
-private:
-    class HeaderHandler : public XML::Parser::ElementHandler {
-    public:
-        explicit HeaderHandler(SWKeyFile & parent);
-        virtual void Start(const XML::Parser::Attributes & attr);
-        virtual void Characters(const std::string &) {}
-        virtual void End() {}
+  private:
+	class HeaderHandler : public XML::Parser::ElementHandler {
+	  public:
+		explicit HeaderHandler(SWKeyFile &parent);
+		virtual void Start(const XML::Parser::Attributes &attr);
+		virtual void Characters(const std::string &) {}
+		virtual void End() {}
 
-        bool isCorrectVersion() const;
+		bool isCorrectVersion() const;
 
-    private:
-        int m_version;
-        SWKeyFile & m_parent;
-    };
+	  private:
+		int m_version;
+		SWKeyFile &m_parent;
+	};
 
-    class RSAKeyHandler : public XML::Parser::ElementHandler {
-    public:
-        explicit RSAKeyHandler(SWKeyFile & parent);
-        virtual void Start(const XML::Parser::Attributes &) {}
-        virtual void Characters(const std::string &data);
-        virtual void End();
+	class RSAKeyHandler : public XML::Parser::ElementHandler {
+	  public:
+		explicit RSAKeyHandler(SWKeyFile &parent);
+		virtual void Start(const XML::Parser::Attributes &) {}
+		virtual void Characters(const std::string &data);
+		virtual void End();
 
-        Crypto::GObjShPtr getPrivKey();
+		Crypto::GObjShPtr getPrivKey();
 
-    private:
-        CKM::RawBuffer m_encryptedKey;
-        SWKeyFile & m_parent;
-    };
+	  private:
+		CKM::RawBuffer m_encryptedKey;
+		SWKeyFile &m_parent;
+	};
 
-    std::string m_filename;
-    XML::Parser m_parser;
-    typedef std::shared_ptr<HeaderHandler> HeaderHandlerPtr;
-    typedef std::shared_ptr<RSAKeyHandler> RSAKeyHandlerPtr;
-    HeaderHandlerPtr m_header;
-    RSAKeyHandlerPtr m_RSAKeyHandler;
-    Crypto::GObjShPtr m_deviceKey;
+	std::string m_filename;
+	XML::Parser m_parser;
+	typedef std::shared_ptr<HeaderHandler> HeaderHandlerPtr;
+	typedef std::shared_ptr<RSAKeyHandler> RSAKeyHandlerPtr;
+	HeaderHandlerPtr m_header;
+	RSAKeyHandlerPtr m_RSAKeyHandler;
+	Crypto::GObjShPtr m_deviceKey;
 
-    void registerElementListeners();
-    static void Error(const XML::Parser::ErrorType errorType,
-                      const std::string & logMsg);
+	void registerElementListeners();
+	static void Error(const XML::Parser::ErrorType errorType,
+					  const std::string &logMsg);
 };
 
 }

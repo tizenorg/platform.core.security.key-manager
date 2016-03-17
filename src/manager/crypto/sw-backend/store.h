@@ -28,18 +28,18 @@ namespace Crypto {
 namespace SW {
 
 class Store : public GStore {
-public:
-    explicit Store(CryptoBackend backendId);
+  public:
+	explicit Store(CryptoBackend backendId);
 
-    virtual GObjUPtr getObject(const Token &, const Password &);
-    virtual TokenPair generateAKey(const CryptoAlgorithm &, const Password &, const Password &);
-    virtual Token generateSKey(const CryptoAlgorithm &, const Password &);
-    virtual Token import(const Data &data, const Password &);
-    virtual Token importEncrypted(const Data &, const Password &, const DataEncryption &);
-    virtual void destroy(const Token &) {}
+	virtual GObjUPtr getObject(const Token &, const Password &);
+	virtual TokenPair generateAKey(const CryptoAlgorithm &, const Password &, const Password &);
+	virtual Token generateSKey(const CryptoAlgorithm &, const Password &);
+	virtual Token import(const Data &data, const Password &);
+	virtual Token importEncrypted(const Data &, const Password &, const DataEncryption &);
+	virtual void destroy(const Token &) {}
 
-private:
-    Crypto::GObjShPtr m_deviceKey;
+  private:
+	Crypto::GObjShPtr m_deviceKey;
 };
 
 } // namespace SW

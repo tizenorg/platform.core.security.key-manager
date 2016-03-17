@@ -40,42 +40,41 @@ namespace {
 
 // TODO replace it with custom exception when they are implemented
 template <typename... Args>
-std::runtime_error io_exception(const Args&... args)
-{
-    return std::runtime_error(Stringify::Merge(args...));
+std::runtime_error io_exception(const Args &... args) {
+	return std::runtime_error(Stringify::Merge(args...));
 };
 
 } // namespace anonymous
 
-FileLock::FileLock(const char* const file)
-{
-    // Open lock file
-    m_lockFd = TEMP_FAILURE_RETRY(creat(file, 0644));
-    if (m_lockFd == -1)
-        throw io_exception("Cannot open lock file. Errno: ", GetErrnoString());
+FileLock::FileLock(const char *const file) {
+	// Open lock file
+	m_lockFd = TEMP_FAILURE_RETRY(creat(file, 0644));
 
-    if (-1 == lockf(m_lockFd, F_TLOCK, 0)) {
-        if (errno == EACCES || errno == EAGAIN)
-            throw io_exception("Can't acquire lock. Another instance must be running.");
-        else
-            throw io_exception("Can't acquire lock. Errno: ", GetErrnoString());
-    }
+	if (m_lockFd == -1)
+		throw io_exception("Cannot open lock file. Errno: ", GetErrnoString());
 
-    std::string pid = std::to_string(getpid());
+	if (-1 == lockf(m_lockFd, F_TLOCK, 0)) {
+		if (errno == EACCES || errno == EAGAIN)
+			throw io_exception("Can't acquire lock. Another instance must be running.");
+		else
+			throw io_exception("Can't acquire lock. Errno: ", GetErrnoString());
+	}
 
-    ssize_t written = TEMP_FAILURE_RETRY(write(m_lockFd, pid.c_str(), pid.size()));
-    if (-1 == written || static_cast<ssize_t>(pid.size()) > written)
-        throw io_exception("Can't write file lock. Errno: ", GetErrnoString());
+	std::string pid = std::to_string(getpid());
+	ssize_t written = TEMP_FAILURE_RETRY(write(m_lockFd, pid.c_str(), pid.size()));
 
-    int ret = fsync(m_lockFd);
-    if (-1 == ret)
-        throw io_exception("Fsync failed. Errno: ", GetErrnoString());
+	if (-1 == written || static_cast<ssize_t>(pid.size()) > written)
+		throw io_exception("Can't write file lock. Errno: ", GetErrnoString());
+
+	int ret = fsync(m_lockFd);
+
+	if (-1 == ret)
+		throw io_exception("Fsync failed. Errno: ", GetErrnoString());
 }
 
-FileLock::~FileLock()
-{
-    // this will also release the lock
-    close(m_lockFd);
+FileLock::~FileLock() {
+	// this will also release the lock
+	close(m_lockFd);
 }
 
 } /* namespace CKM */

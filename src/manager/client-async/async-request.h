@@ -31,19 +31,19 @@
 namespace CKM {
 
 struct AsyncRequest {
-    typedef std::map<int, AsyncRequest> Map;
-    typedef std::queue<AsyncRequest, std::list<AsyncRequest> > Queue;
+	typedef std::map<int, AsyncRequest> Map;
+	typedef std::queue<AsyncRequest, std::list<AsyncRequest>> Queue;
 
-    AsyncRequest(const ManagerAsync::ObserverPtr& observer,
-                 std::string&& interface,
-                 RawBuffer&& buffer,
-                 int id);
+	AsyncRequest(const ManagerAsync::ObserverPtr &observer,
+				 std::string && interface,
+				 RawBuffer && buffer,
+				 int id);
 
-    ManagerAsync::ObserverPtr observer;
-    std::string interface;
-    RawBuffer buffer;
-    size_t written;
-    int id;
+	ManagerAsync::ObserverPtr observer;
+	std::string interface;
+	RawBuffer buffer;
+	size_t written;
+	int id;
 };
 
 } /* namespace CKM */
