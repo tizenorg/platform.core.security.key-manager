@@ -27,11 +27,11 @@
 
 namespace CKM {
 struct CKMLogicExt : public CKMLogic {
-    CKMLogicExt() : m_systemDbUnlocked(false) {}
+	CKMLogicExt() : m_systemDbUnlocked(false) {}
 
-    DB::SqlConnection::Output Execute(uid_t user, const std::string& cmd);
+	DB::SqlConnection::Output Execute(uid_t user, const std::string &cmd);
 
-private:
-    bool m_systemDbUnlocked;
+  private:
+	bool m_systemDbUnlocked;
 };
 } // namespace CKM

@@ -30,39 +30,40 @@
 namespace CKM {
 
 class GLIBLogic {
-public:
-    GLIBLogic();
+  public:
+	GLIBLogic();
 
-    NONCOPYABLE(GLIBLogic);
+	NONCOPYABLE(GLIBLogic);
 
-    void LoopStart();
-    void LoopStop();
-    void SetCommManager(CommMgr *manager);
-    virtual ~GLIBLogic();
-protected:
-    static int packageEventCallbackStatic(
-        uid_t uid,
-        int reqid,
-        const char *pkgtype,
-        const char *pkgid,
-        const char *key,
-        const char *val,
-        const void *pmsg,
-        void *data);
+	void LoopStart();
+	void LoopStop();
+	void SetCommManager(CommMgr *manager);
+	virtual ~GLIBLogic();
 
-    int packageEventCallback(
-        uid_t uid,
-        int reqid,
-        const char *pkgtype,
-        const char *pkgid,
-        const char *key,
-        const char *val,
-        const void *pmsg,
-        void *data);
+  protected:
+	static int packageEventCallbackStatic(
+		uid_t uid,
+		int reqid,
+		const char *pkgtype,
+		const char *pkgid,
+		const char *key,
+		const char *val,
+		const void *pmsg,
+		void *data);
 
-    CommMgr *m_commMgr;
-    GMainLoop *m_gMainLoop;
-    int m_reqid;
+	int packageEventCallback(
+		uid_t uid,
+		int reqid,
+		const char *pkgtype,
+		const char *pkgid,
+		const char *key,
+		const char *val,
+		const void *pmsg,
+		void *data);
+
+	CommMgr *m_commMgr;
+	GMainLoop *m_gMainLoop;
+	int m_reqid;
 };
 
 } // namespace CKM

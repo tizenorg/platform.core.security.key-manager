@@ -27,11 +27,11 @@
 namespace CKM {
 
 struct Credentials {
-    Credentials() : clientUid(0) {}
-    Credentials(uid_t socketUid, const Label & socketLabel)
-        : clientUid(socketUid), smackLabel(socketLabel) {}
-    uid_t clientUid;
-    Label smackLabel;
+	Credentials() : clientUid(0) {}
+	Credentials(uid_t socketUid, const Label &socketLabel)
+		: clientUid(socketUid), smackLabel(socketLabel) {}
+	uid_t clientUid;
+	Label smackLabel;
 };
 
 } // namespace CKM

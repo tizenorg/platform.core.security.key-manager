@@ -32,50 +32,50 @@
 namespace CKM {
 
 class Cynara {
-public:
-    typedef std::function<void(bool)> StatusCallback;
-    explicit Cynara(GenericSocketManager *socketManager);
+  public:
+	typedef std::function<void(bool)> StatusCallback;
+	explicit Cynara(GenericSocketManager *socketManager);
 
-    NONCOPYABLE(Cynara)
+	NONCOPYABLE(Cynara)
 
-    void Request(
-        const std::string &user,
-        const std::string &client,
-        const std::string &session,
-        const std::string &privilege,
-        StatusCallback callback);
+	void Request(
+		const std::string &user,
+		const std::string &client,
+		const std::string &session,
+		const std::string &privilege,
+		StatusCallback callback);
 
-    void ProcessSocket();
+	void ProcessSocket();
 
-    virtual ~Cynara();
+	virtual ~Cynara();
 
-    static bool GetUserFromSocket(int socket, std::string &user);
-    static bool GetClientFromSocket(int socket, std::string &client);
+	static bool GetUserFromSocket(int socket, std::string &user);
+	static bool GetClientFromSocket(int socket, std::string &client);
 
-protected:
-    void ChangeStatus(int oldFd, int newFd, cynara_async_status status);
-    void ProcessResponse(cynara_check_id checkId, cynara_async_call_cause cause, int response);
-    void SendRequest(
-        const std::string &user,
-        const std::string &client,
-        const std::string &session,
-        const std::string &privilege,
-        StatusCallback callback);
-    static void ChangeStatusCallback(
-        int oldFd,
-        int newFd,
-        cynara_async_status status,
-        void *ptr);
+  protected:
+	void ChangeStatus(int oldFd, int newFd, cynara_async_status status);
+	void ProcessResponse(cynara_check_id checkId, cynara_async_call_cause cause, int response);
+	void SendRequest(
+		const std::string &user,
+		const std::string &client,
+		const std::string &session,
+		const std::string &privilege,
+		StatusCallback callback);
+	static void ChangeStatusCallback(
+		int oldFd,
+		int newFd,
+		cynara_async_status status,
+		void *ptr);
 
-    static void ProcessResponseCallback(
-        cynara_check_id checkId,
-        cynara_async_call_cause cause,
-        int response,
-        void *ptr);
+	static void ProcessResponseCallback(
+		cynara_check_id checkId,
+		cynara_async_call_cause cause,
+		int response,
+		void *ptr);
 
-    GenericSocketManager *m_socketManager;
-    cynara_async *m_cynara;
-    std::map<cynara_check_id, StatusCallback> m_callbackMap;
+	GenericSocketManager *m_socketManager;
+	cynara_async *m_cynara;
+	std::map<cynara_check_id, StatusCallback> m_callbackMap;
 };
 
 } // namespace CKM

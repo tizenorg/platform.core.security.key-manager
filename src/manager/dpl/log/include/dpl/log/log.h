@@ -40,61 +40,63 @@ namespace Log {
  */
 class COMMON_API LogSystem {
   public:
-    NONCOPYABLE(LogSystem)
+	NONCOPYABLE(LogSystem)
 
-    LogSystem();
-    virtual ~LogSystem();
+	LogSystem();
+	virtual ~LogSystem();
 
-    AbstractLogProvider::LogLevel GetLogLevel() const { return m_level; }
+	AbstractLogProvider::LogLevel GetLogLevel() const {
+		return m_level;
+	}
 
-    void Log(AbstractLogProvider::LogLevel level,
-             const char *message,
-             const char *filename,
-             int line,
-             const char *function);
+	void Log(AbstractLogProvider::LogLevel level,
+			 const char *message,
+			 const char *filename,
+			 int line,
+			 const char *function);
 
-    /**
-     * Set default's DLOG provider Tag
-     */
-    void SetTag(const char *tag);
+	/**
+	 * Set default's DLOG provider Tag
+	 */
+	void SetTag(const char *tag);
 
-    /**
-     * Add abstract provider to providers list
-     *
-     * @notice Ownership is transfered to LogSystem and deleted upon exit
-     */
-    void AddProvider(AbstractLogProvider *provider);
+	/**
+	 * Add abstract provider to providers list
+	 *
+	 * @notice Ownership is transfered to LogSystem and deleted upon exit
+	 */
+	void AddProvider(AbstractLogProvider *provider);
 
-    /**
-     * Remove abstract provider from providers list
-     */
-    void RemoveProvider(AbstractLogProvider *provider);
+	/**
+	 * Remove abstract provider from providers list
+	 */
+	void RemoveProvider(AbstractLogProvider *provider);
 
-    /**
-     * Selects given provider by name (overwrites environment setting)
-     *
-     * Throws std::out_of_range exception if not found.
-     */
-    void SelectProvider(const std::string& name);
+	/**
+	 * Selects given provider by name (overwrites environment setting)
+	 *
+	 * Throws std::out_of_range exception if not found.
+	 */
+	void SelectProvider(const std::string &name);
 
-    /**
-     * Sets log level (overwrites environment settings)
-     */
-    void SetLogLevel(const char* level);
+	/**
+	 * Sets log level (overwrites environment settings)
+	 */
+	void SetLogLevel(const char *level);
 
   private:
-    void RemoveProviders();
+	void RemoveProviders();
 
-    typedef std::list<AbstractLogProvider *> AbstractLogProviderPtrList;
-    AbstractLogProviderPtrList m_providers;
-    AbstractLogProvider::LogLevel m_level;
+	typedef std::list<AbstractLogProvider *> AbstractLogProviderPtrList;
+	AbstractLogProviderPtrList m_providers;
+	AbstractLogProvider::LogLevel m_level;
 
-    typedef AbstractLogProvider*(*ProviderFn)();
-    /*
-     * It cannot be global as it is used in library constructor and we can't be sure which
-     * constructor is called first: library's or new_provider's.
-     */
-    std::unordered_map<std::string, ProviderFn> m_providerCtor;
+	typedef AbstractLogProvider *(*ProviderFn)();
+	/*
+	 * It cannot be global as it is used in library constructor and we can't be sure which
+	 * constructor is called first: library's or new_provider's.
+	 */
+	std::unordered_map<std::string, ProviderFn> m_providerCtor;
 };
 
 /*
@@ -102,13 +104,12 @@ class COMMON_API LogSystem {
  */
 class NullStream {
   public:
-    NullStream() {}
+	NullStream() {}
 
-    template <typename T>
-    NullStream& operator<<(const T&)
-    {
-        return *this;
-    }
+	template <typename T>
+	NullStream &operator<<(const T &) {
+		return *this;
+	}
 };
 
 /**
@@ -125,70 +126,70 @@ typedef Singleton<LogSystem> LogSystemSingleton;
 
 /* avoid warnings about unused variables */
 #define DPL_MACRO_DUMMY_LOGGING(message, level)                                 \
-    do {                                                                        \
-        CKM::Log::NullStream ns;                                                \
-        ns << message;                                                          \
-    } while (0)
+	do {                                                                        \
+		CKM::Log::NullStream ns;                                                \
+		ns << message;                                                          \
+	} while (0)
 
 #define DPL_MACRO_FOR_LOGGING(message, level)                                   \
-do {                                                                            \
-    if (level > CKM::Log::AbstractLogProvider::LogLevel::None &&                \
-        CKM::Log::LogSystemSingleton::Instance().GetLogLevel() >= level) {      \
-        std::ostringstream platformLog;                                         \
-        platformLog << message;                                                 \
-        CKM::Log::LogSystemSingleton::Instance().Log(level,                     \
-                                                     platformLog.str().c_str(), \
-                                                     __FILE__,                  \
-                                                     __LINE__,                  \
-                                                     __FUNCTION__);             \
-    }                                                                           \
-} while (0)
+	do {                                                                            \
+		if (level > CKM::Log::AbstractLogProvider::LogLevel::None &&                \
+				CKM::Log::LogSystemSingleton::Instance().GetLogLevel() >= level) {      \
+			std::ostringstream platformLog;                                         \
+			platformLog << message;                                                 \
+			CKM::Log::LogSystemSingleton::Instance().Log(level,                     \
+					platformLog.str().c_str(), \
+					__FILE__,                  \
+					__LINE__,                  \
+					__FUNCTION__);             \
+		}                                                                           \
+	} while (0)
 
 #define DPL_MACRO_FOR_LOGGING_POSITION(message, level, file, line, function)    \
-do {                                                                            \
-    if (level > CKM::Log::AbstractLogProvider::LogLevel::None &&                \
-        CKM::Log::LogSystemSingleton::Instance().GetLogLevel() >= level) {      \
-        std::ostringstream platformLog;                                         \
-        platformLog << message;                                                 \
-        CKM::Log::LogSystemSingleton::Instance().Log(level,                     \
-                                                     platformLog.str().c_str(), \
-                                                     file,                      \
-                                                     line,                      \
-                                                     function);                 \
-    }                                                                           \
-} while (0)
+	do {                                                                            \
+		if (level > CKM::Log::AbstractLogProvider::LogLevel::None &&                \
+				CKM::Log::LogSystemSingleton::Instance().GetLogLevel() >= level) {      \
+			std::ostringstream platformLog;                                         \
+			platformLog << message;                                                 \
+			CKM::Log::LogSystemSingleton::Instance().Log(level,                     \
+					platformLog.str().c_str(), \
+					file,                      \
+					line,                      \
+					function);                 \
+		}                                                                           \
+	} while (0)
 
 /* Errors must be always logged. */
 #define  LogError(message)          \
-    DPL_MACRO_FOR_LOGGING(message, CKM::Log::AbstractLogProvider::LogLevel::Error)
+	DPL_MACRO_FOR_LOGGING(message, CKM::Log::AbstractLogProvider::LogLevel::Error)
 #define  LogErrorPosition(message, file, line, function)          \
-    DPL_MACRO_FOR_LOGGING_POSITION(message, CKM::Log::AbstractLogProvider::LogLevel::Error, file, line, function)
+	DPL_MACRO_FOR_LOGGING_POSITION(message, CKM::Log::AbstractLogProvider::LogLevel::Error, file, line, function)
 
 #ifdef BUILD_TYPE_DEBUG
-    #define LogDebug(message)       \
-        DPL_MACRO_FOR_LOGGING(message, CKM::Log::AbstractLogProvider::LogLevel::Debug)
-    #define LogInfo(message)        \
-        DPL_MACRO_FOR_LOGGING(message, CKM::Log::AbstractLogProvider::LogLevel::Info)
-    #define LogWarning(message)     \
-        DPL_MACRO_FOR_LOGGING(message, CKM::Log::AbstractLogProvider::LogLevel::Warning)
-    #define LogPedantic(message)    \
-        DPL_MACRO_FOR_LOGGING(message, CKM::Log::AbstractLogProvider::LogLevel::Pedantic)
-    #define LogDebugPosition(message, file, line, function) \
-        DPL_MACRO_FOR_LOGGING_POSITION(message, CKM::Log::AbstractLogProvider::LogLevel::Debug, file, line, function)
+#define LogDebug(message)       \
+	DPL_MACRO_FOR_LOGGING(message, CKM::Log::AbstractLogProvider::LogLevel::Debug)
+#define LogInfo(message)        \
+	DPL_MACRO_FOR_LOGGING(message, CKM::Log::AbstractLogProvider::LogLevel::Info)
+#define LogWarning(message)     \
+	DPL_MACRO_FOR_LOGGING(message, CKM::Log::AbstractLogProvider::LogLevel::Warning)
+#define LogPedantic(message)    \
+	DPL_MACRO_FOR_LOGGING(message, CKM::Log::AbstractLogProvider::LogLevel::Pedantic)
+#define LogDebugPosition(message, file, line, function) \
+	DPL_MACRO_FOR_LOGGING_POSITION(message, CKM::Log::AbstractLogProvider::LogLevel::Debug, file, line, function)
 #else
-    #define LogDebug(message)       \
-        DPL_MACRO_DUMMY_LOGGING(message, CKM::Log::AbstractLogProvider::LogLevel::Debug)
-    #define LogInfo(message)        \
-        DPL_MACRO_DUMMY_LOGGING(message, CKM::Log::AbstractLogProvider::LogLevel::Info)
-    #define LogWarning(message)     \
-        DPL_MACRO_DUMMY_LOGGING(message, CKM::Log::AbstractLogProvider::LogLevel::Warning)
-    #define LogPedantic(message)    \
-        DPL_MACRO_DUMMY_LOGGING(message, CKM::Log::AbstractLogProvider::LogLevel::Pedantic)
-    #define LogDebugPosition(message, file, line, function)                                    \
-        do {                                                                                   \
-            (void) file; (void) line; (void) function;                                         \
-            DPL_MACRO_DUMMY_LOGGING(message, CKM::Log::AbstractLogProvider::LogLevel::Debug);  \
-        } while (0)
+#define LogDebug(message)       \
+	DPL_MACRO_DUMMY_LOGGING(message, CKM::Log::AbstractLogProvider::LogLevel::Debug)
+#define LogInfo(message)        \
+	DPL_MACRO_DUMMY_LOGGING(message, CKM::Log::AbstractLogProvider::LogLevel::Info)
+#define LogWarning(message)     \
+	DPL_MACRO_DUMMY_LOGGING(message, CKM::Log::AbstractLogProvider::LogLevel::Warning)
+#define LogPedantic(message)    \
+	DPL_MACRO_DUMMY_LOGGING(message, CKM::Log::AbstractLogProvider::LogLevel::Pedantic)
+#define LogDebugPosition(message, file, line, function)                                    \
+	do {                                                                                   \
+		(void) file; (void) line; (void) function;                                         \
+		DPL_MACRO_DUMMY_LOGGING(message, CKM::Log::AbstractLogProvider::LogLevel::Debug);  \
+	} while (0)
 #endif // BUILD_TYPE_DEBUG
 
 #endif // CENT_KEY_LOG_H

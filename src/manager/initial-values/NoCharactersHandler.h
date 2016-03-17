@@ -28,10 +28,10 @@ namespace CKM {
 namespace InitialValues {
 
 class NoCharactersHandler : public XML::Parser::ElementHandler {
-public:
-    void Characters(const std::string & data);
+  public:
+	void Characters(const std::string &data);
 
-    virtual ~NoCharactersHandler();
+	virtual ~NoCharactersHandler();
 };
 
 } // namespace InitialValues

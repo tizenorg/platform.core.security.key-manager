@@ -185,7 +185,7 @@ int ckmc_get_key(const char *alias, const char *password, ckmc_key_s **ppkey);
  * @see ckmc_remove_alias()
  * @see ckmc_get_key()
  */
-int ckmc_get_key_alias_list(ckmc_alias_list_s** ppalias_list);
+int ckmc_get_key_alias_list(ckmc_alias_list_s **ppalias_list);
 
 
 
@@ -328,7 +328,7 @@ int ckmc_get_cert(const char *alias, const char *password, ckmc_cert_s **ppcert)
  * @see ckmc_remove_alias()
  * @see ckmc_get_cert()
  */
-int ckmc_get_cert_alias_list(ckmc_alias_list_s** ppalias_list);
+int ckmc_get_cert_alias_list(ckmc_alias_list_s **ppalias_list);
 
 
 
@@ -367,9 +367,9 @@ int ckmc_get_cert_alias_list(ckmc_alias_list_s** ppalias_list);
  * @see #ckmc_policy_s
  */
 int ckmc_save_pkcs12(const char *alias,
-                     const ckmc_pkcs12_s *pkcs,
-                     const ckmc_policy_s key_policy,
-                     const ckmc_policy_s cert_policy);
+					 const ckmc_pkcs12_s *pkcs,
+					 const ckmc_policy_s key_policy,
+					 const ckmc_policy_s cert_policy);
 
 /**
  * @brief Gets a pkcs12 from key manager.
@@ -406,7 +406,8 @@ int ckmc_save_pkcs12(const char *alias,
  * @see ckmc_save_pkcs12()
  * @see ckmc_remove_alias()
  */
-int ckmc_get_pkcs12(const char *alias, const char *key_password, const char *cert_password, ckmc_pkcs12_s **pkcs12);
+int ckmc_get_pkcs12(const char *alias, const char *key_password, const char *cert_password,
+					ckmc_pkcs12_s **pkcs12);
 
 /**
  * @brief Stores a data inside key manager based on the provided policy.
@@ -541,7 +542,7 @@ int ckmc_get_data(const char *alias, const char *password, ckmc_raw_buffer_s **p
  * @see ckmc_remove_alias()
  * @see ckmc_get_data()
  */
-int ckmc_get_data_alias_list(ckmc_alias_list_s** ppalias_list);
+int ckmc_get_data_alias_list(ckmc_alias_list_s **ppalias_list);
 
 
 
@@ -583,10 +584,10 @@ int ckmc_get_data_alias_list(ckmc_alias_list_s** ppalias_list);
  * @see ckmc_verify_signature()
  */
 int ckmc_create_key_pair_rsa(const size_t size,
-                             const char *private_key_alias,
-                             const char *public_key_alias,
-                             const ckmc_policy_s policy_private_key,
-                             const ckmc_policy_s policy_public_key);
+							 const char *private_key_alias,
+							 const char *public_key_alias,
+							 const ckmc_policy_s policy_private_key,
+							 const ckmc_policy_s policy_public_key);
 
 /**
  * @brief Creates DSA private/public key pair and stores them inside key manager based on each
@@ -625,10 +626,10 @@ int ckmc_create_key_pair_rsa(const size_t size,
  * @see ckmc_verify_signature()
  */
 int ckmc_create_key_pair_dsa(const size_t size,
-                             const char *private_key_alias,
-                             const char *public_key_alias,
-                             const ckmc_policy_s policy_private_key,
-                             const ckmc_policy_s policy_public_key);
+							 const char *private_key_alias,
+							 const char *public_key_alias,
+							 const ckmc_policy_s policy_private_key,
+							 const ckmc_policy_s policy_public_key);
 
 /**
  * @brief Creates ECDSA private/public key pair and stores them inside key manager based on each
@@ -667,10 +668,10 @@ int ckmc_create_key_pair_dsa(const size_t size,
  * @see #ckmc_ec_type_e
  */
 int ckmc_create_key_pair_ecdsa(const ckmc_ec_type_e type,
-                               const char *private_key_alias,
-                               const char *public_key_alias,
-                               const ckmc_policy_s policy_private_key,
-                               const ckmc_policy_s policy_public_key);
+							   const char *private_key_alias,
+							   const char *public_key_alias,
+							   const ckmc_policy_s policy_private_key,
+							   const ckmc_policy_s policy_public_key);
 
 /**
  * @brief Creates AES key and stores it inside key manager based on the policy.
@@ -704,8 +705,8 @@ int ckmc_create_key_pair_ecdsa(const ckmc_ec_type_e type,
  * @see #ckmc_policy_s
  */
 int ckmc_create_key_aes(size_t size,
-                        const char *key_alias,
-                        ckmc_policy_s key_policy);
+						const char *key_alias,
+						ckmc_policy_s key_policy);
 
 /**
  * @brief Creates a signature on a given message using a private key and returns the signature.
@@ -751,11 +752,11 @@ int ckmc_create_key_aes(size_t size,
  * @see #ckmc_rsa_padding_algo_e
  */
 int ckmc_create_signature(const char *private_key_alias,
-                          const char *password,
-                          const ckmc_raw_buffer_s message,
-                          const ckmc_hash_algo_e hash,
-                          const ckmc_rsa_padding_algo_e padding,
-                          ckmc_raw_buffer_s **ppsignature);
+						  const char *password,
+						  const ckmc_raw_buffer_s message,
+						  const ckmc_hash_algo_e hash,
+						  const ckmc_rsa_padding_algo_e padding,
+						  ckmc_raw_buffer_s **ppsignature);
 
 /**
  * @brief Verifies a given signature on a given message using a public key and returns the signature
@@ -799,11 +800,11 @@ int ckmc_create_signature(const char *private_key_alias,
  * @see #ckmc_rsa_padding_algo_e
  */
 int ckmc_verify_signature(const char *public_key_alias,
-                          const char *password,
-                          const ckmc_raw_buffer_s message,
-                          const ckmc_raw_buffer_s signature,
-                          const ckmc_hash_algo_e hash,
-                          const ckmc_rsa_padding_algo_e padding);
+						  const char *password,
+						  const ckmc_raw_buffer_s message,
+						  const ckmc_raw_buffer_s signature,
+						  const ckmc_hash_algo_e hash,
+						  const ckmc_rsa_padding_algo_e padding);
 
 /**
  * @brief Verifies a certificate chain and returns that chain.
@@ -842,8 +843,8 @@ int ckmc_verify_signature(const char *public_key_alias,
  * @see ckmc_cert_list_all_free()
  */
 int ckmc_get_cert_chain(const ckmc_cert_s *cert,
-                        const ckmc_cert_list_s *untrustedcerts,
-                        ckmc_cert_list_s **ppcert_chain_list);
+						const ckmc_cert_list_s *untrustedcerts,
+						ckmc_cert_list_s **ppcert_chain_list);
 
 /**
  * @deprecated Deprecated since 2.4. [Use ckmc_get_cert_chain() instead]
@@ -888,8 +889,8 @@ int ckmc_get_cert_chain(const ckmc_cert_s *cert,
  * @see ckmc_cert_list_all_free()
  */
 int ckmc_get_cert_chain_with_alias(const ckmc_cert_s *cert,
-                                   const ckmc_alias_list_s *untrustedcerts,
-                                   ckmc_cert_list_s **ppcert_chain_list);
+								   const ckmc_alias_list_s *untrustedcerts,
+								   ckmc_cert_list_s **ppcert_chain_list);
 
 /**
  * @brief Verifies a certificate chain and returns that chain using user entered trusted and
@@ -931,10 +932,10 @@ int ckmc_get_cert_chain_with_alias(const ckmc_cert_s *cert,
  * @see ckmc_cert_list_all_free()
  */
 int ckmc_get_cert_chain_with_trustedcert(const ckmc_cert_s *cert,
-                                         const ckmc_cert_list_s *untrustedcerts,
-                                         const ckmc_cert_list_s *trustedcerts,
-                                         const bool use_trustedsystemcerts,
-                                         ckmc_cert_list_s **ppcert_chain_list);
+		const ckmc_cert_list_s *untrustedcerts,
+		const ckmc_cert_list_s *trustedcerts,
+		const bool use_trustedsystemcerts,
+		ckmc_cert_list_s **ppcert_chain_list);
 
 /**
  * @brief Perform OCSP which checks certificate is whether revoked or not.
@@ -1141,10 +1142,10 @@ int ckmc_remove_alias(const char *alias);
  * @see #ckmc_algo_type_e
  */
 int ckmc_encrypt_data(ckmc_param_list_h params,
-                      const char *key_alias,
-                      const char *password,
-                      const ckmc_raw_buffer_s decrypted,
-                      ckmc_raw_buffer_s **ppencrypted);
+					  const char *key_alias,
+					  const char *password,
+					  const ckmc_raw_buffer_s decrypted,
+					  ckmc_raw_buffer_s **ppencrypted);
 
 /**
  * @brief Decrypts data using selected key and algorithm.
@@ -1193,10 +1194,10 @@ int ckmc_encrypt_data(ckmc_param_list_h params,
  * @see #ckmc_algo_type_e
  */
 int ckmc_decrypt_data(ckmc_param_list_h params,
-                      const char *key_alias,
-                      const char *password,
-                      const ckmc_raw_buffer_s encrypted,
-                      ckmc_raw_buffer_s **ppdecrypted);
+					  const char *key_alias,
+					  const char *password,
+					  const ckmc_raw_buffer_s encrypted,
+					  ckmc_raw_buffer_s **ppdecrypted);
 
 #ifdef __cplusplus
 }

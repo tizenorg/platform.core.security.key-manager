@@ -30,80 +30,80 @@
 namespace CKM {
 
 class IDescriptorSet {
-public:
-    // int is for descriptor, short is for revents,
-    typedef std::function<void(int, short)> Callback;
+  public:
+	// int is for descriptor, short is for revents,
+	typedef std::function<void(int, short)> Callback;
 
-    virtual void add(int fd, short events, Callback&& callback) = 0;
-    virtual void remove(int fd, bool close_fd = true) = 0;
-protected:
-    // I don't want anyone to manage object lifetime via interface.
-    IDescriptorSet() {}
-    ~IDescriptorSet() {}
+	virtual void add(int fd, short events, Callback &&callback) = 0;
+	virtual void remove(int fd, bool close_fd = true) = 0;
+  protected:
+	// I don't want anyone to manage object lifetime via interface.
+	IDescriptorSet() {}
+	~IDescriptorSet() {}
 };
 
 /**
  * @brief Wrapper for poll()
  */
 class DescriptorSet : public IDescriptorSet {
-public:
-    DescriptorSet();
-    virtual ~DescriptorSet();
+  public:
+	DescriptorSet();
+	virtual ~DescriptorSet();
 
-    NONCOPYABLE(DescriptorSet);
+	NONCOPYABLE(DescriptorSet);
 
-    /*
-     * Add descriptor fd to watched set. Watches for events. Takes ownership of fd (closes it). Will
-     * synchronously call supported callback when an event occurs on descriptor. If descriptor
-     * already exists in the set events and callback will be overwritten.
-     *
-     * @param fd       descriptor to be watched
-     * @param events   events to watch for
-     * @param callback callback to be called when an event on descriptor occurs
-     */
-    virtual void add(int fd, short events, Callback&& callback);
-    /*
-     * Removes give descriptor from watched set and closes it.
-     *
-     * @param fd       descriptor to be removed and closed
-     */
-    virtual void remove(int fd, bool close_fd = true);
+	/*
+	 * Add descriptor fd to watched set. Watches for events. Takes ownership of fd (closes it). Will
+	 * synchronously call supported callback when an event occurs on descriptor. If descriptor
+	 * already exists in the set events and callback will be overwritten.
+	 *
+	 * @param fd       descriptor to be watched
+	 * @param events   events to watch for
+	 * @param callback callback to be called when an event on descriptor occurs
+	 */
+	virtual void add(int fd, short events, Callback &&callback);
+	/*
+	 * Removes give descriptor from watched set and closes it.
+	 *
+	 * @param fd       descriptor to be removed and closed
+	 */
+	virtual void remove(int fd, bool close_fd = true);
 
-    /*
-     * Wait for descriptor events using poll().
-     * Synchronously calls provided descriptor callbacks.
-     *
-     * @param timeout_ms  timeout in ms. egative value means no timeout.
-     *
-     * @throws Timeout exception in case of timeout
-     * @throws InternalError in case of other error
-     */
-    void wait(int timeout_ms = 60000);
-    /*
-     * Removes and closes all descriptors
-     */
-    void purge();
+	/*
+	 * Wait for descriptor events using poll().
+	 * Synchronously calls provided descriptor callbacks.
+	 *
+	 * @param timeout_ms  timeout in ms. egative value means no timeout.
+	 *
+	 * @throws Timeout exception in case of timeout
+	 * @throws InternalError in case of other error
+	 */
+	void wait(int timeout_ms = 60000);
+	/*
+	 * Removes and closes all descriptors
+	 */
+	void purge();
 
-    DECLARE_EXCEPTION_TYPE(CKM::Exception, InternalError);
-    DECLARE_EXCEPTION_TYPE(CKM::Exception, Timeout);
+	DECLARE_EXCEPTION_TYPE(CKM::Exception, InternalError);
+	DECLARE_EXCEPTION_TYPE(CKM::Exception, Timeout);
 
-protected:
-    // returns false if there are no descriptors to wait for
-    bool rebuildPollfd();
-    void notify(int descCount);
+  protected:
+	// returns false if there are no descriptors to wait for
+	bool rebuildPollfd();
+	void notify(int descCount);
 
-    struct DescriptorData {
-        DescriptorData(short e, Callback&& c) : events(e), callback(std::move(c)) {}
+	struct DescriptorData {
+		DescriptorData(short e, Callback &&c) : events(e), callback(std::move(c)) {}
 
-        short events;
-        Callback callback;
-    };
+		short events;
+		Callback callback;
+	};
 
-    std::map<int, DescriptorData> m_descriptors;
+	std::map<int, DescriptorData> m_descriptors;
 
-    // true if pollfd needs update
-    bool m_dirty;
-    pollfd* m_fds;
+	// true if pollfd needs update
+	bool m_dirty;
+	pollfd *m_fds;
 };
 
 } /* namespace CKM */

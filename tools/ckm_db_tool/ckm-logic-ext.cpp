@@ -24,32 +24,33 @@
 
 namespace CKM {
 
-DB::SqlConnection::Output CKMLogicExt::Execute(uid_t user, const std::string& cmd) {
-    if(user < 5000 && !m_systemDbUnlocked) {
-        if(CKM_API_SUCCESS != unlockSystemDB())
-            ThrowErr(Exc::DatabaseLocked, "can not unlock system database");
-        m_systemDbUnlocked = true;
-    }
+DB::SqlConnection::Output CKMLogicExt::Execute(uid_t user, const std::string &cmd) {
+	if (user < 5000 && !m_systemDbUnlocked) {
+		if (CKM_API_SUCCESS != unlockSystemDB())
+			ThrowErr(Exc::DatabaseLocked, "can not unlock system database");
 
-    DB::SqlConnection::Output output;
+		m_systemDbUnlocked = true;
+	}
 
-    /*
-     * We need to access to DB::Crypto::m_connection to call Execute() on it. We don't want to mess
-     * with DB::Crypto too much so adding a friend and extending public interface was not an option.
-     * That's why we need a derived class DB::CryptoExt. m_userDataMap must be left unchanged after
-     * this operation but DB::Crypto can't be copied. According to C++ standard static casting
-     * DB::Crypto pointer to DB::CryptoExt pointer is UB. Therefore DB::Crypto is temporarily moved
-     * into DB::CryptoExt and moved back to m_userDataMap after the call to Execute().
-     */
-    DB::CryptoExt db(std::move(m_userDataMap[user].database));
-    try {
-        output = db.Execute(cmd);
-        m_userDataMap[user].database = std::move(*static_cast<DB::Crypto*>(&db));
-        return output;
-    } catch (const DB::SqlConnection::Exception::Base& e) {
-        m_userDataMap[user].database = std::move(*static_cast<DB::Crypto*>(&db));
-        throw;
-    }
+	DB::SqlConnection::Output output;
+	/*
+	 * We need to access to DB::Crypto::m_connection to call Execute() on it. We don't want to mess
+	 * with DB::Crypto too much so adding a friend and extending public interface was not an option.
+	 * That's why we need a derived class DB::CryptoExt. m_userDataMap must be left unchanged after
+	 * this operation but DB::Crypto can't be copied. According to C++ standard static casting
+	 * DB::Crypto pointer to DB::CryptoExt pointer is UB. Therefore DB::Crypto is temporarily moved
+	 * into DB::CryptoExt and moved back to m_userDataMap after the call to Execute().
+	 */
+	DB::CryptoExt db(std::move(m_userDataMap[user].database));
+
+	try {
+		output = db.Execute(cmd);
+		m_userDataMap[user].database = std::move(*static_cast<DB::Crypto *>(&db));
+		return output;
+	} catch (const DB::SqlConnection::Exception::Base &e) {
+		m_userDataMap[user].database = std::move(*static_cast<DB::Crypto *>(&db));
+		throw;
+	}
 }
 
 } // namespace CKM

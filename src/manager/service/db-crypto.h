@@ -40,264 +40,263 @@
 namespace CKM {
 namespace DB {
 class Crypto {
-public:
-    typedef boost::optional<Row> RowOptional;
-    typedef boost::optional<RawBuffer> RawBufferOptional;
-    Crypto() :
-        m_connection(NULL),
-        m_inUserTransaction(false)
-    {
-    }
-    // user name instead of path?
-    Crypto(const std::string &path, const RawBuffer &rawPass);
-    Crypto(const Crypto &other) = delete;
-    Crypto(Crypto &&other);
+  public:
+	typedef boost::optional<Row> RowOptional;
+	typedef boost::optional<RawBuffer> RawBufferOptional;
+	Crypto() :
+		m_connection(NULL),
+		m_inUserTransaction(false) {
+	}
+	// user name instead of path?
+	Crypto(const std::string &path, const RawBuffer &rawPass);
+	Crypto(const Crypto &other) = delete;
+	Crypto(Crypto &&other);
 
-    Crypto& operator=(const Crypto& ) = delete;
-    Crypto& operator=(Crypto&& other);
+	Crypto &operator=(const Crypto &) = delete;
+	Crypto &operator=(Crypto &&other);
 
-    virtual ~Crypto();
+	virtual ~Crypto();
 
-    void saveRow(
-            const Row &row);
+	void saveRow(
+		const Row &row);
 
-    void saveRows(
-            const Name &name,
-            const Label &owner,
-            const RowVector &rows);
+	void saveRows(
+		const Name &name,
+		const Label &owner,
+		const RowVector &rows);
 
-    void updateRow(
-            const Row &row);
+	void updateRow(
+		const Row &row);
 
-    bool isNameLabelPresent(
-            const Name &name,
-            const Label &owner) const;
+	bool isNameLabelPresent(
+		const Name &name,
+		const Label &owner) const;
 
-    RowOptional getRow(
-            const Name &name,
-            const Label &ownerLabel,
-            DataType type);
+	RowOptional getRow(
+		const Name &name,
+		const Label &ownerLabel,
+		DataType type);
 
-    RowOptional getRow(
-            const Name &name,
-            const Label &ownerLabel,
-            DataType typeRangeStart,
-            DataType typeRangeStop);
+	RowOptional getRow(
+		const Name &name,
+		const Label &ownerLabel,
+		DataType typeRangeStart,
+		DataType typeRangeStop);
 
-    void getRows(
-            const Name &name,
-            const Label &ownerLabel,
-            DataType type,
-            RowVector &output);
+	void getRows(
+		const Name &name,
+		const Label &ownerLabel,
+		DataType type,
+		RowVector &output);
 
-    void getRows(
-            const Name &name,
-            const Label &ownerLabel,
-            DataType typeRangeStart,
-            DataType typeRangeStop,
-            RowVector &output);
+	void getRows(
+		const Name &name,
+		const Label &ownerLabel,
+		DataType typeRangeStart,
+		DataType typeRangeStop,
+		RowVector &output);
 
-    void listNames(
-            const Label &smackLabel,
-            LabelNameVector& labelNameVector,
-            DataType type);
+	void listNames(
+		const Label &smackLabel,
+		LabelNameVector &labelNameVector,
+		DataType type);
 
-    void listNames(
-            const Label &smackLabel,
-            LabelNameVector& labelNameVector,
-            DataType typeRangeStart,
-            DataType typeRangeStop);
+	void listNames(
+		const Label &smackLabel,
+		LabelNameVector &labelNameVector,
+		DataType typeRangeStart,
+		DataType typeRangeStop);
 
-    bool deleteRow(
-            const Name &name,
-            const Label &ownerLabel);
+	bool deleteRow(
+		const Name &name,
+		const Label &ownerLabel);
 
-    // keys
-    void saveKey(const Label& label, const RawBuffer &key);
-    RawBufferOptional getKey(const Label& label);
-    void deleteKey(const Label& label);
-
-
-    // permissions
-    void setPermission(
-            const Name &name,
-            const Label &ownerLabel,
-            const Label &accessorLabel,
-            const PermissionMask permissionMask);
-
-    PermissionMaskOptional getPermissionRow(
-            const Name &name,
-            const Label &ownerLabel,
-            const Label &accessorLabel) const;
+	// keys
+	void saveKey(const Label &label, const RawBuffer &key);
+	RawBufferOptional getKey(const Label &label);
+	void deleteKey(const Label &label);
 
 
-    // transactions
-    int beginTransaction();
-    int commitTransaction();
-    int rollbackTransaction();
+	// permissions
+	void setPermission(
+		const Name &name,
+		const Label &ownerLabel,
+		const Label &accessorLabel,
+		const PermissionMask permissionMask);
 
-    class Transaction {
-    public:
-        Transaction(Crypto *db) :
-            m_db(db),
-            m_inTransaction(false)
-        {
-            if (!m_db->m_inUserTransaction) {
-                Try {
-                    m_db->m_connection->ExecCommand("BEGIN EXCLUSIVE");
-                    m_db->m_inUserTransaction = true;
-                    m_inTransaction = true;
-                } Catch(SqlConnection::Exception::InternalError) {
-                    ThrowErr(Exc::TransactionFailed, "sqlite got into infinite busy state");
-                } Catch(SqlConnection::Exception::Base) {
-                    ThrowErr(Exc::TransactionFailed, "Couldn't begin transaction");
-                }
-            }
-        }
-        void commit()
-        {
-            if (m_inTransaction) {
-                Try {
-                    m_db->m_connection->CommitTransaction();
-                    m_db->m_inUserTransaction = false;
-                    m_inTransaction = false;
-                } Catch(SqlConnection::Exception::InternalError) {
-                    ThrowErr(Exc::TransactionFailed, "sqlite got into infinite busy state");
-                } Catch(SqlConnection::Exception::Base) {
-                    ThrowErr(Exc::TransactionFailed, "Couldn't commit transaction");
-                }
-            }
-        }
-        void rollback()
-        {
-            if (m_inTransaction) {
-                Try {
-                    m_db->m_connection->RollbackTransaction();
-                    m_db->m_inUserTransaction = false;
-                    m_inTransaction = false;
-                } Catch(SqlConnection::Exception::InternalError) {
-                    ThrowErr(Exc::TransactionFailed, "sqlite got into infinite busy state");
-                } Catch(SqlConnection::Exception::Base) {
-                    ThrowErr(Exc::TransactionFailed, "Couldn't rollback transaction");
-                }
-            }
-        }
-        ~Transaction()
-        {
-            Try {
-                if (m_inTransaction) {
-                    m_db->m_inUserTransaction = false;
-                    m_db->m_connection->RollbackTransaction();
-                }
-            } Catch(SqlConnection::Exception::InternalError) {
-                ThrowErr(Exc::TransactionFailed, "sqlite got into infinite busy state");
-            } Catch(SqlConnection::Exception::Base) {
-                LogError("Transaction rollback failed!");
-            }
-        }
+	PermissionMaskOptional getPermissionRow(
+		const Name &name,
+		const Label &ownerLabel,
+		const Label &accessorLabel) const;
 
-    private:
-        Crypto *m_db;
-        bool m_inTransaction;
-    };
 
-protected:
-    SqlConnection* m_connection;
+	// transactions
+	int beginTransaction();
+	int commitTransaction();
+	int rollbackTransaction();
 
-private:
-    bool m_inUserTransaction;
+	class Transaction {
+	  public:
+		Transaction(Crypto *db) :
+			m_db(db),
+			m_inTransaction(false) {
+			if (!m_db->m_inUserTransaction) {
+				Try {
+					m_db->m_connection->ExecCommand("BEGIN EXCLUSIVE");
+					m_db->m_inUserTransaction = true;
+					m_inTransaction = true;
+				} Catch(SqlConnection::Exception::InternalError) {
+					ThrowErr(Exc::TransactionFailed, "sqlite got into infinite busy state");
+				}
+				Catch(SqlConnection::Exception::Base) {
+					ThrowErr(Exc::TransactionFailed, "Couldn't begin transaction");
+				}
+			}
+		}
+		void commit() {
+			if (m_inTransaction) {
+				Try {
+					m_db->m_connection->CommitTransaction();
+					m_db->m_inUserTransaction = false;
+					m_inTransaction = false;
+				} Catch(SqlConnection::Exception::InternalError) {
+					ThrowErr(Exc::TransactionFailed, "sqlite got into infinite busy state");
+				}
+				Catch(SqlConnection::Exception::Base) {
+					ThrowErr(Exc::TransactionFailed, "Couldn't commit transaction");
+				}
+			}
+		}
+		void rollback() {
+			if (m_inTransaction) {
+				Try {
+					m_db->m_connection->RollbackTransaction();
+					m_db->m_inUserTransaction = false;
+					m_inTransaction = false;
+				} Catch(SqlConnection::Exception::InternalError) {
+					ThrowErr(Exc::TransactionFailed, "sqlite got into infinite busy state");
+				}
+				Catch(SqlConnection::Exception::Base) {
+					ThrowErr(Exc::TransactionFailed, "Couldn't rollback transaction");
+				}
+			}
+		}
+		~Transaction() {
+			Try {
+				if (m_inTransaction) {
+					m_db->m_inUserTransaction = false;
+					m_db->m_connection->RollbackTransaction();
+				}
+			} Catch(SqlConnection::Exception::InternalError) {
+				ThrowErr(Exc::TransactionFailed, "sqlite got into infinite busy state");
+			}
+			Catch(SqlConnection::Exception::Base) {
+				LogError("Transaction rollback failed!");
+			}
+		}
 
-    void resetDB();
-    void initDatabase();
-    void createDBSchema();
-    /**
-     * return current database version
-     *
-     * @param[out] schemaVersion    if success, will contain DB schema version code
-     *
-     * @return false on DB empty or corrupted, true if information read
-     */
-    bool getDBVersion(int & schemaVersion);
-    typedef boost::optional<std::string> ScriptOptional;
-    ScriptOptional getScript(const std::string &scriptName) const;
-    ScriptOptional getMigrationScript(int db_version) const;
+	  private:
+		Crypto *m_db;
+		bool m_inTransaction;
+	};
 
-    Row getRow(
-            const SqlConnection::DataCommandUniquePtr &selectCommand) const;
+  protected:
+	SqlConnection *m_connection;
 
-    void createTable(
-            const char *create_cmd,
-            const char *table_name);
+  private:
+	bool m_inUserTransaction;
 
-    void createView(
-            const char* create_cmd);
+	void resetDB();
+	void initDatabase();
+	void createDBSchema();
+	/**
+	 * return current database version
+	 *
+	 * @param[out] schemaVersion    if success, will contain DB schema version code
+	 *
+	 * @return false on DB empty or corrupted, true if information read
+	 */
+	bool getDBVersion(int &schemaVersion);
+	typedef boost::optional<std::string> ScriptOptional;
+	ScriptOptional getScript(const std::string &scriptName) const;
+	ScriptOptional getMigrationScript(int db_version) const;
 
-    class SchemaInfo {
-    public:
-        explicit SchemaInfo(const Crypto *db) : m_db(db) {}
+	Row getRow(
+		const SqlConnection::DataCommandUniquePtr &selectCommand) const;
 
-        void        setVersionInfo();
-        bool        getVersionInfo(int & version) const;
+	void createTable(
+		const char *create_cmd,
+		const char *table_name);
 
-    private:
-        const Crypto *m_db;
-    };
+	void createView(
+		const char *create_cmd);
 
-public:
-    class NameTable {
-    public:
-        explicit NameTable(SqlConnection* connection) : m_connection(connection) {}
+	class SchemaInfo {
+	  public:
+		explicit SchemaInfo(const Crypto *db) : m_db(db) {}
 
-        void addRow(
-                const Name &name,
-                const Label &ownerLabel);
+		void        setVersionInfo();
+		bool        getVersionInfo(int &version) const;
 
-        void deleteRow(
-                const Name &name,
-                const Label &ownerLabel);
+	  private:
+		const Crypto *m_db;
+	};
 
-        void deleteAllRows(
-                const Label &ownerLabel);
+  public:
+	class NameTable {
+	  public:
+		explicit NameTable(SqlConnection *connection) : m_connection(connection) {}
 
-        bool isPresent(
-                const Name &name,
-                const Label &ownerLabel) const;
+		void addRow(
+			const Name &name,
+			const Label &ownerLabel);
 
-    private:
-        SqlConnection* m_connection;
-    };
+		void deleteRow(
+			const Name &name,
+			const Label &ownerLabel);
 
-    class ObjectTable {
-    public:
-        explicit ObjectTable(SqlConnection* connection) : m_connection(connection) {}
+		void deleteAllRows(
+			const Label &ownerLabel);
 
-        void addRow(
-                const Row &row);
-        void updateRow(
-                const Row &row);
+		bool isPresent(
+			const Name &name,
+			const Label &ownerLabel) const;
 
-    private:
-        SqlConnection* m_connection;
-    };
+	  private:
+		SqlConnection *m_connection;
+	};
 
-    class PermissionTable {
-    public:
-        explicit PermissionTable(SqlConnection* connection) : m_connection(connection) {}
+	class ObjectTable {
+	  public:
+		explicit ObjectTable(SqlConnection *connection) : m_connection(connection) {}
 
-        void setPermission(
-                const Name &name,
-                const Label &ownerLabel,
-                const Label &accessorLabel,
-                const PermissionMask permissionMask);
+		void addRow(
+			const Row &row);
+		void updateRow(
+			const Row &row);
 
-        PermissionMaskOptional getPermissionRow(
-                const Name &name,
-                const Label &ownerLabel,
-                const Label &accessorLabel) const;
+	  private:
+		SqlConnection *m_connection;
+	};
 
-    private:
-        SqlConnection* m_connection;
-    };
+	class PermissionTable {
+	  public:
+		explicit PermissionTable(SqlConnection *connection) : m_connection(connection) {}
+
+		void setPermission(
+			const Name &name,
+			const Label &ownerLabel,
+			const Label &accessorLabel,
+			const PermissionMask permissionMask);
+
+		PermissionMaskOptional getPermissionRow(
+			const Name &name,
+			const Label &ownerLabel,
+			const Label &accessorLabel) const;
+
+	  private:
+		SqlConnection *m_connection;
+	};
 };
 } // namespace DB
 } // namespace CKM

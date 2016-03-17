@@ -37,71 +37,72 @@ namespace InitialValues {
 
 
 class InitialValuesFile {
-public:
-    InitialValuesFile(const std::string &XML_filename,
-                      CKMLogic & db_logic);
+  public:
+	InitialValuesFile(const std::string &XML_filename,
+					  CKMLogic &db_logic);
 
-    int Validate(const std::string &XSD_file);
-    int Parse();
+	int Validate(const std::string &XSD_file);
+	int Parse();
 
-protected:
-    enum ObjectType {
-        KEY,
-        CERT,
-        DATA
-    };
+  protected:
+	enum ObjectType {
+		KEY,
+		CERT,
+		DATA
+	};
 
-    XML::Parser::ElementHandlerPtr GetObjectHandler(ObjectType type, const CKM::RawBuffer &encryptedKey);
-    void ReleaseObjectHandler(ObjectType type);
+	XML::Parser::ElementHandlerPtr GetObjectHandler(ObjectType type,
+			const CKM::RawBuffer &encryptedKey);
+	void ReleaseObjectHandler(ObjectType type);
 
-    XML::Parser::ElementHandlerPtr GetBufferHandler(EncodingType type);
-    void ReleaseBufferHandler(EncodingType type);
+	XML::Parser::ElementHandlerPtr GetBufferHandler(EncodingType type);
+	void ReleaseBufferHandler(EncodingType type);
 
-    XML::Parser::ElementHandlerPtr GetPermissionHandler();
-    void ReleasePermissionHandler();
+	XML::Parser::ElementHandlerPtr GetPermissionHandler();
+	void ReleasePermissionHandler();
 
-private:
-    class HeaderHandler : public XML::Parser::ElementHandler {
-    public:
-        explicit HeaderHandler(InitialValuesFile & parent);
-        virtual void Start(const XML::Parser::Attributes & attr);
-        virtual void Characters(const std::string &) {}
-        virtual void End() {}
+  private:
+	class HeaderHandler : public XML::Parser::ElementHandler {
+	  public:
+		explicit HeaderHandler(InitialValuesFile &parent);
+		virtual void Start(const XML::Parser::Attributes &attr);
+		virtual void Characters(const std::string &) {}
+		virtual void End() {}
 
-        bool isCorrectVersion() const;
+		bool isCorrectVersion() const;
 
-    private:
-        int m_version;
-        InitialValuesFile & m_parent;
-    };
+	  private:
+		int m_version;
+		InitialValuesFile &m_parent;
+	};
 
-    class EncryptionKeyHandler : public XML::Parser::ElementHandler {
-    public:
-        explicit EncryptionKeyHandler(InitialValuesFile & parent);
-        virtual void Start(const XML::Parser::Attributes &) {}
-        virtual void Characters(const std::string &data);
-        virtual void End();
+	class EncryptionKeyHandler : public XML::Parser::ElementHandler {
+	  public:
+		explicit EncryptionKeyHandler(InitialValuesFile &parent);
+		virtual void Start(const XML::Parser::Attributes &) {}
+		virtual void Characters(const std::string &data);
+		virtual void End();
 
-        CKM::RawBuffer getEncryptedKey() const;
+		CKM::RawBuffer getEncryptedKey() const;
 
-    private:
-        CKM::RawBuffer m_encryptedKey;
-        InitialValuesFile & m_parent;
-    };
+	  private:
+		CKM::RawBuffer m_encryptedKey;
+		InitialValuesFile &m_parent;
+	};
 
-    std::string m_filename;
-    XML::Parser m_parser;
-    InitialValueHandler::InitialValueHandlerPtr m_currentHandler;
-    CKMLogic & m_db_logic;
-    typedef std::shared_ptr<HeaderHandler> HeaderHandlerPtr;
-    typedef std::shared_ptr<EncryptionKeyHandler> EncryptionKeyHandlerPtr;
-    HeaderHandlerPtr m_header;
-    EncryptionKeyHandlerPtr m_encryptionKeyHandler;
-    CKM::RawBuffer m_encryptedAESkey;
+	std::string m_filename;
+	XML::Parser m_parser;
+	InitialValueHandler::InitialValueHandlerPtr m_currentHandler;
+	CKMLogic &m_db_logic;
+	typedef std::shared_ptr<HeaderHandler> HeaderHandlerPtr;
+	typedef std::shared_ptr<EncryptionKeyHandler> EncryptionKeyHandlerPtr;
+	HeaderHandlerPtr m_header;
+	EncryptionKeyHandlerPtr m_encryptionKeyHandler;
+	CKM::RawBuffer m_encryptedAESkey;
 
-    void registerElementListeners();
-    static void Error(const XML::Parser::ErrorType errorType,
-                      const std::string & logMsg);
+	void registerElementListeners();
+	static void Error(const XML::Parser::ErrorType errorType,
+					  const std::string &logMsg);
 };
 
 }

@@ -37,179 +37,178 @@ namespace {
 const size_t RECV_BUFFER_SIZE = 2048;
 }
 
-Service::Service(IDescriptorSet& descriptors, const std::string& interface) :
-    m_interface(interface),
-    m_descriptors(descriptors)
-{
+Service::Service(IDescriptorSet &descriptors, const std::string &interface) :
+	m_interface(interface),
+	m_descriptors(descriptors) {
 }
 
-void Service::addRequest(AsyncRequest&& req)
-{
-    if (!m_socket) {
-        m_socket.reset(new SockRAII());
-        int ret;
-        if (CKM_API_SUCCESS != (ret = m_socket->connect(m_interface.c_str()))) {
-            LogError("Socket connection failed: " << ret);
-            m_socket.reset();
-            req.observer->ReceivedError(ret);
-            return;
-        }
-    }
+void Service::addRequest(AsyncRequest &&req) {
+	if (!m_socket) {
+		m_socket.reset(new SockRAII());
+		int ret;
 
-    if (m_sendQueue.empty())
-        watch(POLLOUT);
+		if (CKM_API_SUCCESS != (ret = m_socket->connect(m_interface.c_str()))) {
+			LogError("Socket connection failed: " << ret);
+			m_socket.reset();
+			req.observer->ReceivedError(ret);
+			return;
+		}
+	}
 
-    m_sendQueue.push(std::move(req));
+	if (m_sendQueue.empty())
+		watch(POLLOUT);
+
+	m_sendQueue.push(std::move(req));
 }
 
-void Service::serviceError(int error)
-{
-    if (m_socket) {
-        // stop listening on socket
-        m_descriptors.remove(m_socket->get(), false);
-        // close the socket
-        m_socket.reset();
-    }
+void Service::serviceError(int error) {
+	if (m_socket) {
+		// stop listening on socket
+		m_descriptors.remove(m_socket->get(), false);
+		// close the socket
+		m_socket.reset();
+	}
 
-    // notify observers waiting for response
-    for (const auto& it: m_responseMap)
-        it.second.observer->ReceivedError(error);
+	// notify observers waiting for response
+	for (const auto &it : m_responseMap)
+		it.second.observer->ReceivedError(error);
 
-    m_responseMap.clear();
+	m_responseMap.clear();
 
-    // notify observers waiting for send
-    while (!m_sendQueue.empty()) {
-        m_sendQueue.front().observer->ReceivedError(error);
-        m_sendQueue.pop();
-    }
+	// notify observers waiting for send
+	while (!m_sendQueue.empty()) {
+		m_sendQueue.front().observer->ReceivedError(error);
+		m_sendQueue.pop();
+	}
 
-    // clear response buffer
-    m_responseBuffer.reset();
+	// clear response buffer
+	m_responseBuffer.reset();
 }
 
-void Service::socketReady(int sock, short revents)
-{
-    if (sock != m_socket->get()) {
-        LogError("Unexpected socket: " << sock << "!=" << m_socket->get());
-        serviceError(CKM_API_ERROR_SOCKET);
-        return;
-    }
+void Service::socketReady(int sock, short revents) {
+	if (sock != m_socket->get()) {
+		LogError("Unexpected socket: " << sock << "!=" << m_socket->get());
+		serviceError(CKM_API_ERROR_SOCKET);
+		return;
+	}
 
-    try {
-        if (revents & POLLOUT)
-            sendData();
-        else if (revents & POLLIN)
-            receiveData();
-        else {
-            LogError("Unexpected event: " << revents << "!=" << POLLOUT);
-            serviceError(CKM_API_ERROR_SOCKET);
-        }
-    } catch (const IReceiver::BadResponse&) {
-        serviceError(CKM_API_ERROR_BAD_RESPONSE);
-    } catch (std::exception &e) {
-        LogError("STD exception " << e.what());
-        serviceError(CKM_API_ERROR_UNKNOWN);
-    } catch (...) {
-        LogError("Unknown exception occurred");
-        serviceError(CKM_API_ERROR_UNKNOWN);
-    }
+	try {
+		if (revents & POLLOUT)
+			sendData();
+		else if (revents & POLLIN)
+			receiveData();
+		else {
+			LogError("Unexpected event: " << revents << "!=" << POLLOUT);
+			serviceError(CKM_API_ERROR_SOCKET);
+		}
+	} catch (const IReceiver::BadResponse &) {
+		serviceError(CKM_API_ERROR_BAD_RESPONSE);
+	} catch (std::exception &e) {
+		LogError("STD exception " << e.what());
+		serviceError(CKM_API_ERROR_UNKNOWN);
+	} catch (...) {
+		LogError("Unknown exception occurred");
+		serviceError(CKM_API_ERROR_UNKNOWN);
+	}
 }
 
-void Service::sendData()
-{
-    // nothing to send? -> stop watching POLLOUT
-    if (m_sendQueue.empty()) {
-        watch(POLLIN);
-        return;
-    }
+void Service::sendData() {
+	// nothing to send? -> stop watching POLLOUT
+	if (m_sendQueue.empty()) {
+		watch(POLLIN);
+		return;
+	}
 
-    while (!m_sendQueue.empty()) {
-        AsyncRequest& req = m_sendQueue.front();
+	while (!m_sendQueue.empty()) {
+		AsyncRequest &req = m_sendQueue.front();
+		ssize_t temp = TEMP_FAILURE_RETRY(::send(m_socket->get(),
+										  &req.buffer[req.written],
+										  req.buffer.size() - req.written,
+										  MSG_NOSIGNAL));
 
-        ssize_t temp = TEMP_FAILURE_RETRY(::send(m_socket->get(),
-                                                 &req.buffer[req.written],
-                                                 req.buffer.size() - req.written,
-                                                 MSG_NOSIGNAL));
-        if (-1 == temp) {
-            int err = errno;
-            // can't write? -> go to sleep
-            if (EAGAIN == err || EWOULDBLOCK == err)
-                return;
+		if (-1 == temp) {
+			int err = errno;
 
-            LogError("Error in send: " << GetErrnoString(err));
-            serviceError(CKM_API_ERROR_SEND_FAILED);
-            return;
-        }
+			// can't write? -> go to sleep
+			if (EAGAIN == err || EWOULDBLOCK == err)
+				return;
 
-        req.written += temp;
+			LogError("Error in send: " << GetErrnoString(err));
+			serviceError(CKM_API_ERROR_SEND_FAILED);
+			return;
+		}
 
-        // finished? -> move request to response map
-        if (req.written == req.buffer.size()) {
-            AsyncRequest finished = std::move(m_sendQueue.front());
-            m_sendQueue.pop();
+		req.written += temp;
 
-            // update poll flags if necessary
-            if (m_sendQueue.empty() || m_responseMap.empty())
-                watch((m_sendQueue.empty()? 0 : POLLOUT) | POLLIN);
+		// finished? -> move request to response map
+		if (req.written == req.buffer.size()) {
+			AsyncRequest finished = std::move(m_sendQueue.front());
+			m_sendQueue.pop();
 
-            m_responseMap.insert(std::make_pair(finished.id, finished));
-        }
-    }
+			// update poll flags if necessary
+			if (m_sendQueue.empty() || m_responseMap.empty())
+				watch((m_sendQueue.empty() ? 0 : POLLOUT) | POLLIN);
+
+			m_responseMap.insert(std::make_pair(finished.id, finished));
+		}
+	}
 }
 
-void Service::receiveData()
-{
-    char buffer[RECV_BUFFER_SIZE];
+void Service::receiveData() {
+	char buffer[RECV_BUFFER_SIZE];
+	ssize_t temp = TEMP_FAILURE_RETRY(::recv(m_socket->get(), buffer, RECV_BUFFER_SIZE, 0));
 
-    ssize_t temp = TEMP_FAILURE_RETRY(::recv(m_socket->get(), buffer, RECV_BUFFER_SIZE, 0));
-    if (-1 == temp) {
-        int err = errno;
-        LogError("Error in recv: " << GetErrnoString(err));
-        serviceError(CKM_API_ERROR_RECV_FAILED);
-        return;
-    }
+	if (-1 == temp) {
+		int err = errno;
+		LogError("Error in recv: " << GetErrnoString(err));
+		serviceError(CKM_API_ERROR_RECV_FAILED);
+		return;
+	}
 
-    if (0 == temp) {
-        LogError("Recv return 0/Connection closed by server(?)");
-        serviceError(CKM_API_ERROR_RECV_FAILED);
-        return;
-    }
+	if (0 == temp) {
+		LogError("Recv return 0/Connection closed by server(?)");
+		serviceError(CKM_API_ERROR_RECV_FAILED);
+		return;
+	}
 
-    if (!m_responseBuffer)
-        m_responseBuffer.reset(new MessageBuffer());
+	if (!m_responseBuffer)
+		m_responseBuffer.reset(new MessageBuffer());
 
-    RawBuffer raw(buffer, buffer+temp);
-    m_responseBuffer->Push(raw);
+	RawBuffer raw(buffer, buffer + temp);
+	m_responseBuffer->Push(raw);
 
-    // parse while you can
-    while (m_responseBuffer->Ready()) {
-        std::unique_ptr<IReceiver> receiver;
-        if (m_interface == SERVICE_SOCKET_CKM_STORAGE)
-            receiver.reset(new StorageReceiver(*m_responseBuffer, m_responseMap));
-        else if (m_interface == SERVICE_SOCKET_OCSP)
-            receiver.reset(new OcspReceiver(*m_responseBuffer, m_responseMap));
-        else if (m_interface == SERVICE_SOCKET_ENCRYPTION)
-            receiver.reset(new EncryptionReceiver(*m_responseBuffer, m_responseMap));
-        else {
-            LogError("Unknown service " << m_interface);
-            serviceError(CKM_API_ERROR_RECV_FAILED);
-            return;
-        }
-        receiver->processResponse();
+	// parse while you can
+	while (m_responseBuffer->Ready()) {
+		std::unique_ptr<IReceiver> receiver;
 
-        if (m_responseMap.empty())
-            watch(m_sendQueue.empty()?0:POLLOUT);
-    }
+		if (m_interface == SERVICE_SOCKET_CKM_STORAGE)
+			receiver.reset(new StorageReceiver(*m_responseBuffer, m_responseMap));
+		else if (m_interface == SERVICE_SOCKET_OCSP)
+			receiver.reset(new OcspReceiver(*m_responseBuffer, m_responseMap));
+		else if (m_interface == SERVICE_SOCKET_ENCRYPTION)
+			receiver.reset(new EncryptionReceiver(*m_responseBuffer, m_responseMap));
+		else {
+			LogError("Unknown service " << m_interface);
+			serviceError(CKM_API_ERROR_RECV_FAILED);
+			return;
+		}
+
+		receiver->processResponse();
+
+		if (m_responseMap.empty())
+			watch(m_sendQueue.empty() ? 0 : POLLOUT);
+	}
 }
 
-void Service::watch(short events)
-{
-    if (0 == events)
-        m_descriptors.remove(m_socket->get(), false);
-    else
-        m_descriptors.add(m_socket->get(),
-                          events,
-                          [this](int sock, short revents){ socketReady(sock, revents); });
+void Service::watch(short events) {
+	if (0 == events)
+		m_descriptors.remove(m_socket->get(), false);
+	else
+		m_descriptors.add(m_socket->get(),
+						  events,
+		[this](int sock, short revents) {
+		socketReady(sock, revents);
+	});
 }
 
 } // namespace CKM

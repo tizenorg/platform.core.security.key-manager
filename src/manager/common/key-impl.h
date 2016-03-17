@@ -30,39 +30,38 @@
 namespace CKM {
 
 class COMMON_API KeyImpl : public Key {
-public:
-    typedef std::shared_ptr<EVP_PKEY> EvpShPtr;
+  public:
+	typedef std::shared_ptr<EVP_PKEY> EvpShPtr;
 
-    KeyImpl();
-    KeyImpl(const KeyImpl &second) = delete;
-    KeyImpl &operator=(const KeyImpl &second) = delete;
-    KeyImpl(const RawBuffer& buffer, const Password &password = Password());
-    KeyImpl(EvpShPtr pkey, KeyType type);
+	KeyImpl();
+	KeyImpl(const KeyImpl &second) = delete;
+	KeyImpl &operator=(const KeyImpl &second) = delete;
+	KeyImpl(const RawBuffer &buffer, const Password &password = Password());
+	KeyImpl(EvpShPtr pkey, KeyType type);
 
-    virtual KeyType getType() const;
-    virtual RawBuffer getDER() const;
-    virtual RawBuffer getDERPUB() const;
-    virtual RawBuffer getDERPRV() const;
-    virtual EvpShPtr getEvpShPtr() const;
-    /* //TODO
-    virtual ElipticCurve getCurve() const
-    {
-        return ElipticCurve::prime192v1;
-    }
-    */
+	virtual KeyType getType() const;
+	virtual RawBuffer getDER() const;
+	virtual RawBuffer getDERPUB() const;
+	virtual RawBuffer getDERPRV() const;
+	virtual EvpShPtr getEvpShPtr() const;
+	/* //TODO
+	virtual ElipticCurve getCurve() const
+	{
+	    return ElipticCurve::prime192v1;
+	}
+	*/
 
-    virtual int getSize() const
-    {
-        // TODO
-        return 0;
-    }
+	virtual int getSize() const {
+		// TODO
+		return 0;
+	}
 
-    virtual bool empty() const;
-    virtual ~KeyImpl() {}
+	virtual bool empty() const;
+	virtual ~KeyImpl() {}
 
-protected:
-    EvpShPtr m_pkey;
-    KeyType m_type;
+  protected:
+	EvpShPtr m_pkey;
+	KeyType m_type;
 };
 
 } // namespace CKM

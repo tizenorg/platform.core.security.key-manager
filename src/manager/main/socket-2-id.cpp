@@ -30,48 +30,45 @@ namespace CKM {
 
 namespace {
 
-int assignToString(std::vector<char> &vec, socklen_t len, std::string &res)
-{
-    if (vec.size() <= len)
-        return -1;
+int assignToString(std::vector<char> &vec, socklen_t len, std::string &res) {
+	if (vec.size() <= len)
+		return -1;
 
-    vec[len] = 0;            // old implementation getsockopt returns cstring without 0
+	vec[len] = 0;            // old implementation getsockopt returns cstring without 0
 
-    if (vec[len-1] == 0)
-        --len;               // new implementation of getsockopt returns cstring size+1
+	if (vec[len - 1] == 0)
+		--len;               // new implementation of getsockopt returns cstring size+1
 
-    res.assign(vec.data(), len);
-    return 0;
+	res.assign(vec.data(), len);
+	return 0;
 }
 
 } // namespace anonymous
 
-int Socket2Id::getCredentialsFromSocket(int sock, std::string &res)
-{
-    std::vector<char> result(SMACK_LABEL_LEN+1);
-    socklen_t length = SMACK_LABEL_LEN;
+int Socket2Id::getCredentialsFromSocket(int sock, std::string &res) {
+	std::vector<char> result(SMACK_LABEL_LEN + 1);
+	socklen_t length = SMACK_LABEL_LEN;
 
-    if (0 == getsockopt(sock, SOL_SOCKET, SO_PEERSEC, result.data(), &length))
-        return assignToString(result, length, res);
+	if (0 == getsockopt(sock, SOL_SOCKET, SO_PEERSEC, result.data(), &length))
+		return assignToString(result, length, res);
 
-    if (errno != ERANGE) {
-        LogError("getsockopt failed");
-        return -1;
-    }
+	if (errno != ERANGE) {
+		LogError("getsockopt failed");
+		return -1;
+	}
 
-    result.resize(length+1);
+	result.resize(length + 1);
 
-    if (0 > getsockopt(sock, SOL_SOCKET, SO_PEERSEC, result.data(), &length)) {
-        LogError("getsockopt failed with errno: " << errno);
-        return -1;
-    }
+	if (0 > getsockopt(sock, SOL_SOCKET, SO_PEERSEC, result.data(), &length)) {
+		LogError("getsockopt failed with errno: " << errno);
+		return -1;
+	}
 
-    return assignToString(result, length, res);
+	return assignToString(result, length, res);
 }
 
-void Socket2Id::resetCache()
-{
-    m_stringMap.clear();
+void Socket2Id::resetCache() {
+	m_stringMap.clear();
 }
 
 } // namespace CKM

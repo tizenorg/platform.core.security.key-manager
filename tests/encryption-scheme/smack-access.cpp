@@ -26,27 +26,25 @@
 
 #include <sys/smack.h>
 
-SmackAccess::SmackAccess() : m_handle(nullptr)
-{
-    if(0 != smack_accesses_new(&m_handle))
-        throw std::runtime_error("smack_accesses_new failed");
+SmackAccess::SmackAccess() : m_handle(nullptr) {
+	if (0 != smack_accesses_new(&m_handle))
+		throw std::runtime_error("smack_accesses_new failed");
 }
 
 void SmackAccess::add(
-    const std::string &subject,
-    const std::string &object,
-    const std::string &rights)
-{
-    if(0 != smack_accesses_add(m_handle, subject.c_str(), object.c_str(), rights.c_str()))
-        throw std::runtime_error("smack_accesses_add failed");
+	const std::string &subject,
+	const std::string &object,
+	const std::string &rights) {
+	if (0 != smack_accesses_add(m_handle, subject.c_str(), object.c_str(), rights.c_str()))
+		throw std::runtime_error("smack_accesses_add failed");
 }
 
 void SmackAccess::apply() {
-    if(0 != smack_accesses_apply(m_handle))
-        throw std::runtime_error("smack_accesses_apply failed");
+	if (0 != smack_accesses_apply(m_handle))
+		throw std::runtime_error("smack_accesses_apply failed");
 }
 
 SmackAccess::~SmackAccess() {
-    if (m_handle)
-        smack_accesses_free(m_handle);
+	if (m_handle)
+		smack_accesses_free(m_handle);
 }

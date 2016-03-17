@@ -29,27 +29,27 @@ namespace CKM {
 class OCSPLogic;
 
 class OCSPService : public CKM::ThreadService {
-public:
-    OCSPService();
-    OCSPService(const OCSPService &) = delete;
-    OCSPService(OCSPService &&) = delete;
-    OCSPService& operator=(const OCSPService &) = delete;
-    OCSPService& operator=(OCSPService &&) = delete;
+  public:
+	OCSPService();
+	OCSPService(const OCSPService &) = delete;
+	OCSPService(OCSPService &&) = delete;
+	OCSPService &operator=(const OCSPService &) = delete;
+	OCSPService &operator=(OCSPService &&) = delete;
 
-    virtual void Start();
-    virtual void Stop();
+	virtual void Start();
+	virtual void Stop();
 
-    virtual ~OCSPService();
+	virtual ~OCSPService();
 
-    ServiceDescriptionVector GetServiceDescription();
+	ServiceDescriptionVector GetServiceDescription();
 
-private:
-    bool ProcessOne(
-        const ConnectionID &conn,
-        ConnectionInfo &info,
-        bool allowed);
+  private:
+	bool ProcessOne(
+		const ConnectionID &conn,
+		ConnectionInfo &info,
+		bool allowed);
 
-    OCSPLogic *m_logic;
+	OCSPLogic *m_logic;
 };
 
 } // namespace CKM

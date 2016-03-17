@@ -36,29 +36,29 @@ namespace CKM {
 namespace InitialValues {
 
 class InitialValueHandler : public NoCharactersHandler {
-public:
-    typedef std::shared_ptr<InitialValueHandler> InitialValueHandlerPtr;
+  public:
+	typedef std::shared_ptr<InitialValueHandler> InitialValueHandlerPtr;
 
-    explicit InitialValueHandler(CKMLogic & db_logic, const CKM::RawBuffer &encryptedKey)
-        : m_exportable(false), m_db_logic(db_logic), m_encryptedKey(encryptedKey) {}
-    virtual ~InitialValueHandler() {}
+	explicit InitialValueHandler(CKMLogic &db_logic, const CKM::RawBuffer &encryptedKey)
+		: m_exportable(false), m_db_logic(db_logic), m_encryptedKey(encryptedKey) {}
+	virtual ~InitialValueHandler() {}
 
-    BufferHandler::BufferHandlerPtr CreateBufferHandler(EncodingType type);
-    PermissionHandler::PermissionHandlerPtr CreatePermissionHandler();
-    virtual void Start(const XML::Parser::Attributes &);
-    virtual void End();
+	BufferHandler::BufferHandlerPtr CreateBufferHandler(EncodingType type);
+	PermissionHandler::PermissionHandlerPtr CreatePermissionHandler();
+	virtual void Start(const XML::Parser::Attributes &);
+	virtual void End();
 
-protected:
-    virtual DataType getDataType() const = 0;
+  protected:
+	virtual DataType getDataType() const = 0;
 
-    Alias      m_name;
-    Password   m_password;
-    bool       m_exportable;
-    CKMLogic & m_db_logic;
-    const CKM::RawBuffer & m_encryptedKey;
+	Alias      m_name;
+	Password   m_password;
+	bool       m_exportable;
+	CKMLogic &m_db_logic;
+	const CKM::RawBuffer &m_encryptedKey;
 
-    BufferHandler::BufferHandlerPtr m_bufferHandler;
-    std::vector<PermissionHandler::PermissionHandlerPtr> m_permissions;
+	BufferHandler::BufferHandlerPtr m_bufferHandler;
+	std::vector<PermissionHandler::PermissionHandlerPtr> m_permissions;
 };
 
 }

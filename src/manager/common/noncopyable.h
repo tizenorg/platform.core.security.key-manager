@@ -22,5 +22,5 @@
 #pragma once
 
 #define NONCOPYABLE(type)                  \
-    type(const type&) = delete;            \
-    type& operator=(const type&) = delete;
+	type(const type&) = delete;            \
+	type& operator=(const type&) = delete;

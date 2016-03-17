@@ -31,17 +31,17 @@
 namespace CKM {
 
 class EncryptionLogic {
-public:
-    EncryptionLogic(IEncryptionService& service) : m_service(service) {}
-    virtual ~EncryptionLogic() {}
+  public:
+	EncryptionLogic(IEncryptionService &service) : m_service(service) {}
+	virtual ~EncryptionLogic() {}
 
-    void Crypt(const CryptoRequest& request);
-    void KeyRetrieved(MsgKeyResponse response);
+	void Crypt(const CryptoRequest &request);
+	void KeyRetrieved(MsgKeyResponse response);
 
-private:
-    IEncryptionService& m_service;
+  private:
+	IEncryptionService &m_service;
 
-    std::map<int, CryptoRequest> m_requestsMap;
+	std::map<int, CryptoRequest> m_requestsMap;
 };
 
 } /* namespace CKM */

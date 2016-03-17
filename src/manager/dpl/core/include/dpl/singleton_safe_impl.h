@@ -22,24 +22,20 @@
 #ifndef CENT_KEY_SINGLETON_SAFE_IMPL_H
 #define CENT_KEY_SINGLETON_SAFE_IMPL_H
 
-#define IMPLEMENT_SAFE_SINGLETON(Class)                                        \
-    namespace CKM {                                                                \
-    template<>                                                                     \
-    Singleton<Class>&Singleton<Class>::InternalInstance()                         \
-    {                                                                              \
-        static Singleton<Class> instance;                                          \
-        return instance;                                                           \
-    }                                                                              \
-                                                                               \
-    template<>                                                                     \
-    Class & Singleton<Class>::Instance()                                            \
-    {                                                                              \
-        Singleton<Class>& instance = Singleton<Class>::InternalInstance();         \
-        return instance;                                                           \
-    }                                                                              \
-                                                                               \
-    template Singleton<Class>&Singleton<Class>::InternalInstance();               \
-    template Class & Singleton<Class>::Instance();                                  \
-    } // namespace CKM
+#define IMPLEMENT_SAFE_SINGLETON(Class)                                    \
+	namespace CKM {                                                        \
+	template<>                                                             \
+	Singleton<Class>&Singleton<Class>::InternalInstance() {                \
+		static Singleton<Class> instance;                                  \
+		return instance;                                                   \
+	}                                                                      \
+	template<>                                                             \
+	Class & Singleton<Class>::Instance() {                                 \
+		Singleton<Class>& instance = Singleton<Class>::InternalInstance(); \
+		return instance;                                                   \
+	}                                                                      \
+	template Singleton<Class>&Singleton<Class>::InternalInstance();        \
+	template Class & Singleton<Class>::Instance();                         \
+	} // namespace CKM
 
 #endif // CENT_KEY_SINGLETON_SAFE_IMPL_H

@@ -27,19 +27,19 @@ namespace Crypto {
 namespace TZ {
 
 class SKey : public GObj {
-public:
-    SKey() {}
-    virtual ~SKey() {}
+  public:
+	SKey() {}
+	virtual ~SKey() {}
 
-protected:
+  protected:
 };
 
 class AKey : public GObj {
-public:
-    AKey() {}
-    virtual ~AKey() {}
+  public:
+	AKey() {}
+	virtual ~AKey() {}
 
-protected:
+  protected:
 };
 
 } // namespace TZ

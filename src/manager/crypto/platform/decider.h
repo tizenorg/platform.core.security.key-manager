@@ -33,18 +33,18 @@ namespace CKM {
 namespace Crypto {
 
 class Decider {
-public:
-    Decider();
-    GStore& getStore(const Token &token) const;
-    GStore& getStore(DataType data, bool exportable, bool encrypted = false) const;
+  public:
+	Decider();
+	GStore &getStore(const Token &token) const;
+	GStore &getStore(DataType data, bool exportable, bool encrypted = false) const;
 
-    virtual ~Decider() {}
+	virtual ~Decider() {}
 
-protected:
-    GStore& getStore(CryptoBackend id) const;
+  protected:
+	GStore &getStore(CryptoBackend id) const;
 
-    std::unique_ptr<GStore> m_swStore;
-    std::unique_ptr<GStore> m_tzStore;
+	std::unique_ptr<GStore> m_swStore;
+	std::unique_ptr<GStore> m_tzStore;
 };
 
 } // Crypto

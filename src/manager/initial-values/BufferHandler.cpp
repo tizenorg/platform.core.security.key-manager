@@ -28,7 +28,7 @@
 #include <base64.h>
 
 namespace {
-const char * const XML_ATTR_IV  = "IV";
+const char *const XML_ATTR_IV  = "IV";
 }
 
 namespace CKM {
@@ -37,55 +37,50 @@ namespace InitialValues {
 BufferHandler::BufferHandler(EncodingType type) : m_encoding(type) {}
 BufferHandler::~BufferHandler() {}
 
-void BufferHandler::Start(const XML::Parser::Attributes &attr)
-{
-    // get key type
-    if (attr.find(XML_ATTR_IV) != attr.end()) {
-        std::string IVstring = attr.at(XML_ATTR_IV);
-        Base64Decoder base64;
-        base64.reset();
-        base64.append(RawBuffer(IVstring.begin(), IVstring.end()));
-        base64.finalize();
-        m_IV = base64.get();
-    }
+void BufferHandler::Start(const XML::Parser::Attributes &attr) {
+	// get key type
+	if (attr.find(XML_ATTR_IV) != attr.end()) {
+		std::string IVstring = attr.at(XML_ATTR_IV);
+		Base64Decoder base64;
+		base64.reset();
+		base64.append(RawBuffer(IVstring.begin(), IVstring.end()));
+		base64.finalize();
+		m_IV = base64.get();
+	}
 }
 
 
-void BufferHandler::Characters(const std::string & data)
-{
-    m_data.reserve(m_data.size() + data.size());
-    m_data.insert(m_data.end(), data.begin(), data.end());
+void BufferHandler::Characters(const std::string &data) {
+	m_data.reserve(m_data.size() + data.size());
+	m_data.insert(m_data.end(), data.begin(), data.end());
 }
 
-void BufferHandler::End()
-{
-    // decoding section
-    switch (m_encoding) {
-    // PEM requires that "----- END" section comes right after "\n" character
-    case PEM:
-    {
-        std::string trimmed = XML::trimEachLine(std::string(m_data.begin(), m_data.end()));
-        m_data = RawBuffer(trimmed.begin(), trimmed.end());
-        break;
-    }
+void BufferHandler::End() {
+	// decoding section
+	switch (m_encoding) {
+	// PEM requires that "----- END" section comes right after "\n" character
+	case PEM: {
+		std::string trimmed = XML::trimEachLine(std::string(m_data.begin(), m_data.end()));
+		m_data = RawBuffer(trimmed.begin(), trimmed.end());
+		break;
+	}
 
-    // Base64 decoder also does not accept any whitespaces
-    case DER:
-    case BASE64:
-    case ENCRYPTED:
-    {
-        std::string trimmed = XML::trimEachLine(std::string(m_data.begin(), m_data.end()));
-        Base64Decoder base64;
-        base64.reset();
-        base64.append(RawBuffer(trimmed.begin(), trimmed.end()));
-        base64.finalize();
-        m_data = base64.get();
-        break;
-    }
+	// Base64 decoder also does not accept any whitespaces
+	case DER:
+	case BASE64:
+	case ENCRYPTED: {
+		std::string trimmed = XML::trimEachLine(std::string(m_data.begin(), m_data.end()));
+		Base64Decoder base64;
+		base64.reset();
+		base64.append(RawBuffer(trimmed.begin(), trimmed.end()));
+		base64.finalize();
+		m_data = base64.get();
+		break;
+	}
 
-    default:
-        break;
-    }
+	default:
+		break;
+	}
 }
 
 }

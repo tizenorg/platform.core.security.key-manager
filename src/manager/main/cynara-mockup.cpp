@@ -26,19 +26,17 @@
 namespace CKM {
 
 Cynara::Cynara(GenericSocketManager *socketManager) :
-    m_socketManager(socketManager),
-    m_cynara(nullptr)
-{
+	m_socketManager(socketManager),
+	m_cynara(nullptr) {
 }
 
 void Cynara::Request(
-    const std::string &,
-    const std::string &,
-    const std::string &,
-    const std::string &,
-    StatusCallback callback)
-{
-    callback(true);
+	const std::string &,
+	const std::string &,
+	const std::string &,
+	const std::string &,
+	StatusCallback callback) {
+	callback(true);
 }
 
 void Cynara::ProcessSocket() {}
@@ -46,56 +44,49 @@ void Cynara::ProcessSocket() {}
 Cynara::~Cynara() {}
 
 void Cynara::ChangeStatus(
-    int,
-    int,
-    cynara_async_status)
-{
+	int,
+	int,
+	cynara_async_status) {
 }
 
 void Cynara::ProcessResponse(
-    cynara_check_id,
-    cynara_async_call_cause,
-    int)
-{
+	cynara_check_id,
+	cynara_async_call_cause,
+	int) {
 }
 
 void Cynara::SendRequest(
-    const std::string &,
-    const std::string &,
-    const std::string &,
-    const std::string &,
-    StatusCallback)
-{
+	const std::string &,
+	const std::string &,
+	const std::string &,
+	const std::string &,
+	StatusCallback) {
 }
 
 void Cynara::ChangeStatusCallback(
-    int,
-    int,
-    cynara_async_status,
-    void *)
-{
+	int,
+	int,
+	cynara_async_status,
+	void *) {
 }
 
 void Cynara::ProcessResponseCallback(
-    cynara_check_id,
-    cynara_async_call_cause,
-    int,
-    void *)
-{
+	cynara_check_id,
+	cynara_async_call_cause,
+	int,
+	void *) {
 }
 
 bool Cynara::GetUserFromSocket(
-    int,
-    std::string &)
-{
-    return true;
+	int,
+	std::string &) {
+	return true;
 }
 
 bool Cynara::GetClientFromSocket(
-    int,
-    std::string &)
-{
-    return true;
+	int,
+	std::string &) {
+	return true;
 }
 
 } // namespace CKM
