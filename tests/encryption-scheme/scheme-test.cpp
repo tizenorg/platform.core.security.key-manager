@@ -32,6 +32,7 @@
 
 #include <fstream>
 #include <stdexcept>
+#include <vector>
 
 #include <boost/test/unit_test.hpp>
 
@@ -263,10 +264,9 @@ uid_t getUid(const char *name) {
 
     memset(&pwd, 0x00, sizeof(pwd));
 
-    std::unique_ptr<char> buf(new char[bufsize]);
-    BOOST_REQUIRE_MESSAGE(buf, "failed to allocate mem for buf for getpwname_r");
+    std::vector<char> buf(bufsize, 0);
 
-    int ret = getpwnam_r(name, &pwd, buf.get(), bufsize, &result);
+    int ret = getpwnam_r(name, &pwd, buf.data(), bufsize, &result);
     BOOST_REQUIRE_MESSAGE(ret == 0 && result, "getpwnam_r failed");
 
     return pwd.pw_uid;
@@ -281,10 +281,9 @@ gid_t getGid(const char *name) {
 
     memset(&grp, 0x00, sizeof(grp));
 
-    std::unique_ptr<char> buf(new char[bufsize]);
-    BOOST_REQUIRE_MESSAGE(buf, "failed to allocate mem for buf for getgrnam_r");
+    std::vector<char> buf(bufsize, 0);
 
-    int ret = getgrnam_r(name, &grp, buf.get(), bufsize, &result);
+    int ret = getgrnam_r(name, &grp, buf.data(), bufsize, &result);
     BOOST_REQUIRE_MESSAGE(ret == 0 && result, "getgrnam_r failed");
 
     return grp.gr_gid;
