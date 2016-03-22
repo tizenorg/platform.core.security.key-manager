@@ -337,7 +337,7 @@ int ckmc_get_cert_alias_list(ckmc_alias_list_s** ppalias_list);
  * @brief Stores PKCS12's contents inside key manager based on the provided policies.
  *        All items from the PKCS12 will use the same alias.
  *
- * @since_tizen 2.4
+ * @since_tizen @if MOBILE 2.4 @elseif WEARABLE 3.0 @endif
  * @remarks %http://tizen.org/privilege/keymanager (public level privilege) is no longer
  *          required to use this API since 3.0.
  *
@@ -374,7 +374,7 @@ int ckmc_save_pkcs12(const char *alias,
 /**
  * @brief Gets a pkcs12 from key manager.
  *
- * @since_tizen 2.4
+ * @since_tizen @if MOBILE 2.4 @elseif WEARABLE 3.0 @endif
  * @remarks %http://tizen.org/privilege/keymanager (public level privilege) is no longer
  *          required to use this API since 3.0.
  *
@@ -895,7 +895,7 @@ int ckmc_get_cert_chain_with_alias(const ckmc_cert_s *cert,
  * @brief Verifies a certificate chain and returns that chain using user entered trusted and
  *        untrusted CA certificates.
  *
- * @since_tizen 2.4
+ * @since_tizen @if MOBILE 2.4 @elseif WEARABLE 3.0 @endif
  * @remarks %http://tizen.org/privilege/keymanager (public level privilege) is no longer
  *          required to use this API since 3.0.
  *
@@ -939,7 +939,7 @@ int ckmc_get_cert_chain_with_trustedcert(const ckmc_cert_s *cert,
 /**
  * @brief Perform OCSP which checks certificate is whether revoked or not.
  *
- * @since_tizen 2.4
+ * @since_tizen @if MOBILE 2.4 @elseif WEARABLE 3.0 @endif
  * @privlevel public
  * @privilege %http://tizen.org/privilege/internet
  *
@@ -999,7 +999,7 @@ int ckmc_allow_access(const char *alias, const char *accessor, ckmc_access_right
 /**
  * @brief Allows another application to access client's application data.
  *
- * @since_tizen 2.4
+ * @since_tizen @if MOBILE 2.4 @elseif WEARABLE 3.0 @endif
  * @remarks %http://tizen.org/privilege/keymanager (public level privilege) is no longer
  *          required to use this API since 3.0.
  *
@@ -1060,7 +1060,7 @@ int ckmc_deny_access(const char *alias, const char *accessor);
 /**
  * @brief Removes a an entry (no matter of type) from the key manager.
  *
- * @since_tizen 2.4
+ * @since_tizen @if MOBILE 2.4 @elseif WEARABLE 3.0 @endif
  * @remarks %http://tizen.org/privilege/keymanager (public level privilege) is no longer
  *          required to use this API since 3.0.
  *

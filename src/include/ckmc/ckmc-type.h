@@ -152,7 +152,7 @@ typedef enum __ckmc_access_right {
 
 /**
  * @brief Enumeration for permissions to access/modify alias.
- * @since_tizen 2.4
+ * @since_tizen @if MOBILE 2.4 @elseif WEARABLE 3.0 @endif
  */
 typedef enum __ckmc_permission {
     CKMC_PERMISSION_NONE        = 0x00, /**< Clear permissions */
@@ -221,7 +221,7 @@ typedef struct __ckmc_cert_list {
 
 /**
  * @brief Enumeration for OCSP status.
- * @since_tizen 2.4
+ * @since_tizen @if MOBILE 2.4 @elseif WEARABLE 3.0 @endif
  */
 typedef enum __ckmc_ocsp_status {
     CKMC_OCSP_STATUS_GOOD = 0,          /**< OCSP status is good */
@@ -237,7 +237,7 @@ typedef enum __ckmc_ocsp_status {
 
 /**
  * @brief The structure for PKCS12 used in key manager CAPI.
- * @since_tizen 2.4
+ * @since_tizen @if MOBILE 2.4 @elseif WEARABLE 3.0 @endif
  */
 typedef struct __ckmc_pkcs12 {
     ckmc_key_s  *priv_key;      /**< The private key, may be null */
@@ -323,7 +323,7 @@ typedef enum __ckmc_algo_type {
 /**
  * @brief Creates a new @a ckmc_key_s handle and returns it.
  *
- * @since_tizen 2.4
+ * @since_tizen @if MOBILE 2.4 @elseif WEARABLE 3.0 @endif
  *
  * @remarks You must destroy the newly created @a ckmc_key_s by calling ckmc_key_free() if it is no
  *          longer needed.
@@ -364,7 +364,7 @@ void ckmc_key_free(ckmc_key_s *key);
 /**
  * @brief Creates a new @a ckmc_raw_buffer_s handle and returns it.
  *
- * @since_tizen 2.4
+ * @since_tizen @if MOBILE 2.4 @elseif WEARABLE 3.0 @endif
  *
  * @remarks You must destroy the newly created @a ckmc_raw_buffer_s by calling ckmc_buffer_free() if
  *          it is no longer needed.
@@ -398,7 +398,7 @@ void ckmc_buffer_free(ckmc_raw_buffer_s *buffer);
 /**
  * @brief Creates a new @a ckmc_cert_s handle and returns it.
  *
- * @since_tizen 2.4
+ * @since_tizen @if MOBILE 2.4 @elseif WEARABLE 3.0 @endif
  *
  * @remarks You must destroy the newly created @a ckmc_cert_s by calling ckmc_cert_free() if it is
  *          no longer needed.
@@ -464,7 +464,7 @@ int ckmc_load_cert_from_file(const char *file_path, ckmc_cert_s **cert);
 /**
  * @brief Creates a new @a ckmc_pkcs12_s handle and returns it.
  *
- * @since_tizen 2.4
+ * @since_tizen @if MOBILE 2.4 @lseif WEARABLE 3.0 @endif
  *
  * @remarks You must destroy the newly created @a ckmc_pkcs12_s by calling ckmc_pkcs12_free() if it
  *          is no longer needed.
@@ -543,7 +543,7 @@ int ckmc_load_from_pkcs12_file(const char *file_path,
 /**
  * @brief Creates a new @a ckmc_pkcs12_s handle from a given PKCS#12 file and returns it.
  *
- * @since_tizen 2.4
+ * @since_tizen @if MOBILE 2.4 @elseif WEARABLE 3.0 @endif
  *
  * @remarks You must destroy the newly created @a ckmc_pkcs12_s by calling ckmc_pkcs12_free() if
  *          they are no longer needed.
@@ -573,7 +573,7 @@ int ckmc_pkcs12_load(const char *file_path,
 /**
  * @brief Destroys the @a ckmc_pkcs12_s handle and releases all its resources.
  *
- * @since_tizen 2.4
+ * @since_tizen @if MOBILE 2.4 @elseif WEARABLE 3.0 @endif
  *
  * @param[in] pkcs12 The @a ckmc_pkcs12_s handle to destroy
  *
@@ -587,7 +587,7 @@ void ckmc_pkcs12_free(ckmc_pkcs12_s *pkcs12);
  *        The alias pointer in the returned @a ckmc_alias_list_s handle points to the provided
  *        characters and next is null.
  *
- * @since_tizen 2.4
+ * @since_tizen @if MOBILE 2.4 @elseif WEARABLE 3.0 @endif
  *
  * @remarks You must destroy the newly created @a ckmc_alias_list_s
  *          by calling ckmc_alias_list_free() or ckmc_alias_list_all_free() if it is no longer
@@ -613,7 +613,7 @@ int ckmc_alias_list_new(char *alias, ckmc_alias_list_s **ppalias_list);
  *        returns it. The alias pointer in the returned @a ckmc_alias_list_s handle points to the
  *        provided characters and next is null.
  *
- * @since_tizen 2.4
+ * @since_tizen @if MOBILE 2.4 @elseif WEARABLE 3.0 @endif
  *
  * @param[in]  previous  The last @a ckmc_alias_list_s handle to which a newly created
  *                       @a ckmc_alias_list_s is added
@@ -638,7 +638,7 @@ int ckmc_alias_list_add(ckmc_alias_list_s *previous,
  * @brief Destroys the @a ckmc_alias_list_s handle and releases resources of @a ckmc_alias_list_s
  *        from the provided first handle cascadingly.
  *
- * @since_tizen 2.4
+ * @since_tizen @if MOBILE 2.4 @elseif WEARABLE 3.0 @endif
  *
  * @remarks It does not destroy an alias itself in @a ckmc_alias_list_s.
  *
@@ -653,7 +653,7 @@ void ckmc_alias_list_free(ckmc_alias_list_s *first);
  * @brief Destroys the @a ckmc_alias_list_s handle and releases all its resources from the provided
  *        first handle cascadingly.
  *
- * @since_tizen 2.4
+ * @since_tizen @if MOBILE 2.4 @elseif WEARABLE 3.0 @endif
  *
  * @remarks It also destroys the alias in @a ckmc_alias_list_s.
  *
@@ -668,7 +668,7 @@ void ckmc_alias_list_all_free(ckmc_alias_list_s *first);
  *        The cert pointer in the returned @a ckmc_cert_list_s handle points to the provided
  *        @a ckmc_cert_s and next is null.
  *
- * @since_tizen 2.4
+ * @since_tizen @if MOBILE 2.4 @elseif WEARABLE 3.0 @endif
  *
  * @remarks You must destroy the newly created @a ckmc_cert_list_s by calling ckmc_cert_list_free()
  *          or ckmc_cert_list_all_free() if it is no longer needed.
@@ -693,7 +693,7 @@ int ckmc_cert_list_new(ckmc_cert_s *cert, ckmc_cert_list_s **ppalias_list);
  *        returns it. The cert pointer in the returned @a ckmc_alias_list_s handle points to the
  *        provided @a ckmc_cert_s and next is null.
  *
- * @since_tizen 2.4
+ * @since_tizen @if MOBILE 2.4 @elseif WEARABLE 3.0 @endif
  *
  * @param[in]  previous  The last @a ckmc_cert_list_s handle to which a newly created
  *                       @a ckmc_cert_list_s is added
@@ -716,7 +716,7 @@ int ckmc_cert_list_add(ckmc_cert_list_s *previous, ckmc_cert_s *cert, ckmc_cert_
  * @brief Destroys the @a ckmc_cert_list_s handle and releases resources of @a ckmc_cert_list_s
  *        from the provided first handle cascadingly.
  *
- * @since_tizen 2.4
+ * @since_tizen @if MOBILE 2.4 @elseif WEARABLE 3.0 @endif
  *
  * @remarks It does not destroy @a ckmc_cert_s itself in @a ckmc_cert_list_s.
  *
