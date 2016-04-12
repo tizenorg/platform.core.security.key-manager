@@ -29,56 +29,56 @@ namespace CKM {
 
 class CryptoLogic {
 public:
-    CryptoLogic();
-    CryptoLogic(const CryptoLogic &second) = delete;
-    CryptoLogic(CryptoLogic &&second);
-    CryptoLogic& operator=(CryptoLogic &&second);
-    CryptoLogic& operator=(const CryptoLogic &second) = delete;
+	CryptoLogic();
+	CryptoLogic(const CryptoLogic &second) = delete;
+	CryptoLogic(CryptoLogic &&second);
+	CryptoLogic &operator=(CryptoLogic &&second);
+	CryptoLogic &operator=(const CryptoLogic &second) = delete;
 
-    virtual ~CryptoLogic() {}
+	virtual ~CryptoLogic() {}
 
-    void decryptRow(const Password &password, DB::Row &row);
-    void encryptRow(DB::Row &row);
+	void decryptRow(const Password &password, DB::Row &row);
+	void encryptRow(DB::Row &row);
 
-    static int getSchemeVersion(int encryptionScheme);
+	static int getSchemeVersion(int encryptionScheme);
 
-    bool haveKey(const Label &smackLabel);
-    void pushKey(const Label &smackLabel,
-                 const RawBuffer &applicationKey);
-    void removeKey(const Label &smackLabel);
+	bool haveKey(const Label &smackLabel);
+	void pushKey(const Label &smackLabel,
+				 const RawBuffer &applicationKey);
+	void removeKey(const Label &smackLabel);
 
-    static const int ENCRYPTION_V1 = 0;
-    static const int ENCRYPTION_V2 = 1;
+	static const int ENCRYPTION_V1 = 0;
+	static const int ENCRYPTION_V2 = 1;
 
 private:
-    // Encryption scheme flags (enable/disable specific encryption type, multiple choice)
-    static const int ENCR_BASE64 =   1 << 0;
-    static const int ENCR_APPKEY =   1 << 1;
-    static const int ENCR_PASSWORD = 1 << 2;
+	// Encryption scheme flags (enable/disable specific encryption type, multiple choice)
+	static const int ENCR_BASE64 =   1 << 0;
+	static const int ENCR_APPKEY =   1 << 1;
+	static const int ENCR_PASSWORD = 1 << 2;
 
-    // Encryption order flags (single choice)
-    static const int ENCR_ORDER_CLEAR = 0x00ffffff;
-    static const int ENCR_ORDER_FILTER = ~ENCR_ORDER_CLEAR;
-    /*
-     * ENCR_ORDER_V1 - v1 encryption order. Token returned from store is encrypted with app key and
-     * optionally by custom user password. Is such form it is stored in db.
-     */
-    static const int ENCR_ORDER_V1 = ENCR_ORDER_CLEAR + 0;
-    /*
-     * ENCR_ORDER_V2 - v2 encryption order. Stored data is optionally encrypted by store with
-     * user password. Returned token is encrypted with app key and stored in db.
-     */
-    static const int ENCR_ORDER_V2 = ENCR_ORDER_CLEAR + 1;
+	// Encryption order flags (single choice)
+	static const int ENCR_ORDER_CLEAR = 0x00ffffff;
+	static const int ENCR_ORDER_FILTER = ~ENCR_ORDER_CLEAR;
+	/*
+	 * ENCR_ORDER_V1 - v1 encryption order. Token returned from store is encrypted with app key and
+	 * optionally by custom user password. Is such form it is stored in db.
+	 */
+	static const int ENCR_ORDER_V1 = ENCR_ORDER_CLEAR + 0;
+	/*
+	 * ENCR_ORDER_V2 - v2 encryption order. Stored data is optionally encrypted by store with
+	 * user password. Returned token is encrypted with app key and stored in db.
+	 */
+	static const int ENCR_ORDER_V2 = ENCR_ORDER_CLEAR + 1;
 
-    std::map<Label, RawBuffer> m_keyMap;
+	std::map<Label, RawBuffer> m_keyMap;
 
-    RawBuffer generateRandIV() const;
-    RawBuffer passwordToKey(const Password &password,
-                            const RawBuffer &salt,
-                            size_t keySize) const;
+	RawBuffer generateRandIV() const;
+	RawBuffer passwordToKey(const Password &password,
+							const RawBuffer &salt,
+							size_t keySize) const;
 
-    void decBase64(RawBuffer &data);
-    void encBase64(RawBuffer &data);
+	void decBase64(RawBuffer &data);
+	void encBase64(RawBuffer &data);
 };
 
 } // namespace CKM

@@ -25,69 +25,74 @@
 
 namespace CKM {
 
-void EncryptionLogic::Crypt(const CryptoRequest& request)
+void EncryptionLogic::Crypt(const CryptoRequest &request)
 {
-    // check arguments
-    if (request.input.empty()) {
-        LogError("No input data");
-        m_service.RespondToClient(request, CKM_API_ERROR_INPUT_PARAM);
-        return;
-    }
+	// check arguments
+	if (request.input.empty()) {
+		LogError("No input data");
+		m_service.RespondToClient(request, CKM_API_ERROR_INPUT_PARAM);
+		return;
+	}
 
-    // store request in the map
-    auto ret = m_requestsMap.insert(std::make_pair(request.msgId, request));
-    if (!ret.second) {
-        LogError("Request with id " << request.msgId << " already exists");
-        m_service.RespondToClient(request, CKM_API_ERROR_INPUT_PARAM);
-        return;
-    }
+	// store request in the map
+	auto ret = m_requestsMap.insert(std::make_pair(request.msgId, request));
 
-    // request key
-    try {
-        m_service.RequestKey(request);
-    } catch (...) {
-        LogError("Key request failed");
-        m_requestsMap.erase(request.msgId);
-        m_service.RespondToClient(request, CKM_API_ERROR_SERVER_ERROR);
-    }
+	if (!ret.second) {
+		LogError("Request with id " << request.msgId << " already exists");
+		m_service.RespondToClient(request, CKM_API_ERROR_INPUT_PARAM);
+		return;
+	}
+
+	// request key
+	try {
+		m_service.RequestKey(request);
+	} catch (...) {
+		LogError("Key request failed");
+		m_requestsMap.erase(request.msgId);
+		m_service.RespondToClient(request, CKM_API_ERROR_SERVER_ERROR);
+	}
 }
 
 void EncryptionLogic::KeyRetrieved(MsgKeyResponse response)
 {
-    auto it = m_requestsMap.find(response.id);
-    if (it == m_requestsMap.end()) {
-        LogError("No matching request found"); // nothing we can do
-        return;
-    }
-    CryptoRequest req = std::move(it->second);
-    m_requestsMap.erase(it);
+	auto it = m_requestsMap.find(response.id);
 
-    if (response.error != CKM_API_SUCCESS) {
-        LogError("Attempt to retrieve key failed with error: " << response.error);
-        m_service.RespondToClient(req, response.error);
-        return;
-    }
+	if (it == m_requestsMap.end()) {
+		LogError("No matching request found"); // nothing we can do
+		return;
+	}
 
-    if (!response.key) {
-        LogError("Retrieved key is empty");
-        m_service.RespondToClient(req, CKM_API_ERROR_SERVER_ERROR);
-        return;
-    }
+	CryptoRequest req = std::move(it->second);
+	m_requestsMap.erase(it);
 
-    // encrypt/decrypt
-    try {
-        RawBuffer output;
-        if (req.command == EncryptionCommand::ENCRYPT)
-            output = response.key->encrypt(req.cas, req.input);
-        else
-            output = response.key->decrypt(req.cas, req.input);
-        m_service.RespondToClient(req, CKM_API_SUCCESS, output);
-    } catch (const Exc::Exception& ex) {
-        m_service.RespondToClient(req, ex.error());
-    } catch (...) {
-        LogError("Uncaught exception from encrypt/decrypt.");
-        m_service.RespondToClient(req, CKM_API_ERROR_SERVER_ERROR);
-    }
+	if (response.error != CKM_API_SUCCESS) {
+		LogError("Attempt to retrieve key failed with error: " << response.error);
+		m_service.RespondToClient(req, response.error);
+		return;
+	}
+
+	if (!response.key) {
+		LogError("Retrieved key is empty");
+		m_service.RespondToClient(req, CKM_API_ERROR_SERVER_ERROR);
+		return;
+	}
+
+	// encrypt/decrypt
+	try {
+		RawBuffer output;
+
+		if (req.command == EncryptionCommand::ENCRYPT)
+			output = response.key->encrypt(req.cas, req.input);
+		else
+			output = response.key->decrypt(req.cas, req.input);
+
+		m_service.RespondToClient(req, CKM_API_SUCCESS, output);
+	} catch (const Exc::Exception &ex) {
+		m_service.RespondToClient(req, ex.error());
+	} catch (...) {
+		LogError("Uncaught exception from encrypt/decrypt.");
+		m_service.RespondToClient(req, CKM_API_ERROR_SERVER_ERROR);
+	}
 }
 
 } /* namespace CKM */

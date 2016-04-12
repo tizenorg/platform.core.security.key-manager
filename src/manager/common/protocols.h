@@ -35,98 +35,97 @@
 
 namespace CKM {
 
-COMMON_API extern char const * const SERVICE_SOCKET_ECHO;
-COMMON_API extern char const * const SERVICE_SOCKET_CKM_CONTROL;
-COMMON_API extern char const * const SERVICE_SOCKET_CKM_STORAGE;
-COMMON_API extern char const * const SERVICE_SOCKET_OCSP;
-COMMON_API extern char const * const SERVICE_SOCKET_ENCRYPTION;
+COMMON_API extern char const *const SERVICE_SOCKET_ECHO;
+COMMON_API extern char const *const SERVICE_SOCKET_CKM_CONTROL;
+COMMON_API extern char const *const SERVICE_SOCKET_CKM_STORAGE;
+COMMON_API extern char const *const SERVICE_SOCKET_OCSP;
+COMMON_API extern char const *const SERVICE_SOCKET_ENCRYPTION;
 
 enum class ControlCommand : int {
-    UNLOCK_USER_KEY,
-    LOCK_USER_KEY,
-    REMOVE_USER_DATA,
-    CHANGE_USER_PASSWORD,
-    RESET_USER_PASSWORD,
-    REMOVE_APP_DATA,
-    UPDATE_CC_MODE,
-    SET_PERMISSION
+	UNLOCK_USER_KEY,
+	LOCK_USER_KEY,
+	REMOVE_USER_DATA,
+	CHANGE_USER_PASSWORD,
+	RESET_USER_PASSWORD,
+	REMOVE_APP_DATA,
+	UPDATE_CC_MODE,
+	SET_PERMISSION
 };
 
 enum class LogicCommand : int {
-    GET,
-    GET_LIST,
-    SAVE,
-    REMOVE,
-    CREATE_KEY_AES,
-    CREATE_KEY_PAIR,
-    GET_CHAIN_CERT,
-    GET_CHAIN_ALIAS,
-    CREATE_SIGNATURE,
-    VERIFY_SIGNATURE,
-    SET_PERMISSION,
-    SAVE_PKCS12,
-    GET_PKCS12
+	GET,
+	GET_LIST,
+	SAVE,
+	REMOVE,
+	CREATE_KEY_AES,
+	CREATE_KEY_PAIR,
+	GET_CHAIN_CERT,
+	GET_CHAIN_ALIAS,
+	CREATE_SIGNATURE,
+	VERIFY_SIGNATURE,
+	SET_PERMISSION,
+	SAVE_PKCS12,
+	GET_PKCS12
 };
 
 enum class EncryptionCommand : int {
-    ENCRYPT,
-    DECRYPT
+	ENCRYPT,
+	DECRYPT
 };
 
 // (client side) Alias = (service side) Label::Name
-COMMON_API extern char const * const LABEL_NAME_SEPARATOR;
-COMMON_API extern char const * const OWNER_ID_SYSTEM;
+COMMON_API extern char const *const LABEL_NAME_SEPARATOR;
+COMMON_API extern char const *const OWNER_ID_SYSTEM;
 
 typedef std::string Name;
-typedef std::vector<std::pair<Label, Name> > LabelNameVector;
+typedef std::vector<std::pair<Label, Name>> LabelNameVector;
 
 class IStream;
 
 struct COMMON_API PolicySerializable : public Policy, ISerializable {
-    PolicySerializable() {};
-    explicit PolicySerializable(const Policy &policy) : Policy(policy)
-    {
-    }
+	PolicySerializable() {}
+	explicit PolicySerializable(const Policy &policy) : Policy(policy) {}
 
-    explicit PolicySerializable(IStream &stream)
-    {
-        Deserialization::Deserialize(stream, password);
-        Deserialization::Deserialize(stream, extractable);
-    }
+	explicit PolicySerializable(IStream &stream)
+	{
+		Deserialization::Deserialize(stream, password);
+		Deserialization::Deserialize(stream, extractable);
+	}
 
-    void Serialize(IStream &stream) const
-    {
-        Serialization::Serialize(stream, password);
-        Serialization::Serialize(stream, extractable);
-    }
+	void Serialize(IStream &stream) const
+	{
+		Serialization::Serialize(stream, password);
+		Serialization::Serialize(stream, extractable);
+	}
 };
 
 struct COMMON_API PKCS12Serializable : public PKCS12Impl, ISerializable {
-    PKCS12Serializable();
+	PKCS12Serializable();
 
-    PKCS12Serializable(const PKCS12Serializable &) = delete;
-    PKCS12Serializable &operator=(const PKCS12Serializable &) = delete;
+	PKCS12Serializable(const PKCS12Serializable &) = delete;
+	PKCS12Serializable &operator=(const PKCS12Serializable &) = delete;
 
-    PKCS12Serializable(PKCS12Serializable &&);
-    PKCS12Serializable &operator=(PKCS12Serializable &&);
+	PKCS12Serializable(PKCS12Serializable &&);
+	PKCS12Serializable &operator=(PKCS12Serializable &&);
 
-    explicit PKCS12Serializable(const PKCS12 &);
-    explicit PKCS12Serializable(IStream &);
-    PKCS12Serializable(KeyShPtr &&privKey,
-            CertificateShPtr &&cert,
-            CertificateShPtrVector &&chainCerts);
-    void Serialize(IStream &) const;
+	explicit PKCS12Serializable(const PKCS12 &);
+	explicit PKCS12Serializable(IStream &);
+	PKCS12Serializable(KeyShPtr &&privKey,
+					   CertificateShPtr &&cert,
+					   CertificateShPtrVector &&chainCerts);
+	void Serialize(IStream &) const;
 };
 
-struct COMMON_API CryptoAlgorithmSerializable : public CryptoAlgorithm, ISerializable {
-    DECLARE_EXCEPTION_TYPE(Exception, Base);
-    DECLARE_EXCEPTION_TYPE(Exception, UnsupportedParam);
+struct COMMON_API CryptoAlgorithmSerializable : public CryptoAlgorithm,
+	ISerializable {
+	DECLARE_EXCEPTION_TYPE(Exception, Base);
+	DECLARE_EXCEPTION_TYPE(Exception, UnsupportedParam);
 
-    CryptoAlgorithmSerializable();
-    explicit CryptoAlgorithmSerializable(const CryptoAlgorithm &);
-    explicit CryptoAlgorithmSerializable(IStream &);
+	CryptoAlgorithmSerializable();
+	explicit CryptoAlgorithmSerializable(const CryptoAlgorithm &);
+	explicit CryptoAlgorithmSerializable(IStream &);
 
-    void Serialize(IStream &) const;
+	void Serialize(IStream &) const;
 };
 
 } // namespace CKM

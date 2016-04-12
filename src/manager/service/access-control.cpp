@@ -33,101 +33,106 @@ namespace CKM {
 
 void AccessControl::updateCCMode()
 {
-    /* newMode should be extracted from global property like buxton in product */
-    bool newMode = false;
+	/* newMode should be extracted from global property like buxton in product */
+	bool newMode = false;
 
-    if (newMode == m_ccMode)
-        return;
+	if (newMode == m_ccMode)
+		return;
 
-    int iNewMode = newMode ? 1 : 0;
+	int iNewMode = newMode ? 1 : 0;
 
-    if (FIPS_mode_set(iNewMode) == 0) {
-        LogError("Error to FIPS_mode_set with param " << iNewMode);
-        return;
-    }
+	if (FIPS_mode_set(iNewMode) == 0) {
+		LogError("Error to FIPS_mode_set with param " << iNewMode);
+		return;
+	}
 
-    m_ccMode = newMode;
+	m_ccMode = newMode;
 }
 
 bool AccessControl::isCCMode() const
 {
-    return m_ccMode;
+	return m_ccMode;
 }
 
 bool AccessControl::isSystemService(const uid_t uid) const
 {
-    return uid <= SYSTEM_SVC_MAX_UID;
+	return uid <= SYSTEM_SVC_MAX_UID;
 }
 
 bool AccessControl::isSystemService(const CKM::Credentials &cred) const
 {
-    return isSystemService(cred.clientUid);
+	return isSystemService(cred.clientUid);
 }
 
 
 int AccessControl::canSave(
-        const CKM::Credentials &accessorCred,
-        const Label & ownerLabel) const
+	const CKM::Credentials &accessorCred,
+	const Label &ownerLabel) const
 {
-    if (isSystemService(accessorCred))
-        return CKM_API_SUCCESS;
-    if (ownerLabel != accessorCred.smackLabel)
-        return CKM_API_ERROR_ACCESS_DENIED;
+	if (isSystemService(accessorCred))
+		return CKM_API_SUCCESS;
 
-    return CKM_API_SUCCESS;
+	if (ownerLabel != accessorCred.smackLabel)
+		return CKM_API_ERROR_ACCESS_DENIED;
+
+	return CKM_API_SUCCESS;
 }
 
 int AccessControl::canModify(
-        const CKM::Credentials &accessorCred,
-        const Label & ownerLabel) const
+	const CKM::Credentials &accessorCred,
+	const Label &ownerLabel) const
 {
-    return canSave(accessorCred, ownerLabel);
+	return canSave(accessorCred, ownerLabel);
 }
 
 int AccessControl::canRead(
-        const CKM::Credentials &accessorCred,
-        const PermissionForLabel & permissionLabel) const
+	const CKM::Credentials &accessorCred,
+	const PermissionForLabel &permissionLabel) const
 {
-    if (isSystemService(accessorCred))
-        return CKM_API_SUCCESS;
-    if (permissionLabel & Permission::READ)
-        return CKM_API_SUCCESS;
+	if (isSystemService(accessorCred))
+		return CKM_API_SUCCESS;
 
-    return CKM_API_ERROR_DB_ALIAS_UNKNOWN;
+	if (permissionLabel & Permission::READ)
+		return CKM_API_SUCCESS;
+
+	return CKM_API_ERROR_DB_ALIAS_UNKNOWN;
 }
 
 int AccessControl::canExport(
-        const CKM::Credentials &accessorCred,
-        const DB::Row & row,
-        const PermissionForLabel & permissionLabel) const
+	const CKM::Credentials &accessorCred,
+	const DB::Row &row,
+	const PermissionForLabel &permissionLabel) const
 {
-    int ec;
-    if (CKM_API_SUCCESS != (ec = canRead(accessorCred, permissionLabel)))
-        return ec;
+	int ec;
 
-    // check if can export
-    if (row.exportable == 0)
-        return CKM_API_ERROR_NOT_EXPORTABLE;
+	if (CKM_API_SUCCESS != (ec = canRead(accessorCred, permissionLabel)))
+		return ec;
 
-    // prevent extracting private keys during cc-mode on
-    if (isCCMode() && row.dataType.isKeyPrivate())
-        return CKM_API_ERROR_BAD_REQUEST;
+	// check if can export
+	if (row.exportable == 0)
+		return CKM_API_ERROR_NOT_EXPORTABLE;
 
-    return CKM_API_SUCCESS;
+	// prevent extracting private keys during cc-mode on
+	if (isCCMode() && row.dataType.isKeyPrivate())
+		return CKM_API_ERROR_BAD_REQUEST;
+
+	return CKM_API_SUCCESS;
 }
 
 int AccessControl::canDelete(
-        const CKM::Credentials &accessorCred,
-        const PermissionForLabel & permissionLabel) const
+	const CKM::Credentials &accessorCred,
+	const PermissionForLabel &permissionLabel) const
 {
-    if (isSystemService(accessorCred))
-        return CKM_API_SUCCESS;
-    if (permissionLabel & Permission::REMOVE)
-        return CKM_API_SUCCESS;
-    if (permissionLabel & Permission::READ)
-        return CKM_API_ERROR_ACCESS_DENIED;
+	if (isSystemService(accessorCred))
+		return CKM_API_SUCCESS;
 
-    return CKM_API_ERROR_DB_ALIAS_UNKNOWN;
+	if (permissionLabel & Permission::REMOVE)
+		return CKM_API_SUCCESS;
+
+	if (permissionLabel & Permission::READ)
+		return CKM_API_ERROR_ACCESS_DENIED;
+
+	return CKM_API_ERROR_DB_ALIAS_UNKNOWN;
 }
 
 

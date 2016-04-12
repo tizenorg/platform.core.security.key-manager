@@ -26,8 +26,8 @@
 #include <InitialValuesFile.h>
 
 namespace {
-const char * const INIT_VALUES_XSD          = RO_DATA_DIR "/initial_values.xsd";
-const char * const INIT_VALUES_FILE_SUFFIX  = ".xml";
+const char *const INIT_VALUES_XSD          = RO_DATA_DIR "/initial_values.xsd";
+const char *const INIT_VALUES_FILE_SUFFIX  = ".xml";
 } // namespace anonymous
 
 namespace CKM {
@@ -35,35 +35,40 @@ namespace InitialValues {
 
 void LoadFiles(CKMLogic &logic)
 {
-    try {
-        std::vector<std::string> filesToParse;
+	try {
+		std::vector<std::string> filesToParse;
 
-        forEachFile(INITIAL_VALUES_DIR, [&filesToParse](const std::string &filename) {
-            std::string lowercaseFilename = filename;
-            std::transform(lowercaseFilename.begin(), lowercaseFilename.end(), lowercaseFilename.begin(), ::tolower);
+		forEachFile(INITIAL_VALUES_DIR, [&filesToParse](const std::string & filename) {
+			std::string lowercaseFilename = filename;
+			std::transform(lowercaseFilename.begin(), lowercaseFilename.end(),
+						   lowercaseFilename.begin(), ::tolower);
 
-            if (lowercaseFilename.find(INIT_VALUES_FILE_SUFFIX) == std::string::npos)
-                return;
+			if (lowercaseFilename.find(INIT_VALUES_FILE_SUFFIX) == std::string::npos)
+				return;
 
-            filesToParse.emplace_back(std::string(INITIAL_VALUES_DIR) + "/" + filename);
-        });
+			filesToParse.emplace_back(std::string(INITIAL_VALUES_DIR) + "/" + filename);
+		});
 
-        // parse
-        for (const auto & file : filesToParse) {
-            InitialValues::InitialValuesFile xmlFile(file.c_str(), logic);
-            int rc = xmlFile.Validate(INIT_VALUES_XSD);
-            if (rc == XML::Parser::PARSE_SUCCESS) {
-                rc = xmlFile.Parse();
-                if (rc != XML::Parser::PARSE_SUCCESS)
-                    LogError("invalid initial values file: " << file << ", parsing code: " << rc);
-            } else {
-                LogError("invalid initial values file: " << file << ", validation code: " << rc);
-            }
-            unlink(file.c_str());
-        }
-    } catch (...) {
-        LogError("The implementation of exception handling in xml parser is broken!");
-    }
+		// parse
+		for (const auto &file : filesToParse) {
+			InitialValues::InitialValuesFile xmlFile(file.c_str(), logic);
+			int rc = xmlFile.Validate(INIT_VALUES_XSD);
+
+			if (rc == XML::Parser::PARSE_SUCCESS) {
+				rc = xmlFile.Parse();
+
+				if (rc != XML::Parser::PARSE_SUCCESS)
+					LogError("invalid initial values file: " << file << ", parsing code: " << rc);
+			} else {
+				LogError("invalid initial values file: " << file << ", validation code: " <<
+						 rc);
+			}
+
+			unlink(file.c_str());
+		}
+	} catch (...) {
+		LogError("The implementation of exception handling in xml parser is broken!");
+	}
 }
 
 } // namespace InitialValues

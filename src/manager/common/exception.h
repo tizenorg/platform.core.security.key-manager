@@ -35,107 +35,110 @@ namespace Exc {
 
 class COMMON_API Exception : public std::exception {
 public:
-    Exception(const char *path, const char *function, int line, const std::string &message = std::string())
-      : m_path(path)
-      , m_function(function)
-      , m_line(line)
-      , m_message(message)
-    {}
+	Exception(const char *path, const char *function, int line,
+			  const std::string &message = std::string()) :
+		m_path(path),
+		m_function(function),
+		m_line(line),
+		m_message(message) {}
 
-    virtual ~Exception() noexcept {}
+	virtual ~Exception() noexcept {}
 
-    virtual const char *what(void) const noexcept
-    {
-        return m_message.c_str();
-    }
+	virtual const char *what(void) const noexcept
+	{
+		return m_message.c_str();
+	}
 
-    virtual std::string message(void) const
-    {
-        std::ostringstream msg;
-        msg << "[" << m_path << ":" << m_line << " " << m_function << "()] " << m_message;
-        return msg.str();
-    }
+	virtual std::string message(void) const
+	{
+		std::ostringstream msg;
+		msg << "[" << m_path << ":" << m_line << " " << m_function << "()] " <<
+			m_message;
+		return msg.str();
+	}
 
-    virtual int error(void) const = 0;
+	virtual int error(void) const = 0;
 
 protected:
-    std::string m_path;
-    std::string m_function;
-    int m_line;
-    std::string m_message;
+	std::string m_path;
+	std::string m_function;
+	int m_line;
+	std::string m_message;
 };
 
 class DefaultExceptionLogger {
 public:
-    template <typename... Args>
-    DefaultExceptionLogger(const Args&...) {}
+	template <typename... Args>
+	DefaultExceptionLogger(const Args &...) {}
 };
 
-template<
-    int Error = 0,
-    typename Stringify = StringifyAvoid,
-    typename Before = DefaultExceptionLogger,
-    typename After = DefaultExceptionLogger>
+template <
+	int Error = 0,
+	typename Stringify = StringifyAvoid,
+	typename Before = DefaultExceptionLogger,
+	typename After = DefaultExceptionLogger >
 class COMMON_API DefineException : public Exception {
 public:
-    template<typename... Args>
-    DefineException(const char *path, const char *function, int line, const Args&... args)
-      : Exception(path, function, line, Stringify::Merge(args...))
-    {
-        Before(m_path, m_function, m_line, DefineException<Error, Stringify, Before, After>::error(), m_message);
-    }
-    ~DefineException() noexcept
-    {
-        After(m_path, m_function, m_line, DefineException<Error, Stringify, Before, After>::error(), m_message);
-    }
-    virtual int error(void) const
-    {
-        return Error;
-    }
+	template<typename... Args>
+	DefineException(const char *path, const char *function, int line,
+					const Args &... args)
+		: Exception(path, function, line, Stringify::Merge(args...))
+	{
+		Before(m_path, m_function, m_line,
+			   DefineException<Error, Stringify, Before, After>::error(), m_message);
+	}
+
+	~DefineException() noexcept
+	{
+		After(m_path, m_function, m_line,
+			  DefineException<Error, Stringify, Before, After>::error(), m_message);
+	}
+
+	virtual int error(void) const
+	{
+		return Error;
+	}
 };
 
 class COMMON_API PrintError {
 public:
-    PrintError(
-        const std::string &path,
-        const std::string &function,
-        int line, int error,
-        const std::string &message = std::string());
+	PrintError(const std::string &path, const std::string &function, int line,
+			   int error, const std::string &message = std::string());
 };
 
 class COMMON_API PrintDebug {
 public:
-    PrintDebug(
-        const std::string &path,
-        const std::string &function,
-        int line, int error,
-        const std::string &message = std::string());
+	PrintDebug(
+		const std::string &path,
+		const std::string &function,
+		int line, int error,
+		const std::string &message = std::string());
 };
 
-typedef DefineException<CKM_API_ERROR_SERVER_ERROR,
-        Stringify, PrintError> InternalError;
-typedef DefineException<CKM_API_ERROR_INPUT_PARAM,
-        StringifyDebug, PrintDebug> InputParam;
-typedef DefineException<CKM_API_ERROR_DB_LOCKED,
-        Stringify, PrintError> DatabaseLocked;
-typedef DefineException<CKM_API_ERROR_FILE_SYSTEM,
-        Stringify, PrintError> FileSystemFailed;
-typedef DefineException<CKM_API_ERROR_AUTHENTICATION_FAILED,
-        StringifyDebug, PrintDebug> AuthenticationFailed;
-typedef DefineException<CKM_API_ERROR_DB_ERROR,
-        StringifyError, PrintError> DatabaseFailed;
+using InternalError =
+	DefineException<CKM_API_ERROR_SERVER_ERROR, Stringify, PrintError>;
+using DatabaseLocked =
+	DefineException<CKM_API_ERROR_DB_LOCKED, Stringify, PrintError>;
+using DatabaseFailed =
+	DefineException<CKM_API_ERROR_DB_ERROR, StringifyError, PrintError>;
+using FileSystemFailed =
+	DefineException<CKM_API_ERROR_FILE_SYSTEM, Stringify, PrintError>;
+using InputParam =
+	DefineException<CKM_API_ERROR_INPUT_PARAM, StringifyDebug, PrintDebug>;
+using AuthenticationFailed =
+	DefineException<CKM_API_ERROR_AUTHENTICATION_FAILED, StringifyDebug, PrintDebug>;
 
 
 struct TransactionFailed : public DatabaseFailed {
-    template<typename... Args>
-    TransactionFailed(const char *path, const char *function, int line, const Args&... args)
-      : DatabaseFailed(path, function, line, args...)
-    {}
+	template<typename... Args>
+	TransactionFailed(const char *path, const char *function, int line,
+					  const Args &... args)
+		: DatabaseFailed(path, function, line, args...) {}
 };
 
 } // namespace Exc
 } // namespace CKM
 
 #define ThrowErr(name, ...) \
-  throw name(__FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__);
+	throw name(__FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__);
 

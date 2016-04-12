@@ -32,132 +32,138 @@ namespace CKM {
 
 ConnectionThread::Pipe::Pipe()
 {
-    if (-1 == pipe(m_pipe))
-        ThrowMsg(PipeError, "Pipe creation failed " << GetErrnoString(errno));
+	if (-1 == pipe(m_pipe))
+		ThrowMsg(PipeError, "Pipe creation failed " << GetErrnoString(errno));
 }
 
 ConnectionThread::Pipe::~Pipe()
 {
-    close(m_pipe[0]);
-    close(m_pipe[1]);
+	close(m_pipe[0]);
+	close(m_pipe[1]);
 }
 
 void ConnectionThread::Pipe::notify()
 {
-    if (-1 == TEMP_FAILURE_RETRY(write(m_pipe[1], "j", 1)))
-        ThrowMsg(PipeError, "Writing pipe failed " << GetErrnoString(errno));
+	if (-1 == TEMP_FAILURE_RETRY(write(m_pipe[1], "j", 1)))
+		ThrowMsg(PipeError, "Writing pipe failed " << GetErrnoString(errno));
 }
 
 ConnectionThread::ConnectionThread() :
-    m_join(false),
-    m_finished(false)
+	m_join(false),
+	m_finished(false)
 {
 }
 
 ConnectionThread::~ConnectionThread()
 {
-    m_join = true;
-    m_pipe.notify();
-    m_thread.join();
+	m_join = true;
+	m_pipe.notify();
+	m_thread.join();
 }
 
 void ConnectionThread::run()
 {
-    m_thread = std::thread(&ConnectionThread::threadLoop, this);
+	m_thread = std::thread(&ConnectionThread::threadLoop, this);
 }
 
-void ConnectionThread::sendMessage(AsyncRequest&& req)
+void ConnectionThread::sendMessage(AsyncRequest &&req)
 {
-    std::unique_lock<std::mutex> lock(m_mutex);
-    m_waitingReqs.push(std::move(req));
-    lock.unlock();
+	std::unique_lock<std::mutex> lock(m_mutex);
+	m_waitingReqs.push(std::move(req));
+	lock.unlock();
 
-    // notify via pipe
-    m_pipe.notify();
+	// notify via pipe
+	m_pipe.notify();
 }
 
 void ConnectionThread::threadLoop()
 {
-    try {
-        m_descriptors.add(m_pipe.output(),
-                          POLLIN,
-                          [this](int fd, short revents){ newRequest(fd, revents); });
+	try {
+		m_descriptors.add(m_pipe.output(),
+						  POLLIN,
+		[this](int fd, short revents) {
+			newRequest(fd, revents);
+		});
 
-        while (!m_join) {
-            // wait for pipe/socket notification
-            m_descriptors.wait();
-        }
-    } catch (CKM::Exception &e) {
-        LogError("CKM::Exception::Exception " << e.DumpToString());
-    } catch (std::exception &e) {
-        LogError("STD exception " << e.what());
-    } catch (...) {
-        LogError("Unknown exception occured");
-    }
+		while (!m_join) {
+			// wait for pipe/socket notification
+			m_descriptors.wait();
+		}
+	} catch (CKM::Exception &e) {
+		LogError("CKM::Exception::Exception " << e.DumpToString());
+	} catch (std::exception &e) {
+		LogError("STD exception " << e.what());
+	} catch (...) {
+		LogError("Unknown exception occured");
+	}
 
-    // cleanup services
-    for (auto& it: m_services)
-        it.second.serviceError(CKM_API_ERROR_UNKNOWN);
-    m_services.clear();
+	// cleanup services
+	for (auto &it : m_services)
+		it.second.serviceError(CKM_API_ERROR_UNKNOWN);
 
-    // close all descriptors (including pipe)
-    m_descriptors.purge();
+	m_services.clear();
 
-    // remove waiting requests and notify about error
-    std::unique_lock<std::mutex> lock(m_mutex);
-    while (!m_waitingReqs.empty()) {
-        m_waitingReqs.front().observer->ReceivedError(CKM_API_ERROR_UNKNOWN);
-        m_waitingReqs.pop();
-    }
-    lock.unlock();
+	// close all descriptors (including pipe)
+	m_descriptors.purge();
 
-    m_finished = true;
+	// remove waiting requests and notify about error
+	std::unique_lock<std::mutex> lock(m_mutex);
+
+	while (!m_waitingReqs.empty()) {
+		m_waitingReqs.front().observer->ReceivedError(CKM_API_ERROR_UNKNOWN);
+		m_waitingReqs.pop();
+	}
+
+	lock.unlock();
+
+	m_finished = true;
 }
 
 void ConnectionThread::readPipe(int pipe, short revents)
 {
-    char buffer[1];
+	char buffer[1];
 
-    if ((revents & POLLIN) == 0)
-        ThrowMsg(PipeError, "Unexpected event: " << revents << "!=" << POLLIN);
+	if ((revents & POLLIN) == 0)
+		ThrowMsg(PipeError, "Unexpected event: " << revents << "!=" << POLLIN);
 
-    if (1 != TEMP_FAILURE_RETRY(read(pipe, buffer, 1))) {
-        int err = errno;
-        ThrowMsg(PipeError, "Failed to read pipe: " << GetErrnoString(err));
-    }
+	if (1 != TEMP_FAILURE_RETRY(read(pipe, buffer, 1))) {
+		int err = errno;
+		ThrowMsg(PipeError, "Failed to read pipe: " << GetErrnoString(err));
+	}
 }
 
-Service& ConnectionThread::getService(const std::string& interface)
+Service &ConnectionThread::getService(const std::string &interface)
 {
-    auto it = m_services.find(interface);
-    if (it != m_services.end())
-        return it->second;
+	auto it = m_services.find(interface);
 
-    // create new service, insert it and return
-    return m_services.insert(
-            std::make_pair(interface, Service(m_descriptors, interface))).first->second;
+	if (it != m_services.end())
+		return it->second;
+
+	// create new service, insert it and return
+	return m_services.insert(
+			   std::make_pair(interface, Service(m_descriptors, interface))).first->second;
 }
 
 void ConnectionThread::newRequest(int pipe, short revents)
 {
-    readPipe(pipe, revents);
+	readPipe(pipe, revents);
 
-    std::unique_lock<std::mutex> lock(m_mutex);
+	std::unique_lock<std::mutex> lock(m_mutex);
 
-    // nothing to do?
-    if (m_waitingReqs.empty()) {
-        LogWarning("Empty request queue. Are we exiting?");
-        return;
-    }
+	// nothing to do?
+	if (m_waitingReqs.empty()) {
+		LogWarning("Empty request queue. Are we exiting?");
+		return;
+	}
 
-    // zero-copy remove
-    AsyncRequest req = std::move(m_waitingReqs.front());
-    m_waitingReqs.pop();
+	// zero-copy remove
+	AsyncRequest req = std::move(m_waitingReqs.front());
+	m_waitingReqs.pop();
 
-    lock.unlock();
+	lock.unlock();
 
-    Service& srv = getService(req.interface);
-    srv.addRequest(std::move(req));
+	Service &srv = getService(req.interface);
+	srv.addRequest(std::move(req));
 }
 
 } /* namespace CKM */

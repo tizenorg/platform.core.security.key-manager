@@ -31,7 +31,7 @@ DataHandler::~DataHandler() {}
 
 DataType DataHandler::getDataType() const
 {
-    return DataType::BINARY_DATA;
+	return DataType::BINARY_DATA;
 }
 
 }

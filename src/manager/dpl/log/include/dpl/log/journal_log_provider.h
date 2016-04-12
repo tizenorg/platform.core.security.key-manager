@@ -28,14 +28,14 @@ namespace Log {
 
 class JournalLogProvider: public AbstractLogProvider {
 public:
-    JournalLogProvider();
-    virtual ~JournalLogProvider();
+	JournalLogProvider();
+	virtual ~JournalLogProvider();
 
-    virtual void Log(AbstractLogProvider::LogLevel level,
-                     const char *message,
-                     const char *fileName,
-                     int line,
-                     const char *function) const;
+	virtual void Log(AbstractLogProvider::LogLevel level,
+					 const char *message,
+					 const char *fileName,
+					 int line,
+					 const char *function) const;
 };
 
 } /* namespace Log */

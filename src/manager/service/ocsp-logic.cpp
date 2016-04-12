@@ -39,10 +39,11 @@
 namespace {
 
 const std::vector<std::string> FEATURES = {
-    "tizen.org/feature/network.internet",
-    "tizen.org/feature/network.telephony",
-    "tizen.org/feature/network.tethering.bluetooth",
-    "tizen.org/feature/network.ethernet"};
+	"tizen.org/feature/network.internet",
+	"tizen.org/feature/network.telephony",
+	"tizen.org/feature/network.tethering.bluetooth",
+	"tizen.org/feature/network.ethernet"
+};
 
 } // namespace anonymous
 
@@ -50,66 +51,69 @@ namespace CKM {
 
 OCSPLogic::OCSPLogic() : m_isNetAvailable(false)
 {
-    setNetAvailable();
+	setNetAvailable();
 }
 
 void OCSPLogic::setNetAvailable()
 {
-    bool value;
-    int ret;
+	bool value;
+	int ret;
 
-    for (const auto &feature : FEATURES) {
-        value = false;
+	for (const auto &feature : FEATURES) {
+		value = false;
 
-        ret = system_info_get_platform_bool(feature.c_str(), &value);
-        if (ret != SYSTEM_INFO_ERROR_NONE) {
-            LogError("Error in system_info_get_platform_bool. ret : " << ret);
-            continue;
-        }
+		ret = system_info_get_platform_bool(feature.c_str(), &value);
 
-        if (value) {
-            m_isNetAvailable = true;
-            return;
-        }
-    }
+		if (ret != SYSTEM_INFO_ERROR_NONE) {
+			LogError("Error in system_info_get_platform_bool. ret : " << ret);
+			continue;
+		}
 
-    m_isNetAvailable = false;
+		if (value) {
+			m_isNetAvailable = true;
+			return;
+		}
+	}
+
+	m_isNetAvailable = false;
 }
 
-RawBuffer OCSPLogic::ocspCheck(int commandId, const RawBufferVector &rawChain, bool allowed)
+RawBuffer OCSPLogic::ocspCheck(int commandId, const RawBufferVector &rawChain,
+							   bool allowed)
 {
-    CertificateImplVector certChain;
-    OCSPModule ocsp;
-    int retCode = CKM_API_SUCCESS;
-    int ocspStatus = CKM_API_OCSP_STATUS_INTERNAL_ERROR;
+	CertificateImplVector certChain;
+	OCSPModule ocsp;
+	int retCode = CKM_API_SUCCESS;
+	int ocspStatus = CKM_API_OCSP_STATUS_INTERNAL_ERROR;
 
-    if (!m_isNetAvailable) {
-        /* try again for in case of system-info error */
-        setNetAvailable();
-    }
+	if (!m_isNetAvailable) {
+		/* try again for in case of system-info error */
+		setNetAvailable();
+	}
 
-    if (!m_isNetAvailable) {
-        retCode = CKM_API_ERROR_NOT_SUPPORTED;
-    } else if (!allowed) {
-        retCode = CKM_API_ERROR_ACCESS_DENIED;
-    } else if (rawChain.size() < 2) {
-        LogError("Certificate chain should contain at least 2 certificates");
-        retCode = CKM_API_ERROR_INPUT_PARAM;
-    } else {
-        for (auto &e: rawChain) {
-            certChain.push_back(CertificateImpl(e, DataFormat::FORM_DER));
-            if (certChain.rbegin()->empty()) {
-                LogDebug("Error in parsing certificates!");
-                retCode = CKM_API_ERROR_INPUT_PARAM;
-                break;
-            }
-        }
-    }
+	if (!m_isNetAvailable) {
+		retCode = CKM_API_ERROR_NOT_SUPPORTED;
+	} else if (!allowed) {
+		retCode = CKM_API_ERROR_ACCESS_DENIED;
+	} else if (rawChain.size() < 2) {
+		LogError("Certificate chain should contain at least 2 certificates");
+		retCode = CKM_API_ERROR_INPUT_PARAM;
+	} else {
+		for (auto &e : rawChain) {
+			certChain.push_back(CertificateImpl(e, DataFormat::FORM_DER));
 
-    if (retCode == CKM_API_SUCCESS)
-        ocspStatus = ocsp.verify(certChain);
+			if (certChain.rbegin()->empty()) {
+				LogDebug("Error in parsing certificates!");
+				retCode = CKM_API_ERROR_INPUT_PARAM;
+				break;
+			}
+		}
+	}
 
-    return MessageBuffer::Serialize(commandId, retCode, ocspStatus).Pop();
+	if (retCode == CKM_API_SUCCESS)
+		ocspStatus = ocsp.verify(certChain);
+
+	return MessageBuffer::Serialize(commandId, retCode, ocspStatus).Pop();
 }
 
 } // namespace CKM

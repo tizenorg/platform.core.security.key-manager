@@ -28,15 +28,15 @@ namespace CKM {
 
 class COMMON_API KeyAESImpl : public Key {
 public:
-    explicit KeyAESImpl(const RawBuffer& buffer);
+	explicit KeyAESImpl(const RawBuffer &buffer);
 
-    virtual KeyType getType() const;
-    virtual RawBuffer getDER() const;
-    virtual int getSize() const;
-    virtual bool empty() const;
+	virtual KeyType getType() const;
+	virtual RawBuffer getDER() const;
+	virtual int getSize() const;
+	virtual bool empty() const;
 
 protected:
-    CKM::RawBuffer m_key;
+	CKM::RawBuffer m_key;
 };
 
 } // namespace CKM

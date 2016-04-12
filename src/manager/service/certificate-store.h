@@ -21,35 +21,35 @@
 #include <certificate-impl.h>
 
 extern "C" {
-struct x509_store_st;
-typedef struct x509_store_st X509_STORE;
+	struct x509_store_st;
+	typedef struct x509_store_st X509_STORE;
 }
 
 namespace CKM {
 
 class CertificateStore {
 public:
-    CertificateStore();
-    CertificateStore(const CertificateStore &) = delete;
-    CertificateStore(CertificateStore &&) = delete;
-    CertificateStore& operator=(CertificateStore &&) = delete;
-    CertificateStore& operator=(const CertificateStore &) = delete;
-    virtual ~CertificateStore();
+	CertificateStore();
+	CertificateStore(const CertificateStore &) = delete;
+	CertificateStore(CertificateStore &&) = delete;
+	CertificateStore &operator=(CertificateStore &&) = delete;
+	CertificateStore &operator=(const CertificateStore &) = delete;
+	virtual ~CertificateStore();
 
-    int verifyCertificate(
-        const CertificateImpl &cert,
-        const CertificateImplVector &untrustedVector,
-        const CertificateImplVector &trustedVector,
-        bool useTrustedSystemCertificates,
-        bool stateCCMode,
-        CertificateImplVector &chainVector);
+	int verifyCertificate(
+		const CertificateImpl &cert,
+		const CertificateImplVector &untrustedVector,
+		const CertificateImplVector &trustedVector,
+		bool useTrustedSystemCertificates,
+		bool stateCCMode,
+		CertificateImplVector &chainVector);
 
 private:
-    int addSystemCertificateDirs();
-    int addSystemCertificateFiles();
-    int addCustomTrustedCertificates(const CertificateImplVector &trustedVector);
+	int addSystemCertificateDirs();
+	int addSystemCertificateFiles();
+	int addCustomTrustedCertificates(const CertificateImplVector &trustedVector);
 
-    X509_STORE* m_store;
+	X509_STORE *m_store;
 };
 
 } // namespace CKM

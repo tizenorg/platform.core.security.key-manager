@@ -31,56 +31,58 @@ using namespace std;
 
 bool parseLong(const char *buf_ptr, long int &val)
 {
-    char *temp;
-    errno = 0;
-    long int val_tmp = strtol(buf_ptr, &temp, 0);
-    if(errno)
-        return true;
-    val = val_tmp;
-    return false;
+	char *temp;
+	errno = 0;
+	long int val_tmp = strtol(buf_ptr, &temp, 0);
+
+	if (errno)
+		return true;
+
+	val = val_tmp;
+	return false;
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-    if (argc < 3) {
-        cerr << "Usage: ckm_tool [option] [opt_arg]" << endl;
-        cerr << "option: " << endl;
-        cerr << "\t-d\tdelete user database, opt_arg specified the user UID" << endl;
-        cerr << "Example: ckm_tool -l 5000" << endl;
-        return -1;
-    }
+	if (argc < 3) {
+		cerr << "Usage: ckm_tool [option] [opt_arg]" << endl;
+		cerr << "option: " << endl;
+		cerr << "\t-d\tdelete user database, opt_arg specified the user UID" << endl;
+		cerr << "Example: ckm_tool -l 5000" << endl;
+		return -1;
+	}
 
-    // simple input arg parser
-    for (int i=1; i<argc-1; i++)
-    {
-        if(!strcmp(argv[i], "-d"))
-        {
-            long int uid;
-            if(parseLong(argv[i+1], uid) || uid<0) {
-                cerr << "parameter error: invalid UID provided to the -d option" << endl;
-                exit(-2);
-            }
+	// simple input arg parser
+	for (int i = 1; i < argc - 1; i++) {
+		if (!strcmp(argv[i], "-d")) {
+			long int uid;
 
-            // lock the database
-            auto control = CKM::Control::create();
-            int ec = control->lockUserKey(static_cast<uid_t>(uid));
-            if(ec != CKM_API_SUCCESS) {
-                cerr << "Failed, lock DB error: " << ec << endl;
-                exit(ec);
-            }
+			if (parseLong(argv[i + 1], uid) || uid < 0) {
+				cerr << "parameter error: invalid UID provided to the -d option" << endl;
+				exit(-2);
+			}
 
-            // remove the user content
-            ec = control->removeUserData(static_cast<uid_t>(uid));
-            if(ec != CKM_API_SUCCESS) {
-                cerr << "Failed, remove user data error: " << ec << endl;
-                exit(ec);
-            }
-        }
-        else {
-            std::cout << "Not enough or invalid arguments, please try again.\n";
-            exit(-1);
-        }
-    }
+			// lock the database
+			auto control = CKM::Control::create();
+			int ec = control->lockUserKey(static_cast<uid_t>(uid));
 
-    return 0;
+			if (ec != CKM_API_SUCCESS) {
+				cerr << "Failed, lock DB error: " << ec << endl;
+				exit(ec);
+			}
+
+			// remove the user content
+			ec = control->removeUserData(static_cast<uid_t>(uid));
+
+			if (ec != CKM_API_SUCCESS) {
+				cerr << "Failed, remove user data error: " << ec << endl;
+				exit(ec);
+			}
+		} else {
+			std::cout << "Not enough or invalid arguments, please try again.\n";
+			exit(-1);
+		}
+	}
+
+	return 0;
 }

@@ -27,12 +27,12 @@ namespace CKM {
 namespace InitialValues {
 
 enum EncodingType {
-    PEM,
-    DER,
-    ASCII,
-    BASE64,
-    // encrypted
-    ENCRYPTED
+	PEM,
+	DER,
+	ASCII,
+	BASE64,
+	// encrypted
+	ENCRYPTED
 };
 
 }

@@ -28,12 +28,15 @@
 namespace CKM {
 namespace InitialValues {
 
-void NoCharactersHandler::Characters(const std::string & data)
+void NoCharactersHandler::Characters(const std::string &data)
 {
-    auto f = find_if(data.begin(), data.end(), [](char c){ return std::isspace(c) == 0;});
-    if (f != data.end())
-        throw std::runtime_error(
-                "error: value handler detected raw data outside data-specific tag");
+	auto f = find_if(data.begin(), data.end(), [](char c) {
+		return std::isspace(c) == 0;
+	});
+
+	if (f != data.end())
+		throw std::runtime_error(
+			"error: value handler detected raw data outside data-specific tag");
 }
 
 NoCharactersHandler::~NoCharactersHandler()

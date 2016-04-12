@@ -28,15 +28,15 @@
 namespace CKM {
 
 struct CryptoRequest {
-    ConnectionID conn;
-    Credentials cred;
-    EncryptionCommand command;
-    int msgId;
-    CryptoAlgorithmSerializable cas;
-    Name name;
-    Label label;
-    Password password;
-    RawBuffer input;
+	ConnectionID conn;
+	Credentials cred;
+	EncryptionCommand command;
+	int msgId;
+	CryptoAlgorithmSerializable cas;
+	Name name;
+	Label label;
+	Password password;
+	RawBuffer input;
 };
 
 } /* namespace CKM */

@@ -31,7 +31,7 @@ CertHandler::~CertHandler() {}
 
 DataType CertHandler::getDataType() const
 {
-    return DataType::CERTIFICATE;
+	return DataType::CERTIFICATE;
 }
 
 }
