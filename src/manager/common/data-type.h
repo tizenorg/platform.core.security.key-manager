@@ -29,77 +29,77 @@ namespace CKM {
 
 class COMMON_API DataType {
 public:
-    class Exception {
-    public:
-        DECLARE_EXCEPTION_TYPE(CKM::Exception, Base)
-        DECLARE_EXCEPTION_TYPE(Base, OutOfRange)
-    };
+	class Exception {
+	public:
+		DECLARE_EXCEPTION_TYPE(CKM::Exception, Base)
+		DECLARE_EXCEPTION_TYPE(Base, OutOfRange)
+	};
 
-    enum Type {
-        KEY_RSA_PUBLIC,
-        KEY_RSA_PRIVATE,
-        KEY_ECDSA_PUBLIC,
-        KEY_ECDSA_PRIVATE,
-        KEY_DSA_PUBLIC,
-        KEY_DSA_PRIVATE,
-        KEY_AES,
-        CERTIFICATE,
-        BINARY_DATA,
+	enum Type {
+		KEY_RSA_PUBLIC,
+		KEY_RSA_PRIVATE,
+		KEY_ECDSA_PUBLIC,
+		KEY_ECDSA_PRIVATE,
+		KEY_DSA_PUBLIC,
+		KEY_DSA_PRIVATE,
+		KEY_AES,
+		CERTIFICATE,
+		BINARY_DATA,
 
-        CHAIN_CERT_0,
-        CHAIN_CERT_1,
-        CHAIN_CERT_2,
-        CHAIN_CERT_3,
-        CHAIN_CERT_4,
-        CHAIN_CERT_5,
-        CHAIN_CERT_6,
-        CHAIN_CERT_7,
-        CHAIN_CERT_8,
-        CHAIN_CERT_9,
-        CHAIN_CERT_10,
-        CHAIN_CERT_11,
-        CHAIN_CERT_12,
-        CHAIN_CERT_13,
-        CHAIN_CERT_14,
-        CHAIN_CERT_15,
+		CHAIN_CERT_0,
+		CHAIN_CERT_1,
+		CHAIN_CERT_2,
+		CHAIN_CERT_3,
+		CHAIN_CERT_4,
+		CHAIN_CERT_5,
+		CHAIN_CERT_6,
+		CHAIN_CERT_7,
+		CHAIN_CERT_8,
+		CHAIN_CERT_9,
+		CHAIN_CERT_10,
+		CHAIN_CERT_11,
+		CHAIN_CERT_12,
+		CHAIN_CERT_13,
+		CHAIN_CERT_14,
+		CHAIN_CERT_15,
 
-        // Special types to support database,
-        DB_KEY_FIRST = KEY_RSA_PUBLIC,
-        DB_KEY_LAST  = KEY_AES,
-        DB_CHAIN_FIRST = CHAIN_CERT_0,
-        DB_CHAIN_LAST = CHAIN_CERT_15,
-        DB_FIRST = KEY_RSA_PUBLIC,
-        DB_LAST  = CHAIN_CERT_15,
-    };
+		// Special types to support database,
+		DB_KEY_FIRST = KEY_RSA_PUBLIC,
+		DB_KEY_LAST  = KEY_AES,
+		DB_CHAIN_FIRST = CHAIN_CERT_0,
+		DB_CHAIN_LAST = CHAIN_CERT_15,
+		DB_FIRST = KEY_RSA_PUBLIC,
+		DB_LAST  = CHAIN_CERT_15,
+	};
 
-    DataType();
-    DataType(Type data);
-    explicit DataType(int data);
-    explicit DataType(KeyType key);
-    explicit DataType(AlgoType algorithmType);
-    DataType(const DataType &) = default;
-    DataType& operator=(const DataType &) = default;
+	DataType();
+	DataType(Type data);
+	explicit DataType(int data);
+	explicit DataType(KeyType key);
+	explicit DataType(AlgoType algorithmType);
+	DataType(const DataType &) = default;
+	DataType &operator=(const DataType &) = default;
 
-    operator int () const;
-    operator KeyType () const;
-    bool operator==(const DataType &second) const;
+	operator int () const;
+	operator KeyType() const;
+	bool operator==(const DataType &second) const;
 
-    bool isKey() const;
-    bool isSKey() const;
-    bool isChainCert() const;
-    bool isKeyPrivate() const;
-    bool isKeyPublic() const;
-    bool isCertificate() const;
-    bool isBinaryData() const;
+	bool isKey() const;
+	bool isSKey() const;
+	bool isChainCert() const;
+	bool isKeyPrivate() const;
+	bool isKeyPublic() const;
+	bool isCertificate() const;
+	bool isBinaryData() const;
 
-    static bool isInRange(int data);
-    static DataType getChainDatatype(unsigned int index);
+	static bool isInRange(int data);
+	static DataType getChainDatatype(unsigned int index);
 
-    // it's not virtual for a reason!
-    ~DataType() {}
+	// it's not virtual for a reason!
+	~DataType() {}
 
 private:
-    Type m_dataType;
+	Type m_dataType;
 };
 
 } // namespace CKM

@@ -36,12 +36,11 @@ namespace CKM {
 
 template<typename T>
 class FstreamAccessors : T::__filebuf_type {
-    typedef FstreamAccessors<T> MyType;
+	typedef FstreamAccessors<T> MyType;
 public:
-    static int GetFd(T &strm)
-    {
-        return static_cast<MyType *>(strm.rdbuf())->_M_file.fd();
-    }
+	static int GetFd(T &strm) {
+		return static_cast<MyType *>(strm.rdbuf())->_M_file.fd();
+	}
 };
 
 } // namespace CKM

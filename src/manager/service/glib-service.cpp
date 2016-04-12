@@ -30,8 +30,8 @@
 namespace CKM {
 
 GLIBService::GLIBService()
-  : m_state(State::NoThread)
-  , m_logic(new GLIBLogic())
+	: m_state(State::NoThread)
+	, m_logic(new GLIBLogic())
 {}
 
 void GLIBService::Event(const AcceptEvent &) {}
@@ -40,41 +40,48 @@ void GLIBService::Event(const ReadEvent &) {}
 void GLIBService::Event(const CloseEvent &) {}
 void GLIBService::Event(const SecurityEvent &) {}
 
-void GLIBService::Start(){
-    LogDebug("Starting thread!");
-    assert(m_state == State::NoThread);
-    m_thread = std::thread(ThreadLoopStatic, this);
-    m_state = State::Work;
+void GLIBService::Start()
+{
+	LogDebug("Starting thread!");
+	assert(m_state == State::NoThread);
+	m_thread = std::thread(ThreadLoopStatic, this);
+	m_state = State::Work;
 }
 
-void GLIBService::Stop(){
-    LogDebug("Stopping thread!");
-    assert(m_state == State::Work);
-    m_logic->LoopStop();
-    m_thread.join();
-    m_state = State::NoThread;
-    LogDebug("Thread for glib joined!");
+void GLIBService::Stop()
+{
+	LogDebug("Stopping thread!");
+	assert(m_state == State::Work);
+	m_logic->LoopStop();
+	m_thread.join();
+	m_state = State::NoThread;
+	LogDebug("Thread for glib joined!");
 }
 
-GLIBService::~GLIBService(){
-    delete m_logic;
+GLIBService::~GLIBService()
+{
+	delete m_logic;
 }
 
-GLIBService::ServiceDescriptionVector GLIBService::GetServiceDescription() {
-    return ServiceDescriptionVector();
+GLIBService::ServiceDescriptionVector GLIBService::GetServiceDescription()
+{
+	return ServiceDescriptionVector();
 }
 
-void GLIBService::ThreadLoopStatic(GLIBService *ptr) {
-    ptr->ThreadLoop();
+void GLIBService::ThreadLoopStatic(GLIBService *ptr)
+{
+	ptr->ThreadLoop();
 }
 
-void GLIBService::ThreadLoop() {
-    m_logic->LoopStart();
+void GLIBService::ThreadLoop()
+{
+	m_logic->LoopStart();
 }
 
-void GLIBService::SetCommManager(CommMgr *manager) {
-    m_commMgr = manager;
-    m_logic->SetCommManager(manager);
+void GLIBService::SetCommManager(CommMgr *manager)
+{
+	m_commMgr = manager;
+	m_logic->SetCommManager(manager);
 }
 
 } // namespace CKM

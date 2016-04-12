@@ -24,15 +24,15 @@
 
 namespace CKM {
 
-AsyncRequest::AsyncRequest(const ManagerAsync::ObserverPtr& o,
-                           std::string&& i,
-                           RawBuffer&& b,
-                           int id) :
-    observer(o),
-    interface(std::move(i)),
-    buffer(std::move(b)),
-    written(0),
-    id(id)
+AsyncRequest::AsyncRequest(const ManagerAsync::ObserverPtr &o,
+						   std::string &&i,
+						   RawBuffer &&b,
+						   int id) :
+	observer(o),
+	interface(std::move(i)),
+	buffer(std::move(b)),
+	written(0),
+	id(id)
 {
 }
 

@@ -44,22 +44,21 @@ class MessageService;
 
 // aggregating template
 template <typename Msg, typename ...Msgs>
-class MessageService<Msg, Msgs...> : public MessageService<Msg>, public MessageService<Msgs...> {
+class MessageService<Msg, Msgs...> : public MessageService<Msg>,
+	public MessageService<Msgs...> {
 protected:
-    // RECEIVER THREAD
-    template <typename Mgr>
-    void Register(Mgr& mgr)
-    {
-        MessageService<Msg>::Register(mgr);
-        MessageService<Msgs...>::Register(mgr);
-    }
+	// RECEIVER THREAD
+	template <typename Mgr>
+	void Register(Mgr &mgr) {
+		MessageService<Msg>::Register(mgr);
+		MessageService<Msgs...>::Register(mgr);
+	}
 
-    // RECEIVER THREAD
-    void CheckMessages()
-    {
-        MessageService<Msg>::CheckMessages();
-        MessageService<Msgs...>::CheckMessages();
-    }
+	// RECEIVER THREAD
+	void CheckMessages() {
+		MessageService<Msg>::CheckMessages();
+		MessageService<Msgs...>::CheckMessages();
+	}
 };
 
 
@@ -67,98 +66,102 @@ protected:
 template <typename Msg>
 class MessageService<Msg> {
 public:
-    MessageService() {}
-    virtual ~MessageService() {}
-    NONCOPYABLE(MessageService);
+	MessageService() {}
+	virtual ~MessageService() {}
+	NONCOPYABLE(MessageService);
 
 protected:
-    // RECEIVER THREAD: register as a listener of Msg
-    template <typename Mgr>
-    void Register(Mgr& mgr);
+	// RECEIVER THREAD: register as a listener of Msg
+	template <typename Mgr>
+	void Register(Mgr &mgr);
 
-    // SENDER THREAD: notify about new message
-    virtual void Notify() = 0;
+	// SENDER THREAD: notify about new message
+	virtual void Notify() = 0;
 
-    // RECEIVER THREAD: check if there are new messages and process each of them
-    void CheckMessages();
+	// RECEIVER THREAD: check if there are new messages and process each of them
+	void CheckMessages();
 
-    // RECEIVER THREAD: process single message
-    virtual void ProcessMessage(Msg msg) = 0;
+	// RECEIVER THREAD: process single message
+	virtual void ProcessMessage(Msg msg) = 0;
 
 private:
-    // SENDER THREAD: add message to the list
-    void AddMessage(const Msg& msg);
+	// SENDER THREAD: add message to the list
+	void AddMessage(const Msg &msg);
 
-    std::mutex m_messagesMutex;
-    std::list<Msg> m_messages;
+	std::mutex m_messagesMutex;
+	std::list<Msg> m_messages;
 };
 
 template <typename Msg>
 template <typename Mgr>
-void MessageService<Msg>::Register(Mgr& mgr)
+void MessageService<Msg>::Register(Mgr &mgr)
 {
-    mgr.Register<Msg>([this](const Msg& msg) { this->AddMessage(msg); });
+	mgr.Register<Msg>([this](const Msg & msg) {
+		this->AddMessage(msg);
+	});
 }
 
 template <typename Msg>
-void MessageService<Msg>::AddMessage(const Msg& msg)
+void MessageService<Msg>::AddMessage(const Msg &msg)
 {
-    m_messagesMutex.lock();
-    m_messages.push_back(msg);
-    m_messagesMutex.unlock();
-    Notify(); // notify about added message
+	m_messagesMutex.lock();
+	m_messages.push_back(msg);
+	m_messagesMutex.unlock();
+	Notify(); // notify about added message
 }
 
 template <typename Msg>
 void MessageService<Msg>::CheckMessages()
 {
-    while (true) {
-        m_messagesMutex.lock();
-        if (m_messages.empty()) {
-            m_messagesMutex.unlock();
-            break;
-        }
-        // move out the first message
-        Msg message = std::move(m_messages.front());
-        m_messages.pop_front();
-        m_messagesMutex.unlock();
+	while (true) {
+		m_messagesMutex.lock();
 
-        try {
-            ProcessMessage(std::move(message));
-        } catch(...) {
-            LogError("Uncaught exception in ProcessMessage");
-        }
-    }
+		if (m_messages.empty()) {
+			m_messagesMutex.unlock();
+			break;
+		}
+
+		// move out the first message
+		Msg message = std::move(m_messages.front());
+		m_messages.pop_front();
+		m_messagesMutex.unlock();
+
+		try {
+			ProcessMessage(std::move(message));
+		} catch (...) {
+			LogError("Uncaught exception in ProcessMessage");
+		}
+	}
 }
 
 
 // thread based service with messages support
 template <typename ...Msgs>
-class ThreadMessageService : public ThreadService, public MessageService<Msgs...> {
+class ThreadMessageService : public ThreadService,
+	public MessageService<Msgs...> {
 public:
-    ThreadMessageService() {}
-    virtual ~ThreadMessageService() {}
-    NONCOPYABLE(ThreadMessageService);
+	ThreadMessageService() {}
+	virtual ~ThreadMessageService() {}
+	NONCOPYABLE(ThreadMessageService);
 
-    // RECEIVER THREAD: register as a listener of all supported messages
-    template <typename Mgr>
-    void Register(Mgr& mgr)
-    {
-        MessageService<Msgs...>::Register(mgr);
-    }
+	// RECEIVER THREAD: register as a listener of all supported messages
+	template <typename Mgr>
+	void Register(Mgr &mgr) {
+		MessageService<Msgs...>::Register(mgr);
+	}
 
 private:
-    // SENDER THREAD: adds callback to RECEIVER THREAD event queue and wakes it
-    virtual void Notify()
-    {
-        CreateEvent([this]() { this->CheckMessages(); });
-    }
+	// SENDER THREAD: adds callback to RECEIVER THREAD event queue and wakes it
+	virtual void Notify() {
+		CreateEvent([this]() {
+			this->CheckMessages();
+		});
+	}
 
-    // RECEIVER THREAD
-    void CheckMessages()
-    {
-        MessageService<Msgs...>::CheckMessages();
-    }
+	// RECEIVER THREAD
+	void CheckMessages() {
+		MessageService<Msgs...>::CheckMessages();
+	}
 };
 
 } /* namespace CKM */

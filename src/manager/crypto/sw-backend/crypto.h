@@ -36,93 +36,96 @@ namespace Cipher {
 
 template<class T>
 struct Base {
-    Base()
-      : m_ctx(EVP_CIPHER_CTX_new())
-    {
-        static_assert(sizeof(typename T::value_type) == 1, "Unsupported type inside conatainer.");
-    }
-    Base(const Base&) = delete;
-    Base(Base &&) = delete;
-    Base<T>& operator=(const Base&) = delete;
-    Base<T>& operator=(Base &&) = delete;
+	Base()
+		: m_ctx(EVP_CIPHER_CTX_new()) {
+		static_assert(sizeof(typename T::value_type) == 1,
+					  "Unsupported type inside conatainer.");
+	}
+	Base(const Base &) = delete;
+	Base(Base &&) = delete;
+	Base<T> &operator=(const Base &) = delete;
+	Base<T> &operator=(Base &&) = delete;
 
-    // Low level api.
-    // Allows various cipher specific parameters to be determined and set.
-    int Control(int type, int arg, void *ptr)
-    {
-        return EVP_CIPHER_CTX_ctrl(m_ctx, type, arg, ptr);
-    }
+	// Low level api.
+	// Allows various cipher specific parameters to be determined and set.
+	int Control(int type, int arg, void *ptr) {
+		return EVP_CIPHER_CTX_ctrl(m_ctx, type, arg, ptr);
+	}
 
-    virtual void AppendAAD(const T&) = 0;
-    virtual T Append(const T&) = 0;
-    virtual T Finalize() = 0;
-    virtual ~Base()
-    {
-        EVP_CIPHER_CTX_free(m_ctx);
-    }
+	virtual void AppendAAD(const T &) = 0;
+	virtual T Append(const T &) = 0;
+	virtual T Finalize() = 0;
+	virtual ~Base() {
+		EVP_CIPHER_CTX_free(m_ctx);
+	}
 
 protected:
-    EVP_CIPHER_CTX *m_ctx;
+	EVP_CIPHER_CTX *m_ctx;
 };
 
 template<class T>
 class EvpCipherWrapper : public Base<T> {
 public:
-    using Base<T>::m_ctx;
+	using Base<T>::m_ctx;
 
-    EvpCipherWrapper(const EVP_CIPHER *type, const T &key, const T &iv, bool encryption)
-    {
-        if (static_cast<int>(key.size()) != EVP_CIPHER_key_length(type))
-            ThrowErr(Exc::Crypto::InternalError, "Wrong key size! Expected: ", EVP_CIPHER_key_length(type), " Get: ", key.size());
+	EvpCipherWrapper(const EVP_CIPHER *type, const T &key, const T &iv,
+					 bool encryption) {
+		if (static_cast<int>(key.size()) != EVP_CIPHER_key_length(type))
+			ThrowErr(Exc::Crypto::InternalError, "Wrong key size! Expected: ",
+					 EVP_CIPHER_key_length(type), " Get: ", key.size());
 
-        if (static_cast<int>(iv.size()) < EVP_CIPHER_iv_length(type))
-            ThrowErr(Exc::Crypto::InternalError, "Wrong iv size! Expected: ", EVP_CIPHER_iv_length(type), " Get: ", iv.size());
+		if (static_cast<int>(iv.size()) < EVP_CIPHER_iv_length(type))
+			ThrowErr(Exc::Crypto::InternalError, "Wrong iv size! Expected: ",
+					 EVP_CIPHER_iv_length(type), " Get: ", iv.size());
 
-        if (1 != EVP_CipherInit_ex(m_ctx, type, NULL, key.data(), iv.data(), encryption ? 1 : 0))
-            ThrowErr(Exc::Crypto::InternalError, "Failed in EVP_CipherInit");
+		if (1 != EVP_CipherInit_ex(m_ctx, type, NULL, key.data(), iv.data(),
+								   encryption ? 1 : 0))
+			ThrowErr(Exc::Crypto::InternalError, "Failed in EVP_CipherInit");
 
-        EVP_CIPHER_CTX_set_padding(m_ctx, 1);
-    }
+		EVP_CIPHER_CTX_set_padding(m_ctx, 1);
+	}
 
-    void AppendAAD(const T& data)
-    {
-        static_assert(sizeof(typename T::value_type) == 1, "Unsupported type inside container.");
-        int bytesLen;
-        if (1 != EVP_CipherUpdate(m_ctx, NULL, &bytesLen, data.data(), data.size()))
-            ThrowErr(Exc::Crypto::InternalError, "AppendAAD(): Failed in EVP_CipherUpdate");
-    }
+	void AppendAAD(const T &data) {
+		static_assert(sizeof(typename T::value_type) == 1,
+					  "Unsupported type inside container.");
+		int bytesLen;
 
-    T Append(const T& data)
-    {
-        static_assert(sizeof(typename T::value_type) == 1, "Unsupported type inside container.");
-        int bytesLen = static_cast<int>(data.size() + EVP_CIPHER_CTX_block_size(m_ctx));
-        T output(bytesLen);
-        if (1 != EVP_CipherUpdate(m_ctx, output.data(), &bytesLen, data.data(), data.size()))
-            ThrowErr(Exc::Crypto::InternalError, "Append(): Failed in EVP_CipherUpdate");
+		if (1 != EVP_CipherUpdate(m_ctx, NULL, &bytesLen, data.data(), data.size()))
+			ThrowErr(Exc::Crypto::InternalError, "AppendAAD(): Failed in EVP_CipherUpdate");
+	}
 
-        output.resize(bytesLen);
-        return output;
-    }
+	T Append(const T &data) {
+		static_assert(sizeof(typename T::value_type) == 1,
+					  "Unsupported type inside container.");
+		int bytesLen = static_cast<int>(data.size() + EVP_CIPHER_CTX_block_size(m_ctx));
+		T output(bytesLen);
 
-    T Finalize()
-    {
-        int bytesLen = EVP_CIPHER_CTX_block_size(m_ctx);
-        T output(bytesLen);
-        if (1 != EVP_CipherFinal_ex(m_ctx, output.data(), &bytesLen))
-            ThrowErr(Exc::Crypto::InternalError, "Failed in EVP_CipherFinal");
+		if (1 != EVP_CipherUpdate(m_ctx, output.data(), &bytesLen, data.data(),
+								  data.size()))
+			ThrowErr(Exc::Crypto::InternalError, "Append(): Failed in EVP_CipherUpdate");
 
-        output.resize(bytesLen);
-        return output;
-    }
+		output.resize(bytesLen);
+		return output;
+	}
+
+	T Finalize() {
+		int bytesLen = EVP_CIPHER_CTX_block_size(m_ctx);
+		T output(bytesLen);
+
+		if (1 != EVP_CipherFinal_ex(m_ctx, output.data(), &bytesLen))
+			ThrowErr(Exc::Crypto::InternalError, "Failed in EVP_CipherFinal");
+
+		output.resize(bytesLen);
+		return output;
+	}
 };
 
 #define DEFINE_CIPHER(__classname, __type, __evpcipher, __encryption) \
-class __classname : public EvpCipherWrapper<__type> {                 \
-public:                                                               \
-    __classname(const __type &key, const __type &iv)                  \
-      : EvpCipherWrapper(__evpcipher, key, iv, __encryption)          \
-    {}                                                                \
-}
+	class __classname : public EvpCipherWrapper<__type> {             \
+	public:                                                           \
+		__classname(const __type &key, const __type &iv) :            \
+			EvpCipherWrapper(__evpcipher, key, iv, __encryption) {}   \
+	}
 
 DEFINE_CIPHER(AesCbcEncryption128, RawBuffer, EVP_aes_128_cbc(), true);
 DEFINE_CIPHER(AesCbcDecryption128, RawBuffer, EVP_aes_128_cbc(), false);

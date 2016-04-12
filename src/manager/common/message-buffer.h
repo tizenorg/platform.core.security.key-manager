@@ -36,60 +36,56 @@ namespace CKM {
 
 class COMMON_API MessageBuffer : public CKM::IStream {
 public:
-    class Exception {
-    public:
-        DECLARE_EXCEPTION_TYPE(CKM::Exception, Base)
-        DECLARE_EXCEPTION_TYPE(Base, OutOfData)
-    };
+	class Exception {
+	public:
+		DECLARE_EXCEPTION_TYPE(CKM::Exception, Base)
+		DECLARE_EXCEPTION_TYPE(Base, OutOfData)
+	};
 
-    MessageBuffer() :
-        m_bytesLeft(0)
-    {
-    }
+	MessageBuffer() :
+		m_bytesLeft(0) {
+	}
 
-    MessageBuffer(MessageBuffer&&) = default;
-    MessageBuffer& operator=(MessageBuffer&&) = default;
+	MessageBuffer(MessageBuffer &&) = default;
+	MessageBuffer &operator=(MessageBuffer &&) = default;
 
-    void Push(const RawBuffer &data);
+	void Push(const RawBuffer &data);
 
-    RawBuffer Pop();
+	RawBuffer Pop();
 
-    bool Ready();
+	bool Ready();
 
-    virtual void Read(size_t num, void *bytes);
+	virtual void Read(size_t num, void *bytes);
 
-    virtual void Write(size_t num, const void *bytes);
+	virtual void Write(size_t num, const void *bytes);
 
-    // generic serialization
-    template <typename... Args>
-    static MessageBuffer Serialize(const Args&... args)
-    {
-        MessageBuffer buffer;
-        Serializer<Args...>::Serialize(buffer, args...);
-        return buffer;
-    }
+	// generic serialization
+	template <typename... Args>
+	static MessageBuffer Serialize(const Args &... args) {
+		MessageBuffer buffer;
+		Serializer<Args...>::Serialize(buffer, args...);
+		return buffer;
+	}
 
-    // generic deserialization
-    template <typename... Args>
-    void Deserialize(Args&... args)
-    {
-        Deserializer<Args...>::Deserialize(*this, args...);
-    }
+	// generic deserialization
+	template <typename... Args>
+	void Deserialize(Args &... args) {
+		Deserializer<Args...>::Deserialize(*this, args...);
+	}
 
 protected:
-    inline void CountBytesLeft()
-    {
-        if (m_bytesLeft > 0)
-            return;  // we already counted m_bytesLeft nothing to do
+	inline void CountBytesLeft() {
+		if (m_bytesLeft > 0)
+			return;  // we already counted m_bytesLeft nothing to do
 
-        if (m_buffer.Size() < sizeof(size_t))
-            return;  // we cannot count m_bytesLeft because buffer is too small
+		if (m_buffer.Size() < sizeof(size_t))
+			return;  // we cannot count m_bytesLeft because buffer is too small
 
-        m_buffer.FlattenConsume(&m_bytesLeft, sizeof(size_t));
-    }
+		m_buffer.FlattenConsume(&m_bytesLeft, sizeof(size_t));
+	}
 
-    size_t m_bytesLeft;
-    CKM::BinaryQueue m_buffer;
+	size_t m_bytesLeft;
+	CKM::BinaryQueue m_buffer;
 };
 
 } // namespace CKM

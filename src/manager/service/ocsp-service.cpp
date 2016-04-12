@@ -35,63 +35,65 @@ const CKM::InterfaceID SOCKET_ID_OCSP = 0;
 namespace CKM {
 
 OCSPService::OCSPService()
-  : m_logic(new OCSPLogic())
+	: m_logic(new OCSPLogic())
 {
 }
 
 OCSPService::~OCSPService()
 {
-    delete m_logic;
+	delete m_logic;
 }
 
 void OCSPService::Start()
 {
-    Create();
+	Create();
 }
 
 void OCSPService::Stop()
 {
-    Join();
+	Join();
 }
 
-GenericSocketService::ServiceDescriptionVector OCSPService::GetServiceDescription()
+GenericSocketService::ServiceDescriptionVector
+OCSPService::GetServiceDescription()
 {
-    return ServiceDescriptionVector {
-        {SERVICE_SOCKET_OCSP, "http://tizen.org/privilege/internet", SOCKET_ID_OCSP}
-    };
+	return ServiceDescriptionVector {
+		{SERVICE_SOCKET_OCSP, "http://tizen.org/privilege/internet", SOCKET_ID_OCSP}
+	};
 }
 
 bool OCSPService::ProcessOne(
-    const ConnectionID &conn,
-    ConnectionInfo &info,
-    bool allowed)
+	const ConnectionID &conn,
+	ConnectionInfo &info,
+	bool allowed)
 {
-    LogDebug("process One");
+	LogDebug("process One");
 
-    Try {
-        if (!info.buffer.Ready())
-            return false;
+	Try {
+		if (!info.buffer.Ready())
+			return false;
 
-        auto &buffer = info.buffer;
+		auto &buffer = info.buffer;
 
-        int commandId = 0;
-        RawBufferVector chainVector;
-        buffer.Deserialize(commandId, chainVector);
+		int commandId = 0;
+		RawBufferVector chainVector;
+		buffer.Deserialize(commandId, chainVector);
 
-        RawBuffer response = m_logic->ocspCheck(commandId, chainVector, allowed);
-        m_serviceManager->Write(conn, response);
+		RawBuffer response = m_logic->ocspCheck(commandId, chainVector, allowed);
+		m_serviceManager->Write(conn, response);
 
-        return true;
-    } Catch(MessageBuffer::Exception::Base) {
-        LogError("Broken protocol. Closing socket.");
-    } catch (const std::string &e) {
-        LogError("String exception(" << e << "). Closing socket");
-    } catch (...) {
-        LogError("Unknown exception. Closing socket.");
-    }
+		return true;
+	} Catch(MessageBuffer::Exception::Base) {
+		LogError("Broken protocol. Closing socket.");
+	}
+	catch (const std::string &e) {
+		LogError("String exception(" << e << "). Closing socket");
+	} catch (...) {
+		LogError("Unknown exception. Closing socket.");
+	}
 
-    m_serviceManager->Close(conn);
-    return false;
+	m_serviceManager->Close(conn);
+	return false;
 }
 
 } // namespace CKM

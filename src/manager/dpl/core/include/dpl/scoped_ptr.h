@@ -26,11 +26,10 @@
 #include <memory>
 
 namespace CKM {
-struct free_deleter{
-    void operator()(char *p)
-    {
-        free(p);
-    }
+struct free_deleter {
+	void operator()(char *p) {
+		free(p);
+	}
 };
 
 typedef std::unique_ptr<char, free_deleter> CharUniquePtr;

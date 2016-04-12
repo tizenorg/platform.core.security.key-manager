@@ -32,20 +32,19 @@ namespace InitialValues {
 
 class PermissionHandler : public NoCharactersHandler {
 public:
-    typedef std::shared_ptr<PermissionHandler> PermissionHandlerPtr;
+	typedef std::shared_ptr<PermissionHandler> PermissionHandlerPtr;
 
-    virtual ~PermissionHandler();
+	virtual ~PermissionHandler();
 
-    virtual void Start(const XML::Parser::Attributes &);
-    virtual void End();
+	virtual void Start(const XML::Parser::Attributes &);
+	virtual void End();
 
-    const Label & getAccessor() const
-    {
-        return m_accessor;
-    }
+	const Label &getAccessor() const {
+		return m_accessor;
+	}
 
 private:
-    Label   m_accessor;
+	Label   m_accessor;
 };
 
 }

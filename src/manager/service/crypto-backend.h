@@ -23,9 +23,9 @@
 namespace CKM {
 
 enum class CryptoBackend {
-    None = 0,
-    OpenSSL = 1,
-    TrustZone = 2
+	None = 0,
+	OpenSSL = 1,
+	TrustZone = 2
 };
 
 } // namespace CKM

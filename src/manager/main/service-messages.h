@@ -35,54 +35,54 @@ namespace CKM {
 
 // inter-service communication message base class
 struct MsgBase {
-    explicit MsgBase(int id) : id(id) {}
-    virtual ~MsgBase() {}
+	explicit MsgBase(int id) : id(id) {}
+	virtual ~MsgBase() {}
 
-    int id;
+	int id;
 };
 
 // key request
 struct MsgKeyRequest : public MsgBase {
-    MsgKeyRequest(int id,
-                  const Credentials& cred,
-                  const Name& name,
-                  const Label& label,
-                  const Password& password) :
-        MsgBase(id),
-        cred(cred),
-        name(name),
-        label(label),
-        password(password)
-    {
-    }
+	MsgKeyRequest(int id,
+				  const Credentials &cred,
+				  const Name &name,
+				  const Label &label,
+				  const Password &password) :
+		MsgBase(id),
+		cred(cred),
+		name(name),
+		label(label),
+		password(password) {
+	}
 
-    Credentials cred;
-    Name name;
-    Label label;
-    Password password;
+	Credentials cred;
+	Name name;
+	Label label;
+	Password password;
 };
 
 // key response
 struct MsgKeyResponse : public MsgBase {
-    MsgKeyResponse(int id, const Crypto::GObjShPtr& key, int errorCode = CKM_API_SUCCESS) :
-        MsgBase(id),
-        key(key),
-        error(errorCode)
-    {
-    }
+	MsgKeyResponse(int id, const Crypto::GObjShPtr &key,
+				   int errorCode = CKM_API_SUCCESS) :
+		MsgBase(id),
+		key(key),
+		error(errorCode) {
+	}
 
-    Crypto::GObjShPtr key;
-    int error;
+	Crypto::GObjShPtr key;
+	int error;
 };
 
 struct MsgRemoveAppData {
-    explicit MsgRemoveAppData(std::string pkgIdT)
-      : pkgId(std::move(pkgIdT))
-    {}
+	explicit MsgRemoveAppData(std::string pkgIdT)
+		: pkgId(std::move(pkgIdT)) {
+	}
 
-    std::string pkgId;
+	std::string pkgId;
 };
 
-typedef CommunicationManager<MsgKeyRequest, MsgKeyResponse, MsgRemoveAppData> CommMgr;
+typedef CommunicationManager<MsgKeyRequest, MsgKeyResponse, MsgRemoveAppData>
+CommMgr;
 
 } /* namespace CKM */

@@ -29,165 +29,168 @@
 
 namespace CKM {
 
-class ManagerAsync::Impl
-{
+class ManagerAsync::Impl {
 public:
-    Impl();
+	Impl();
 
-    NONCOPYABLE(Impl);
+	NONCOPYABLE(Impl);
 
-    virtual ~Impl();
+	virtual ~Impl();
 
-    void saveKey(
-            const ObserverPtr& observer,
-            const Alias& alias,
-            const KeyShPtr& key,
-            const Policy& policy);
-    void saveCertificate(
-            const ObserverPtr& observer,
-            const Alias& alias,
-            const CertificateShPtr& cert,
-            const Policy& policy);
-    void saveData(
-            const ObserverPtr& observer,
-            const Alias& alias,
-            const RawBuffer& data,
-            const Policy& policy);
-    void savePKCS12(
-            const ObserverPtr& observer,
-            const Alias &alias,
-            const PKCS12ShPtr &pkcs,
-            const Policy &keyPolicy,
-            const Policy &certPolicy);
+	void saveKey(
+		const ObserverPtr &observer,
+		const Alias &alias,
+		const KeyShPtr &key,
+		const Policy &policy);
+	void saveCertificate(
+		const ObserverPtr &observer,
+		const Alias &alias,
+		const CertificateShPtr &cert,
+		const Policy &policy);
+	void saveData(
+		const ObserverPtr &observer,
+		const Alias &alias,
+		const RawBuffer &data,
+		const Policy &policy);
+	void savePKCS12(
+		const ObserverPtr &observer,
+		const Alias &alias,
+		const PKCS12ShPtr &pkcs,
+		const Policy &keyPolicy,
+		const Policy &certPolicy);
 
-    void createSignature(
-            const ObserverPtr& observer,
-            const Alias& privateKeyAlias,
-            const Password& password,
-            const RawBuffer& message,
-            const CryptoAlgorithm& cAlgorithm);
-    void verifySignature(
-            const ObserverPtr& observer,
-            const Alias& publicKeyOrCertAlias,
-            const Password& password,
-            const RawBuffer& message,
-            const RawBuffer& signature,
-            const CryptoAlgorithm& cAlgorithm);
+	void createSignature(
+		const ObserverPtr &observer,
+		const Alias &privateKeyAlias,
+		const Password &password,
+		const RawBuffer &message,
+		const CryptoAlgorithm &cAlgorithm);
+	void verifySignature(
+		const ObserverPtr &observer,
+		const Alias &publicKeyOrCertAlias,
+		const Password &password,
+		const RawBuffer &message,
+		const RawBuffer &signature,
+		const CryptoAlgorithm &cAlgorithm);
 
-    void ocspCheck(
-            const ObserverPtr& observer,
-            const CertificateShPtrVector& certificateChainVector);
+	void ocspCheck(
+		const ObserverPtr &observer,
+		const CertificateShPtrVector &certificateChainVector);
 
-    void setPermission(
-            const ObserverPtr& observer,
-            const Alias& alias,
-            const Label& accessor,
-            PermissionMask permissionMask);
+	void setPermission(
+		const ObserverPtr &observer,
+		const Alias &alias,
+		const Label &accessor,
+		PermissionMask permissionMask);
 
-    // generic methods
-    void saveBinaryData(
-            const ManagerAsync::ObserverPtr& observer,
-            const Alias& alias,
-            DataType dataType,
-            const RawBuffer& rawData,
-            const Policy& policy);
+	// generic methods
+	void saveBinaryData(
+		const ManagerAsync::ObserverPtr &observer,
+		const Alias &alias,
+		DataType dataType,
+		const RawBuffer &rawData,
+		const Policy &policy);
 
-    void removeAlias(
-            const ManagerAsync::ObserverPtr& observer,
-            const Alias &alias);
+	void removeAlias(
+		const ManagerAsync::ObserverPtr &observer,
+		const Alias &alias);
 
-    void getBinaryData(
-            const ManagerAsync::ObserverPtr& observer,
-            const Alias &alias,
-            DataType sendDataType,
-            const Password &password);
+	void getBinaryData(
+		const ManagerAsync::ObserverPtr &observer,
+		const Alias &alias,
+		DataType sendDataType,
+		const Password &password);
 
-    void getPKCS12(
-            const ManagerAsync::ObserverPtr& observer,
-            const Alias &alias,
-            const Password &keyPassword,
-            const Password &certPassword);
+	void getPKCS12(
+		const ManagerAsync::ObserverPtr &observer,
+		const Alias &alias,
+		const Password &keyPassword,
+		const Password &certPassword);
 
-    void getBinaryDataAliasVector(
-            const ManagerAsync::ObserverPtr& observer,
-            DataType dataType);
+	void getBinaryDataAliasVector(
+		const ManagerAsync::ObserverPtr &observer,
+		DataType dataType);
 
-    void createKeyPair(
-            const ManagerAsync::ObserverPtr& observer,
-            const KeyType key_type,
-            const int     additional_param,
-            const Alias  &privateKeyAlias,
-            const Alias  &publicKeyAlias,
-            const Policy &policyPrivateKey,
-            const Policy &policyPublicKey);
+	void createKeyPair(
+		const ManagerAsync::ObserverPtr &observer,
+		const KeyType key_type,
+		const int     additional_param,
+		const Alias  &privateKeyAlias,
+		const Alias  &publicKeyAlias,
+		const Policy &policyPrivateKey,
+		const Policy &policyPublicKey);
 
-    void createKeyAES(
-            const ManagerAsync::ObserverPtr& observer,
-            const size_t  size,
-            const Alias  &keyAlias,
-            const Policy &policyKey);
+	void createKeyAES(
+		const ManagerAsync::ObserverPtr &observer,
+		const size_t  size,
+		const Alias  &keyAlias,
+		const Policy &policyKey);
 
-    template <typename T>
-    void getCertChain(
-            const ManagerAsync::ObserverPtr& observer,
-            LogicCommand command,
-            const CertificateShPtr &certificate,
-            const T &untrusted,
-            const T &trusted,
-            bool useSystemTrustedCertificates)
-    {
-        observerCheck(observer);
-        if (!certificate) {
-            observer->ReceivedError(CKM_API_ERROR_INPUT_PARAM);
-            return;
-        }
-        try_catch_async([&] {
-            sendToStorage(observer,
-                          static_cast<int>(command),
-                          m_counter,
-                          certificate->getDER(),
-                          untrusted,
-                          trusted,
-                          useSystemTrustedCertificates);
-        }, [&observer](int error){ observer->ReceivedError(error);});
-    }
+	template <typename T>
+	void getCertChain(
+		const ManagerAsync::ObserverPtr &observer,
+		LogicCommand command,
+		const CertificateShPtr &certificate,
+		const T &untrusted,
+		const T &trusted,
+		bool useSystemTrustedCertificates) {
+		observerCheck(observer);
 
-    void crypt(
-            const ObserverPtr& observer,
-            const CryptoAlgorithm& algo,
-            const Alias& keyAlias,
-            const Password& password,
-            const RawBuffer& input,
-            bool encryption);
+		if (!certificate) {
+			observer->ReceivedError(CKM_API_ERROR_INPUT_PARAM);
+			return;
+		}
+
+		try_catch_async([&] {
+			sendToStorage(observer,
+			static_cast<int>(command),
+			m_counter,
+			certificate->getDER(),
+			untrusted,
+			trusted,
+			useSystemTrustedCertificates);
+		}, [&observer](int error) {
+			observer->ReceivedError(error);
+		});
+	}
+
+	void crypt(
+		const ObserverPtr &observer,
+		const CryptoAlgorithm &algo,
+		const Alias &keyAlias,
+		const Password &password,
+		const RawBuffer &input,
+		bool encryption);
 
 private:
-    template <typename... Args>
-    void sendToStorage(const ManagerAsync::ObserverPtr& observer, const Args&... args)
-    {
-        m_counter++; // yes, it changes m_counter argument passed in args
+	template <typename... Args>
+	void sendToStorage(const ManagerAsync::ObserverPtr &observer,
+					   const Args &... args) {
+		m_counter++; // yes, it changes m_counter argument passed in args
 
-        auto send = MessageBuffer::Serialize(args...);
-        thread()->sendMessage(AsyncRequest(observer,
-                                           SERVICE_SOCKET_CKM_STORAGE,
-                                           send.Pop(),
-                                           m_counter));
-    }
+		auto send = MessageBuffer::Serialize(args...);
+		thread()->sendMessage(AsyncRequest(observer,
+										   SERVICE_SOCKET_CKM_STORAGE,
+										   send.Pop(),
+										   m_counter));
+	}
 
-    void observerCheck(const ManagerAsync::ObserverPtr& observer);
+	void observerCheck(const ManagerAsync::ObserverPtr &observer);
 
-    typedef std::unique_ptr<ConnectionThread> ConnectionThreadPtr;
+	typedef std::unique_ptr<ConnectionThread> ConnectionThreadPtr;
 
-    ConnectionThreadPtr& thread() {
-        if (!m_thread || m_thread->finished()) {
-            m_thread.reset(new ConnectionThread());
-            m_thread->run();
-        }
-        return m_thread;
-    }
+	ConnectionThreadPtr &thread() {
+		if (!m_thread || m_thread->finished()) {
+			m_thread.reset(new ConnectionThread());
+			m_thread->run();
+		}
 
-    ConnectionThreadPtr m_thread;
+		return m_thread;
+	}
 
-    static int m_counter;
+	ConnectionThreadPtr m_thread;
+
+	static int m_counter;
 };
 
 } // namespace CKM

@@ -29,7 +29,7 @@ namespace CKM {
 namespace XML {
 
 RawBuffer removeWhiteChars(const RawBuffer &buffer);
-std::string trim(const std::string& s);
+std::string trim(const std::string &s);
 std::string trimEachLine(const std::string &s);
 
 }

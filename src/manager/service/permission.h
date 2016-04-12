@@ -27,21 +27,20 @@
 namespace CKM {
 typedef boost::optional<PermissionMask> PermissionMaskOptional;
 struct PermissionForLabel {
-    Label accessorLabel;        // who is accessing the item
-    PermissionMask permissionMask;
+	Label accessorLabel;        // who is accessing the item
+	PermissionMask permissionMask;
 
-    PermissionForLabel(const Label & accessor, const PermissionMaskOptional mask)
-    {
-        accessorLabel = accessor;
-        if (mask)
-            permissionMask = *mask;
-        else
-            permissionMask = Permission::NONE;
-    }
+	PermissionForLabel(const Label &accessor, const PermissionMaskOptional mask) {
+		accessorLabel = accessor;
 
-    int operator&(const Permission &bit) const
-    {
-        return permissionMask & bit;
-    }
+		if (mask)
+			permissionMask = *mask;
+		else
+			permissionMask = Permission::NONE;
+	}
+
+	int operator&(const Permission &bit) const {
+		return permissionMask & bit;
+	}
 };
 } // namespace CKM

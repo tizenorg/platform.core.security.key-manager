@@ -34,61 +34,62 @@ ThreadService::~ThreadService()
 
 void ThreadService::Handle(const AcceptEvent &event)
 {
-    LogDebug("Accept event");
-    auto &info = m_connectionInfoMap[event.connectionID.counter];
-    info.interfaceID = event.interfaceID;
-    info.credentials = event.credentials;
+	LogDebug("Accept event");
+	auto &info = m_connectionInfoMap[event.connectionID.counter];
+	info.interfaceID = event.interfaceID;
+	info.credentials = event.credentials;
 }
 
 void ThreadService::Handle(const WriteEvent &event)
 {
-    LogDebug("Write event (" << event.size << " bytes )");
+	LogDebug("Write event (" << event.size << " bytes )");
 }
 
 void ThreadService::Handle(const ReadEvent &event)
 {
-    LogDebug("Read event");
-    auto &info = m_connectionInfoMap[event.connectionID.counter];
-    info.buffer.Push(event.rawBuffer);
+	LogDebug("Read event");
+	auto &info = m_connectionInfoMap[event.connectionID.counter];
+	info.buffer.Push(event.rawBuffer);
 
-    if (!info.buffer.Ready())
-        return;
+	if (!info.buffer.Ready())
+		return;
 
-    if (info.checkInProgress)
-        return;
+	if (info.checkInProgress)
+		return;
 
-    info.checkInProgress = true;
-    m_serviceManager->SecurityCheck(event.connectionID);
+	info.checkInProgress = true;
+	m_serviceManager->SecurityCheck(event.connectionID);
 }
 
 void ThreadService::Handle(const CloseEvent &event)
 {
-    LogDebug("Close event");
-    m_connectionInfoMap.erase(event.connectionID.counter);
+	LogDebug("Close event");
+	m_connectionInfoMap.erase(event.connectionID.counter);
 }
 
 void ThreadService::Handle(const SecurityEvent &event)
 {
-    LogDebug("Security event");
-    auto it = m_connectionInfoMap.find(event.connectionID.counter);
+	LogDebug("Security event");
+	auto it = m_connectionInfoMap.find(event.connectionID.counter);
 
-    if (it == m_connectionInfoMap.end()) {
-        LogDebug("Connection has been closed already");
-        return;
-    }
-    auto &info = it->second;
+	if (it == m_connectionInfoMap.end()) {
+		LogDebug("Connection has been closed already");
+		return;
+	}
 
-    if (!info.checkInProgress) {
-        LogDebug("Wrong status in info.checkInProgress. Expected: true.");
-        return;
-    }
+	auto &info = it->second;
 
-    ProcessOne(event.connectionID, info, event.allowed);
+	if (!info.checkInProgress) {
+		LogDebug("Wrong status in info.checkInProgress. Expected: true.");
+		return;
+	}
 
-    if (info.buffer.Ready())
-        m_serviceManager->SecurityCheck(event.connectionID);
-    else
-        info.checkInProgress = false;
+	ProcessOne(event.connectionID, info, event.allowed);
+
+	if (info.buffer.Ready())
+		m_serviceManager->SecurityCheck(event.connectionID);
+	else
+		info.checkInProgress = false;
 }
 
 } /* namespace CKM */

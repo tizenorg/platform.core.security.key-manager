@@ -44,28 +44,31 @@
 
 #include <cynara.h>
 
+#define CRITICAL_SECTION_START { std::lock_guard<std::mutex> l(this->m_eventQueueMutex);
+#define CRITICAL_SECTION_END   }
+
 namespace {
 
 const time_t SOCKET_TIMEOUT = 1000;
 
 int getCredentialsFromSocket(int sock, CKM::Credentials &cred)
 {
-    static CKM::Socket2Id sock2id;
-    std::string ownerId;
+	static CKM::Socket2Id sock2id;
+	std::string ownerId;
 
-    if (0 > sock2id.translate(sock, ownerId))
-        return -1;
+	if (0 > sock2id.translate(sock, ownerId))
+		return -1;
 
-    ucred peerCred;
-    socklen_t length = sizeof(ucred);
+	ucred peerCred;
+	socklen_t length = sizeof(ucred);
 
-    if (0 > getsockopt(sock, SOL_SOCKET, SO_PEERCRED, &peerCred, &length)) {
-        LogError("getsockopt failed");
-        return -1;
-    }
+	if (0 > getsockopt(sock, SOL_SOCKET, SO_PEERCRED, &peerCred, &length)) {
+		LogError("getsockopt failed");
+		return -1;
+	}
 
-    cred = CKM::Credentials(peerCred.uid, std::move(ownerId));
-    return 0;
+	cred = CKM::Credentials(peerCred.uid, std::move(ownerId));
+	return 0;
 }
 
 } // namespace anonymous
@@ -73,720 +76,747 @@ int getCredentialsFromSocket(int sock, CKM::Credentials &cred)
 namespace CKM {
 
 struct DummyService : public GenericSocketService {
-    ServiceDescriptionVector GetServiceDescription()
-    {
-        return ServiceDescriptionVector();
-    }
+	ServiceDescriptionVector GetServiceDescription() {
+		return ServiceDescriptionVector();
+	}
 
-    void Start() {}
-    void Stop() {}
+	void Start() {}
+	void Stop() {}
 
-    void Event(const AcceptEvent &) {}
-    void Event(const WriteEvent &) {}
-    void Event(const ReadEvent &) {}
-    void Event(const CloseEvent &) {}
-    void Event(const SecurityEvent &) {}
+	void Event(const AcceptEvent &) {}
+	void Event(const WriteEvent &) {}
+	void Event(const ReadEvent &) {}
+	void Event(const CloseEvent &) {}
+	void Event(const SecurityEvent &) {}
 };
 
 struct SignalService : public GenericSocketService {
-    int GetDescriptor()
-    {
-        LogInfo("set up");
-        sigset_t mask;
-        sigemptyset(&mask);
-        sigaddset(&mask, SIGTERM);
-        if (-1 == pthread_sigmask(SIG_BLOCK, &mask, NULL))
-            return -1;
-        return signalfd(-1, &mask, 0);
-    }
+	int GetDescriptor() {
+		LogInfo("set up");
+		sigset_t mask;
+		sigemptyset(&mask);
+		sigaddset(&mask, SIGTERM);
 
-    ServiceDescriptionVector GetServiceDescription()
-    {
-        return ServiceDescriptionVector();
-    }
+		if (-1 == pthread_sigmask(SIG_BLOCK, &mask, NULL))
+			return -1;
 
-    void Start() {}
-    void Stop() {}
+		return signalfd(-1, &mask, 0);
+	}
 
-    void Event(const AcceptEvent &) {} // not supported
-    void Event(const WriteEvent &) {}  // not supported
-    void Event(const CloseEvent &) {}  // not supported
-    void Event(const SecurityEvent &) {} // not supported
+	ServiceDescriptionVector GetServiceDescription() {
+		return ServiceDescriptionVector();
+	}
 
-    void Event(const ReadEvent &event)
-    {
-        LogDebug("Get signal information");
+	void Start() {}
+	void Stop() {}
 
-        if (sizeof(struct signalfd_siginfo) != event.rawBuffer.size()) {
-            LogError("Wrong size of signalfd_siginfo struct. Expected: "
-                << sizeof(signalfd_siginfo) << " Get: "
-                << event.rawBuffer.size());
-            return;
-        }
+	void Event(const AcceptEvent &) {} // not supported
+	void Event(const WriteEvent &) {}  // not supported
+	void Event(const CloseEvent &) {}  // not supported
+	void Event(const SecurityEvent &) {} // not supported
 
-        signalfd_siginfo *siginfo = (signalfd_siginfo*)(&(event.rawBuffer[0]));
+	void Event(const ReadEvent &event) {
+		LogDebug("Get signal information");
 
-        if (siginfo->ssi_signo == SIGTERM) {
-            LogInfo("Got signal: SIGTERM");
-            static_cast<SocketManager*>(m_serviceManager)->MainLoopStop();
-            return;
-        }
+		if (sizeof(struct signalfd_siginfo) != event.rawBuffer.size()) {
+			LogError("Wrong size of signalfd_siginfo struct. Expected: "
+					 << sizeof(signalfd_siginfo) << " Get: "
+					 << event.rawBuffer.size());
+			return;
+		}
 
-        LogInfo("This should not happend. Got signal: " << siginfo->ssi_signo);
-    }
+		signalfd_siginfo *siginfo = (signalfd_siginfo *)(&(event.rawBuffer[0]));
+
+		if (siginfo->ssi_signo == SIGTERM) {
+			LogInfo("Got signal: SIGTERM");
+			static_cast<SocketManager *>(m_serviceManager)->MainLoopStop();
+			return;
+		}
+
+		LogInfo("This should not happend. Got signal: " << siginfo->ssi_signo);
+	}
 };
 
-SocketManager::SocketDescription&
+SocketManager::SocketDescription &
 SocketManager::CreateDefaultReadSocketDescription(int sock, bool timeout)
 {
-    if ((int)m_socketDescriptionVector.size() <= sock)
-        m_socketDescriptionVector.resize(sock+20);
+	if ((int)m_socketDescriptionVector.size() <= sock)
+		m_socketDescriptionVector.resize(sock + 20);
 
-    auto &desc = m_socketDescriptionVector[sock];
-    desc.setListen(false);
-    desc.setOpen(true);
-    desc.setCynara(false);
-    desc.interfaceID = 0;
-    desc.service = NULL;
-    desc.counter = ++m_counter;
+	auto &desc = m_socketDescriptionVector[sock];
+	desc.setListen(false);
+	desc.setOpen(true);
+	desc.setCynara(false);
+	desc.interfaceID = 0;
+	desc.service = NULL;
+	desc.counter = ++m_counter;
 
-    if (timeout) {
-        desc.timeout = time(NULL) + SOCKET_TIMEOUT;
-        Timeout tm;
-        tm.time = desc.timeout;
-        tm.sock = sock;
-        m_timeoutQueue.push(tm);
-    }
+	if (timeout) {
+		desc.timeout = time(NULL) + SOCKET_TIMEOUT;
+		Timeout tm;
+		tm.time = desc.timeout;
+		tm.sock = sock;
+		m_timeoutQueue.push(tm);
+	}
 
-    desc.setTimeout(timeout);
+	desc.setTimeout(timeout);
 
-    FD_SET(sock, &m_readSet);
-    m_maxDesc = sock > m_maxDesc ? sock : m_maxDesc;
-    return desc;
+	FD_SET(sock, &m_readSet);
+	m_maxDesc = sock > m_maxDesc ? sock : m_maxDesc;
+	return desc;
 }
 
 SocketManager::SocketManager() :
-    m_maxDesc(0),
-    m_working(true),
-    m_counter(0)
+	m_maxDesc(0),
+	m_working(true),
+	m_counter(0)
 {
-    FD_ZERO(&m_readSet);
-    FD_ZERO(&m_writeSet);
+	FD_ZERO(&m_readSet);
+	FD_ZERO(&m_writeSet);
 
-    if (-1 == pipe(m_notifyMe)) {
-        int err = errno;
-        ThrowMsg(Exception::InitFailed, "Error in pipe: " << GetErrnoString(err));
-    }
+	if (-1 == pipe(m_notifyMe)) {
+		int err = errno;
+		ThrowMsg(Exception::InitFailed, "Error in pipe: " << GetErrnoString(err));
+	}
 
-    LogInfo("Pipe: Read desc: " << m_notifyMe[0] << " Write desc: " << m_notifyMe[1]);
+	LogInfo("Pipe: Read desc: " << m_notifyMe[0] << " Write desc: " <<
+			m_notifyMe[1]);
 
-    auto &desc = CreateDefaultReadSocketDescription(m_notifyMe[0], false);
-    desc.service = new DummyService;
-    m_serviceVector.push_back(desc.service);
+	auto &desc = CreateDefaultReadSocketDescription(m_notifyMe[0], false);
+	desc.service = new DummyService;
+	m_serviceVector.push_back(desc.service);
 
-    // std::thread bases on pthread so this should work fine
-    sigset_t set;
-    sigemptyset(&set);
-    sigaddset(&set, SIGPIPE);
-    pthread_sigmask(SIG_BLOCK, &set, NULL);
+	// std::thread bases on pthread so this should work fine
+	sigset_t set;
+	sigemptyset(&set);
+	sigaddset(&set, SIGPIPE);
+	pthread_sigmask(SIG_BLOCK, &set, NULL);
 
-    // add support for TERM signal (passed from systemd)
-    auto *signalService = new SignalService;
-    signalService->SetSocketManager(this);
-    int filefd = signalService->GetDescriptor();
+	// add support for TERM signal (passed from systemd)
+	auto *signalService = new SignalService;
+	signalService->SetSocketManager(this);
+	int filefd = signalService->GetDescriptor();
 
-    if (-1 == filefd) {
-        LogError("Error in SignalService.GetDescriptor()");
-        delete signalService;
-    } else {
-        auto &desc2 = CreateDefaultReadSocketDescription(filefd, false);
-        desc2.service = signalService;
-        LogInfo("SignalService mounted on " << filefd << " descriptor");
-    }
+	if (-1 == filefd) {
+		LogError("Error in SignalService.GetDescriptor()");
+		delete signalService;
+	} else {
+		auto &desc2 = CreateDefaultReadSocketDescription(filefd, false);
+		desc2.service = signalService;
+		LogInfo("SignalService mounted on " << filefd << " descriptor");
+	}
 
-    if (signalService)
-        m_serviceVector.push_back(signalService);
+	if (signalService)
+		m_serviceVector.push_back(signalService);
 
-    // We cannot create Cynara earlier because descriptors are not initialized!
-    m_cynara.reset(new Cynara(this));
+	// We cannot create Cynara earlier because descriptors are not initialized!
+	m_cynara.reset(new Cynara(this));
 }
 
 SocketManager::~SocketManager()
 {
-    m_cynara.reset(nullptr);
+	m_cynara.reset(nullptr);
 
-    // Time to destroy all services.
-    for (auto service : m_serviceVector) {
-        LogDebug("delete " << (void*)(service));
-        if (service)
-            service->Stop();
-        delete service;
-    }
+	// Time to destroy all services.
+	for (auto service : m_serviceVector) {
+		LogDebug("delete " << (void *)(service));
 
-    for (size_t i = 0; i < m_socketDescriptionVector.size(); ++i)
-        if (m_socketDescriptionVector[i].isOpen())
-            close(i);
+		if (service)
+			service->Stop();
 
-    // All socket except one were closed. Now pipe input must be closed.
-    close(m_notifyMe[1]);
+		delete service;
+	}
+
+	for (size_t i = 0; i < m_socketDescriptionVector.size(); ++i)
+		if (m_socketDescriptionVector[i].isOpen())
+			close(i);
+
+	// All socket except one were closed. Now pipe input must be closed.
+	close(m_notifyMe[1]);
 }
 
 void SocketManager::ReadyForAccept(int sock)
 {
-    struct sockaddr_un clientAddr;
-    unsigned int clientLen = sizeof(clientAddr);
-    int client = accept4(sock, (struct sockaddr*) &clientAddr, &clientLen, SOCK_NONBLOCK);
+	struct sockaddr_un clientAddr;
+	unsigned int clientLen = sizeof(clientAddr);
+	int client = accept4(sock, (struct sockaddr *) &clientAddr, &clientLen,
+						 SOCK_NONBLOCK);
 
-    if (-1 == client) {
-        int err = errno;
-        LogDebug("Error in accept: " << GetErrnoString(err));
-        return;
-    }
+	if (-1 == client) {
+		int err = errno;
+		LogDebug("Error in accept: " << GetErrnoString(err));
+		return;
+	}
 
-    std::string smack;
-    std::string user;
-    Credentials peerCred;
+	std::string smack;
+	std::string user;
+	Credentials peerCred;
 
-    if (0 > getCredentialsFromSocket(client, peerCred)
-        || !Cynara::GetUserFromSocket(client, user)
-        || !Cynara::GetClientFromSocket(client, smack)) {
-        LogDebug("Error in getting credentials from socket.");
-        TEMP_FAILURE_RETRY(close(client));
-        return;
-    }
+	if (0 > getCredentialsFromSocket(client, peerCred)
+			|| !Cynara::GetUserFromSocket(client, user)
+			|| !Cynara::GetClientFromSocket(client, smack)) {
+		LogDebug("Error in getting credentials from socket.");
+		TEMP_FAILURE_RETRY(close(client));
+		return;
+	}
 
-    auto &desc = CreateDefaultReadSocketDescription(client, true);
-    desc.interfaceID = m_socketDescriptionVector[sock].interfaceID;
-    desc.service = m_socketDescriptionVector[sock].service;
-    desc.cynaraPrivilege = m_socketDescriptionVector[sock].cynaraPrivilege;
-    desc.cynaraUser = std::move(user);
-    desc.cynaraClient = std::move(smack);
+	auto &desc = CreateDefaultReadSocketDescription(client, true);
+	desc.interfaceID = m_socketDescriptionVector[sock].interfaceID;
+	desc.service = m_socketDescriptionVector[sock].service;
+	desc.cynaraPrivilege = m_socketDescriptionVector[sock].cynaraPrivilege;
+	desc.cynaraUser = std::move(user);
+	desc.cynaraClient = std::move(smack);
 
-    GenericSocketService::AcceptEvent event;
-    event.connectionID.sock = client;
-    event.connectionID.counter = desc.counter;
-    event.interfaceID = desc.interfaceID;
-    event.credentials = peerCred;
-    desc.service->Event(event);
+	GenericSocketService::AcceptEvent event;
+	event.connectionID.sock = client;
+	event.connectionID.counter = desc.counter;
+	event.interfaceID = desc.interfaceID;
+	event.credentials = peerCred;
+	desc.service->Event(event);
 }
 
 void SocketManager::SecurityStatus(int sock, int counter, bool allowed)
 {
-    auto &desc = m_socketDescriptionVector[sock];
-    if (!desc.isOpen()) {
-        LogDebug("Client from socket " << sock <<
-            " closed connection before cynara answer was received.");
-        return;
-    }
+	auto &desc = m_socketDescriptionVector[sock];
 
-    if (desc.counter != counter) {
-        LogDebug("Client from socket " << sock <<
-            " closed connection before cynara answer was received.");
-        return;
-    }
+	if (!desc.isOpen()) {
+		LogDebug("Client from socket " << sock <<
+				 " closed connection before cynara answer was received.");
+		return;
+	}
 
-    GenericSocketService::SecurityEvent event;
-    event.connectionID.sock = sock;
-    event.connectionID.counter = counter;
-    event.allowed = allowed;
-    desc.service->Event(event);
+	if (desc.counter != counter) {
+		LogDebug("Client from socket " << sock <<
+				 " closed connection before cynara answer was received.");
+		return;
+	}
+
+	GenericSocketService::SecurityEvent event;
+	event.connectionID.sock = sock;
+	event.connectionID.counter = counter;
+	event.allowed = allowed;
+	desc.service->Event(event);
 }
 
 void SocketManager::ReadyForRead(int sock)
 {
-    if (m_socketDescriptionVector[sock].isListen()) {
-        ReadyForAccept(sock);
-        return;
-    }
+	if (m_socketDescriptionVector[sock].isListen()) {
+		ReadyForAccept(sock);
+		return;
+	}
 
-    if (m_socketDescriptionVector[sock].isCynara()) {
-        m_cynara->ProcessSocket();
-        return;
-    }
+	if (m_socketDescriptionVector[sock].isCynara()) {
+		m_cynara->ProcessSocket();
+		return;
+	}
 
-    GenericSocketService::ReadEvent event;
-    event.connectionID.sock = sock;
-    event.connectionID.counter = m_socketDescriptionVector[sock].counter;
-    event.rawBuffer.resize(4096);
+	GenericSocketService::ReadEvent event;
+	event.connectionID.sock = sock;
+	event.connectionID.counter = m_socketDescriptionVector[sock].counter;
+	event.rawBuffer.resize(4096);
 
-    auto &desc = m_socketDescriptionVector[sock];
-    desc.timeout = time(NULL) + SOCKET_TIMEOUT;
+	auto &desc = m_socketDescriptionVector[sock];
+	desc.timeout = time(NULL) + SOCKET_TIMEOUT;
 
-    ssize_t size = read(sock, &event.rawBuffer[0], 4096);
+	ssize_t size = read(sock, &event.rawBuffer[0], 4096);
 
-    if (size == 0) {
-        CloseSocket(sock);
-    } else if (size >= 0) {
-        event.rawBuffer.resize(size);
-        desc.service->Event(event);
-    } else if (size == -1) {
-        int err = errno;
-        switch (err) {
-        case EAGAIN:
-        case EINTR:
-            break;
-        default:
-            LogDebug("Reading sock error: " << GetErrnoString(err));
-            CloseSocket(sock);
-        }
-    }
+	if (size == 0) {
+		CloseSocket(sock);
+	} else if (size >= 0) {
+		event.rawBuffer.resize(size);
+		desc.service->Event(event);
+	} else if (size == -1) {
+		int err = errno;
+
+		switch (err) {
+		case EAGAIN:
+		case EINTR:
+			break;
+
+		default:
+			LogDebug("Reading sock error: " << GetErrnoString(err));
+			CloseSocket(sock);
+		}
+	}
 }
 
 void SocketManager::ReadyForWrite(int sock)
 {
-    if (m_socketDescriptionVector[sock].isCynara()) {
-        m_cynara->ProcessSocket();
-        return;
-    }
+	if (m_socketDescriptionVector[sock].isCynara()) {
+		m_cynara->ProcessSocket();
+		return;
+	}
 
-    auto &desc = m_socketDescriptionVector[sock];
-    size_t size = desc.rawBuffer.size();
-    ssize_t result = write(sock, &desc.rawBuffer[0], size);
+	auto &desc = m_socketDescriptionVector[sock];
+	size_t size = desc.rawBuffer.size();
+	ssize_t result = write(sock, &desc.rawBuffer[0], size);
 
-    if (result == -1) {
-        int err = errno;
-        switch (err) {
-        case EAGAIN:
-        case EINTR:
-            // select will trigger write once again, nothing to do
-            break;
-        case EPIPE:
-        default:
-            LogDebug("Error during write: " << GetErrnoString(err));
-            CloseSocket(sock);
-            break;
-        }
-        return; // We do not want to propagate error to next layer
-    }
+	if (result == -1) {
+		int err = errno;
 
-    desc.rawBuffer.erase(desc.rawBuffer.begin(), desc.rawBuffer.begin()+result);
+		switch (err) {
+		case EAGAIN:
+		case EINTR:
+			// select will trigger write once again, nothing to do
+			break;
 
-    desc.timeout = time(NULL) + SOCKET_TIMEOUT;
+		case EPIPE:
+		default:
+			LogDebug("Error during write: " << GetErrnoString(err));
+			CloseSocket(sock);
+			break;
+		}
 
-    if (desc.rawBuffer.empty())
-        FD_CLR(sock, &m_writeSet);
+		return; // We do not want to propagate error to next layer
+	}
 
-    GenericSocketService::WriteEvent event;
-    event.connectionID.sock = sock;
-    event.connectionID.counter = desc.counter;
-    event.size = result;
-    event.left = desc.rawBuffer.size();
+	desc.rawBuffer.erase(desc.rawBuffer.begin(), desc.rawBuffer.begin() + result);
 
-    desc.service->Event(event);
+	desc.timeout = time(NULL) + SOCKET_TIMEOUT;
+
+	if (desc.rawBuffer.empty())
+		FD_CLR(sock, &m_writeSet);
+
+	GenericSocketService::WriteEvent event;
+	event.connectionID.sock = sock;
+	event.connectionID.counter = desc.counter;
+	event.size = result;
+	event.left = desc.rawBuffer.size();
+
+	desc.service->Event(event);
 }
 
 void SocketManager::MainLoop()
 {
-    // remove evironment values passed by systemd
-    sd_listen_fds(1);
+	// remove evironment values passed by systemd
+	sd_listen_fds(1);
 
-    // Daemon is ready to work.
-    sd_notify(0, "READY=1");
+	// Daemon is ready to work.
+	sd_notify(0, "READY=1");
 
-    m_working = true;
-    while (m_working) {
-        fd_set readSet = m_readSet;
-        fd_set writeSet = m_writeSet;
+	m_working = true;
 
-        timeval localTempTimeout;
-        timeval *ptrTimeout = &localTempTimeout;
+	while (m_working) {
+		fd_set readSet = m_readSet;
+		fd_set writeSet = m_writeSet;
 
-        // I need to extract timeout from priority_queue.
-        // Timeout in priority_queue may be deprecated.
-        // I need to find some actual one.
-        while (!m_timeoutQueue.empty()) {
-            auto &top = m_timeoutQueue.top();
-            auto &desc = m_socketDescriptionVector[top.sock];
+		timeval localTempTimeout;
+		timeval *ptrTimeout = &localTempTimeout;
 
-            if (top.time == desc.timeout) {
-                // This timeout matches timeout from socket.
-                // It can be used.
-                break;
-            } else {
-                // This socket was used after timeout in priority queue was set up.
-                // We need to update timeout and find some useable one.
-                Timeout tm = { desc.timeout , top.sock};
-                m_timeoutQueue.pop();
-                m_timeoutQueue.push(tm);
-            }
-        }
+		// I need to extract timeout from priority_queue.
+		// Timeout in priority_queue may be deprecated.
+		// I need to find some actual one.
+		while (!m_timeoutQueue.empty()) {
+			auto &top = m_timeoutQueue.top();
+			auto &desc = m_socketDescriptionVector[top.sock];
 
-        if (m_timeoutQueue.empty()) {
-            LogDebug("No usaable timeout found.");
-            ptrTimeout = NULL; // select will wait without timeout
-        } else {
-            time_t currentTime = time(NULL);
-            auto &pqTimeout = m_timeoutQueue.top();
+			if (top.time == desc.timeout) {
+				// This timeout matches timeout from socket.
+				// It can be used.
+				break;
+			} else {
+				// This socket was used after timeout in priority queue was set up.
+				// We need to update timeout and find some useable one.
+				Timeout tm = { desc.timeout , top.sock};
+				m_timeoutQueue.pop();
+				m_timeoutQueue.push(tm);
+			}
+		}
 
-            // 0 means that select won't block and socket will be closed ;-)
-            ptrTimeout->tv_sec =
-              currentTime < pqTimeout.time ? pqTimeout.time - currentTime : 0;
-            ptrTimeout->tv_usec = 0;
-        }
+		if (m_timeoutQueue.empty()) {
+			LogDebug("No usaable timeout found.");
+			ptrTimeout = NULL; // select will wait without timeout
+		} else {
+			time_t currentTime = time(NULL);
+			auto &pqTimeout = m_timeoutQueue.top();
 
-        int ret = select(m_maxDesc+1, &readSet, &writeSet, NULL, ptrTimeout);
+			// 0 means that select won't block and socket will be closed ;-)
+			ptrTimeout->tv_sec =
+				currentTime < pqTimeout.time ? pqTimeout.time - currentTime : 0;
+			ptrTimeout->tv_usec = 0;
+		}
 
-        if (0 == ret) { // timeout
-            Assert(!m_timeoutQueue.empty());
+		int ret = select(m_maxDesc + 1, &readSet, &writeSet, NULL, ptrTimeout);
 
-            Timeout pqTimeout = m_timeoutQueue.top();
-            m_timeoutQueue.pop();
+		if (0 == ret) { // timeout
+			Assert(!m_timeoutQueue.empty());
 
-            auto &desc = m_socketDescriptionVector[pqTimeout.sock];
+			Timeout pqTimeout = m_timeoutQueue.top();
+			m_timeoutQueue.pop();
 
-            if (!desc.isTimeout() || !desc.isOpen()) {
-                // Connection was closed. Timeout is useless...
-                desc.setTimeout(false);
-                continue;
-            }
+			auto &desc = m_socketDescriptionVector[pqTimeout.sock];
 
-            if (pqTimeout.time < desc.timeout) {
-                // Is it possible?
-                // This socket was used after timeout. We need to update timeout.
-                pqTimeout.time = desc.timeout;
-                m_timeoutQueue.push(pqTimeout);
-                continue;
-            }
+			if (!desc.isTimeout() || !desc.isOpen()) {
+				// Connection was closed. Timeout is useless...
+				desc.setTimeout(false);
+				continue;
+			}
 
-            // timeout from m_timeoutQueue matches with socket.timeout
-            // and connection is open. Time to close it!
-            // Putting new timeout in queue here is pointless.
-            desc.setTimeout(false);
-            CloseSocket(pqTimeout.sock);
+			if (pqTimeout.time < desc.timeout) {
+				// Is it possible?
+				// This socket was used after timeout. We need to update timeout.
+				pqTimeout.time = desc.timeout;
+				m_timeoutQueue.push(pqTimeout);
+				continue;
+			}
 
-            // All done. Now we should process next select ;-)
-            continue;
-        }
+			// timeout from m_timeoutQueue matches with socket.timeout
+			// and connection is open. Time to close it!
+			// Putting new timeout in queue here is pointless.
+			desc.setTimeout(false);
+			CloseSocket(pqTimeout.sock);
 
-        if (-1 == ret) {
-            switch (errno) {
-            case EINTR:
-                LogDebug("EINTR in select");
-                break;
-            default:
-                int err = errno;
-                LogError("Error in select: " << GetErrnoString(err));
-                return;
-            }
-            continue;
-        }
-        for (int i = 0; i < m_maxDesc+1 && ret; ++i) {
-            if (FD_ISSET(i, &readSet)) {
-                ReadyForRead(i);
-                --ret;
-            }
-            if (FD_ISSET(i, &writeSet)) {
-                ReadyForWrite(i);
-                --ret;
-            }
-        }
-        ProcessQueue();
-    }
+			// All done. Now we should process next select ;-)
+			continue;
+		}
+
+		if (-1 == ret) {
+			switch (errno) {
+			case EINTR:
+				LogDebug("EINTR in select");
+				break;
+
+			default:
+				int err = errno;
+				LogError("Error in select: " << GetErrnoString(err));
+				return;
+			}
+
+			continue;
+		}
+
+		for (int i = 0; i < m_maxDesc + 1 && ret; ++i) {
+			if (FD_ISSET(i, &readSet)) {
+				ReadyForRead(i);
+				--ret;
+			}
+
+			if (FD_ISSET(i, &writeSet)) {
+				ReadyForWrite(i);
+				--ret;
+			}
+		}
+
+		ProcessQueue();
+	}
 }
 
 void SocketManager::MainLoopStop()
 {
-    m_working = false;
-    NotifyMe();
+	m_working = false;
+	NotifyMe();
 }
 
 int SocketManager::GetSocketFromSystemD(
-    const GenericSocketService::ServiceDescription &desc)
+	const GenericSocketService::ServiceDescription &desc)
 {
-    int fd;
+	int fd;
 
-    // TODO optimalization - do it once in object constructor
-    //                       and remember all information path->sockfd
-    int n = sd_listen_fds(0);
+	// TODO optimalization - do it once in object constructor
+	//                       and remember all information path->sockfd
+	int n = sd_listen_fds(0);
 
-    LogInfo("sd_listen_fds returns: " << n);
+	LogInfo("sd_listen_fds returns: " << n);
 
-    if (n < 0) {
-        LogError("Error in sd_listend_fds");
-        ThrowMsg(Exception::InitFailed, "Error in sd_listend_fds");
-    }
+	if (n < 0) {
+		LogError("Error in sd_listend_fds");
+		ThrowMsg(Exception::InitFailed, "Error in sd_listend_fds");
+	}
 
-    for (fd = SD_LISTEN_FDS_START; fd < SD_LISTEN_FDS_START+n; ++fd) {
-        if (0 < sd_is_socket_unix(fd, SOCK_STREAM, 1,
-                                  desc.serviceHandlerPath.c_str(), 0)) {
-            LogInfo("Useable socket " << desc.serviceHandlerPath <<
-                " was passed by SystemD under descriptor " << fd);
-            return fd;
-        }
-    }
-    LogError("No useable sockets were passed by systemd.");
-    return -1;
+	for (fd = SD_LISTEN_FDS_START; fd < SD_LISTEN_FDS_START + n; ++fd) {
+		if (0 < sd_is_socket_unix(fd, SOCK_STREAM, 1,
+								  desc.serviceHandlerPath.c_str(), 0)) {
+			LogInfo("Useable socket " << desc.serviceHandlerPath <<
+					" was passed by SystemD under descriptor " << fd);
+			return fd;
+		}
+	}
+
+	LogError("No useable sockets were passed by systemd.");
+	return -1;
 }
 
 int SocketManager::CreateDomainSocketHelp(
-    const GenericSocketService::ServiceDescription &desc)
+	const GenericSocketService::ServiceDescription &desc)
 {
-    int sockfd;
+	int sockfd;
 
-    if (desc.serviceHandlerPath.size()*sizeof(decltype(desc.serviceHandlerPath)::value_type) >=
-         sizeof(static_cast<sockaddr_un*>(0)->sun_path)) {
-        LogError("Service handler path too long: " << desc.serviceHandlerPath.size());
-        ThrowMsg(Exception::InitFailed,
-                 "Service handler path too long: " << desc.serviceHandlerPath.size());
-    }
+	if (desc.serviceHandlerPath.size()*sizeof(decltype(desc.serviceHandlerPath)
+			::value_type) >=
+			sizeof(static_cast<sockaddr_un *>(0)->sun_path)) {
+		LogError("Service handler path too long: " << desc.serviceHandlerPath.size());
+		ThrowMsg(Exception::InitFailed,
+				 "Service handler path too long: " << desc.serviceHandlerPath.size());
+	}
 
-    if (-1 == (sockfd = socket(AF_UNIX, SOCK_STREAM, 0))) {
-        int err = errno;
-        LogError("Error in socket: " << GetErrnoString(err));
-        ThrowMsg(Exception::InitFailed, "Error in socket: " << GetErrnoString(err));
-    }
+	if (-1 == (sockfd = socket(AF_UNIX, SOCK_STREAM, 0))) {
+		int err = errno;
+		LogError("Error in socket: " << GetErrnoString(err));
+		ThrowMsg(Exception::InitFailed, "Error in socket: " << GetErrnoString(err));
+	}
 
-    if (smack_check()) {
-        LogInfo("Set up smack label: " << desc.privilege);
+	if (smack_check()) {
+		LogInfo("Set up smack label: " << desc.privilege);
 
-//        if (0 != smack_fsetlabel(sockfd, desc.smackLabel.c_str(), SMACK_LABEL_IPIN)) {
-//            LogError("Error in smack_fsetlabel");
-//            ThrowMsg(Exception::InitFailed, "Error in smack_fsetlabel");
-//        }
-    } else {
-        LogInfo("No smack on platform. Socket won't be securied with smack label!");
-    }
+		//        if (0 != smack_fsetlabel(sockfd, desc.smackLabel.c_str(), SMACK_LABEL_IPIN)) {
+		//            LogError("Error in smack_fsetlabel");
+		//            ThrowMsg(Exception::InitFailed, "Error in smack_fsetlabel");
+		//        }
+	} else {
+		LogInfo("No smack on platform. Socket won't be securied with smack label!");
+	}
 
-    int flags;
-    if (-1 == (flags = fcntl(sockfd, F_GETFL, 0)))
-        flags = 0;
+	int flags;
 
-    if (-1 == fcntl(sockfd, F_SETFL, flags | O_NONBLOCK)) {
-        int err = errno;
-        close(sockfd);
-        LogError("Error in fcntl: " << GetErrnoString(err));
-        ThrowMsg(Exception::InitFailed, "Error in fcntl: " << GetErrnoString(err));
-    }
+	if (-1 == (flags = fcntl(sockfd, F_GETFL, 0)))
+		flags = 0;
 
-    sockaddr_un serverAddress;
-    memset(&serverAddress, 0, sizeof(serverAddress));
-    serverAddress.sun_family = AF_UNIX;
-    strncpy(serverAddress.sun_path, desc.serviceHandlerPath.c_str(), sizeof(serverAddress.sun_path) - 1);
-    unlink(serverAddress.sun_path);
+	if (-1 == fcntl(sockfd, F_SETFL, flags | O_NONBLOCK)) {
+		int err = errno;
+		close(sockfd);
+		LogError("Error in fcntl: " << GetErrnoString(err));
+		ThrowMsg(Exception::InitFailed, "Error in fcntl: " << GetErrnoString(err));
+	}
 
-    mode_t originalUmask;
-    originalUmask = umask(0);
+	sockaddr_un serverAddress;
+	memset(&serverAddress, 0, sizeof(serverAddress));
+	serverAddress.sun_family = AF_UNIX;
+	strncpy(serverAddress.sun_path, desc.serviceHandlerPath.c_str(),
+			sizeof(serverAddress.sun_path) - 1);
+	unlink(serverAddress.sun_path);
 
-    if (-1 == bind(sockfd, (struct sockaddr*)&serverAddress, sizeof(serverAddress))) {
-        int err = errno;
-        close(sockfd);
-        LogError("Error in bind: " << GetErrnoString(err));
-        ThrowMsg(Exception::InitFailed, "Error in bind: " << GetErrnoString(err));
-    }
+	mode_t originalUmask;
+	originalUmask = umask(0);
 
-    umask(originalUmask);
+	if (-1 == bind(sockfd, (struct sockaddr *)&serverAddress,
+				   sizeof(serverAddress))) {
+		int err = errno;
+		close(sockfd);
+		LogError("Error in bind: " << GetErrnoString(err));
+		ThrowMsg(Exception::InitFailed, "Error in bind: " << GetErrnoString(err));
+	}
 
-    if (-1 == listen(sockfd, 5)) {
-        int err = errno;
-        close(sockfd);
-        LogError("Error in listen: " << GetErrnoString(err));
-        ThrowMsg(Exception::InitFailed, "Error in listen: " << GetErrnoString(err));
-    }
+	umask(originalUmask);
 
-    return sockfd;
+	if (-1 == listen(sockfd, 5)) {
+		int err = errno;
+		close(sockfd);
+		LogError("Error in listen: " << GetErrnoString(err));
+		ThrowMsg(Exception::InitFailed, "Error in listen: " << GetErrnoString(err));
+	}
+
+	return sockfd;
 }
 
 void SocketManager::CreateDomainSocket(
-    GenericSocketService *service,
-    const GenericSocketService::ServiceDescription &desc)
+	GenericSocketService *service,
+	const GenericSocketService::ServiceDescription &desc)
 {
-    int sockfd = GetSocketFromSystemD(desc);
-    if (-1 == sockfd)
-        sockfd = CreateDomainSocketHelp(desc);
+	int sockfd = GetSocketFromSystemD(desc);
 
-    auto &description = CreateDefaultReadSocketDescription(sockfd, false);
+	if (-1 == sockfd)
+		sockfd = CreateDomainSocketHelp(desc);
 
-    description.setListen(true);
-    description.interfaceID = desc.interfaceID;
-    description.service = service;
-    description.cynaraPrivilege = desc.privilege;
+	auto &description = CreateDefaultReadSocketDescription(sockfd, false);
 
-    LogDebug("Listen on socket: " << sockfd <<
-        " Handler: " << desc.serviceHandlerPath.c_str());
+	description.setListen(true);
+	description.interfaceID = desc.interfaceID;
+	description.service = service;
+	description.cynaraPrivilege = desc.privilege;
+
+	LogDebug("Listen on socket: " << sockfd <<
+			 " Handler: " << desc.serviceHandlerPath.c_str());
 }
 
 void SocketManager::RegisterSocketService(GenericSocketService *service)
 {
-    service->SetSocketManager(this);
-    service->SetCommManager(&m_commMgr);
-    auto serviceVector = service->GetServiceDescription();
-    m_serviceVector.push_back(service);
-    Try {
-        for (auto iter = serviceVector.begin(); iter != serviceVector.end(); ++iter)
-            CreateDomainSocket(service, *iter);
-    } Catch(Exception::Base) {
-        for (int i =0; i < (int)m_socketDescriptionVector.size(); ++i) {
-            auto &desc = m_socketDescriptionVector[i];
-            if (desc.service == service && desc.isOpen()) {
-                close(i);
-                desc.setOpen(false);
-            }
-        }
-        ReThrow(Exception::Base);
-    }
+	service->SetSocketManager(this);
+	service->SetCommManager(&m_commMgr);
+	auto serviceVector = service->GetServiceDescription();
+	m_serviceVector.push_back(service);
+	Try {
+		for (auto iter = serviceVector.begin(); iter != serviceVector.end(); ++iter)
+			CreateDomainSocket(service, *iter);
+	} Catch(Exception::Base) {
+		for (int i = 0; i < (int)m_socketDescriptionVector.size(); ++i) {
+			auto &desc = m_socketDescriptionVector[i];
+
+			if (desc.service == service && desc.isOpen()) {
+				close(i);
+				desc.setOpen(false);
+			}
+		}
+
+		ReThrow(Exception::Base);
+	}
 }
 
 void SocketManager::Close(ConnectionID connectionID)
 {
-    CloseEvent event;
-    event.sock = connectionID.sock;
-    event.counter = connectionID.counter;
-    AddEvent(event);
+	CloseEvent event;
+	event.sock = connectionID.sock;
+	event.counter = connectionID.counter;
+	AddEvent(event);
 }
 
 void SocketManager::Write(ConnectionID connectionID, const RawBuffer &rawBuffer)
 {
-    WriteEvent event{connectionID, rawBuffer};
-    AddEvent(event);
+	WriteEvent event{connectionID, rawBuffer};
+	AddEvent(event);
 }
 
 void SocketManager::SecurityCheck(ConnectionID connectionID)
 {
-    SecurityEvent event;
-    event.sock = connectionID.sock;
-    event.counter = connectionID.counter;
-    AddEvent(event);
+	SecurityEvent event;
+	event.sock = connectionID.sock;
+	event.counter = connectionID.counter;
+	AddEvent(event);
 }
 
 void SocketManager::CreateEvent(EventFunction fun)
 {
-    {
-        std::lock_guard<std::mutex> ulock(m_eventQueueMutex);
-        m_eventQueue.push(std::move(fun));
-    }
-    NotifyMe();
+	CRITICAL_SECTION_START
+	m_eventQueue.push(std::move(fun));
+	CRITICAL_SECTION_END
+
+	NotifyMe();
 }
 
 void SocketManager::NotifyMe()
 {
-    TEMP_FAILURE_RETRY(write(m_notifyMe[1], "You have message ;-)", 1));
+	TEMP_FAILURE_RETRY(write(m_notifyMe[1], "You have message ;-)", 1));
 }
 
 void SocketManager::ProcessQueue()
 {
-    while (1) {
-        EventFunction fun;
-        {
-            std::lock_guard<std::mutex> ulock(m_eventQueueMutex);
-            if (m_eventQueue.empty())
-                return;
-            fun = std::move(m_eventQueue.front());
-            m_eventQueue.pop();
-        }
-        fun();
-    }
+	while (1) {
+		EventFunction fun;
+
+		CRITICAL_SECTION_START
+
+		if (m_eventQueue.empty())
+			return;
+
+		fun = std::move(m_eventQueue.front());
+		m_eventQueue.pop();
+
+		CRITICAL_SECTION_END
+
+		fun();
+	}
 }
 
 void SocketManager::Handle(const WriteEvent &event)
 {
-    auto &desc = m_socketDescriptionVector[event.connectionID.sock];
+	auto &desc = m_socketDescriptionVector[event.connectionID.sock];
 
-    if (!desc.isOpen()) {
-        LogDebug("Received packet for write but connection is closed. Packet ignored!");
-        return;
-    }
+	if (!desc.isOpen()) {
+		LogDebug("Received packet for write but connection is closed. Packet ignored!");
+		return;
+	}
 
-    if (desc.counter != event.connectionID.counter) {
-        LogDebug("Received packet for write but counter is broken. Packet ignored!");
-        return;
-    }
+	if (desc.counter != event.connectionID.counter) {
+		LogDebug("Received packet for write but counter is broken. Packet ignored!");
+		return;
+	}
 
-    std::copy(
-        event.rawBuffer.begin(),
-        event.rawBuffer.end(),
-        std::back_inserter(desc.rawBuffer));
+	std::copy(
+		event.rawBuffer.begin(),
+		event.rawBuffer.end(),
+		std::back_inserter(desc.rawBuffer));
 
-    FD_SET(event.connectionID.sock, &m_writeSet);
+	FD_SET(event.connectionID.sock, &m_writeSet);
 }
 
 void SocketManager::Handle(const CloseEvent &event)
 {
-    if (!m_socketDescriptionVector[event.sock].isOpen())
-        return;
+	if (!m_socketDescriptionVector[event.sock].isOpen())
+		return;
 
-    if (event.counter != m_socketDescriptionVector[event.sock].counter)
-        return;
+	if (event.counter != m_socketDescriptionVector[event.sock].counter)
+		return;
 
-    CloseSocket(event.sock);
+	CloseSocket(event.sock);
 }
 
 void SocketManager::Handle(const SecurityEvent &event)
 {
-    auto& desc = m_socketDescriptionVector[event.sock];
-    if (!desc.isOpen())
-        return;
+	auto &desc = m_socketDescriptionVector[event.sock];
 
-    if (event.counter != desc.counter)
-        return;
+	if (!desc.isOpen())
+		return;
 
-    std::string session = std::to_string(desc.counter);
+	if (event.counter != desc.counter)
+		return;
 
-    m_cynara->Request(desc.cynaraUser,
-                      desc.cynaraClient,
-                      session,
-                      desc.cynaraPrivilege,
-                      [this, event](bool allowed) {
-                          this->SecurityStatus(event.sock, event.counter, allowed);
-                      });
+	std::string session = std::to_string(desc.counter);
+
+	m_cynara->Request(desc.cynaraUser,
+					  desc.cynaraClient,
+					  session,
+					  desc.cynaraPrivilege,
+	[this, event](bool allowed) {
+		this->SecurityStatus(event.sock, event.counter, allowed);
+	});
 }
 
 void SocketManager::CloseSocket(int sock)
 {
-    auto &desc = m_socketDescriptionVector[sock];
+	auto &desc = m_socketDescriptionVector[sock];
 
-    if (!(desc.isOpen())) {
-        // This may happend when some information was waiting for write to the
-        // socket and in the same time socket was closed by the client.
-        LogError("Socket " << sock << " is not open. Nothing to do!");
-        return;
-    }
+	if (!(desc.isOpen())) {
+		// This may happend when some information was waiting for write to the
+		// socket and in the same time socket was closed by the client.
+		LogError("Socket " << sock << " is not open. Nothing to do!");
+		return;
+	}
 
-    GenericSocketService::CloseEvent event;
-    event.connectionID.sock = sock;
-    event.connectionID.counter = desc.counter;
-    auto service = desc.service;
+	GenericSocketService::CloseEvent event;
+	event.connectionID.sock = sock;
+	event.connectionID.counter = desc.counter;
+	auto service = desc.service;
 
-    desc.setOpen(false);
-    desc.service = NULL;
-    desc.interfaceID = -1;
-    desc.rawBuffer.clear();
+	desc.setOpen(false);
+	desc.service = NULL;
+	desc.interfaceID = -1;
+	desc.rawBuffer.clear();
 
-    if (service)
-        service->Event(event);
-    else
-        LogError("Critical! Service is NULL! This should never happend!");
+	if (service)
+		service->Event(event);
+	else
+		LogError("Critical! Service is NULL! This should never happend!");
 
-    TEMP_FAILURE_RETRY(close(sock));
-    FD_CLR(sock, &m_readSet);
-    FD_CLR(sock, &m_writeSet);
+	TEMP_FAILURE_RETRY(close(sock));
+	FD_CLR(sock, &m_readSet);
+	FD_CLR(sock, &m_writeSet);
 }
 
 void SocketManager::CynaraSocket(int oldFd, int newFd, bool isRW)
 {
-    if (newFd != oldFd) {
-        if (newFd >= 0) {
-            auto &desc = CreateDefaultReadSocketDescription(newFd, false);
-            desc.service = nullptr;
-            desc.setCynara(true);
-        }
+	if (newFd != oldFd) {
+		if (newFd >= 0) {
+			auto &desc = CreateDefaultReadSocketDescription(newFd, false);
+			desc.service = nullptr;
+			desc.setCynara(true);
+		}
 
-        if (oldFd >= 0) {
-            auto &old = m_socketDescriptionVector[oldFd];
-            old.setOpen(false);
-            old.setCynara(false);
-            FD_CLR(oldFd, &m_writeSet);
-            FD_CLR(oldFd, &m_readSet);
-        }
-    }
+		if (oldFd >= 0) {
+			auto &old = m_socketDescriptionVector[oldFd];
+			old.setOpen(false);
+			old.setCynara(false);
+			FD_CLR(oldFd, &m_writeSet);
+			FD_CLR(oldFd, &m_readSet);
+		}
+	}
 
-    if (newFd >= 0) {
-        FD_SET(newFd, &m_readSet);
+	if (newFd >= 0) {
+		FD_SET(newFd, &m_readSet);
 
-        if (isRW)
-            FD_SET(newFd, &m_writeSet);
-        else
-            FD_CLR(newFd, &m_writeSet);
-    }
+		if (isRW)
+			FD_SET(newFd, &m_writeSet);
+		else
+			FD_CLR(newFd, &m_writeSet);
+	}
 }
 
 } // namespace CKM

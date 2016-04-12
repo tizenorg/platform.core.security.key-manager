@@ -32,16 +32,17 @@ BOOST_AUTO_TEST_SUITE(TRAVERSE_DIR_TEST)
 
 BOOST_AUTO_TEST_CASE(T010_check_prefix)
 {
-    std::vector<std::string> files;
+	std::vector<std::string> files;
 
-    forEachFile(DB_TEST_DIR "/traverse", [&files](const std::string &filename) {
-        if (filename.find("res-") == std::string::npos)
-            return;
+	forEachFile(DB_TEST_DIR "/traverse", [&files](const std::string & filename) {
+		if (filename.find("res-") == std::string::npos)
+			return;
 
-        files.push_back(filename);
-    });
+		files.push_back(filename);
+	});
 
-    BOOST_REQUIRE_MESSAGE(files.size() == 10, "files num in traverse dir should be 10");
+	BOOST_REQUIRE_MESSAGE(files.size() == 10,
+						  "files num in traverse dir should be 10");
 }
 
 BOOST_AUTO_TEST_SUITE_END()

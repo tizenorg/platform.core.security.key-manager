@@ -141,7 +141,8 @@ int ckmc_remove_user_data(uid_t user);
  * @see ckmc_remove_user_data()
  * @see ckmc_reset_user_password()
  */
-int ckmc_change_user_password(uid_t user, const char *old_password, const char *new_password);
+int ckmc_change_user_password(uid_t user, const char *old_password,
+							  const char *new_password);
 
 /**
  * @brief Changes a password for a user without old password.
@@ -202,10 +203,10 @@ int ckmc_reset_user_password(uid_t user, const char *new_password);
  * @see ckmc_set_permission()
  */
 int ckmc_allow_access_by_adm(uid_t user,
-                             const char *owner,
-                             const char *alias,
-                             const char *accessor,
-                             ckmc_access_right_e granted);
+							 const char *owner,
+							 const char *alias,
+							 const char *accessor,
+							 ckmc_access_right_e granted);
 
 /**
  * @brief Allows another application to access client's application data
@@ -237,7 +238,8 @@ int ckmc_allow_access_by_adm(uid_t user,
  *
  * @see ckmc_set_permission()
  */
-int ckmc_set_permission_by_adm(uid_t user, const char *alias, const char *accessor, int mask);
+int ckmc_set_permission_by_adm(uid_t user, const char *alias,
+							   const char *accessor, int mask);
 
 
 /**
@@ -271,7 +273,8 @@ int ckmc_set_permission_by_adm(uid_t user, const char *alias, const char *access
  * @see ckmc_set_permission()
  * @see ckmc_set_permission_by_adm()
  */
-int ckmc_deny_access_by_adm(uid_t user, const char *owner, const char *alias, const char *accessor);
+int ckmc_deny_access_by_adm(uid_t user, const char *owner, const char *alias,
+							const char *accessor);
 
 /**
  * @}

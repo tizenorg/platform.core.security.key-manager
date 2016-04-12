@@ -33,59 +33,62 @@
 
 namespace CKM {
 
-class ConnectionThread
-{
+class ConnectionThread {
 public:
-    DECLARE_EXCEPTION_TYPE(CKM::Exception, PipeError)
+	DECLARE_EXCEPTION_TYPE(CKM::Exception, PipeError)
 
-    ConnectionThread();
-    virtual ~ConnectionThread();
+	ConnectionThread();
+	virtual ~ConnectionThread();
 
-    NONCOPYABLE(ConnectionThread);
+	NONCOPYABLE(ConnectionThread);
 
-    void run();
+	void run();
 
-    void sendMessage(AsyncRequest&& request);
+	void sendMessage(AsyncRequest &&request);
 
-    bool finished() const { return m_finished; }
+	bool finished() const {
+		return m_finished;
+	}
 
 private:
-    void threadLoop();
+	void threadLoop();
 
-    void newRequest(int pipe, short revents);
+	void newRequest(int pipe, short revents);
 
-    // reads notification pipe
-    void readPipe(int pipe, short revents);
+	// reads notification pipe
+	void readPipe(int pipe, short revents);
 
-    Service& getService(const std::string& interface);
+	Service &getService(const std::string &interface);
 
-    // Helper class that creates a pipe before thread is started
-    class Pipe {
-    public:
-        Pipe();
-        ~Pipe();
+	// Helper class that creates a pipe before thread is started
+	class Pipe {
+	public:
+		Pipe();
+		~Pipe();
 
-        NONCOPYABLE(Pipe);
+		NONCOPYABLE(Pipe);
 
-        void notify();
-        int output() const { return m_pipe[0]; }
+		void notify();
+		int output() const {
+			return m_pipe[0];
+		}
 
-    private:
-        int m_pipe[2];
-    };
-    // shared vars
-    Pipe m_pipe;
-    AsyncRequest::Queue m_waitingReqs;
-    std::mutex m_mutex;
-    bool m_join;
-    bool m_finished;
+	private:
+		int m_pipe[2];
+	};
+	// shared vars
+	Pipe m_pipe;
+	AsyncRequest::Queue m_waitingReqs;
+	std::mutex m_mutex;
+	bool m_join;
+	bool m_finished;
 
-    // parent thread vars
-    std::thread m_thread;
+	// parent thread vars
+	std::thread m_thread;
 
-    // child thread vars
-    std::map<std::string, Service> m_services;
-    DescriptorSet m_descriptors;
+	// child thread vars
+	std::map<std::string, Service> m_services;
+	DescriptorSet m_descriptors;
 };
 
 } /* namespace CKM */

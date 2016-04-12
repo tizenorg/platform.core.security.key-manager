@@ -28,257 +28,276 @@
 
 namespace CKM {
 
-StorageReceiver::StorageReceiver(MessageBuffer& buffer, AsyncRequest::Map& requests) :
-    m_buffer(buffer),
-    m_requests(requests),
-    m_observer(NULL)
+StorageReceiver::StorageReceiver(MessageBuffer &buffer,
+								 AsyncRequest::Map &requests) :
+	m_buffer(buffer),
+	m_requests(requests),
+	m_observer(NULL)
 {
 }
 
 void StorageReceiver::processResponse()
 {
-    int command = 0, id = 0;
-    m_buffer.Deserialize(command, id);
+	int command = 0, id = 0;
+	m_buffer.Deserialize(command, id);
 
-    auto it = m_requests.find(id);
-    if (it == m_requests.end()) {
-        LogError("Request with id " << id << " not found!");
-        ThrowMsg(BadResponse, "Request with id " << id << " not found!");
-    }
+	auto it = m_requests.find(id);
 
-    // let it throw
-    AsyncRequest req = std::move(m_requests.at(id));
-    m_requests.erase(id);
+	if (it == m_requests.end()) {
+		LogError("Request with id " << id << " not found!");
+		ThrowMsg(BadResponse, "Request with id " << id << " not found!");
+	}
 
-    m_observer = req.observer;
+	// let it throw
+	AsyncRequest req = std::move(m_requests.at(id));
+	m_requests.erase(id);
 
-    switch (static_cast<LogicCommand>(command)) {
-    case LogicCommand::GET:
-        parseGetCommand();
-        break;
-    case LogicCommand::GET_PKCS12:
-        parseGetPKCS12Command();
-        break;
-    case LogicCommand::GET_LIST:
-        parseGetListCommand();
-        break;
-    case LogicCommand::SAVE:
-        parseSaveCommand();
-        break;
-    case LogicCommand::SAVE_PKCS12:
-        parseSavePKCS12Command();
-        break;
-    case LogicCommand::REMOVE:
-        parseRemoveCommand();
-        break;
-    case LogicCommand::CREATE_KEY_AES:
-        parseRetCode(&ManagerAsync::Observer::ReceivedCreateKeyAES);
-        break;
-    case LogicCommand::CREATE_KEY_PAIR:
-        parseRetCode(&ManagerAsync::Observer::ReceivedCreateKeyPair);
-        break;
-    case LogicCommand::GET_CHAIN_CERT:
-    case LogicCommand::GET_CHAIN_ALIAS:
-        parseGetChainCertCommand();
-        break;
-    case LogicCommand::CREATE_SIGNATURE:
-        parseCreateSignatureCommand();
-        break;
-    case LogicCommand::VERIFY_SIGNATURE:
-        parseRetCode(&ManagerAsync::Observer::ReceivedVerifySignature);
-        break;
-    case LogicCommand::SET_PERMISSION:
-        parseRetCode(&ManagerAsync::Observer::ReceivedSetPermission);
-        break;
+	m_observer = req.observer;
 
-    default:
-        LogError("Unknown command id: " << command);
-        ThrowMsg(BadResponse, "Unknown command id: " << command);
-        break;
-    }
+	switch (static_cast<LogicCommand>(command)) {
+	case LogicCommand::GET:
+		parseGetCommand();
+		break;
+
+	case LogicCommand::GET_PKCS12:
+		parseGetPKCS12Command();
+		break;
+
+	case LogicCommand::GET_LIST:
+		parseGetListCommand();
+		break;
+
+	case LogicCommand::SAVE:
+		parseSaveCommand();
+		break;
+
+	case LogicCommand::SAVE_PKCS12:
+		parseSavePKCS12Command();
+		break;
+
+	case LogicCommand::REMOVE:
+		parseRemoveCommand();
+		break;
+
+	case LogicCommand::CREATE_KEY_AES:
+		parseRetCode(&ManagerAsync::Observer::ReceivedCreateKeyAES);
+		break;
+
+	case LogicCommand::CREATE_KEY_PAIR:
+		parseRetCode(&ManagerAsync::Observer::ReceivedCreateKeyPair);
+		break;
+
+	case LogicCommand::GET_CHAIN_CERT:
+	case LogicCommand::GET_CHAIN_ALIAS:
+		parseGetChainCertCommand();
+		break;
+
+	case LogicCommand::CREATE_SIGNATURE:
+		parseCreateSignatureCommand();
+		break;
+
+	case LogicCommand::VERIFY_SIGNATURE:
+		parseRetCode(&ManagerAsync::Observer::ReceivedVerifySignature);
+		break;
+
+	case LogicCommand::SET_PERMISSION:
+		parseRetCode(&ManagerAsync::Observer::ReceivedSetPermission);
+		break;
+
+	default:
+		LogError("Unknown command id: " << command);
+		ThrowMsg(BadResponse, "Unknown command id: " << command);
+		break;
+	}
 }
 
 void StorageReceiver::parseGetCommand()
 {
-    RawBuffer rawData;
-    int dataType = 0, retCode = 0;
-    m_buffer.Deserialize(retCode, dataType, rawData);
+	RawBuffer rawData;
+	int dataType = 0, retCode = 0;
+	m_buffer.Deserialize(retCode, dataType, rawData);
 
-    // check error code
-    if (retCode != CKM_API_SUCCESS) {
-         m_observer->ReceivedError(retCode);
-         return;
-    }
+	// check error code
+	if (retCode != CKM_API_SUCCESS) {
+		m_observer->ReceivedError(retCode);
+		return;
+	}
 
-    DataType type(dataType);
-    if (type.isKey())
-        m_observer->ReceivedKey(KeyImpl(rawData));
-    else if (type.isCertificate())
-        m_observer->ReceivedCertificate(CertificateImpl(rawData, DataFormat::FORM_DER));
-    else if (type.isBinaryData())
-        m_observer->ReceivedData(std::move(rawData));
-    else
-        m_observer->ReceivedError(CKM_API_ERROR_BAD_RESPONSE);
+	DataType type(dataType);
+
+	if (type.isKey())
+		m_observer->ReceivedKey(KeyImpl(rawData));
+	else if (type.isCertificate())
+		m_observer->ReceivedCertificate(CertificateImpl(rawData, DataFormat::FORM_DER));
+	else if (type.isBinaryData())
+		m_observer->ReceivedData(std::move(rawData));
+	else
+		m_observer->ReceivedError(CKM_API_ERROR_BAD_RESPONSE);
 }
 
 void StorageReceiver::parseGetPKCS12Command()
 {
-    int retCode = 0;
-    PKCS12Serializable gotPkcs;
-    m_buffer.Deserialize(retCode, gotPkcs);
+	int retCode = 0;
+	PKCS12Serializable gotPkcs;
+	m_buffer.Deserialize(retCode, gotPkcs);
 
-    // check error code
-    if (retCode != CKM_API_SUCCESS) {
-         m_observer->ReceivedError(retCode);
-         return;
-    }
+	// check error code
+	if (retCode != CKM_API_SUCCESS) {
+		m_observer->ReceivedError(retCode);
+		return;
+	}
 
-    m_observer->ReceivedPKCS12(std::make_shared<PKCS12Impl>(std::move(gotPkcs)));
+	m_observer->ReceivedPKCS12(std::make_shared<PKCS12Impl>(std::move(gotPkcs)));
 }
 
 void StorageReceiver::parseGetListCommand()
 {
-    int dataType = 0, retCode = 0;
-    LabelNameVector labelNameVector;
-    m_buffer.Deserialize(retCode, dataType, labelNameVector);
+	int dataType = 0, retCode = 0;
+	LabelNameVector labelNameVector;
+	m_buffer.Deserialize(retCode, dataType, labelNameVector);
 
-    // check error code
-    if (retCode != CKM_API_SUCCESS) {
-         m_observer->ReceivedError(retCode);
-         return;
-    }
+	// check error code
+	if (retCode != CKM_API_SUCCESS) {
+		m_observer->ReceivedError(retCode);
+		return;
+	}
 
-    AliasVector aliasVector;
-    for (const auto &it : labelNameVector)
-        aliasVector.push_back(AliasSupport::merge(it.first, it.second));
+	AliasVector aliasVector;
 
-    DataType type(dataType);
+	for (const auto &it : labelNameVector)
+		aliasVector.push_back(AliasSupport::merge(it.first, it.second));
 
-    if (type.isKey())
-        m_observer->ReceivedKeyAliasVector(std::move(aliasVector));
-    else if (type.isCertificate())
-        m_observer->ReceivedCertificateAliasVector(std::move(aliasVector));
-    else if (type.isBinaryData())
-        m_observer->ReceivedDataAliasVector(std::move(aliasVector));
-    else
-        m_observer->ReceivedError(CKM_API_ERROR_BAD_RESPONSE);
+	DataType type(dataType);
+
+	if (type.isKey())
+		m_observer->ReceivedKeyAliasVector(std::move(aliasVector));
+	else if (type.isCertificate())
+		m_observer->ReceivedCertificateAliasVector(std::move(aliasVector));
+	else if (type.isBinaryData())
+		m_observer->ReceivedDataAliasVector(std::move(aliasVector));
+	else
+		m_observer->ReceivedError(CKM_API_ERROR_BAD_RESPONSE);
 }
 
 void StorageReceiver::parseSaveCommand()
 {
-    int dataType = 0, retCode = 0;
-    m_buffer.Deserialize(retCode, dataType);
+	int dataType = 0, retCode = 0;
+	m_buffer.Deserialize(retCode, dataType);
 
-    // check error code
-    if (retCode != CKM_API_SUCCESS) {
-         m_observer->ReceivedError(retCode);
-         return;
-    }
+	// check error code
+	if (retCode != CKM_API_SUCCESS) {
+		m_observer->ReceivedError(retCode);
+		return;
+	}
 
-    DataType type(dataType);
-    if (type.isKey())
-        m_observer->ReceivedSaveKey();
-    else if (type.isCertificate())
-        m_observer->ReceivedSaveCertificate();
-    else if (type.isBinaryData())
-        m_observer->ReceivedSaveData();
-    else
-        m_observer->ReceivedError(CKM_API_ERROR_BAD_RESPONSE);
+	DataType type(dataType);
+
+	if (type.isKey())
+		m_observer->ReceivedSaveKey();
+	else if (type.isCertificate())
+		m_observer->ReceivedSaveCertificate();
+	else if (type.isBinaryData())
+		m_observer->ReceivedSaveData();
+	else
+		m_observer->ReceivedError(CKM_API_ERROR_BAD_RESPONSE);
 }
 
 void StorageReceiver::parseSavePKCS12Command()
 {
-    int retCode = 0;
-    m_buffer.Deserialize(retCode);
+	int retCode = 0;
+	m_buffer.Deserialize(retCode);
 
-    // check error code
-    if (retCode != CKM_API_SUCCESS) {
-         m_observer->ReceivedError(retCode);
-         return;
-    }
+	// check error code
+	if (retCode != CKM_API_SUCCESS) {
+		m_observer->ReceivedError(retCode);
+		return;
+	}
 
-    m_observer->ReceivedSavePKCS12();
+	m_observer->ReceivedSavePKCS12();
 }
 
 void StorageReceiver::parseRemoveCommand()
 {
-    int retCode = 0;
-    m_buffer.Deserialize(retCode);
+	int retCode = 0;
+	m_buffer.Deserialize(retCode);
 
-    // check error code
-    if (retCode != CKM_API_SUCCESS) {
-         m_observer->ReceivedError(retCode);
-         return;
-    }
+	// check error code
+	if (retCode != CKM_API_SUCCESS) {
+		m_observer->ReceivedError(retCode);
+		return;
+	}
 
-    m_observer->ReceivedRemovedAlias();
+	m_observer->ReceivedRemovedAlias();
 }
 
 void StorageReceiver::parseGetChainCertCommand()
 {
-    CertificateShPtrVector certificateChainVector;
-    RawBufferVector rawBufferVector;
-    int retCode = 0;
-    m_buffer.Deserialize(retCode, rawBufferVector);
+	CertificateShPtrVector certificateChainVector;
+	RawBufferVector rawBufferVector;
+	int retCode = 0;
+	m_buffer.Deserialize(retCode, rawBufferVector);
 
-    // check error code
-    if (retCode != CKM_API_SUCCESS) {
-         m_observer->ReceivedError(retCode);
-         return;
-    }
+	// check error code
+	if (retCode != CKM_API_SUCCESS) {
+		m_observer->ReceivedError(retCode);
+		return;
+	}
 
-    for (auto &e: rawBufferVector) {
-        CertificateShPtr cert(new CertificateImpl(e, DataFormat::FORM_DER));
-        if (cert->empty()) {
-            m_observer->ReceivedError(CKM_API_ERROR_BAD_RESPONSE);
-            return;
-        }
-        certificateChainVector.push_back(cert);
-    }
-    m_observer->ReceivedGetCertificateChain(std::move(certificateChainVector));
+	for (auto &e : rawBufferVector) {
+		CertificateShPtr cert(new CertificateImpl(e, DataFormat::FORM_DER));
+
+		if (cert->empty()) {
+			m_observer->ReceivedError(CKM_API_ERROR_BAD_RESPONSE);
+			return;
+		}
+
+		certificateChainVector.push_back(cert);
+	}
+
+	m_observer->ReceivedGetCertificateChain(std::move(certificateChainVector));
 }
 
 void StorageReceiver::parseCreateSignatureCommand()
 {
-    int retCode = 0;
-    RawBuffer signature;
-    m_buffer.Deserialize(retCode, signature);
+	int retCode = 0;
+	RawBuffer signature;
+	m_buffer.Deserialize(retCode, signature);
 
-    // check error code
-    if (retCode != CKM_API_SUCCESS) {
-         m_observer->ReceivedError(retCode);
-         return;
-    }
+	// check error code
+	if (retCode != CKM_API_SUCCESS) {
+		m_observer->ReceivedError(retCode);
+		return;
+	}
 
-    m_observer->ReceivedCreateSignature(std::move(signature));
+	m_observer->ReceivedCreateSignature(std::move(signature));
 }
 
 void StorageReceiver::parseSetPermission()
 {
-    int retCode = 0;
-    m_buffer.Deserialize(retCode);
+	int retCode = 0;
+	m_buffer.Deserialize(retCode);
 
-    // check error code
-    if (retCode != CKM_API_SUCCESS) {
-         m_observer->ReceivedError(retCode);
-         return;
-    }
+	// check error code
+	if (retCode != CKM_API_SUCCESS) {
+		m_observer->ReceivedError(retCode);
+		return;
+	}
 
-    m_observer->ReceivedSetPermission();
+	m_observer->ReceivedSetPermission();
 }
 
 void StorageReceiver::parseRetCode(ObserverCb callback)
 {
-    int retCode = 0;
-    m_buffer.Deserialize(retCode);
+	int retCode = 0;
+	m_buffer.Deserialize(retCode);
 
-    // check error code
-    if (retCode != CKM_API_SUCCESS) {
-         m_observer->ReceivedError(retCode);
-         return;
-    }
+	// check error code
+	if (retCode != CKM_API_SUCCESS) {
+		m_observer->ReceivedError(retCode);
+		return;
+	}
 
-    (m_observer.get()->*callback)();
+	(m_observer.get()->*callback)();
 }
 
 } /* namespace CKM */

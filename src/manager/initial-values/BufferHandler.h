@@ -33,34 +33,32 @@ namespace InitialValues {
 
 class BufferHandler : public XML::Parser::ElementHandler {
 public:
-    typedef std::shared_ptr<BufferHandler> BufferHandlerPtr;
+	typedef std::shared_ptr<BufferHandler> BufferHandlerPtr;
 
-    BufferHandler(EncodingType type);
-    virtual ~BufferHandler();
+	BufferHandler(EncodingType type);
+	virtual ~BufferHandler();
 
-    virtual void Start(const XML::Parser::Attributes &);
-    virtual void Characters(const std::string & data);
-    virtual void End();
+	virtual void Start(const XML::Parser::Attributes &);
+	virtual void Characters(const std::string &data);
+	virtual void End();
 
-    const RawBuffer & getData() const
-    {
-        return m_data;
-    }
-    bool isEncrypted() const
-    {
-        if (m_encoding == EncodingType::ENCRYPTED)
-            return true;
-        return false;
-    }
-    const RawBuffer & getIV() const
-    {
-        return m_IV;
-    }
+	const RawBuffer &getData() const {
+		return m_data;
+	}
+	bool isEncrypted() const {
+		if (m_encoding == EncodingType::ENCRYPTED)
+			return true;
+
+		return false;
+	}
+	const RawBuffer &getIV() const {
+		return m_IV;
+	}
 
 private:
-    EncodingType        m_encoding;
-    RawBuffer           m_IV;
-    RawBuffer           m_data;
+	EncodingType        m_encoding;
+	RawBuffer           m_IV;
+	RawBuffer           m_data;
 };
 
 }

@@ -30,63 +30,66 @@ namespace CKM {
 
 class CKMLogic;
 
-class CKMService : public ThreadMessageService<MsgKeyRequest, MsgRemoveAppData> {
+class CKMService : public
+	ThreadMessageService<MsgKeyRequest, MsgRemoveAppData> {
 public:
-    CKMService();
-    CKMService(const CKMService &) = delete;
-    CKMService(CKMService &&) = delete;
-    CKMService& operator=(const CKMService &) = delete;
-    CKMService& operator=(CKMService &&) = delete;
+	CKMService();
+	CKMService(const CKMService &) = delete;
+	CKMService(CKMService &&) = delete;
+	CKMService &operator=(const CKMService &) = delete;
+	CKMService &operator=(CKMService &&) = delete;
 
-    // Custom add custom support for ReadEvent and SecurityEvent
-    // because we want to bypass security check in CKMService
-    virtual void Event(const ReadEvent &event)
-    {
-        CreateEvent([this, event]() { this->CustomHandle(event); });
-    }
+	// Custom add custom support for ReadEvent and SecurityEvent
+	// because we want to bypass security check in CKMService
+	virtual void Event(const ReadEvent &event) {
+		CreateEvent([this, event]() {
+			this->CustomHandle(event);
+		});
+	}
 
-    virtual void Event(const SecurityEvent &event)
-    {
-        CreateEvent([this, event]() { this->CustomHandle(event); });
-    }
+	virtual void Event(const SecurityEvent &event) {
+		CreateEvent([this, event]() {
+			this->CustomHandle(event);
+		});
+	}
 
-    virtual void Start(void);
-    virtual void Stop(void);
+	virtual void Start(void);
+	virtual void Stop(void);
 
-    virtual ~CKMService();
+	virtual ~CKMService();
 
-    ServiceDescriptionVector GetServiceDescription();
+	ServiceDescriptionVector GetServiceDescription();
 
 protected:
-    // CustomHandle is used to bypass security check
-    void CustomHandle(const ReadEvent &event);
-    void CustomHandle(const SecurityEvent &event);
+	// CustomHandle is used to bypass security check
+	void CustomHandle(const ReadEvent &event);
+	void CustomHandle(const SecurityEvent &event);
 
 private:
-    virtual void SetCommManager(CommMgr *manager);
+	virtual void SetCommManager(CommMgr *manager);
 
-    class Exception {
-    public:
-        DECLARE_EXCEPTION_TYPE(CKM::Exception, Base)
-        DECLARE_EXCEPTION_TYPE(Base, BrokenProtocol)
-    };
+	class Exception {
+	public:
+		DECLARE_EXCEPTION_TYPE(CKM::Exception, Base)
+		DECLARE_EXCEPTION_TYPE(Base, BrokenProtocol)
+	};
 
-    bool ProcessOne(
-        const ConnectionID &conn,
-        ConnectionInfo &info,
-        bool allowed);
+	bool ProcessOne(
+		const ConnectionID &conn,
+		ConnectionInfo &info,
+		bool allowed);
 
-    RawBuffer ProcessControl(
-        MessageBuffer &buffer);
+	RawBuffer ProcessControl(
+		MessageBuffer &buffer);
 
-    RawBuffer ProcessStorage(
-        Credentials &cred,
-        MessageBuffer &buffer);
+	RawBuffer ProcessStorage(
+		Credentials &cred,
+		MessageBuffer &buffer);
 
-    virtual void ProcessMessage(MsgKeyRequest msg);
-    virtual void ProcessMessage(MsgRemoveAppData msg);
+	virtual void ProcessMessage(MsgKeyRequest msg);
+	virtual void ProcessMessage(MsgRemoveAppData msg);
 
-    CKMLogic *m_logic;
+	CKMLogic *m_logic;
 };
 
 } // namespace CKM

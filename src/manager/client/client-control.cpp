@@ -32,196 +32,219 @@ namespace CKM {
 
 class ControlImpl : public Control {
 public:
-    ControlImpl() : m_controlConnection(SERVICE_SOCKET_CKM_CONTROL) {}
-    ControlImpl(const ControlImpl &) = delete;
-    ControlImpl(ControlImpl &&) = delete;
-    ControlImpl& operator=(const ControlImpl &) = delete;
-    ControlImpl& operator=(ControlImpl &&) = delete;
+	ControlImpl() : m_controlConnection(SERVICE_SOCKET_CKM_CONTROL) {}
+	ControlImpl(const ControlImpl &) = delete;
+	ControlImpl(ControlImpl &&) = delete;
+	ControlImpl &operator=(const ControlImpl &) = delete;
+	ControlImpl &operator=(ControlImpl &&) = delete;
 
-    virtual int unlockUserKey(uid_t user, const Password &password)
-    {
-        return try_catch([&] {
-            if ((int)user < 0)
-                return CKM_API_ERROR_INPUT_PARAM;
+	virtual int unlockUserKey(uid_t user, const Password &password) {
+		EXCEPTION_GUARD_START_CPPAPI
 
-            MessageBuffer recv;
-            auto send = MessageBuffer::Serialize(static_cast<int>(ControlCommand::UNLOCK_USER_KEY),
-                                                 user,
-                                                 password);
+		if ((int)user < 0)
+			return CKM_API_ERROR_INPUT_PARAM;
 
-            int retCode = m_controlConnection.processRequest(send.Pop(), recv);
-            if (CKM_API_SUCCESS != retCode)
-                return retCode;
+		MessageBuffer recv;
+		auto send = MessageBuffer::Serialize(static_cast<int>
+											 (ControlCommand::UNLOCK_USER_KEY),
+											 user,
+											 password);
 
-            recv.Deserialize(retCode);
+		int retCode = m_controlConnection.processRequest(send.Pop(), recv);
 
-            return retCode;
-        });
-    }
+		if (CKM_API_SUCCESS != retCode)
+			return retCode;
 
-    virtual int lockUserKey(uid_t user)
-    {
-        return try_catch([&] {
-            if ((int)user < 0)
-                return CKM_API_ERROR_INPUT_PARAM;
+		recv.Deserialize(retCode);
 
-            MessageBuffer recv;
-            auto send = MessageBuffer::Serialize(static_cast<int>(ControlCommand::LOCK_USER_KEY), user);
+		return retCode;
 
-            int retCode = m_controlConnection.processRequest(send.Pop(), recv);
-            if (CKM_API_SUCCESS != retCode)
-                return retCode;
+		EXCEPTION_GUARD_END
+	}
 
-            recv.Deserialize(retCode);
+	virtual int lockUserKey(uid_t user) {
+		EXCEPTION_GUARD_START_CPPAPI
 
-            return retCode;
-        });
-    }
+		if ((int)user < 0)
+			return CKM_API_ERROR_INPUT_PARAM;
 
-    virtual int removeUserData(uid_t user)
-    {
-        return try_catch([&] {
-            if ((int)user < 0)
-                return CKM_API_ERROR_INPUT_PARAM;
+		MessageBuffer recv;
+		auto send = MessageBuffer::Serialize(static_cast<int>
+											 (ControlCommand::LOCK_USER_KEY), user);
 
-            MessageBuffer recv;
-            auto send = MessageBuffer::Serialize(static_cast<int>(ControlCommand::REMOVE_USER_DATA), user);
+		int retCode = m_controlConnection.processRequest(send.Pop(), recv);
 
-            int retCode = m_controlConnection.processRequest(send.Pop(), recv);
-            if (CKM_API_SUCCESS != retCode)
-                return retCode;
+		if (CKM_API_SUCCESS != retCode)
+			return retCode;
 
-            recv.Deserialize(retCode);
+		recv.Deserialize(retCode);
 
-            return retCode;
-        });
-    }
+		return retCode;
 
-    virtual int changeUserPassword(uid_t user, const Password &oldPassword, const Password &newPassword)
-    {
-        return try_catch([&] {
-            if ((int)user < 0)
-                return CKM_API_ERROR_INPUT_PARAM;
+		EXCEPTION_GUARD_END
+	}
 
-            MessageBuffer recv;
-            auto send = MessageBuffer::Serialize(
-                    static_cast<int>(ControlCommand::CHANGE_USER_PASSWORD),
-                    user,
-                    oldPassword,
-                    newPassword);
+	virtual int removeUserData(uid_t user) {
+		EXCEPTION_GUARD_START_CPPAPI
 
-            int retCode = m_controlConnection.processRequest(send.Pop(), recv);
-            if (CKM_API_SUCCESS != retCode)
-                return retCode;
+		if ((int)user < 0)
+			return CKM_API_ERROR_INPUT_PARAM;
 
-            recv.Deserialize(retCode);
+		MessageBuffer recv;
+		auto send = MessageBuffer::Serialize(static_cast<int>
+											 (ControlCommand::REMOVE_USER_DATA), user);
 
-            return retCode;
-        });
-    }
+		int retCode = m_controlConnection.processRequest(send.Pop(), recv);
 
-    virtual int resetUserPassword(uid_t user, const Password &newPassword)
-    {
-        return try_catch([&] {
-            if ((int)user < 0)
-                return CKM_API_ERROR_INPUT_PARAM;
+		if (CKM_API_SUCCESS != retCode)
+			return retCode;
 
-            MessageBuffer recv;
-            auto send = MessageBuffer::Serialize(
-                    static_cast<int>(ControlCommand::RESET_USER_PASSWORD),
-                    user,
-                    newPassword);
+		recv.Deserialize(retCode);
 
-            int retCode = m_controlConnection.processRequest(send.Pop(), recv);
-            if (CKM_API_SUCCESS != retCode)
-                return retCode;
+		return retCode;
 
-            recv.Deserialize(retCode);
+		EXCEPTION_GUARD_END
+	}
 
-            return retCode;
-        });
-    }
+	virtual int changeUserPassword(uid_t user, const Password &oldPassword,
+								   const Password &newPassword) {
+		EXCEPTION_GUARD_START_CPPAPI
 
-    virtual int removeApplicationData(const Label &smackLabel)
-    {
-        return try_catch([&] {
-            if (smackLabel.empty())
-                return CKM_API_ERROR_INPUT_PARAM;
+		if ((int)user < 0)
+			return CKM_API_ERROR_INPUT_PARAM;
 
-            MessageBuffer recv;
-            auto send = MessageBuffer::Serialize(static_cast<int>(ControlCommand::REMOVE_APP_DATA), smackLabel);
+		MessageBuffer recv;
+		auto send = MessageBuffer::Serialize(
+						static_cast<int>(ControlCommand::CHANGE_USER_PASSWORD),
+						user,
+						oldPassword,
+						newPassword);
 
-            int retCode = m_controlConnection.processRequest(send.Pop(), recv);
-            if (CKM_API_SUCCESS != retCode)
-                return retCode;
+		int retCode = m_controlConnection.processRequest(send.Pop(), recv);
 
-            recv.Deserialize(retCode);
+		if (CKM_API_SUCCESS != retCode)
+			return retCode;
 
-            return retCode;
-        });
-    }
+		recv.Deserialize(retCode);
 
-    virtual int updateCCMode()
-    {
-        return try_catch([&] {
-            MessageBuffer recv;
-            auto send = MessageBuffer::Serialize(static_cast<int>(ControlCommand::UPDATE_CC_MODE));
+		return retCode;
 
-            int retCode = m_controlConnection.processRequest(send.Pop(), recv);
-            if (CKM_API_SUCCESS != retCode)
-                return retCode;
+		EXCEPTION_GUARD_END
+	}
 
-            recv.Deserialize(retCode);
+	virtual int resetUserPassword(uid_t user, const Password &newPassword) {
+		EXCEPTION_GUARD_START_CPPAPI
 
-            return retCode;
-        });
-    }
+		if ((int)user < 0)
+			return CKM_API_ERROR_INPUT_PARAM;
 
-    virtual int setPermission(uid_t user,
-                              const Alias &alias,
-                              const Label &accessor,
-                              PermissionMask permissionMask)
-    {
-        return try_catch([&] {
-            MessageBuffer recv;
-            AliasSupport helper(alias);
-            auto send = MessageBuffer::Serialize(static_cast<int>(ControlCommand::SET_PERMISSION),
-                                                 static_cast<int>(user),
-                                                 helper.getName(),
-                                                 helper.getLabel(),
-                                                 accessor,
-                                                 permissionMask);
+		MessageBuffer recv;
+		auto send = MessageBuffer::Serialize(
+						static_cast<int>(ControlCommand::RESET_USER_PASSWORD),
+						user,
+						newPassword);
 
-            int retCode = m_controlConnection.processRequest(send.Pop(), recv);
-            if (CKM_API_SUCCESS != retCode)
-                return retCode;
+		int retCode = m_controlConnection.processRequest(send.Pop(), recv);
 
-            int command;
-            int counter;
-            recv.Deserialize(command, counter, retCode);
+		if (CKM_API_SUCCESS != retCode)
+			return retCode;
 
-            return retCode;
-        });
-    }
+		recv.Deserialize(retCode);
 
-    virtual ~ControlImpl()
-    {
-    }
+		return retCode;
+
+		EXCEPTION_GUARD_END
+	}
+
+	virtual int removeApplicationData(const Label &smackLabel) {
+		EXCEPTION_GUARD_START_CPPAPI
+
+		if (smackLabel.empty())
+			return CKM_API_ERROR_INPUT_PARAM;
+
+		MessageBuffer recv;
+		auto send = MessageBuffer::Serialize(static_cast<int>
+											 (ControlCommand::REMOVE_APP_DATA), smackLabel);
+
+		int retCode = m_controlConnection.processRequest(send.Pop(), recv);
+
+		if (CKM_API_SUCCESS != retCode)
+			return retCode;
+
+		recv.Deserialize(retCode);
+
+		return retCode;
+
+		EXCEPTION_GUARD_END
+	}
+
+	virtual int updateCCMode() {
+		EXCEPTION_GUARD_START_CPPAPI
+
+		MessageBuffer recv;
+		auto send = MessageBuffer::Serialize(static_cast<int>
+											 (ControlCommand::UPDATE_CC_MODE));
+
+		int retCode = m_controlConnection.processRequest(send.Pop(), recv);
+
+		if (CKM_API_SUCCESS != retCode)
+			return retCode;
+
+		recv.Deserialize(retCode);
+
+		return retCode;
+
+		EXCEPTION_GUARD_END
+	}
+
+	virtual int setPermission(uid_t user,
+							  const Alias &alias,
+							  const Label &accessor,
+							  PermissionMask permissionMask) {
+		EXCEPTION_GUARD_START_CPPAPI
+
+		MessageBuffer recv;
+		AliasSupport helper(alias);
+		auto send = MessageBuffer::Serialize(static_cast<int>
+											 (ControlCommand::SET_PERMISSION),
+											 static_cast<int>(user),
+											 helper.getName(),
+											 helper.getLabel(),
+											 accessor,
+											 permissionMask);
+
+		int retCode = m_controlConnection.processRequest(send.Pop(), recv);
+
+		if (CKM_API_SUCCESS != retCode)
+			return retCode;
+
+		int command;
+		int counter;
+		recv.Deserialize(command, counter, retCode);
+
+		return retCode;
+
+		EXCEPTION_GUARD_END
+	}
+
+	virtual ~ControlImpl() {
+	}
 
 private:
-    CKM::ServiceConnection m_controlConnection;
+	CKM::ServiceConnection m_controlConnection;
 };
 
 ControlShPtr Control::create()
 {
-    try {
-        return std::make_shared<ControlImpl>();
-    } catch (const std::bad_alloc &) {
-        LogDebug("Bad alloc was caught during ControlImpl creation.");
-    } catch (...) {
-        LogError("Critical error: Unknown exception was caught druing ControlImpl creation!");
-    }
-    return ControlShPtr();
+	try {
+		return std::make_shared<ControlImpl>();
+	} catch (const std::bad_alloc &) {
+		LogDebug("Bad alloc was caught during ControlImpl creation.");
+	} catch (...) {
+		LogError("Critical error: Unknown exception was caught druing ControlImpl creation!");
+	}
+
+	return ControlShPtr();
 }
 
 } // namespace CKM
