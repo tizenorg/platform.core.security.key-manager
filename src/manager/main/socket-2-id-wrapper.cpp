@@ -28,60 +28,62 @@
 
 namespace {
 
-int getPkgIdFromSocket(int sock, std::string &pkgId) {
-    char *pkg = nullptr;
+int getPkgIdFromSocket(int sock, std::string &pkgId)
+{
+	char *pkg = nullptr;
 
-    int ret = security_manager_identify_app_from_socket(sock, &pkg, nullptr);
+	int ret = security_manager_identify_app_from_socket(sock, &pkg, nullptr);
 
-    if (ret == SECURITY_MANAGER_ERROR_NO_SUCH_OBJECT) {
-        LogInfo("Owner of socket is not connected with pkgid. "
-            "This case must be special-labled client. e.g. User, System");
-        return 1;
-    }
+	if (ret == SECURITY_MANAGER_ERROR_NO_SUCH_OBJECT) {
+		LogInfo("Owner of socket is not connected with pkgid. "
+				"This case must be special-labled client. e.g. User, System");
+		return 1;
+	}
 
-    if (ret != SECURITY_MANAGER_SUCCESS) {
-        LogError("security_manager_identify_app_from_socket failed with error: "
-                 << ret);
-        return -1;
-    }
+	if (ret != SECURITY_MANAGER_SUCCESS) {
+		LogError("security_manager_identify_app_from_socket failed with error: "
+				 << ret);
+		return -1;
+	}
 
-    pkgId = pkg;
-    free(pkg);
-    LogDebug("Socket: " << sock << " Was translated to owner id: " << pkgId);
-    return 0;
+	pkgId = pkg;
+	free(pkg);
+	LogDebug("Socket: " << sock << " Was translated to owner id: " << pkgId);
+	return 0;
 }
 
 } // namespace anonymous
 
 namespace CKM {
 
-int Socket2Id::translate(int sock, std::string &result) {
-    std::string smack;
+int Socket2Id::translate(int sock, std::string &result)
+{
+	std::string smack;
 
-    if (0 > getCredentialsFromSocket(sock, smack))
-        return -1;
+	if (0 > getCredentialsFromSocket(sock, smack))
+		return -1;
 
-    StringMap::iterator it = m_stringMap.find(smack);
+	StringMap::iterator it = m_stringMap.find(smack);
 
-    if (it != m_stringMap.end()) {
-        result = it->second;
-        return 0;
-    }
+	if (it != m_stringMap.end()) {
+		result = it->second;
+		return 0;
+	}
 
-    std::string pkgId;
-    int retCode = getPkgIdFromSocket(sock, pkgId);
+	std::string pkgId;
+	int retCode = getPkgIdFromSocket(sock, pkgId);
 
-    if (retCode < 0)
-        return -1;
+	if (retCode < 0)
+		return -1;
 
-    if (retCode == 1) {
-        LogInfo("Special smack label case. label: " << smack);
-        pkgId = "/" + smack;
-    }
+	if (retCode == 1) {
+		LogInfo("Special smack label case. label: " << smack);
+		pkgId = "/" + smack;
+	}
 
-    result = pkgId;
-    m_stringMap.emplace(std::move(smack), std::move(pkgId));
-    return 0;
+	result = pkgId;
+	m_stringMap.emplace(std::move(smack), std::move(pkgId));
+	return 0;
 }
 
 } // namespace CKM

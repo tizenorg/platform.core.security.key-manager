@@ -28,15 +28,15 @@ struct smack_accesses;
 
 class SmackAccess {
 public:
-    SmackAccess();
-    SmackAccess(const SmackAccess &second) = delete;
-    SmackAccess& operator=(const SmackAccess &second) = delete;
+	SmackAccess();
+	SmackAccess(const SmackAccess &second) = delete;
+	SmackAccess &operator=(const SmackAccess &second) = delete;
 
-    void add(const std::string &subject,
-             const std::string &object,
-             const std::string &rights);
-    void apply();
-    virtual ~SmackAccess();
+	void add(const std::string &subject,
+			 const std::string &object,
+			 const std::string &rights);
+	void apply();
+	virtual ~SmackAccess();
 private:
-    struct smack_accesses *m_handle;
+	struct smack_accesses *m_handle;
 };

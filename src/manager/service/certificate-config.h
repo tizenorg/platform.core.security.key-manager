@@ -28,31 +28,31 @@ namespace CKM {
 
 class CertificateConfig {
 public:
-    static void addSystemCertificateDir(const std::string& dir)
-    {
-        m_sysCertDirs.insert(dir);
-    }
-    static void addSystemCertificateFile(const std::string& file)
-    {
-         m_sysCertFiles.insert(file);
-    }
+	static void addSystemCertificateDir(const std::string &dir)
+	{
+		m_sysCertDirs.insert(dir);
+	}
+	static void addSystemCertificateFile(const std::string &file)
+	{
+		m_sysCertFiles.insert(file);
+	}
 
-    typedef std::set<std::string> PathSet;
+	using PathSet = std::set<std::string>;
 
-    static const PathSet& getSystemCertificateDirs()
-    {
-        return m_sysCertDirs;
-    }
-    static const PathSet& getSystemCertificateFiles()
-    {
-        return m_sysCertFiles;
-    }
+	static const PathSet &getSystemCertificateDirs()
+	{
+		return m_sysCertDirs;
+	}
+	static const PathSet &getSystemCertificateFiles()
+	{
+		return m_sysCertFiles;
+	}
 
 private:
-    CertificateConfig();
+	CertificateConfig();
 
-    static PathSet m_sysCertDirs;
-    static PathSet m_sysCertFiles;
+	static PathSet m_sysCertDirs;
+	static PathSet m_sysCertFiles;
 };
 
 } /* namespace CKM */

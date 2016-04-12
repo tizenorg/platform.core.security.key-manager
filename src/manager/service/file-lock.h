@@ -27,16 +27,16 @@ namespace CKM {
 
 class FileLock {
 public:
-    explicit FileLock(const char* const file);
-    ~FileLock();
+	explicit FileLock(const char *const file);
+	~FileLock();
 
-    NONCOPYABLE(FileLock);
+	NONCOPYABLE(FileLock);
 
-    FileLock(FileLock&&) = default;
-    FileLock& operator=(FileLock&&) = default;
+	FileLock(FileLock &&) = default;
+	FileLock &operator=(FileLock &&) = default;
 
 private:
-    int m_lockFd;
+	int m_lockFd;
 };
 
 } /* namespace CKM */

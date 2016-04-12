@@ -29,58 +29,56 @@ typedef bio_st BIO;
 namespace CKM {
 
 class COMMON_API Base64Encoder {
-  public:
-    NONCOPYABLE(Base64Encoder)
+public:
+	NONCOPYABLE(Base64Encoder)
 
-    class Exception {
-      public:
-        DECLARE_EXCEPTION_TYPE(CKM::Exception, Base)
-        DECLARE_EXCEPTION_TYPE(Base, InternalError)
-        DECLARE_EXCEPTION_TYPE(Base, NotFinalized)
-        DECLARE_EXCEPTION_TYPE(Base, AlreadyFinalized)
-    };
-    Base64Encoder();
-    void append(const RawBuffer &data);
-    void finalize();
-    RawBuffer get();
-    void reset();
-    ~Base64Encoder();
+	class Exception {
+	public:
+		DECLARE_EXCEPTION_TYPE(CKM::Exception, Base)
+		DECLARE_EXCEPTION_TYPE(Base, InternalError)
+		DECLARE_EXCEPTION_TYPE(Base, NotFinalized)
+		DECLARE_EXCEPTION_TYPE(Base, AlreadyFinalized)
+	};
+	Base64Encoder();
+	void append(const RawBuffer &data);
+	void finalize();
+	RawBuffer get();
+	void reset();
+	~Base64Encoder();
 
-  private:
-    BIO *m_b64;
-    BIO *m_bmem;
-    bool m_finalized;
+private:
+	BIO *m_b64;
+	BIO *m_bmem;
+	bool m_finalized;
 };
 
 class COMMON_API Base64Decoder {
-  public:
-    NONCOPYABLE(Base64Decoder)
+public:
+	NONCOPYABLE(Base64Decoder)
 
-    class Exception {
-      public:
-        DECLARE_EXCEPTION_TYPE(CKM::Exception, Base)
-        DECLARE_EXCEPTION_TYPE(Base, InternalError)
-        DECLARE_EXCEPTION_TYPE(Base, NotFinalized)
-        DECLARE_EXCEPTION_TYPE(Base, AlreadyFinalized)
-    };
-    Base64Decoder();
-    void append(const RawBuffer &data);
+	class Exception {
+	public:
+		DECLARE_EXCEPTION_TYPE(CKM::Exception, Base)
+		DECLARE_EXCEPTION_TYPE(Base, InternalError)
+		DECLARE_EXCEPTION_TYPE(Base, NotFinalized)
+		DECLARE_EXCEPTION_TYPE(Base, AlreadyFinalized)
+	};
+	Base64Decoder();
+	void append(const RawBuffer &data);
 
-    /*
-     *  Function will return false when BIO_read fails
-     *  (for example: when string was not in base64 format).
-     */
-    bool finalize();
-    RawBuffer get() const;
-    void reset();
-    ~Base64Decoder()
-    {
-    }
+	/*
+	 *  Function will return false when BIO_read fails
+	 *  (for example: when string was not in base64 format).
+	 */
+	bool finalize();
+	RawBuffer get() const;
+	void reset();
+	~Base64Decoder() {}
 
-  private:
-    RawBuffer m_input;
-    RawBuffer m_output;
-    bool m_finalized;
+private:
+	RawBuffer m_input;
+	RawBuffer m_output;
+	bool m_finalized;
 };
 } // namespace CKM
 

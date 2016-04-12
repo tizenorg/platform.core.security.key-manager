@@ -32,35 +32,36 @@ class GLIBLogic;
 
 class GLIBService : public CKM::GenericSocketService {
 public:
-    enum class State {
-        NoThread,
-        Work,
-    };
+	enum class State {
+		NoThread,
+		Work,
+	};
 
-    GLIBService();
-    NONCOPYABLE(GLIBService);
+	GLIBService();
+	NONCOPYABLE(GLIBService);
 
-    // This service does not provide any socket for communication so no events will be supported
-    virtual void Event(const AcceptEvent &);
-    virtual void Event(const WriteEvent &);
-    virtual void Event(const ReadEvent &);
-    virtual void Event(const CloseEvent &);
-    virtual void Event(const SecurityEvent &);
+	// This service does not provide any socket for communication so no events will be supported
+	virtual void Event(const AcceptEvent &);
+	virtual void Event(const WriteEvent &);
+	virtual void Event(const ReadEvent &);
+	virtual void Event(const CloseEvent &);
+	virtual void Event(const SecurityEvent &);
 
-    virtual void Start();
-    virtual void Stop();
+	virtual void Start();
+	virtual void Stop();
 
-    virtual ~GLIBService();
+	virtual ~GLIBService();
 
-    virtual ServiceDescriptionVector GetServiceDescription();
-    virtual void SetCommManager(CommMgr *manager);
+	virtual ServiceDescriptionVector GetServiceDescription();
+	virtual void SetCommManager(CommMgr *manager);
+
 protected:
-    static void ThreadLoopStatic(GLIBService *ptr);
-    void ThreadLoop();
+	static void ThreadLoopStatic(GLIBService *ptr);
+	void ThreadLoop();
 
-    State m_state;
-    std::thread m_thread;
-    GLIBLogic *m_logic;
+	State m_state;
+	std::thread m_thread;
+	GLIBLogic *m_logic;
 };
 
 } // namespace CKM

@@ -26,53 +26,56 @@ namespace CKM {
 
 KeyAESImpl::KeyAESImpl(const RawBuffer &buf) : m_key(buf)
 {
-    // buf stores bytes -> compare the bit sizes
-    switch (buf.size() * 8) {
-    case 128:
-    case 192:
-    case 256:
-        break;
+	// buf stores bytes -> compare the bit sizes
+	switch (buf.size() * 8) {
+	case 128:
+	case 192:
+	case 256:
+		break;
 
-    default:
-        throw std::invalid_argument("invalid AES key size");
-    }
+	default:
+		throw std::invalid_argument("invalid AES key size");
+	}
 }
 
 bool KeyAESImpl::empty() const
 {
-    return (getSize() == 0);
+	return (getSize() == 0);
 }
 
 KeyType KeyAESImpl::getType() const
 {
-    return KeyType::KEY_AES;
+	return KeyType::KEY_AES;
 }
 
 RawBuffer KeyAESImpl::getDER() const
 {
-    return m_key;
+	return m_key;
 }
 
 int KeyAESImpl::getSize() const
 {
-    return m_key.size();
+	return m_key.size();
 }
 
 KeyShPtr Key::createAES(const RawBuffer &raw)
 {
-    try {
-        KeyShPtr output = std::make_shared<KeyAESImpl>(raw);
-        if (output->empty())
-            output.reset();
-        return output;
-    } catch (const std::bad_alloc &) {
-        LogDebug("Bad alloc during KeyAESImpl creation");
-    } catch (const std::invalid_argument &e) {
-        LogDebug(e.what());
-    } catch (...) {
-        LogError("Critical error: Unknown exception was caught during KeyAESImpl creation");
-    }
-    return KeyShPtr();
+	try {
+		KeyShPtr output = std::make_shared<KeyAESImpl>(raw);
+
+		if (output->empty())
+			output.reset();
+
+		return output;
+	} catch (const std::bad_alloc &) {
+		LogDebug("Bad alloc during KeyAESImpl creation");
+	} catch (const std::invalid_argument &e) {
+		LogDebug(e.what());
+	} catch (...) {
+		LogError("Critical error: Unknown exception was caught during KeyAESImpl creation");
+	}
+
+	return KeyShPtr();
 }
 
 } // namespace CKM

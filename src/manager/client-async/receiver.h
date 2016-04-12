@@ -25,10 +25,10 @@ namespace CKM {
 
 class IReceiver {
 public:
-    DECLARE_EXCEPTION_TYPE(CKM::Exception, BadResponse);
+	DECLARE_EXCEPTION_TYPE(CKM::Exception, BadResponse);
 
-    virtual void processResponse() = 0;
-    virtual ~IReceiver() {};
+	virtual void processResponse() = 0;
+	virtual ~IReceiver() {};
 };
 
 }

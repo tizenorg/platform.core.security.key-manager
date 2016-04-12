@@ -28,16 +28,16 @@ namespace TZ {
 
 class SKey : public GObj {
 public:
-    SKey() {}
-    virtual ~SKey() {}
+	SKey() {}
+	virtual ~SKey() {}
 
 protected:
 };
 
 class AKey : public GObj {
 public:
-    AKey() {}
-    virtual ~AKey() {}
+	AKey() {}
+	virtual ~AKey() {}
 
 protected:
 };

@@ -27,18 +27,18 @@ namespace CKM {
 
 class Socket2Id {
 public:
-    Socket2Id() {}
+	Socket2Id() {}
 
-    int translate(int sock, std::string &result);
-    void resetCache();
+	int translate(int sock, std::string &result);
+	void resetCache();
 
-    virtual ~Socket2Id() {}
+	virtual ~Socket2Id() {}
 
 private:
-    int getCredentialsFromSocket(int sock, std::string &res);
+	int getCredentialsFromSocket(int sock, std::string &res);
 
-    typedef std::map<std::string, std::string> StringMap;
-    StringMap m_stringMap;
+	typedef std::map<std::string, std::string> StringMap;
+	StringMap m_stringMap;
 };
 
 } // namespace CKM

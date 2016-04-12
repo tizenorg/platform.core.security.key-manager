@@ -33,7 +33,7 @@ extern "C" {
 
 int to_ckmc_error(int ckm_error);
 ckmc_ocsp_status_e to_ckmc_ocsp_status(int ckm_ocsp_status);
-int access_to_permission_mask(ckmc_access_right_e ar, int & permissionMask);
+int access_to_permission_mask(ckmc_access_right_e ar, int &permissionMask);
 
 #ifdef __cplusplus
 }

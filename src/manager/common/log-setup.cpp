@@ -40,38 +40,46 @@ bool logSystemReady = false;
  */
 class EnvFileParser {
 public:
-    EnvFileParser();
-    virtual ~EnvFileParser() {}
+	EnvFileParser();
+	virtual ~EnvFileParser() {}
 
-    std::string getProvider() const { return m_provider; }
-    std::string getLevel() const { return m_level; }
+	std::string getProvider() const
+	{
+		return m_provider;
+	}
+
+	std::string getLevel() const
+	{
+		return m_level;
+	}
 
 private:
-    std::string m_provider;
-    std::string m_level;
+	std::string m_provider;
+	std::string m_level;
 };
 
 EnvFileParser::EnvFileParser()
 {
 #ifdef SYSTEMD_ENV_FILE
-    std::ifstream is(SYSTEMD_ENV_FILE);
-    LogDebug("Reading env file: " SYSTEMD_ENV_FILE);
+	std::ifstream is(SYSTEMD_ENV_FILE);
+	LogDebug("Reading env file: " SYSTEMD_ENV_FILE);
 
-    while (is.good()) {
-        std::string line;
+	while (is.good()) {
+		std::string line;
 
-        std::getline(is, line);
+		std::getline(is, line);
 
-        if (0 == line.compare(0, PROVIDER_MATCH.size(), PROVIDER_MATCH)) {
-            m_provider = line.substr(PROVIDER_MATCH.size());
-            LogDebug("Log provider: " << m_provider);
-        } else if (0 == line.compare(0, LEVEL_MATCH.size(), LEVEL_MATCH)) {
-            m_level = line.substr(LEVEL_MATCH.size());
-            LogDebug("Log level: " << m_level);
-        }
-    }
+		if (0 == line.compare(0, PROVIDER_MATCH.size(), PROVIDER_MATCH)) {
+			m_provider = line.substr(PROVIDER_MATCH.size());
+			LogDebug("Log provider: " << m_provider);
+		} else if (0 == line.compare(0, LEVEL_MATCH.size(), LEVEL_MATCH)) {
+			m_level = line.substr(LEVEL_MATCH.size());
+			LogDebug("Log level: " << m_level);
+		}
+	}
+
 #else
-    LogWarning("Log configuration file is undefined");
+	LogWarning("Log configuration file is undefined");
 #endif
 }
 
@@ -79,33 +87,36 @@ EnvFileParser::EnvFileParser()
 
 void SetupClientLogSystem()
 {
-    /*
-     * This function is called from library constructors. This will prevent from executing the code
-     * more than once from single binary (because both client libraries use their constructors to
-     * initialize log system). To make it work the code has to be in a common library linked by both
-     * clients.
-     */
-    if (logSystemReady)
-        return;
+	/*
+	 * This function is called from library constructors. This will prevent from executing the code
+	 * more than once from single binary (because both client libraries use their constructors to
+	 * initialize log system). To make it work the code has to be in a common library linked by both
+	 * clients.
+	 */
+	if (logSystemReady)
+		return;
 
-    CKM::Singleton<CKM::Log::LogSystem>::Instance().SetTag("CKM_CLIENT");
+	CKM::Singleton<CKM::Log::LogSystem>::Instance().SetTag("CKM_CLIENT");
 
-    CKM::EnvFileParser parser;
-    const std::string provider = parser.getProvider();
-    if (!provider.empty()) {
-        try {
-            CKM::Singleton<CKM::Log::LogSystem>::Instance().SelectProvider(provider);
-            // reset tag after changing log provider
-            CKM::Singleton<CKM::Log::LogSystem>::Instance().SetTag("CKM_CLIENT");
-        } catch(const std::out_of_range&) {
-            LogError("Unsupported log provider: " << provider);
-        }
-    }
-    const std::string level = parser.getLevel();
-    if (!level.empty())
-        CKM::Singleton<CKM::Log::LogSystem>::Instance().SetLogLevel(level.c_str());
+	CKM::EnvFileParser parser;
+	const std::string provider = parser.getProvider();
 
-    logSystemReady = true;
+	if (!provider.empty()) {
+		try {
+			CKM::Singleton<CKM::Log::LogSystem>::Instance().SelectProvider(provider);
+			// reset tag after changing log provider
+			CKM::Singleton<CKM::Log::LogSystem>::Instance().SetTag("CKM_CLIENT");
+		} catch (const std::out_of_range &) {
+			LogError("Unsupported log provider: " << provider);
+		}
+	}
+
+	const std::string level = parser.getLevel();
+
+	if (!level.empty())
+		CKM::Singleton<CKM::Log::LogSystem>::Instance().SetLogLevel(level.c_str());
+
+	logSystemReady = true;
 }
 
 } /* namespace CKM */

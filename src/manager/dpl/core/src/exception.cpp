@@ -25,28 +25,31 @@
 #include <dpl/log/log.h>
 
 namespace CKM {
-Exception* Exception::m_lastException = NULL;
+Exception *Exception::m_lastException = NULL;
 unsigned int Exception::m_exceptionCount = 0;
 void (*Exception::m_terminateHandler)() = NULL;
 
 void LogUnhandledException(const std::string &str)
 {
-    LogError(str);
+	LogError(str);
 }
 
 void LogUnhandledException(const std::string &str,
-                           const char *filename,
-                           int line,
-                           const char *function)
+						   const char *filename,
+						   int line,
+						   const char *function)
 {
-    LogError(
-        "################################################################################" << std::endl <<
-        "###                   CKM Unhandled Exception Occured!                       ###" << std::endl <<
-        "################################################################################" << std::endl <<
-        "### Condition: " << str << std::endl <<
-        "### File: " << filename << std::endl <<
-        "### Line: " << line << std::endl <<
-        "### Function: " << function <<
-        "################################################################################");
+	LogError(
+		"################################################################################"
+		<< std::endl <<
+		"###                   CKM Unhandled Exception Occured!                       ###"
+		<< std::endl <<
+		"################################################################################"
+		<< std::endl <<
+		"### Condition: " << str << std::endl <<
+		"### File: " << filename << std::endl <<
+		"### Line: " << line << std::endl <<
+		"### Function: " << function <<
+		"################################################################################");
 }
 } // namespace CKM

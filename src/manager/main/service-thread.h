@@ -42,103 +42,108 @@
 
 #include "generic-event.h"
 
+#define __CRITICAL_SECTION_START__ { std::lock_guard<std::mutex> lock(this->m_eventQueueMutex);
+#define __CRITICAL_SECTION_END__   }
+
 namespace CKM {
 
 class ServiceThread {
 public:
-    typedef std::function<void(void)> EventDescription;
-    enum class State {
-        NoThread,
-        Work,
-    };
+	typedef std::function<void(void)> EventDescription;
+	enum class State {
+		NoThread,
+		Work,
+	};
 
-    ServiceThread()
-      : m_state(State::NoThread)
-      , m_quit(false)
-    {
-    }
+	ServiceThread() : m_state(State::NoThread), m_quit(false) {}
 
-    void Create()
-    {
-        assert(m_state == State::NoThread);
-        m_thread = std::thread(ThreadLoopStatic, this);
-        m_state = State::Work;
-    }
+	void Create()
+	{
+		assert(m_state == State::NoThread);
+		m_thread = std::thread(ThreadLoopStatic, this);
+		m_state = State::Work;
+	}
 
-    void Join()
-    {
-        assert(m_state != State::NoThread);
-        {
-            std::lock_guard<std::mutex> lock(m_eventQueueMutex);
-            m_quit = true;
-            m_waitCondition.notify_one();
-        }
-        m_thread.join();
-        m_state = State::NoThread;
-    }
+	void Join()
+	{
+		assert(m_state != State::NoThread);
 
-    virtual ~ServiceThread()
-    {
-        assert((m_state == State::NoThread) && "Thread was not stopped before ServiceThread destruction!");
-    }
+		__CRITICAL_SECTION_START__
+		m_quit = true;
+		m_waitCondition.notify_one();
+		__CRITICAL_SECTION_END__
+
+		m_thread.join();
+		m_state = State::NoThread;
+	}
+
+	virtual ~ServiceThread()
+	{
+		assert((m_state == State::NoThread) &&
+			   "Thread was not stopped before ServiceThread destruction!");
+	}
 
 protected:
-    /*
-     * This function is always called from ThreadService::ThreadEvent where fun
-     * is created as a temporary object and therefore will not be copied.
-     */
-    void CreateEvent(std::function<void(void)> fun)
-    {
-        EventDescription description;
-        description = std::move(fun);
-        {
-            std::lock_guard<std::mutex> lock(m_eventQueueMutex);
-            m_eventQueue.push(description);
-        }
-        m_waitCondition.notify_one();
-    }
+	/*
+	 * This function is always called from ThreadService::ThreadEvent where fun
+	 * is created as a temporary object and therefore will not be copied.
+	 */
+	void CreateEvent(std::function<void(void)> fun)
+	{
+		EventDescription description;
+		description = std::move(fun);
 
-    static void ThreadLoopStatic(ServiceThread *ptr)
-    {
-        ptr->ThreadLoop();
+		__CRITICAL_SECTION_START__
+		m_eventQueue.push(description);
+		__CRITICAL_SECTION_END__
 
-        // cleanup openssl in every thread
-        deinitOpenSslThread();
-    }
+		m_waitCondition.notify_one();
+	}
 
-    void ThreadLoop()
-    {
-        for (;;) {
-            EventDescription description;
-            {
-                std::unique_lock<std::mutex> ulock(m_eventQueueMutex);
-                if (m_quit)
-                    return;
-                if (!m_eventQueue.empty()) {
-                    description = m_eventQueue.front();
-                    m_eventQueue.pop();
-                } else {
-                    m_waitCondition.wait(ulock);
-                }
-            }
+	static void ThreadLoopStatic(ServiceThread *ptr)
+	{
+		ptr->ThreadLoop();
 
-            if (description) {
-                UNHANDLED_EXCEPTION_HANDLER_BEGIN
-                {
-                    description();
-                }
-                UNHANDLED_EXCEPTION_HANDLER_END
-            }
-        }
-    }
+		// cleanup openssl in every thread
+		deinitOpenSslThread();
+	}
 
-    std::thread m_thread;
-    std::mutex m_eventQueueMutex;
-    std::queue<EventDescription> m_eventQueue;
-    std::condition_variable m_waitCondition;
+	void ThreadLoop()
+	{
+		while (true) {
+			EventDescription description;
 
-    State m_state;
-    bool m_quit;
+			std::unique_lock<std::mutex> ulock(m_eventQueueMutex);
+
+			if (m_quit)
+				return;
+
+			if (!m_eventQueue.empty()) {
+				description = m_eventQueue.front();
+				m_eventQueue.pop();
+			} else {
+				m_waitCondition.wait(ulock);
+			}
+
+			ulock.unlock();
+
+			if (description) {
+				try {
+					description();
+				}
+
+				UNHANDLED_EXCEPTION_HANDLER_END
+			}
+		}
+	}
+
+	std::thread m_thread;
+	std::mutex m_eventQueueMutex;
+	std::queue<EventDescription> m_eventQueue;
+	std::condition_variable m_waitCondition;
+
+	State m_state;
+	bool m_quit;
 };
 
 } // namespace CKM

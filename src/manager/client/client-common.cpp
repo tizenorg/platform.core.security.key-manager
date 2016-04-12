@@ -52,298 +52,327 @@ SockRAII::SockRAII() : m_sock(-1) {}
 
 SockRAII::~SockRAII()
 {
-    disconnect();
+	disconnect();
 }
 
-int SockRAII::connect(const char * interface)
+int SockRAII::connect(const char *interface)
 {
-    if (!interface) {
-        LogError("No valid interface address given.");
-        return CKM_API_ERROR_INPUT_PARAM;
-    }
+	if (!interface) {
+		LogError("No valid interface address given.");
+		return CKM_API_ERROR_INPUT_PARAM;
+	}
 
-    int localSock = socket(AF_UNIX, SOCK_STREAM, 0);
+	int localSock = socket(AF_UNIX, SOCK_STREAM, 0);
 
-    if (localSock < 0) {
-        LogError("Error creating socket: " << CKM::GetErrnoString(errno));
-        return CKM_API_ERROR_SOCKET;
-    }
+	if (localSock < 0) {
+		LogError("Error creating socket: " << CKM::GetErrnoString(errno));
+		return CKM_API_ERROR_SOCKET;
+	}
 
-    int retCode = connectWrapper(localSock, interface);
+	int retCode = connectWrapper(localSock, interface);
 
-    if (retCode != CKM_API_SUCCESS) {
-        close(localSock);
-        return retCode;
-    }
+	if (retCode != CKM_API_SUCCESS) {
+		close(localSock);
+		return retCode;
+	}
 
-    disconnect();
+	disconnect();
 
-    m_sock = localSock;
+	m_sock = localSock;
 
-    return CKM_API_SUCCESS;
+	return CKM_API_SUCCESS;
 }
 
 int SockRAII::connectWrapper(int sock, const char *interface)
 {
-    int flags;
+	int flags;
 
-    // we need to be sure that socket is in blocking mode
-    if ((flags = fcntl(sock, F_GETFL, 0)) < 0 || fcntl(sock, F_SETFL, flags & ~O_NONBLOCK) < 0) {
-        LogError("Error in fcntl: " << CKM::GetErrnoString(errno));
-        return CKM_API_ERROR_SOCKET;
-    }
+	// we need to be sure that socket is in blocking mode
+	if ((flags = fcntl(sock, F_GETFL, 0)) < 0 ||
+			fcntl(sock, F_SETFL, flags & ~O_NONBLOCK) < 0) {
+		LogError("Error in fcntl: " << CKM::GetErrnoString(errno));
+		return CKM_API_ERROR_SOCKET;
+	}
 
-    sockaddr_un clientAddr;
-    memset(&clientAddr, 0, sizeof(clientAddr));
-    clientAddr.sun_family = AF_UNIX;
+	sockaddr_un clientAddr;
+	memset(&clientAddr, 0, sizeof(clientAddr));
+	clientAddr.sun_family = AF_UNIX;
 
-    if (strlen(interface) >= sizeof(clientAddr.sun_path)) {
-        LogError("Error: interface name " << interface << "is too long."
-            " Max len is:" << sizeof(clientAddr.sun_path));
-        return CKM_API_ERROR_INPUT_PARAM;
-    }
+	if (strlen(interface) >= sizeof(clientAddr.sun_path)) {
+		LogError("Error: interface name " << interface << "is too long."
+				 " Max len is:" << sizeof(clientAddr.sun_path));
+		return CKM_API_ERROR_INPUT_PARAM;
+	}
 
-    strncpy(clientAddr.sun_path, interface, sizeof(clientAddr.sun_path) - 1);
-    LogDebug("ClientAddr.sun_path = " << interface);
+	strncpy(clientAddr.sun_path, interface, sizeof(clientAddr.sun_path) - 1);
+	LogDebug("ClientAddr.sun_path = " << interface);
 
-    int retval = TEMP_FAILURE_RETRY(::connect(sock, (struct sockaddr*)&clientAddr, SUN_LEN(&clientAddr)));
+	int retval = TEMP_FAILURE_RETRY(::connect(sock, (struct sockaddr *)&clientAddr,
+									SUN_LEN(&clientAddr)));
 
-    // we don't need to support EINPROGRESS because the socket is in blocking mode
-    if (-1 == retval) {
-        if (errno == EACCES) {
-            LogError("Access denied to interface: " << interface);
-            return CKM_API_ERROR_ACCESS_DENIED;
-        }
-        LogError("Error connecting socket: " << CKM::GetErrnoString(errno));
-        return CKM_API_ERROR_SOCKET;
-    }
+	// we don't need to support EINPROGRESS because the socket is in blocking mode
+	if (-1 == retval) {
+		if (errno == EACCES) {
+			LogError("Access denied to interface: " << interface);
+			return CKM_API_ERROR_ACCESS_DENIED;
+		}
 
-    // make the socket non-blocking
-    if ((flags = fcntl(sock, F_GETFL, 0)) < 0 || fcntl(sock, F_SETFL, flags | O_NONBLOCK) < 0) {
-        LogError("Error in fcntl: " << CKM::GetErrnoString(errno));
-        return CKM_API_ERROR_SOCKET;
-    }
+		LogError("Error connecting socket: " << CKM::GetErrnoString(errno));
+		return CKM_API_ERROR_SOCKET;
+	}
 
-    return CKM_API_SUCCESS;
+	// make the socket non-blocking
+	if ((flags = fcntl(sock, F_GETFL, 0)) < 0 ||
+			fcntl(sock, F_SETFL, flags | O_NONBLOCK) < 0) {
+		LogError("Error in fcntl: " << CKM::GetErrnoString(errno));
+		return CKM_API_ERROR_SOCKET;
+	}
+
+	return CKM_API_SUCCESS;
 }
 
 bool SockRAII::isConnected() const
 {
-    return (m_sock > -1);
+	return (m_sock > -1);
 }
 
 void SockRAII::disconnect()
 {
-    if (isConnected())
-        close(m_sock);
-    m_sock = -1;
+	if (isConnected())
+		close(m_sock);
+
+	m_sock = -1;
 }
 
 int SockRAII::waitForSocket(int event, int timeout)
 {
-    int retval;
-    pollfd desc[1];
-    desc[0].fd = m_sock;
-    desc[0].events = event;
+	int retval;
+	pollfd desc[1];
+	desc[0].fd = m_sock;
+	desc[0].events = event;
 
-    while ((-1 == (retval = poll(desc, 1, timeout))) && (errno == EINTR)) {
-        timeout >>= 1;
-        errno = 0;
-    }
+	while ((-1 == (retval = poll(desc, 1, timeout))) && (errno == EINTR)) {
+		timeout >>= 1;
+		errno = 0;
+	}
 
-    if (0 == retval)
-        LogDebug("Poll timeout");
-    else if (-1 == retval)
-        LogError("Error in poll: " << CKM::GetErrnoString(errno));
+	if (0 == retval)
+		LogDebug("Poll timeout");
+	else if (-1 == retval)
+		LogError("Error in poll: " << CKM::GetErrnoString(errno));
 
-    return retval;
+	return retval;
 }
 
 int SockRAII::get() const
 {
-    return m_sock;
+	return m_sock;
 }
 
 AliasSupport::AliasSupport(const Alias &alias)
 {
-    std::size_t separator_pos = alias.rfind(CKM::LABEL_NAME_SEPARATOR);
-    if (separator_pos == Alias::npos) {
-        m_label.clear();
-        m_name = alias;
-    } else {
-        m_label = alias.substr(0, separator_pos);
-        m_name = alias.substr(separator_pos + strlen(CKM::LABEL_NAME_SEPARATOR));
-    }
+	std::size_t separator_pos = alias.rfind(CKM::LABEL_NAME_SEPARATOR);
+
+	if (separator_pos == Alias::npos) {
+		m_label.clear();
+		m_name = alias;
+	} else {
+		m_label = alias.substr(0, separator_pos);
+		m_name = alias.substr(separator_pos + strlen(CKM::LABEL_NAME_SEPARATOR));
+	}
 }
 
 Alias AliasSupport::merge(const Label &label, const Name &name)
 {
-    if (label.empty())
-        return name;
+	if (label.empty())
+		return name;
 
-    std::stringstream output;
-    output << label << std::string(CKM::LABEL_NAME_SEPARATOR) << name;
-    return output.str();
+	std::stringstream output;
+	output << label << std::string(CKM::LABEL_NAME_SEPARATOR) << name;
+	return output.str();
 }
 
-const Name & AliasSupport::getName() const
+const Name &AliasSupport::getName() const
 {
-    return m_name;
+	return m_name;
 }
 
-const Label & AliasSupport::getLabel() const
+const Label &AliasSupport::getLabel() const
 {
-    return m_label;
+	return m_label;
 }
 
 bool AliasSupport::isLabelEmpty() const
 {
-    return m_label.empty();
+	return m_label.empty();
 }
 
 ServiceConnection::ServiceConnection(const char *service_interface)
 {
-    if (service_interface)
-        m_serviceInterface = std::string(service_interface);
+	if (service_interface)
+		m_serviceInterface = std::string(service_interface);
 }
 
 int ServiceConnection::processRequest(
-    const CKM::RawBuffer &send_buf,
-    CKM::MessageBuffer &recv_buf)
+	const CKM::RawBuffer &send_buf,
+	CKM::MessageBuffer &recv_buf)
 {
-    int ec;
-    if (CKM_API_SUCCESS != (ec = send(send_buf)))
-        return ec;
+	int ec;
 
-    return receive(recv_buf);
+	if (CKM_API_SUCCESS != (ec = send(send_buf)))
+		return ec;
+
+	return receive(recv_buf);
 }
 
 int ServiceConnection::prepareConnection()
 {
-    if (m_socket.isConnected())
-        return CKM_API_SUCCESS;
+	if (m_socket.isConnected())
+		return CKM_API_SUCCESS;
 
-    return m_socket.connect(m_serviceInterface.c_str());
+	return m_socket.connect(m_serviceInterface.c_str());
 }
 
 int ServiceConnection::send(const CKM::RawBuffer &send_buf)
 {
-    int retCode = prepareConnection();
+	int retCode = prepareConnection();
 
-    if (retCode != CKM_API_SUCCESS) {
-        LogError("Failed to prepare connection: " << retCode);
-        return retCode;
-    }
+	if (retCode != CKM_API_SUCCESS) {
+		LogError("Failed to prepare connection: " << retCode);
+		return retCode;
+	}
 
-    ssize_t done = 0;
-    while ((send_buf.size() - done) > 0) {
-        if (0 >= m_socket.waitForSocket(POLLOUT, POLL_TIMEOUT)) {
-            LogError("Error in WaitForSocket.");
-            retCode = CKM_API_ERROR_SOCKET;
-            break;
-        }
+	ssize_t done = 0;
 
-        ssize_t temp = TEMP_FAILURE_RETRY(::send(m_socket.get(),
-                                                 &send_buf[done],
-                                                 send_buf.size() - done,
-                                                 MSG_NOSIGNAL));
-        if (-1 == temp) {
-            LogError("Error in write: " << CKM::GetErrnoString(errno));
-            retCode = CKM_API_ERROR_SOCKET;
-            break;
-        }
+	while ((send_buf.size() - done) > 0) {
+		if (0 >= m_socket.waitForSocket(POLLOUT, POLL_TIMEOUT)) {
+			LogError("Error in WaitForSocket.");
+			retCode = CKM_API_ERROR_SOCKET;
+			break;
+		}
 
-        done += temp;
-    }
+		ssize_t temp = TEMP_FAILURE_RETRY(::send(m_socket.get(),
+										  &send_buf[done],
+										  send_buf.size() - done,
+										  MSG_NOSIGNAL));
 
-    if (retCode != CKM_API_SUCCESS)
-        m_socket.disconnect();
+		if (-1 == temp) {
+			LogError("Error in write: " << CKM::GetErrnoString(errno));
+			retCode = CKM_API_ERROR_SOCKET;
+			break;
+		}
 
-    return retCode;
+		done += temp;
+	}
+
+	if (retCode != CKM_API_SUCCESS)
+		m_socket.disconnect();
+
+	return retCode;
 }
 
 int ServiceConnection::receive(CKM::MessageBuffer &recv_buf)
 {
-    if (!m_socket.isConnected()) {
-        LogError("Not connected!");
-        return CKM_API_ERROR_SOCKET;
-    }
+	if (!m_socket.isConnected()) {
+		LogError("Not connected!");
+		return CKM_API_ERROR_SOCKET;
+	}
 
-    int ec = CKM_API_SUCCESS;
-    const size_t c_recv_buf_len = 2048;
-    char buffer[c_recv_buf_len];
-    do {
-        if (0 >= m_socket.waitForSocket(POLLIN, POLL_TIMEOUT)) {
-            LogError("Error in WaitForSocket.");
-            ec = CKM_API_ERROR_SOCKET;
-            break;
-        }
+	int ec = CKM_API_SUCCESS;
+	const size_t c_recv_buf_len = 2048;
+	char buffer[c_recv_buf_len];
 
-        ssize_t temp = TEMP_FAILURE_RETRY(::recv(m_socket.get(),
-                                                 buffer,
-                                                 sizeof(buffer),
-                                                 0));
-        if (-1 == temp) {
-            LogError("Error in read: " << CKM::GetErrnoString(errno));
-            ec = CKM_API_ERROR_SOCKET;
-            break;
-        }
+	do {
+		if (0 >= m_socket.waitForSocket(POLLIN, POLL_TIMEOUT)) {
+			LogError("Error in WaitForSocket.");
+			ec = CKM_API_ERROR_SOCKET;
+			break;
+		}
 
-        if (0 == temp) {
-            LogError("Read return 0/Connection closed by server(?)");
-            ec = CKM_API_ERROR_SOCKET;
-            break;
-        }
+		ssize_t temp = TEMP_FAILURE_RETRY(::recv(m_socket.get(),
+										  buffer,
+										  sizeof(buffer),
+										  0));
 
-        CKM::RawBuffer raw(buffer, buffer+temp);
-        recv_buf.Push(raw);
-    } while (!recv_buf.Ready());
+		if (-1 == temp) {
+			LogError("Error in read: " << CKM::GetErrnoString(errno));
+			ec = CKM_API_ERROR_SOCKET;
+			break;
+		}
 
-    if (ec != CKM_API_SUCCESS)
-        m_socket.disconnect();
+		if (0 == temp) {
+			LogError("Read return 0/Connection closed by server(?)");
+			ec = CKM_API_ERROR_SOCKET;
+			break;
+		}
 
-    return ec;
+		CKM::RawBuffer raw(buffer, buffer + temp);
+		recv_buf.Push(raw);
+	} while (!recv_buf.Ready());
+
+	if (ec != CKM_API_SUCCESS)
+		m_socket.disconnect();
+
+	return ec;
 }
 
 ServiceConnection::~ServiceConnection()
 {
 }
 
-int try_catch(const std::function<int()>& func)
+int try_catch(const std::function<int()> &func)
 {
-    int retval = CKM_API_ERROR_UNKNOWN;
-    try {
-        return func();
-    } catch (const MessageBuffer::Exception::Base &e) {
-        LogError("CKM::MessageBuffer::Exception " << e.DumpToString());
-    } catch (const DataType::Exception::Base &e) {
-        LogError("CKM::DBDataType::Exception " << e.DumpToString());
-    } catch (const std::exception &e) {
-        LogError("STD exception " << e.what());
-    } catch (...) {
-        LogError("Unknown exception occured");
-    }
-    return retval;
+	int retval = CKM_API_ERROR_UNKNOWN;
+
+	try {
+		return func();
+	} catch (const MessageBuffer::Exception::Base &e) {
+		LogError("CKM::MessageBuffer::Exception " << e.DumpToString());
+	} catch (const DataType::Exception::Base &e) {
+		LogError("CKM::DBDataType::Exception " << e.DumpToString());
+	} catch (const std::exception &e) {
+		LogError("STD exception " << e.what());
+	} catch (...) {
+		LogError("Unknown exception occured");
+	}
+
+	return retval;
 }
 
-void try_catch_async(const std::function<void()>& func,
-                     const std::function<void(int)>& error)
+int try_catch_enclosure(const std::function<int()> &func)
 {
-    try {
-        func();
-    } catch (const MessageBuffer::Exception::Base& e) {
-        LogError("CKM::MessageBuffer::Exception " << e.DumpToString());
-        error(CKM_API_ERROR_BAD_REQUEST);
-    } catch (const DataType::Exception::Base &e) {
-        LogError("CKM::DBDataType conversion failed:" << e.DumpToString());
-        error(CKM_API_ERROR_UNKNOWN);
-    } catch (const std::exception& e) {
-        LogError("STD exception " << e.what());
-        error(CKM_API_ERROR_UNKNOWN);
-    } catch (...) {
-        LogError("Unknown exception occured");
-        error(CKM_API_ERROR_UNKNOWN);
-    }
+	try {
+		return func();
+	} catch (const std::bad_alloc &e) {
+		LogError("memory allocation exception: " << e.what());
+		return CKMC_ERROR_OUT_OF_MEMORY;
+	} catch (const std::exception &e) {
+		LogError("std exception occured: " << e.what());
+		return CKMC_ERROR_UNKNOWN;
+	} catch (...) {
+		LogError("Unknown exception occured.");
+		return CKMC_ERROR_UNKNOWN;
+	}
+}
+
+void try_catch_async(const std::function<void()> &func,
+					 const std::function<void(int)> &error)
+{
+	try {
+		func();
+	} catch (const MessageBuffer::Exception::Base &e) {
+		LogError("CKM::MessageBuffer::Exception " << e.DumpToString());
+		error(CKM_API_ERROR_BAD_REQUEST);
+	} catch (const DataType::Exception::Base &e) {
+		LogError("CKM::DBDataType conversion failed:" << e.DumpToString());
+		error(CKM_API_ERROR_UNKNOWN);
+	} catch (const std::exception &e) {
+		LogError("STD exception " << e.what());
+		error(CKM_API_ERROR_UNKNOWN);
+	} catch (...) {
+		LogError("Unknown exception occured");
+		error(CKM_API_ERROR_UNKNOWN);
+	}
 }
 
 } // namespace CKM
@@ -351,7 +380,7 @@ void try_catch_async(const std::function<void()>& func,
 static void init_lib(void) __attribute__((constructor));
 static void init_lib(void)
 {
-    CKM::SetupClientLogSystem();
+	CKM::SetupClientLogSystem();
 }
 
 static void fini_lib(void) __attribute__((destructor));

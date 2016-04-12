@@ -32,22 +32,22 @@
 
 namespace CKM {
 template<typename Class>
-Singleton<Class>& Singleton<Class>::InternalInstance()
+Singleton<Class> &Singleton<Class>::InternalInstance()
 {
-    static Singleton<Class> instance;
-    return instance;
+	static Singleton<Class> instance;
+	return instance;
 }
 
 template<typename Class>
 Class &Singleton<Class>::Instance()
 {
-    Singleton<Class>& instance = Singleton<Class>::InternalInstance();
-    return instance;
+	Singleton<Class> &instance = Singleton<Class>::InternalInstance();
+	return instance;
 }
 } // namespace CKM
 
 #define IMPLEMENT_SINGLETON(Type)                                           \
-    template CKM::Singleton<Type>&CKM::Singleton<Type>::InternalInstance();    \
-    template Type & CKM::Singleton<Type>::Instance();                            \
+	template CKM::Singleton<Type>&CKM::Singleton<Type>::InternalInstance();    \
+	template Type & CKM::Singleton<Type>::Instance();                            \
 
 #endif // CENT_KEY_SINGLETON_IMPL_H

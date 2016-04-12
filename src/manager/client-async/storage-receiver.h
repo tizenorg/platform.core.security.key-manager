@@ -29,34 +29,33 @@
 
 namespace CKM {
 
-class StorageReceiver : public IReceiver
-{
+class StorageReceiver : public IReceiver {
 public:
-    StorageReceiver(MessageBuffer& buffer, AsyncRequest::Map& reqMap);
-    virtual ~StorageReceiver() {}
+	StorageReceiver(MessageBuffer &buffer, AsyncRequest::Map &reqMap);
+	virtual ~StorageReceiver() {}
 
-    NONCOPYABLE(StorageReceiver);
+	NONCOPYABLE(StorageReceiver);
 
-    void processResponse();
+	void processResponse();
 
 private:
-    void parseGetCommand();
-    void parseGetPKCS12Command();
-    void parseGetListCommand();
-    void parseSaveCommand();
-    void parseSavePKCS12Command();
-    void parseRemoveCommand();
-    void parseGetChainCertCommand();
-    void parseCreateSignatureCommand();
-    void parseSetPermission();
+	void parseGetCommand();
+	void parseGetPKCS12Command();
+	void parseGetListCommand();
+	void parseSaveCommand();
+	void parseSavePKCS12Command();
+	void parseRemoveCommand();
+	void parseGetChainCertCommand();
+	void parseCreateSignatureCommand();
+	void parseSetPermission();
 
-    typedef void (ManagerAsync::Observer::*ObserverCb)();
+	typedef void (ManagerAsync::Observer::*ObserverCb)();
 
-    void parseRetCode(ObserverCb callback);
+	void parseRetCode(ObserverCb callback);
 
-    MessageBuffer& m_buffer;
-    AsyncRequest::Map& m_requests;
-    ManagerAsync::ObserverPtr m_observer;
+	MessageBuffer &m_buffer;
+	AsyncRequest::Map &m_requests;
+	ManagerAsync::ObserverPtr m_observer;
 };
 
 } /* namespace CKM */

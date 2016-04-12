@@ -37,205 +37,225 @@ using namespace CKM;
 namespace {
 const size_t MAX_LEN = 32;
 const char ELLIPSIS[] = "...";
-const size_t ELLIPSIS_LEN = sizeof(ELLIPSIS)/sizeof(ELLIPSIS[0]);
+const size_t ELLIPSIS_LEN = sizeof(ELLIPSIS) / sizeof(ELLIPSIS[0]);
 
-const char* const SQL_TABLES = "SELECT name FROM sqlcipher_master "
-                               "WHERE type IN ('table','view') AND name NOT LIKE 'sqlcipher_%' "
-                               "UNION ALL "
-                               "SELECT name FROM sqlcipher_temp_master "
-                               "WHERE type IN ('table','view') "
-                               "ORDER BY 1";
+const char *const SQL_TABLES = "SELECT name FROM sqlcipher_master "
+							   "WHERE type IN ('table','view') AND name NOT LIKE 'sqlcipher_%' "
+							   "UNION ALL "
+							   "SELECT name FROM sqlcipher_temp_master "
+							   "WHERE type IN ('table','view') "
+							   "ORDER BY 1";
 
-const char* const SQL_SCHEMA = "SELECT sql FROM "
-                               "(SELECT * FROM sqlcipher_master "
-                               "UNION ALL "
-                               "SELECT * FROM sqlcipher_temp_master) "
-                               "WHERE type!='meta' AND sql!='NULL'"
-                               "ORDER BY tbl_name, type DESC, name";
+const char *const SQL_SCHEMA = "SELECT sql FROM "
+							   "(SELECT * FROM sqlcipher_master "
+							   "UNION ALL "
+							   "SELECT * FROM sqlcipher_temp_master) "
+							   "WHERE type!='meta' AND sql!='NULL'"
+							   "ORDER BY tbl_name, type DESC, name";
 } // namespace anonymous
 
 class DbWrapper {
 public:
-    DbWrapper(uid_t uid, Password pw) : m_uid(uid), m_pw(pw) {}
+	DbWrapper(uid_t uid, Password pw) : m_uid(uid), m_pw(pw) {}
 
-    int unlock();
-    void lock();
-    void process(const string& cmd);
+	int unlock();
+	void lock();
+	void process(const string &cmd);
 
 private:
-    void displayRow(const DB::SqlConnection::Output::Row& row, bool trim);
+	void displayRow(const DB::SqlConnection::Output::Row &row, bool trim);
 
-    uid_t m_uid;
-    Password m_pw;
-    CKMLogicExt m_logic;
+	uid_t m_uid;
+	Password m_pw;
+	CKMLogicExt m_logic;
 };
 
 int DbWrapper::unlock()
 {
-    // no unlock for system db
-    if (m_uid < 5000)
-        return CKM_API_SUCCESS;
+	// no unlock for system db
+	if (m_uid < 5000)
+		return CKM_API_SUCCESS;
 
-    int retCode;
-    RawBuffer ret = m_logic.unlockUserKey(m_uid, m_pw);
-    MessageBuffer buff;
-    buff.Push(ret);
-    buff.Deserialize(retCode);
-    return retCode;
+	int retCode;
+	RawBuffer ret = m_logic.unlockUserKey(m_uid, m_pw);
+	MessageBuffer buff;
+	buff.Push(ret);
+	buff.Deserialize(retCode);
+	return retCode;
 }
 
 void DbWrapper::lock()
 {
-    // no lock for system db
-    if (m_uid < 5000)
-        return;
+	// no lock for system db
+	if (m_uid < 5000)
+		return;
 
-    m_logic.lockUserKey(m_uid);
+	m_logic.lockUserKey(m_uid);
 }
 
-void DbWrapper::process(const string& acmd)
+void DbWrapper::process(const string &acmd)
 {
-    try {
-        string cmd = acmd;
-        bool trim = true;
-        if (acmd == ".tables") {
-            cmd = SQL_TABLES;
-            trim = false;
-        }
-        else if(acmd == ".schema") {
-            cmd = SQL_SCHEMA;
-            trim = false;
-        }
+	try {
+		string cmd = acmd;
+		bool trim = true;
 
-        DB::SqlConnection::Output output = m_logic.Execute(m_uid, cmd);
+		if (acmd == ".tables") {
+			cmd = SQL_TABLES;
+			trim = false;
+		} else if (acmd == ".schema") {
+			cmd = SQL_SCHEMA;
+			trim = false;
+		}
 
-        if(output.GetNames().empty())
-            return;
+		DB::SqlConnection::Output output = m_logic.Execute(m_uid, cmd);
 
-        displayRow(output.GetNames(), trim);
-        cout << "--------------------------" << endl;
-        for(const auto& row : output.GetValues()) {
-            displayRow(row, trim);
-        }
-    } catch (const DB::SqlConnection::Exception::Base& e) {
-        cerr << e.GetMessage() << endl;
-    } catch (const Exc::Exception &e) {
-        cerr << e.message() << endl;
-    } catch (const std::exception &e) {
-        cerr << e.what() << endl;
-    } catch (...) {
-        cerr << "Unexpected exception occurred" << endl;
-    }
+		if (output.GetNames().empty())
+			return;
+
+		displayRow(output.GetNames(), trim);
+		cout << "--------------------------" << endl;
+
+		for (const auto &row : output.GetValues()) {
+			displayRow(row, trim);
+		}
+	} catch (const DB::SqlConnection::Exception::Base &e) {
+		cerr << e.GetMessage() << endl;
+	} catch (const Exc::Exception &e) {
+		cerr << e.message() << endl;
+	} catch (const std::exception &e) {
+		cerr << e.what() << endl;
+	} catch (...) {
+		cerr << "Unexpected exception occurred" << endl;
+	}
 }
 
-void DbWrapper::displayRow(const DB::SqlConnection::Output::Row& row, bool trim)
+void DbWrapper::displayRow(const DB::SqlConnection::Output::Row &row, bool trim)
 {
-    for(auto it = row.begin();it != row.end();it++) {
-        std::string col = *it;
-        if(trim && col.size() > MAX_LEN) {
-            col.resize(MAX_LEN);
-            col.replace(MAX_LEN-ELLIPSIS_LEN, ELLIPSIS_LEN, ELLIPSIS);
-        }
-        cout << col;
-        if(it+1 != row.end())
-            cout<< "|";
-    }
-    cout << endl;
+	for (auto it = row.begin(); it != row.end(); it++) {
+		std::string col = *it;
+
+		if (trim && col.size() > MAX_LEN) {
+			col.resize(MAX_LEN);
+			col.replace(MAX_LEN - ELLIPSIS_LEN, ELLIPSIS_LEN, ELLIPSIS);
+		}
+
+		cout << col;
+
+		if (it + 1 != row.end())
+			cout << "|";
+	}
+
+	cout << endl;
 }
 
-void usage() {
-    cout << "ckm_db_tool - the command line tool for accessing key-manager encrypted databases." << endl;
-    cout << endl;
-    cout << "Usage: ckm_db_tool uid [password] [sql_command]" << endl;
-    cout << endl;
-    cout << "uid (mandatory)         User id as in <TZ_SYS_DATA>/ckm/db-<uid>" << endl;
-    cout << "password (optional)     Password used for database encryption. For system database (uid < 5000) no password should be used." << endl;
-    cout << "sql_command (optional)  Sqlite3 command to execute on database. If empty the tool will enter interactive mode." << endl;
-    cout << endl;
-    cout << "Example:" << endl;
-    cout << "cmd_db_tool 5000 user-pass \"select * from names\"" << endl;
-}
-
-void internalHelp() {
-    cout << "[sqlite_command]  executes sqlite command on database" << endl;
-    cout << ".tables           shows a list of table names" << endl;
-    cout << ".schema           shows Sqlite3 command used to create tables in the database" << endl;
-    cout << "help              shows this help" << endl;
-    cout << "exit (Ctrl-D)     quits the program" << endl;
-}
-
-int main(int argc, char* argv[])
+void usage()
 {
-    try {
-        if (argc < 2 || !argv[1]) {
-            usage();
-            return -1;
-        }
+	cout << "ckm_db_tool - the command line tool for accessing key-manager encrypted databases."
+		 << endl;
+	cout << endl;
+	cout << "Usage: ckm_db_tool uid [password] [sql_command]" << endl;
+	cout << endl;
+	cout << "uid (mandatory)         User id as in <TZ_SYS_DATA>/ckm/db-<uid>" <<
+		 endl;
+	cout << "password (optional)     Password used for database encryption. For system database (uid < 5000) no password should be used."
+		 << endl;
+	cout << "sql_command (optional)  Sqlite3 command to execute on database. If empty the tool will enter interactive mode."
+		 << endl;
+	cout << endl;
+	cout << "Example:" << endl;
+	cout << "cmd_db_tool 5000 user-pass \"select * from names\"" << endl;
+}
 
-        // read uid
-        stringstream ss(argv[1]);
-        uid_t uid;
-        if (!(ss >> uid)) {
-            usage();
-            return -1;
-        }
+void internalHelp()
+{
+	cout << "[sqlite_command]  executes sqlite command on database" << endl;
+	cout << ".tables           shows a list of table names" << endl;
+	cout << ".schema           shows Sqlite3 command used to create tables in the database"
+		 << endl;
+	cout << "help              shows this help" << endl;
+	cout << "exit (Ctrl-D)     quits the program" << endl;
+}
 
-        int idx = 2;
+int main(int argc, char *argv[])
+{
+	try {
+		if (argc < 2 || !argv[1]) {
+			usage();
+			return -1;
+		}
 
-        // read password
-        Password pass;
-        if (uid >= 5000) {
-            if (argc > idx) {
-                pass = argv[idx];
-                idx++;
-            }
-        }
+		// read uid
+		stringstream ss(argv[1]);
+		uid_t uid;
 
-        // read sqlite3 command
-        string argcmd;
-        if (argc > idx)
-            argcmd = argv[idx];
+		if (!(ss >> uid)) {
+			usage();
+			return -1;
+		}
 
-        // unlock db
-        DbWrapper dbw(uid, pass);
-        int retCode = dbw.unlock();
-        if (retCode != CKM_API_SUCCESS ) {
-            cerr << "Unlocking database failed: " << retCode << endl;
-            return -1;
-        }
-        cout << "Database unlocked" << endl;
+		int idx = 2;
 
-        while (true) {
-            string cmd;
-            if (argcmd.empty()) {
-                cout << "> ";
-                if(!getline(cin, cmd)) {
-                    cout << "exit" << endl;
-                    break; // EOF
-                }
-            } else {
-                cmd = argcmd;
-            }
+		// read password
+		Password pass;
 
-            if(cmd == "exit")
-                break;
-            if(cmd == "help") {
-                internalHelp();
-                continue;
-            }
+		if (uid >= 5000) {
+			if (argc > idx) {
+				pass = argv[idx];
+				idx++;
+			}
+		}
 
-            dbw.process(cmd);
+		// read sqlite3 command
+		string argcmd;
 
-            if(!argcmd.empty())
-                break;
-        }
+		if (argc > idx)
+			argcmd = argv[idx];
 
-        dbw.lock();
-        cout << "Database locked" << endl;
+		// unlock db
+		DbWrapper dbw(uid, pass);
+		int retCode = dbw.unlock();
 
-        return 0;
-    } catch (...) {
-        cerr << "Unexpected exception occurred" << endl;
-        return -1;
-    }
+		if (retCode != CKM_API_SUCCESS) {
+			cerr << "Unlocking database failed: " << retCode << endl;
+			return -1;
+		}
+
+		cout << "Database unlocked" << endl;
+
+		while (true) {
+			string cmd;
+
+			if (argcmd.empty()) {
+				cout << "> ";
+
+				if (!getline(cin, cmd)) {
+					cout << "exit" << endl;
+					break; // EOF
+				}
+			} else {
+				cmd = argcmd;
+			}
+
+			if (cmd == "exit")
+				break;
+
+			if (cmd == "help") {
+				internalHelp();
+				continue;
+			}
+
+			dbw.process(cmd);
+
+			if (!argcmd.empty())
+				break;
+		}
+
+		dbw.lock();
+		cout << "Database locked" << endl;
+
+		return 0;
+	} catch (...) {
+		cerr << "Unexpected exception occurred" << endl;
+		return -1;
+	}
 }
