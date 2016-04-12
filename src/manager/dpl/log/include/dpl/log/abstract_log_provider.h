@@ -25,28 +25,28 @@
 namespace CKM {
 namespace Log {
 class AbstractLogProvider {
-  public:
-    enum class LogLevel {
-        None,
-        Error,
-        Warning,
-        Info,
-        Debug,
-        Pedantic
-    };
+public:
+	enum class LogLevel {
+		None,
+		Error,
+		Warning,
+		Info,
+		Debug,
+		Pedantic
+	};
 
-    virtual ~AbstractLogProvider() {}
+	virtual ~AbstractLogProvider() {}
 
-    virtual void SetTag(const char *tag);
+	virtual void SetTag(const char *tag);
 
-    virtual void Log(LogLevel level,
-                     const char *message,
-                     const char *fileName,
-                     int line,
-                     const char *function) const = 0;
+	virtual void Log(LogLevel level,
+					 const char *message,
+					 const char *fileName,
+					 int line,
+					 const char *function) const = 0;
 
-  protected:
-    static const char *LocateSourceFileName(const char *filename);
+protected:
+	static const char *LocateSourceFileName(const char *filename);
 };
 }
 } // namespace CKM

@@ -27,25 +27,28 @@
 
 namespace CKM {
 void AssertProc(const char *condition,
-                const char *file,
-                int line,
-                const char *function)
+				const char *file,
+				int line,
+				const char *function)
 {
-    try {
-        LogError(
-            "################################################################################" << std::endl <<
-            "###                          CKM assertion failed!                           ###" << std::endl <<
-            "################################################################################" << std::endl <<
-            "### Condition: " << condition << std::endl <<
-            "### File: " << file << std::endl <<
-            "### Line: " << line << std::endl <<
-            "### Function: " << function <<
-            "################################################################################");
-    } catch (...) {
-        // Just ignore possible double errors
-    }
+	try {
+		LogError(
+			"################################################################################"
+			<< std::endl <<
+			"###                          CKM assertion failed!                           ###"
+			<< std::endl <<
+			"################################################################################"
+			<< std::endl <<
+			"### Condition: " << condition << std::endl <<
+			"### File: " << file << std::endl <<
+			"### Line: " << line << std::endl <<
+			"### Function: " << function <<
+			"################################################################################");
+	} catch (...) {
+		// Just ignore possible double errors
+	}
 
-    // Fail with c-library abort
-    abort();
+	// Fail with c-library abort
+	abort();
 }
 } // namespace CKM

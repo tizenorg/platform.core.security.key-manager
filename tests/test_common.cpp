@@ -25,33 +25,37 @@
 
 using namespace CKM;
 
-RawBuffer createDefaultPass() {
-    return createPass(0, RAW_PASS_SIZE);
+RawBuffer createDefaultPass()
+{
+	return createPass(0, RAW_PASS_SIZE);
 }
 
-RawBuffer createPass(std::size_t from, std::size_t to) {
-    RawBuffer raw;
+RawBuffer createPass(std::size_t from, std::size_t to)
+{
+	RawBuffer raw;
 
-    for (std::size_t i = from; i < to; i++)
-        raw.push_back(static_cast<unsigned char>(i));
+	for (std::size_t i = from; i < to; i++)
+		raw.push_back(static_cast<unsigned char>(i));
 
-    return raw;
+	return raw;
 }
 
-RawBuffer createBigBlob(std::size_t size) {
-    return createPass(0, size);
+RawBuffer createBigBlob(std::size_t size)
+{
+	return createPass(0, size);
 }
 
 //raw to hex string conversion from SqlConnection
-std::string rawToHexString(const RawBuffer &raw) {
-    std::string dump;
+std::string rawToHexString(const RawBuffer &raw)
+{
+	std::string dump;
 
-    for (auto &e : raw) {
-        char buf[3];
-        snprintf(buf, sizeof(buf), "%02x", (e & 0xff));
-        dump.push_back(buf[0]);
-        dump.push_back(buf[1]);
-    }
+	for (auto &e : raw) {
+		char buf[3];
+		snprintf(buf, sizeof(buf), "%02x", (e & 0xff));
+		dump.push_back(buf[0]);
+		dump.push_back(buf[1]);
+	}
 
-    return dump;
+	return dump;
 }

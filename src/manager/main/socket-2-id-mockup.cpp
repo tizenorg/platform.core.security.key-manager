@@ -26,48 +26,50 @@
 
 namespace {
 
-int getPkgIdFromSmack(const std::string &smack, std::string &pkgId) {
-    static const std::string SMACK_PREFIX_APPID  = "User::App::";
+int getPkgIdFromSmack(const std::string &smack, std::string &pkgId)
+{
+	static const std::string SMACK_PREFIX_APPID  = "User::App::";
 
-    if (smack.empty()) {
-        LogError("Smack is empty. Connection will be rejected");
-        return -1;
-    }
+	if (smack.empty()) {
+		LogError("Smack is empty. Connection will be rejected");
+		return -1;
+	}
 
-    if (smack.compare(0, SMACK_PREFIX_APPID.size(), SMACK_PREFIX_APPID)) {
-        pkgId = "/" + smack;
-        LogDebug("Smack: " << smack << " Was translated to owner id: " << pkgId);
-        return 0;
-    }
+	if (smack.compare(0, SMACK_PREFIX_APPID.size(), SMACK_PREFIX_APPID)) {
+		pkgId = "/" + smack;
+		LogDebug("Smack: " << smack << " Was translated to owner id: " << pkgId);
+		return 0;
+	}
 
-    std::string appId = smack.substr(SMACK_PREFIX_APPID.size(), std::string::npos);
+	std::string appId = smack.substr(SMACK_PREFIX_APPID.size(), std::string::npos);
 
-    if (appId.empty()) {
-        LogError("After conversion (smack->pkgId) pkgId is empty. Label: " << appId);
-        return -1;
-    }
+	if (appId.empty()) {
+		LogError("After conversion (smack->pkgId) pkgId is empty. Label: " << appId);
+		return -1;
+	}
 
-    pkgId = std::move(appId);
-    LogDebug("Smack: " << smack << " Was translated to owner id: " << pkgId);
-    return 0;
+	pkgId = std::move(appId);
+	LogDebug("Smack: " << smack << " Was translated to owner id: " << pkgId);
+	return 0;
 }
 
 } // namespace anonymous
 
 namespace CKM {
 
-int Socket2Id::translate(int sock, std::string &result) {
-    std::string smack;
-    std::string pkgId;
+int Socket2Id::translate(int sock, std::string &result)
+{
+	std::string smack;
+	std::string pkgId;
 
-    if (0 > getCredentialsFromSocket(sock, smack))
-        return -1;
+	if (0 > getCredentialsFromSocket(sock, smack))
+		return -1;
 
-    if (0 > getPkgIdFromSmack(smack, pkgId))
-        return -1;
+	if (0 > getPkgIdFromSmack(smack, pkgId))
+		return -1;
 
-    result = std::move(pkgId);
-    return 0;
+	result = std::move(pkgId);
+	return 0;
 }
 
 } // namespace CKM

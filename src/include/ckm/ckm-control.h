@@ -36,40 +36,41 @@ typedef std::shared_ptr<Control> ControlShPtr;
 // used by login manager to unlock user data with global password
 class KEY_MANAGER_API Control {
 public:
-    // decrypt user key with password
-    virtual int unlockUserKey(uid_t user, const Password &password) = 0;
+	// decrypt user key with password
+	virtual int unlockUserKey(uid_t user, const Password &password) = 0;
 
-    // remove user key from memory
-    virtual int lockUserKey(uid_t user) = 0;
+	// remove user key from memory
+	virtual int lockUserKey(uid_t user) = 0;
 
-    // remove user data from Store and erase key used for encryption
-    virtual int removeUserData(uid_t user) = 0;
+	// remove user data from Store and erase key used for encryption
+	virtual int removeUserData(uid_t user) = 0;
 
-    // change password for user
-    virtual int changeUserPassword(uid_t user, const Password &oldPassword, const Password &newPassword) = 0;
+	// change password for user
+	virtual int changeUserPassword(uid_t user, const Password &oldPassword,
+								   const Password &newPassword) = 0;
 
-    // This is work around for security-server api - resetPassword that may be called without passing oldPassword.
-    // This api should not be supported on tizen 3.0
-    // User must be already logged in and his DKEK is already loaded into memory in plain text form.
-    // The service will use DKEK in plain text and encrypt it in encrypted form (using new password).
-    virtual int resetUserPassword(uid_t user, const Password &newPassword) = 0;
+	// This is work around for security-server api - resetPassword that may be called without passing oldPassword.
+	// This api should not be supported on tizen 3.0
+	// User must be already logged in and his DKEK is already loaded into memory in plain text form.
+	// The service will use DKEK in plain text and encrypt it in encrypted form (using new password).
+	virtual int resetUserPassword(uid_t user, const Password &newPassword) = 0;
 
-    // Required for tizen 2.3.
-    // It will remove all application data owned by application identified
-    // by smackLabel. This function will remove application data from unlocked
-    // database only. This function may be used during application uninstallation.
-    virtual int removeApplicationData(const std::string &smackLabel) = 0;
+	// Required for tizen 2.3.
+	// It will remove all application data owned by application identified
+	// by smackLabel. This function will remove application data from unlocked
+	// database only. This function may be used during application uninstallation.
+	virtual int removeApplicationData(const std::string &smackLabel) = 0;
 
-    virtual int updateCCMode() = 0;
+	virtual int updateCCMode() = 0;
 
-    virtual int setPermission(uid_t user,
-                              const Alias &alias,
-                              const Label &accessor,
-                              PermissionMask permissionMask) = 0;
+	virtual int setPermission(uid_t user,
+							  const Alias &alias,
+							  const Label &accessor,
+							  PermissionMask permissionMask) = 0;
 
-    virtual ~Control() {}
+	virtual ~Control() {}
 
-    static ControlShPtr create();
+	static ControlShPtr create();
 };
 
 } // namespace CKM

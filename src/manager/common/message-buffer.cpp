@@ -31,44 +31,49 @@ namespace CKM {
 
 void MessageBuffer::Push(const RawBuffer &data)
 {
-    m_buffer.AppendCopy(&data[0], data.size());
+	m_buffer.AppendCopy(&data[0], data.size());
 }
 
 RawBuffer MessageBuffer::Pop()
 {
-    size_t size = m_buffer.Size();
-    RawBuffer buffer;
-    buffer.resize(size + sizeof(size_t));
-    memcpy(&buffer[0], &size, sizeof(size_t));
-    m_buffer.FlattenConsume(&buffer[sizeof(size_t)], size);
-    return buffer;
+	size_t size = m_buffer.Size();
+	RawBuffer buffer;
+	buffer.resize(size + sizeof(size_t));
+	memcpy(&buffer[0], &size, sizeof(size_t));
+	m_buffer.FlattenConsume(&buffer[sizeof(size_t)], size);
+	return buffer;
 }
 
 bool MessageBuffer::Ready()
 {
-    CountBytesLeft();
-    if (m_bytesLeft == 0)
-        return false;
-    if (m_bytesLeft > m_buffer.Size())
-        return false;
-    return true;
+	CountBytesLeft();
+
+	if (m_bytesLeft == 0)
+		return false;
+
+	if (m_bytesLeft > m_buffer.Size())
+		return false;
+
+	return true;
 }
 
 void MessageBuffer::Read(size_t num, void *bytes)
 {
-    CountBytesLeft();
-    if (num > m_bytesLeft) {
-        LogDebug("Protocol broken. OutOfData. Asked for: " << num << " Ready: " << m_bytesLeft << " Buffer.size(): " << m_buffer.Size());
-        Throw(Exception::OutOfData);
-    }
+	CountBytesLeft();
 
-    m_buffer.FlattenConsume(bytes, num);
-    m_bytesLeft -= num;
+	if (num > m_bytesLeft) {
+		LogDebug("Protocol broken. OutOfData. Asked for: " << num << " Ready: " <<
+				 m_bytesLeft << " Buffer.size(): " << m_buffer.Size());
+		Throw(Exception::OutOfData);
+	}
+
+	m_buffer.FlattenConsume(bytes, num);
+	m_bytesLeft -= num;
 }
 
 void MessageBuffer::Write(size_t num, const void *bytes)
 {
-    m_buffer.AppendCopy(bytes, num);
+	m_buffer.AppendCopy(bytes, num);
 }
 
 } // namespace CKM

@@ -34,46 +34,48 @@ DECLARE_EXCEPTION_TYPE(CKM::Exception, ThreadErrorMessage)
 template <typename F, typename... Args>
 class WatchedThread {
 public:
-    // can't use rreferences for Args because std::thread needs to copy all arguments
-    explicit WatchedThread(F&& function, const Args&... args) :
-        m_function(std::move(function)),
-        m_thread(&WatchedThread::Wrapper, this, args...)
-    {}
+	// can't use rreferences for Args because std::thread needs to copy all arguments
+	explicit WatchedThread(F &&function, const Args &... args) :
+		m_function(std::move(function)),
+		m_thread(&WatchedThread::Wrapper, this, args...) {}
 
-    ~WatchedThread() {
-        m_thread.join();
-        if (!m_error.empty())
-            BOOST_FAIL(m_error);
-    }
+	~WatchedThread()
+	{
+		m_thread.join();
 
-    NONCOPYABLE(WatchedThread);
+		if (!m_error.empty())
+			BOOST_FAIL(m_error);
+	}
 
-    WatchedThread(WatchedThread&&) = default;
-    WatchedThread& operator=(WatchedThread&&) = default;
+	NONCOPYABLE(WatchedThread);
+
+	WatchedThread(WatchedThread &&) = default;
+	WatchedThread &operator=(WatchedThread &&) = default;
 
 protected:
+	void Wrapper(const Args &... args)
+	{
+		try {
+			m_function(args...);
+		} catch (const ThreadErrorMessage &e) {
+			m_error = e.DumpToString();
+		}
+	}
 
-    void Wrapper(const Args&... args) {
-        try {
-            m_function(args...);
-        } catch (const ThreadErrorMessage& e) {
-            m_error = e.DumpToString();
-        }
-    }
-
-    std::string m_error;
-    F m_function;
-    std::thread m_thread;
+	std::string m_error;
+	F m_function;
+	std::thread m_thread;
 };
 
 template <typename F, typename... Args>
-WatchedThread<F, Args...> CreateWatchedThread(F&& function, const Args&... args)
+WatchedThread<F, Args...> CreateWatchedThread(F &&function,
+		const Args &... args)
 {
-    return WatchedThread<F, Args...>(std::move(function), args...);
+	return WatchedThread<F, Args...>(std::move(function), args...);
 }
 
-#define THREAD_REQUIRE_MESSAGE(expr, message)                \
-    do {                                                     \
-        if (!(expr))                                         \
-            ThrowMsg( ThreadErrorMessage, message);          \
-    } while (false);
+#define THREAD_REQUIRE_MESSAGE(expr, message)      \
+	do {                                           \
+		if (!(expr))                               \
+			ThrowMsg(ThreadErrorMessage, message); \
+	} while (false);

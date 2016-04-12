@@ -30,9 +30,9 @@
 namespace CKM {
 namespace DB {
 struct CryptoExt : public Crypto {
-    CryptoExt(Crypto orig) : Crypto(std::move(orig)) {}
+	CryptoExt(Crypto orig) : Crypto(std::move(orig)) {}
 
-    SqlConnection::Output Execute(const std::string& cmd);
+	SqlConnection::Output Execute(const std::string &cmd);
 };
 
 } // namespace DB

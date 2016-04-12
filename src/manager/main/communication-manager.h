@@ -33,31 +33,32 @@ namespace CKM {
 template <typename M>
 class MessageManager {
 public:
-    NONCOPYABLE(MessageManager);
+	NONCOPYABLE(MessageManager);
 
-    // Listener is an object callable with const M& as argument
-    template <typename L>
-    void Register(L&& listener)
-    {
-        m_listeners.push_back(std::move(listener));
-    }
+	// Listener is an object callable with const M& as argument
+	template <typename L>
+	void Register(L &&listener)
+	{
+		m_listeners.push_back(std::move(listener));
+	}
 
-    // Sends message of type M to all registered listeners
-    // Returns the number of listeners called
-    size_t SendMessage(const M& msg) const
-    {
-        for (auto& it : m_listeners)
-            it(msg);
-        return m_listeners.size();
-    }
+	// Sends message of type M to all registered listeners
+	// Returns the number of listeners called
+	size_t SendMessage(const M &msg) const
+	{
+		for (auto &it : m_listeners)
+			it(msg);
+
+		return m_listeners.size();
+	}
 
 protected:
-    MessageManager() {}
-    // No one is going to destroy this class directly (only via inherited class). Hence no 'virtual'
-    ~MessageManager() {}
+	MessageManager() {}
+	// No one is going to destroy this class directly (only via inherited class). Hence no 'virtual'
+	~MessageManager() {}
 
 private:
-    std::list<std::function<void(const M&)>> m_listeners;
+	std::list<std::function<void(const M &)>> m_listeners;
 };
 
 // generic template declaration
@@ -70,25 +71,25 @@ struct CommunicationManager;
  */
 template <typename First, typename... Args>
 struct CommunicationManager<First, Args...> :
-    public MessageManager<First>, public CommunicationManager<Args...> {
+	public MessageManager<First>, public CommunicationManager<Args...> {
 public:
-    CommunicationManager() {}
-    NONCOPYABLE(CommunicationManager);
+	CommunicationManager() {}
+	NONCOPYABLE(CommunicationManager);
 
-    // M - message type, L - listener to register
-    template <typename M, typename L>
-    void Register(L&& listener)
-    {
-        MessageManager<M>::Register(std::move(listener));
-    }
+	// M - message type, L - listener to register
+	template <typename M, typename L>
+	void Register(L &&listener)
+	{
+		MessageManager<M>::Register(std::move(listener));
+	}
 
-    // M message type
-    // Sending a message calls an unknown listener callback on the receiving side. It may throw.
-    template <typename M>
-    size_t SendMessage(const M& msg) const
-    {
-        return MessageManager<M>::SendMessage(msg);
-    }
+	// M message type
+	// Sending a message calls an unknown listener callback on the receiving side. It may throw.
+	template <typename M>
+	size_t SendMessage(const M &msg) const
+	{
+		return MessageManager<M>::SendMessage(msg);
+	}
 };
 
 // stop condition for recursive inheritance

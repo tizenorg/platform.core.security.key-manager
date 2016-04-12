@@ -32,38 +32,38 @@ typedef std::vector<uid_t> UidVector;
 
 class FileSystem {
 public:
-    FileSystem(uid_t uid);
+	FileSystem(uid_t uid);
 
-    std::string getDBPath() const;
+	std::string getDBPath() const;
 
-    // Domain Key Encryption Key
-    RawBuffer getDKEK() const;
-    void saveDKEK(const RawBuffer &buffer) const;
+	// Domain Key Encryption Key
+	RawBuffer getDKEK() const;
+	void saveDKEK(const RawBuffer &buffer) const;
 
-    // Database Data Encryption Key
-    RawBuffer getDBDEK() const;
-    void saveDBDEK(const RawBuffer &buffer) const;
+	// Database Data Encryption Key
+	RawBuffer getDBDEK() const;
+	void saveDBDEK(const RawBuffer &buffer) const;
 
-    // Remove all ckm data related to user
-    int removeUserData() const;
+	// Remove all ckm data related to user
+	int removeUserData() const;
 
-    void addRemovedApp(const std::string &smackLabel) const;
-    AppLabelVector clearRemovedsApps() const;
+	void addRemovedApp(const std::string &smackLabel) const;
+	AppLabelVector clearRemovedsApps() const;
 
-    static int init();
-    static UidVector getUIDsFromDBFile();
-    static FileLock lock();
+	static int init();
+	static UidVector getUIDsFromDBFile();
+	static FileLock lock();
 
-    virtual ~FileSystem() {}
+	virtual ~FileSystem() {}
 
 protected:
-    std::string getDKEKPath() const;
-    std::string getDBDEKPath() const;
-    RawBuffer loadFile(const std::string &path) const;
-    void saveFile(const std::string &path, const RawBuffer &buffer) const;
-    std::string getRemovedAppsPath() const;
+	std::string getDKEKPath() const;
+	std::string getDBDEKPath() const;
+	RawBuffer loadFile(const std::string &path) const;
+	void saveFile(const std::string &path, const RawBuffer &buffer) const;
+	std::string getRemovedAppsPath() const;
 
-    uid_t m_uid;
+	uid_t m_uid;
 };
 
 } // namespace CKM

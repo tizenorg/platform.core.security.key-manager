@@ -36,17 +36,18 @@ typedef std::shared_ptr<PKCS12> PKCS12ShPtr;
 
 class KEY_MANAGER_API PKCS12 {
 public:
-    virtual KeyShPtr getKey() const = 0;
+	virtual KeyShPtr getKey() const = 0;
 
-    virtual CertificateShPtr getCertificate() const = 0;
+	virtual CertificateShPtr getCertificate() const = 0;
 
-    virtual CertificateShPtrVector getCaCertificateShPtrVector() const = 0;
+	virtual CertificateShPtrVector getCaCertificateShPtrVector() const = 0;
 
-    virtual bool empty() const = 0;
+	virtual bool empty() const = 0;
 
-    virtual ~PKCS12() {}
+	virtual ~PKCS12() {}
 
-    static PKCS12ShPtr create(const RawBuffer &rawData, const Password &password = Password());
+	static PKCS12ShPtr create(const RawBuffer &rawData,
+							  const Password &password = Password());
 };
 
 } // namespace CKM

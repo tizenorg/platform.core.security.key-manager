@@ -27,8 +27,8 @@
 #include <ckm/ckm-type.h>
 
 extern "C" {
-struct x509_st;
-typedef struct x509_st X509;
+	struct x509_st;
+	typedef struct x509_st X509;
 }
 
 // Central Key Manager namespace
@@ -39,16 +39,16 @@ typedef std::shared_ptr<Certificate> CertificateShPtr;
 
 class KEY_MANAGER_API Certificate {
 public:
-    virtual bool empty() const = 0;
+	virtual bool empty() const = 0;
 
-    // This function  will return openssl struct X509*.
-    // You should not free the memory.
-    // Memory will be freed in ~Certificate.
-    virtual X509 *getX509() const = 0;
-    virtual RawBuffer getDER() const = 0;
-    virtual ~Certificate() {}
+	// This function  will return openssl struct X509*.
+	// You should not free the memory.
+	// Memory will be freed in ~Certificate.
+	virtual X509 *getX509() const = 0;
+	virtual RawBuffer getDER() const = 0;
+	virtual ~Certificate() {}
 
-    static CertificateShPtr create(const RawBuffer &rawBuffer, DataFormat format);
+	static CertificateShPtr create(const RawBuffer &rawBuffer, DataFormat format);
 };
 
 typedef std::vector<CertificateShPtr> CertificateShPtrVector;

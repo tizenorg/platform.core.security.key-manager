@@ -37,79 +37,86 @@
 #include <file-system.h>
 
 #define REGISTER_SOCKET_SERVICE(manager, service) \
-    registerSocketService<service>(manager, #service)
+	registerSocketService<service>(manager, #service)
 
 template<typename T>
-void registerSocketService(CKM::SocketManager &manager, const std::string& serviceName)
+void registerSocketService(CKM::SocketManager &manager,
+						   const std::string &serviceName)
 {
-    T *service = NULL;
-    try {
-        service = new T();
-        service->Start();
-        manager.RegisterSocketService(service);
-        service = NULL;
-    } catch (const CKM::Exception &exception) {
-        LogError("Error in creating service " << serviceName <<
-                 ", details:\n" << exception.DumpToString());
-    } catch (const std::exception& e) {
-        LogError("Error in creating service " << serviceName <<
-                 ", details:\n" << e.what());
-    } catch (...) {
-        LogError("Error in creating service " << serviceName <<
-                 ", unknown exception occured");
-    }
-    if (service)
-        delete service;
+	T *service = NULL;
+
+	try {
+		service = new T();
+		service->Start();
+		manager.RegisterSocketService(service);
+		service = NULL;
+	} catch (const CKM::Exception &exception) {
+		LogError("Error in creating service " << serviceName <<
+				 ", details:\n" << exception.DumpToString());
+	} catch (const std::exception &e) {
+		LogError("Error in creating service " << serviceName <<
+				 ", details:\n" << e.what());
+	} catch (...) {
+		LogError("Error in creating service " << serviceName <<
+				 ", unknown exception occured");
+	}
+
+	if (service)
+		delete service;
 }
 
 int main(void)
 {
-    UNHANDLED_EXCEPTION_HANDLER_BEGIN
-    {
-        CKM::Singleton<CKM::Log::LogSystem>::Instance().SetTag("CKM");
+	try {
+		CKM::Singleton<CKM::Log::LogSystem>::Instance().SetTag("CKM");
 
-        int retCode = CKM::FileSystem::init();
-        if (retCode) {
-            LogError("Fatal error in FileSystem::init()");
-            return 1;
-        }
+		int retCode = CKM::FileSystem::init();
 
-        CKM::FileLock fl = CKM::FileSystem::lock();
+		if (retCode) {
+			LogError("Fatal error in FileSystem::init()");
+			return 1;
+		}
 
-        sigset_t mask;
-        sigemptyset(&mask);
-        sigaddset(&mask, SIGTERM);
-        sigaddset(&mask, SIGPIPE);
-        if (-1 == pthread_sigmask(SIG_BLOCK, &mask, NULL)) {
-            LogError("Error in pthread_sigmask");
-            return 1;
-        }
-        LogInfo("Init external libraries SKMM and openssl");
+		CKM::FileLock fl = CKM::FileSystem::lock();
 
-        CKM::initOpenSsl();
+		sigset_t mask;
+		sigemptyset(&mask);
+		sigaddset(&mask, SIGTERM);
+		sigaddset(&mask, SIGPIPE);
 
-        CKM::KeyProvider::initializeLibrary();
+		if (-1 == pthread_sigmask(SIG_BLOCK, &mask, NULL)) {
+			LogError("Error in pthread_sigmask");
+			return 1;
+		}
 
-        {
-            LogInfo("Start!");
-            CKM::SocketManager manager;
+		LogInfo("Init external libraries SKMM and openssl");
 
-            REGISTER_SOCKET_SERVICE(manager, CKM::CKMService);
-            REGISTER_SOCKET_SERVICE(manager, CKM::OCSPService);
-            REGISTER_SOCKET_SERVICE(manager, CKM::EncryptionService);
-            REGISTER_SOCKET_SERVICE(manager, CKM::GLIBService);
+		CKM::initOpenSsl();
 
-            manager.MainLoop();
-        }
-        // Manager has been destroyed and we may close external libraries.
-        LogInfo("Deinit SKMM and openssl");
-        CKM::KeyProvider::closeLibrary();
+		CKM::KeyProvider::initializeLibrary();
 
-        CKM::deinitOpenSsl();
-    } catch (const std::runtime_error& e) {
-        LogError(e.what());
-    }
-    UNHANDLED_EXCEPTION_HANDLER_END
-    return 0;
+		{
+			LogInfo("Start!");
+			CKM::SocketManager manager;
+
+			REGISTER_SOCKET_SERVICE(manager, CKM::CKMService);
+			REGISTER_SOCKET_SERVICE(manager, CKM::OCSPService);
+			REGISTER_SOCKET_SERVICE(manager, CKM::EncryptionService);
+			REGISTER_SOCKET_SERVICE(manager, CKM::GLIBService);
+
+			manager.MainLoop();
+		}
+
+		// Manager has been destroyed and we may close external libraries.
+		LogInfo("Deinit SKMM and openssl");
+		CKM::KeyProvider::closeLibrary();
+
+		CKM::deinitOpenSsl();
+	} catch (const std::runtime_error &e) {
+		LogError(e.what());
+	}
+
+	UNHANDLED_EXCEPTION_HANDLER_END
+
+	return 0;
 }
-

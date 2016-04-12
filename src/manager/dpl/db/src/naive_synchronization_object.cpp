@@ -26,7 +26,7 @@
 #include <time.h>
 
 namespace {
-    unsigned int seed = time(NULL);
+unsigned int seed = time(NULL);
 }
 
 //Taken from Thread class, so we don't have to pull whole definition
@@ -34,37 +34,37 @@ namespace {
 namespace Thread {
 
 static const size_t NANOSECONDS_PER_SECOND =
-    static_cast<uint64_t>(1000 * 1000 * 1000);
+	static_cast<uint64_t>(1000 * 1000 * 1000);
 
 static const size_t NANOSECONDS_PER_MILISECOND =
-    static_cast<uint64_t>(1000 * 1000);
+	static_cast<uint64_t>(1000 * 1000);
 
 void NanoSleep(uint64_t nanoseconds)
 {
-    timespec requestedTime = {
-        static_cast<time_t>(
-            nanoseconds / NANOSECONDS_PER_SECOND),
+	timespec requestedTime = {
+		static_cast<time_t>(
+			nanoseconds / NANOSECONDS_PER_SECOND),
 
-        static_cast<long>(
-            nanoseconds % NANOSECONDS_PER_SECOND)
-    };
+		static_cast<long>(
+			nanoseconds % NANOSECONDS_PER_SECOND)
+	};
 
-    timespec remainingTime;
+	timespec remainingTime;
 
-    for (;;) {
-        if (nanosleep(&requestedTime, &remainingTime) == 0)
-            break;
+	for (;;) {
+		if (nanosleep(&requestedTime, &remainingTime) == 0)
+			break;
 
-        int error = errno;
-        Assert(error == EINTR);
+		int error = errno;
+		Assert(error == EINTR);
 
-        requestedTime = remainingTime;
-    }
+		requestedTime = remainingTime;
+	}
 }
 
 void MiliSleep(uint64_t miliseconds)
 {
-    NanoSleep(miliseconds * NANOSECONDS_PER_MILISECOND);
+	NanoSleep(miliseconds * NANOSECONDS_PER_MILISECOND);
 }
 }
 
@@ -72,13 +72,13 @@ namespace CKM {
 namespace DB {
 void NaiveSynchronizationObject::Synchronize()
 {
-    // Sleep for about 10ms - 30ms
-    Thread::MiliSleep(10 + rand_r(&seed) % 20);
+	// Sleep for about 10ms - 30ms
+	Thread::MiliSleep(10 + rand_r(&seed) % 20);
 }
 
 void NaiveSynchronizationObject::NotifyAll()
 {
-    // No need to inform about anything
+	// No need to inform about anything
 }
 } // namespace DB
 } // namespace CKM

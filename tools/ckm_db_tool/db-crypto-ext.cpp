@@ -26,13 +26,17 @@
 namespace CKM {
 namespace DB {
 
-SqlConnection::Output CryptoExt::Execute(const std::string& cmd) {
-    SqlConnection::Output out;
-    if(!m_connection) {
-        ThrowMsg(SqlConnection::Exception::ConnectionBroken, "Not connected to database");
-    }
-    m_connection->ExecCommand(&out, "%s", cmd.c_str());
-    return out;
+SqlConnection::Output CryptoExt::Execute(const std::string &cmd)
+{
+	SqlConnection::Output out;
+
+	if (!m_connection) {
+		ThrowMsg(SqlConnection::Exception::ConnectionBroken,
+				 "Not connected to database");
+	}
+
+	m_connection->ExecCommand(&out, "%s", cmd.c_str());
+	return out;
 }
 } // namespace DB
 } // namespace CKM
