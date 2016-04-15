@@ -44,11 +44,12 @@ class MessageService;
 
 // aggregating template
 template <typename Msg, typename ...Msgs>
-class MessageService<Msg, Msgs...> : public MessageService<Msg>, public MessageService<Msgs...> {
+class MessageService<Msg, Msgs...> : public MessageService<Msg>,
+    public MessageService<Msgs...> {
 protected:
     // RECEIVER THREAD
     template <typename Mgr>
-    void Register(Mgr& mgr)
+    void Register(Mgr &mgr)
     {
         MessageService<Msg>::Register(mgr);
         MessageService<Msgs...>::Register(mgr);
@@ -74,7 +75,7 @@ public:
 protected:
     // RECEIVER THREAD: register as a listener of Msg
     template <typename Mgr>
-    void Register(Mgr& mgr);
+    void Register(Mgr &mgr);
 
     // SENDER THREAD: notify about new message
     virtual void Notify() = 0;
@@ -87,7 +88,7 @@ protected:
 
 private:
     // SENDER THREAD: add message to the list
-    void AddMessage(const Msg& msg);
+    void AddMessage(const Msg &msg);
 
     std::mutex m_messagesMutex;
     std::list<Msg> m_messages;
@@ -95,13 +96,15 @@ private:
 
 template <typename Msg>
 template <typename Mgr>
-void MessageService<Msg>::Register(Mgr& mgr)
+void MessageService<Msg>::Register(Mgr &mgr)
 {
-    mgr.Register<Msg>([this](const Msg& msg) { this->AddMessage(msg); });
+    mgr.Register<Msg>([this](const Msg & msg) {
+        this->AddMessage(msg);
+    });
 }
 
 template <typename Msg>
-void MessageService<Msg>::AddMessage(const Msg& msg)
+void MessageService<Msg>::AddMessage(const Msg &msg)
 {
     m_messagesMutex.lock();
     m_messages.push_back(msg);
@@ -114,10 +117,12 @@ void MessageService<Msg>::CheckMessages()
 {
     while (true) {
         m_messagesMutex.lock();
+
         if (m_messages.empty()) {
             m_messagesMutex.unlock();
             break;
         }
+
         // move out the first message
         Msg message = std::move(m_messages.front());
         m_messages.pop_front();
@@ -125,7 +130,7 @@ void MessageService<Msg>::CheckMessages()
 
         try {
             ProcessMessage(std::move(message));
-        } catch(...) {
+        } catch (...) {
             LogError("Uncaught exception in ProcessMessage");
         }
     }
@@ -134,7 +139,8 @@ void MessageService<Msg>::CheckMessages()
 
 // thread based service with messages support
 template <typename ...Msgs>
-class ThreadMessageService : public ThreadService, public MessageService<Msgs...> {
+class ThreadMessageService : public ThreadService,
+    public MessageService<Msgs...> {
 public:
     ThreadMessageService() {}
     virtual ~ThreadMessageService() {}
@@ -142,7 +148,7 @@ public:
 
     // RECEIVER THREAD: register as a listener of all supported messages
     template <typename Mgr>
-    void Register(Mgr& mgr)
+    void Register(Mgr &mgr)
     {
         MessageService<Msgs...>::Register(mgr);
     }
@@ -151,7 +157,9 @@ private:
     // SENDER THREAD: adds callback to RECEIVER THREAD event queue and wakes it
     virtual void Notify()
     {
-        CreateEvent([this]() { this->CheckMessages(); });
+        CreateEvent([this]() {
+            this->CheckMessages();
+        });
     }
 
     // RECEIVER THREAD

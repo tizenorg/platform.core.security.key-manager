@@ -76,6 +76,7 @@ void ThreadService::Handle(const SecurityEvent &event)
         LogDebug("Connection has been closed already");
         return;
     }
+
     auto &info = it->second;
 
     if (!info.checkInProgress) {

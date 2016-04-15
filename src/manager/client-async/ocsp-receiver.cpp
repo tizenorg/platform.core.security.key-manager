@@ -24,7 +24,7 @@
 
 namespace CKM {
 
-OcspReceiver::OcspReceiver(MessageBuffer& buffer, AsyncRequest::Map& requests) :
+OcspReceiver::OcspReceiver(MessageBuffer &buffer, AsyncRequest::Map &requests) :
     m_buffer(buffer),
     m_requests(requests)
 {
@@ -36,6 +36,7 @@ void OcspReceiver::processResponse()
     m_buffer.Deserialize(id, retCode, ocspStatus);
 
     auto it = m_requests.find(id);
+
     if (it == m_requests.end()) {
         LogError("Request with id " << id << " not found!");
         ThrowMsg(BadResponse, "Request with id " << id << " not found!");

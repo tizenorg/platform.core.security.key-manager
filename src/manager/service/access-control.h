@@ -43,36 +43,36 @@ public:
      * @return CKM_API_SUCCESS if access is allowed, otherwise negative error code
      */
     int canSave(const CKM::Credentials &accessorCred,
-                const Label & ownerLabel) const;
+                const Label &ownerLabel) const;
 
     /**
      * check if given label can be modified by accessor
      * @return CKM_API_SUCCESS if access is allowed, otherwise negative error code
      */
     int canModify(const CKM::Credentials &accessorCred,
-                  const Label & ownerLabel) const;
+                  const Label &ownerLabel) const;
 
     /**
      * check if given row can be read (for internal use)
      * @return CKM_API_SUCCESS if access is allowed, otherwise negative error code
      */
     int canRead(const CKM::Credentials &accessorCred,
-                const PermissionForLabel & permissionLabel) const;
+                const PermissionForLabel &permissionLabel) const;
 
     /**
      * check if given row can be exported (data provided to the client)
      * @return CKM_API_SUCCESS if access is allowed, otherwise negative error code
      */
     int canExport(const CKM::Credentials &accessorCred,
-                  const DB::Row & row,
-                  const PermissionForLabel & permissionLabel) const;
+                  const DB::Row &row,
+                  const PermissionForLabel &permissionLabel) const;
 
     /**
      * check if given accessor can delete ownerLabel's items.
      * @return CKM_API_SUCCESS if access is allowed, otherwise negative error code
      */
     int canDelete(const CKM::Credentials &accessorCred,
-                  const PermissionForLabel & permissionLabel) const;
+                  const PermissionForLabel &permissionLabel) const;
 
     void updateCCMode();
     bool isCCMode() const;

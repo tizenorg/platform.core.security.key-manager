@@ -41,10 +41,10 @@ struct Item {
     {
     }
 
-    Item(const CKM::Alias& alias,
+    Item(const CKM::Alias &alias,
          const CKM::DataType::Type type,
-         const CKM::Policy& policy)
-    : alias(alias), type(type), policy(policy)
+         const CKM::Policy &policy)
+        : alias(alias), type(type), policy(policy)
     {
     }
 
@@ -77,13 +77,17 @@ struct ItemFilter {
         noPassword(false)
     {}
 
-    bool Matches(const Item& item) const {
-        if(item.type < typeFrom || item.type > typeTo)
+    bool Matches(const Item &item) const
+    {
+        if (item.type < typeFrom || item.type > typeTo)
             return false;
-        if(exportableOnly && !item.policy.extractable)
+
+        if (exportableOnly && !item.policy.extractable)
             return false;
-        if(noPassword && !item.policy.password.empty())
+
+        if (noPassword && !item.policy.password.empty())
             return false;
+
         return true;
     }
 
@@ -107,16 +111,16 @@ public:
     void RemoveAll();
     size_t CountObjects();
     void RestoreDb();
-    void CheckSchemeVersion(const ItemFilter& filter, int version);
+    void CheckSchemeVersion(const ItemFilter &filter, int version);
 
 private:
     void SwitchToUser();
     void SwitchToRoot();
     void EnableDirectDbAccess();
-    void SignVerifyItem(const Item& itemPrv, const Item& itemPub);
-    void EncryptDecryptItem(const Item& item);
-    void EncryptDecryptItem(const Item& itemPrv, const Item& itemPub);
-    void CreateChainItem(const Item& leaf, const Items& certs);
+    void SignVerifyItem(const Item &itemPrv, const Item &itemPub);
+    void EncryptDecryptItem(const Item &item);
+    void EncryptDecryptItem(const Item &itemPrv, const Item &itemPub);
+    void CreateChainItem(const Item &leaf, const Items &certs);
 
     CKM::ControlShPtr m_control;
     CKM::ManagerShPtr m_mgr;

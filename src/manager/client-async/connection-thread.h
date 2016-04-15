@@ -33,8 +33,7 @@
 
 namespace CKM {
 
-class ConnectionThread
-{
+class ConnectionThread {
 public:
     DECLARE_EXCEPTION_TYPE(CKM::Exception, PipeError)
 
@@ -45,9 +44,12 @@ public:
 
     void run();
 
-    void sendMessage(AsyncRequest&& request);
+    void sendMessage(AsyncRequest &&request);
 
-    bool finished() const { return m_finished; }
+    bool finished() const
+    {
+        return m_finished;
+    }
 
 private:
     void threadLoop();
@@ -57,7 +59,7 @@ private:
     // reads notification pipe
     void readPipe(int pipe, short revents);
 
-    Service& getService(const std::string& interface);
+    Service &getService(const std::string &interface);
 
     // Helper class that creates a pipe before thread is started
     class Pipe {
@@ -68,7 +70,10 @@ private:
         NONCOPYABLE(Pipe);
 
         void notify();
-        int output() const { return m_pipe[0]; }
+        int output() const
+        {
+            return m_pipe[0];
+        }
 
     private:
         int m_pipe[2];

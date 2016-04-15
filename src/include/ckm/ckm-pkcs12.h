@@ -46,7 +46,8 @@ public:
 
     virtual ~PKCS12() {}
 
-    static PKCS12ShPtr create(const RawBuffer &rawData, const Password &password = Password());
+    static PKCS12ShPtr create(const RawBuffer &rawData,
+                              const Password &password = Password());
 };
 
 } // namespace CKM

@@ -57,7 +57,8 @@ void CKMService::Stop()
     Join();
 }
 
-GenericSocketService::ServiceDescriptionVector CKMService::GetServiceDescription()
+GenericSocketService::ServiceDescriptionVector
+CKMService::GetServiceDescription()
 {
     return ServiceDescriptionVector {
         {SERVICE_SOCKET_CKM_CONTROL, "http://tizen.org/privilege/keymanager.admin", SOCKET_ID_CONTROL},
@@ -95,9 +96,11 @@ bool CKMService::ProcessOne(
         return true;
     } Catch(MessageBuffer::Exception::Base) {
         LogError("Broken protocol. Closing socket.");
-    } Catch(Exception::BrokenProtocol) {
+    }
+    Catch(Exception::BrokenProtocol) {
         LogError("Broken protocol. Closing socket.");
-    } catch (const DataType::Exception::Base &e) {
+    }
+    catch (const DataType::Exception::Base &e) {
         LogError("Closing socket. DBDataType::Exception: " << e.DumpToString());
     } catch (const std::string &e) {
         LogError("String exception(" << e << "). Closing socket");
@@ -129,25 +132,31 @@ RawBuffer CKMService::ProcessControl(MessageBuffer &buffer)
     case ControlCommand::UNLOCK_USER_KEY:
         buffer.Deserialize(user, newPass);
         return m_logic->unlockUserKey(user, newPass);
+
     case ControlCommand::LOCK_USER_KEY:
         buffer.Deserialize(user);
         return m_logic->lockUserKey(user);
+
     case ControlCommand::REMOVE_USER_DATA:
         buffer.Deserialize(user);
         return m_logic->removeUserData(user);
+
     case ControlCommand::CHANGE_USER_PASSWORD:
         buffer.Deserialize(user, oldPass, newPass);
         return m_logic->changeUserPassword(user, oldPass, newPass);
+
     case ControlCommand::RESET_USER_PASSWORD:
         buffer.Deserialize(user, newPass);
         return m_logic->resetUserPassword(user, newPass);
+
     case ControlCommand::REMOVE_APP_DATA:
         buffer.Deserialize(smackLabel);
         return m_logic->removeApplicationData(smackLabel);
+
     case ControlCommand::UPDATE_CC_MODE:
         return m_logic->updateCCMode();
-    case ControlCommand::SET_PERMISSION:
-    {
+
+    case ControlCommand::SET_PERMISSION: {
         Name name;
         Label label;
         Label accessorLabel;
@@ -157,14 +166,15 @@ RawBuffer CKMService::ProcessControl(MessageBuffer &buffer)
 
         Credentials cred(user, label);
         return m_logic->setPermission(
-            cred,
-            command,
-            0, // dummy
-            name,
-            label,
-            accessorLabel,
-            permissionMask);
+                   cred,
+                   command,
+                   0, // dummy
+                   name,
+                   label,
+                   accessorLabel,
+                   permissionMask);
     }
+
     default:
         Throw(Exception::BrokenProtocol);
     }
@@ -192,57 +202,56 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
     LogDebug("Process storage. Command: " << command);
 
     switch (static_cast<LogicCommand>(command)) {
-    case LogicCommand::SAVE:
-    {
+    case LogicCommand::SAVE: {
         RawBuffer rawData;
         PolicySerializable policy;
         buffer.Deserialize(tmpDataType, name, label, rawData, policy);
         return m_logic->saveData(
-            cred,
-            msgID,
-            name,
-            label,
-            Crypto::Data(DataType(tmpDataType), std::move(rawData)),
-            policy);
+                   cred,
+                   msgID,
+                   name,
+                   label,
+                   Crypto::Data(DataType(tmpDataType), std::move(rawData)),
+                   policy);
     }
-    case LogicCommand::SAVE_PKCS12:
-    {
+
+    case LogicCommand::SAVE_PKCS12: {
         RawBuffer rawData;
         PKCS12Serializable pkcs;
         PolicySerializable keyPolicy, certPolicy;
         buffer.Deserialize(name, label, pkcs, keyPolicy, certPolicy);
         return m_logic->savePKCS12(
-            cred,
-            msgID,
-            name,
-            label,
-            pkcs,
-            keyPolicy,
-            certPolicy);
+                   cred,
+                   msgID,
+                   name,
+                   label,
+                   pkcs,
+                   keyPolicy,
+                   certPolicy);
     }
-    case LogicCommand::REMOVE:
-    {
+
+    case LogicCommand::REMOVE: {
         buffer.Deserialize(name, label);
         return m_logic->removeData(
-            cred,
-            msgID,
-            name,
-            label);
+                   cred,
+                   msgID,
+                   name,
+                   label);
     }
-    case LogicCommand::GET:
-    {
+
+    case LogicCommand::GET: {
         Password password;
         buffer.Deserialize(tmpDataType, name, label, password);
         return m_logic->getData(
-            cred,
-            msgID,
-            DataType(tmpDataType),
-            name,
-            label,
-            password);
+                   cred,
+                   msgID,
+                   DataType(tmpDataType),
+                   name,
+                   label,
+                   password);
     }
-    case LogicCommand::GET_PKCS12:
-    {
+
+    case LogicCommand::GET_PKCS12: {
         Password passKey;
         Password passCert;
         buffer.Deserialize(
@@ -251,23 +260,23 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
             passKey,
             passCert);
         return m_logic->getPKCS12(
-            cred,
-            msgID,
-            name,
-            label,
-            passKey,
-            passCert);
+                   cred,
+                   msgID,
+                   name,
+                   label,
+                   passKey,
+                   passCert);
     }
-    case LogicCommand::GET_LIST:
-    {
+
+    case LogicCommand::GET_LIST: {
         buffer.Deserialize(tmpDataType);
         return m_logic->getDataList(
-            cred,
-            msgID,
-            DataType(tmpDataType));
+                   cred,
+                   msgID,
+                   DataType(tmpDataType));
     }
-    case LogicCommand::CREATE_KEY_AES:
-    {
+
+    case LogicCommand::CREATE_KEY_AES: {
         int size = 0;
         Name keyName;
         Label keyLabel;
@@ -278,15 +287,15 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
             keyName,
             keyLabel);
         return m_logic->createKeyAES(
-            cred,
-            msgID,
-            size,
-            keyName,
-            keyLabel,
-            policyKey);
+                   cred,
+                   msgID,
+                   size,
+                   keyName,
+                   keyLabel,
+                   policyKey);
     }
-    case LogicCommand::CREATE_KEY_PAIR:
-    {
+
+    case LogicCommand::CREATE_KEY_PAIR: {
         CryptoAlgorithmSerializable keyGenAlgorithm;
         Name privateKeyName;
         Label privateKeyLabel;
@@ -302,48 +311,48 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
                            publicKeyName,
                            publicKeyLabel);
         return m_logic->createKeyPair(
-            cred,
-            msgID,
-            keyGenAlgorithm,
-            privateKeyName,
-            privateKeyLabel,
-            publicKeyName,
-            publicKeyLabel,
-            policyPrivateKey,
-            policyPublicKey);
+                   cred,
+                   msgID,
+                   keyGenAlgorithm,
+                   privateKeyName,
+                   privateKeyLabel,
+                   publicKeyName,
+                   publicKeyLabel,
+                   policyPrivateKey,
+                   policyPublicKey);
     }
-    case LogicCommand::GET_CHAIN_CERT:
-    {
+
+    case LogicCommand::GET_CHAIN_CERT: {
         RawBuffer certificate;
         RawBufferVector untrustedVector;
         RawBufferVector trustedVector;
         bool systemCerts = false;
         buffer.Deserialize(certificate, untrustedVector, trustedVector, systemCerts);
         return m_logic->getCertificateChain(
-            cred,
-            msgID,
-            certificate,
-            untrustedVector,
-            trustedVector,
-            systemCerts);
+                   cred,
+                   msgID,
+                   certificate,
+                   untrustedVector,
+                   trustedVector,
+                   systemCerts);
     }
-    case LogicCommand::GET_CHAIN_ALIAS:
-    {
+
+    case LogicCommand::GET_CHAIN_ALIAS: {
         RawBuffer certificate;
         LabelNameVector untrustedVector;
         LabelNameVector trustedVector;
         bool systemCerts = false;
         buffer.Deserialize(certificate, untrustedVector, trustedVector, systemCerts);
         return m_logic->getCertificateChain(
-            cred,
-            msgID,
-            certificate,
-            untrustedVector,
-            trustedVector,
-            systemCerts);
+                   cred,
+                   msgID,
+                   certificate,
+                   untrustedVector,
+                   trustedVector,
+                   systemCerts);
     }
-    case LogicCommand::CREATE_SIGNATURE:
-    {
+
+    case LogicCommand::CREATE_SIGNATURE: {
         Password password;        // password for private_key
         RawBuffer message;
 
@@ -351,16 +360,16 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
         buffer.Deserialize(name, label, password, message, cAlgorithm);
 
         return m_logic->createSignature(
-              cred,
-              msgID,
-              name,
-              label,
-              password,           // password for private_key
-              message,
-              cAlgorithm);
+                   cred,
+                   msgID,
+                   name,
+                   label,
+                   password,           // password for private_key
+                   message,
+                   cAlgorithm);
     }
-    case LogicCommand::VERIFY_SIGNATURE:
-    {
+
+    case LogicCommand::VERIFY_SIGNATURE: {
         Password password;           // password for public_key (optional)
         RawBuffer message;
         RawBuffer signature;
@@ -374,28 +383,29 @@ RawBuffer CKMService::ProcessStorage(Credentials &cred, MessageBuffer &buffer)
                            cAlg);
 
         return m_logic->verifySignature(
-            cred,
-            msgID,
-            name,
-            label,
-            password,           // password for public_key (optional)
-            message,
-            signature,
-            cAlg);
+                   cred,
+                   msgID,
+                   name,
+                   label,
+                   password,           // password for public_key (optional)
+                   message,
+                   signature,
+                   cAlg);
     }
-    case LogicCommand::SET_PERMISSION:
-    {
+
+    case LogicCommand::SET_PERMISSION: {
         PermissionMask permissionMask = 0;
         buffer.Deserialize(name, label, accessorLabel, permissionMask);
         return m_logic->setPermission(
-            cred,
-            command,
-            msgID,
-            name,
-            label,
-            accessorLabel,
-            permissionMask);
+                   cred,
+                   command,
+                   msgID,
+                   name,
+                   label,
+                   accessorLabel,
+                   permissionMask);
     }
+
     default:
         Throw(Exception::BrokenProtocol);
     }
@@ -410,6 +420,7 @@ void CKMService::ProcessMessage(MsgKeyRequest msg)
                                         msg.password,
                                         key);
     MsgKeyResponse kResp(msg.id, key, ret);
+
     try {
         if (!m_commMgr->SendMessage(kResp))
             LogError("No listener found"); // can't do much more
@@ -418,7 +429,8 @@ void CKMService::ProcessMessage(MsgKeyRequest msg)
     }
 }
 
-void CKMService::ProcessMessage(MsgRemoveAppData msg) {
+void CKMService::ProcessMessage(MsgRemoveAppData msg)
+{
     LogDebug("Call removeApplicationData. pkgId: " << msg.pkgId);
     m_logic->removeApplicationData(msg.pkgId);
 }
@@ -428,6 +440,7 @@ void CKMService::CustomHandle(const ReadEvent &event)
     LogDebug("Read event");
     auto &info = m_connectionInfoMap[event.connectionID.counter];
     info.buffer.Push(event.rawBuffer);
+
     while (ProcessOne(event.connectionID, info, true));
 }
 

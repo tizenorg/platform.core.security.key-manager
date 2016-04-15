@@ -39,12 +39,12 @@ namespace DB {
  * SQL connection class
  */
 class SqlConnection {
-  public:
+public:
     /**
      * SQL Exception classes
      */
     class Exception {
-      public:
+    public:
         DECLARE_EXCEPTION_TYPE(CKM::Exception, Base)
         DECLARE_EXCEPTION_TYPE(Base, SyntaxError)
         DECLARE_EXCEPTION_TYPE(Base, ConnectionBroken)
@@ -61,11 +61,17 @@ class SqlConnection {
         typedef std::vector<std::string> Row;
         typedef std::vector<Row> Rows;
 
-        static int Callback(void*, int, char**, char**);
-        const Row& GetNames() const { return m_names; }
-        const Rows& GetValues() const { return m_values; }
+        static int Callback(void *, int, char **, char **);
+        const Row &GetNames() const
+        {
+            return m_names;
+        }
+        const Rows &GetValues() const
+        {
+            return m_values;
+        }
     private:
-        void SetResults(int columns, char** values, char** names);
+        void SetResults(int columns, char **values, char **names);
 
         Row m_names;
         Rows m_values;
@@ -78,7 +84,7 @@ class SqlConnection {
      * SQL processed data command
      */
     class DataCommand {
-      private:
+    private:
         SqlConnection *m_masterConnection;
         sqlcipher3_stmt *m_stmt;
 
@@ -89,7 +95,7 @@ class SqlConnection {
 
         friend class SqlConnection;
 
-      public:
+    public:
         NONCOPYABLE(DataCommand);
 
         virtual ~DataCommand();
@@ -390,7 +396,7 @@ class SqlConnection {
 
     // Open flags
     class Flag {
-      public:
+    public:
         enum Option {
             RO = SQLCIPHER_OPEN_NOMUTEX | SQLCIPHER_OPEN_READONLY,
             RW = SQLCIPHER_OPEN_NOMUTEX | SQLCIPHER_OPEN_READWRITE,
@@ -406,7 +412,7 @@ class SqlConnection {
      * to the same database across different threads and processes
      */
     class SynchronizationObject {
-      public:
+    public:
         virtual ~SynchronizationObject() {}
 
         /**
@@ -420,7 +426,7 @@ class SqlConnection {
         virtual void NotifyAll() = 0;
     };
 
-  protected:
+protected:
     sqlcipher3 *m_connection;
 
     // Options
@@ -441,7 +447,7 @@ class SqlConnection {
 
     static SynchronizationObject *AllocDefaultSynchronizationObject();
 
-  public:
+public:
     /**
      * Open SQL connection
      *
@@ -511,7 +517,7 @@ class SqlConnection {
      * @param ...
      */
     //To prevent sql injection do not use this method for direct sql execution
-    void ExecCommand(Output* output, const char *format, ...);
+    void ExecCommand(Output *output, const char *format, ...);
 
     /**
      * Execute BEGIN; command to start new transaction
@@ -554,8 +560,8 @@ class SqlConnection {
      */
     RowID GetLastInsertRowID() const;
 
-  private:
-    void ExecCommandHelper(Output* out, const char *format, va_list args);
+private:
+    void ExecCommandHelper(Output *out, const char *format, va_list args);
 };
 } // namespace DB
 } // namespace CKM

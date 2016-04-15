@@ -81,7 +81,8 @@ extern "C" {
  * @see #ckmc_key_s
  * @see #ckmc_policy_s
  */
-int ckmc_save_key(const char *alias, const ckmc_key_s key, const ckmc_policy_s policy);
+int ckmc_save_key(const char *alias, const ckmc_key_s key,
+                  const ckmc_policy_s policy);
 
 /**
  * @deprecated Deprecated since 2.4. [Use ckmc_remove_alias() instead]
@@ -185,7 +186,7 @@ int ckmc_get_key(const char *alias, const char *password, ckmc_key_s **ppkey);
  * @see ckmc_remove_alias()
  * @see ckmc_get_key()
  */
-int ckmc_get_key_alias_list(ckmc_alias_list_s** ppalias_list);
+int ckmc_get_key_alias_list(ckmc_alias_list_s **ppalias_list);
 
 
 
@@ -223,7 +224,8 @@ int ckmc_get_key_alias_list(ckmc_alias_list_s** ppalias_list);
  * @see #ckmc_cert_s
  * @see #ckmc_policy_s
  */
-int ckmc_save_cert(const char *alias, const ckmc_cert_s cert, const ckmc_policy_s policy);
+int ckmc_save_cert(const char *alias, const ckmc_cert_s cert,
+                   const ckmc_policy_s policy);
 
 /**
  * @deprecated Deprecated since 2.4. [Use ckmc_remove_alias() instead]
@@ -294,7 +296,8 @@ int ckmc_remove_cert(const char *alias);
  * @see ckmc_remove_alias()
  * @see ckmc_get_cert_alias_list()
  */
-int ckmc_get_cert(const char *alias, const char *password, ckmc_cert_s **ppcert);
+int ckmc_get_cert(const char *alias, const char *password,
+                  ckmc_cert_s **ppcert);
 
 /**
  * @brief Gets all alias of certificates which the client can access.
@@ -328,7 +331,7 @@ int ckmc_get_cert(const char *alias, const char *password, ckmc_cert_s **ppcert)
  * @see ckmc_remove_alias()
  * @see ckmc_get_cert()
  */
-int ckmc_get_cert_alias_list(ckmc_alias_list_s** ppalias_list);
+int ckmc_get_cert_alias_list(ckmc_alias_list_s **ppalias_list);
 
 
 
@@ -406,7 +409,8 @@ int ckmc_save_pkcs12(const char *alias,
  * @see ckmc_save_pkcs12()
  * @see ckmc_remove_alias()
  */
-int ckmc_get_pkcs12(const char *alias, const char *key_password, const char *cert_password, ckmc_pkcs12_s **pkcs12);
+int ckmc_get_pkcs12(const char *alias, const char *key_password,
+                    const char *cert_password, ckmc_pkcs12_s **pkcs12);
 
 /**
  * @brief Stores a data inside key manager based on the provided policy.
@@ -438,7 +442,8 @@ int ckmc_get_pkcs12(const char *alias, const char *key_password, const char *cer
  * @see #ckmc_raw_buffer_s
  * @see #ckmc_policy_s
  */
-int ckmc_save_data(const char *alias, ckmc_raw_buffer_s data, const ckmc_policy_s policy);
+int ckmc_save_data(const char *alias, ckmc_raw_buffer_s data,
+                   const ckmc_policy_s policy);
 
 /**
  * @deprecated Deprecated since 2.4. [Use ckmc_remove_alias() instead]
@@ -507,7 +512,8 @@ int ckmc_remove_data(const char *alias);
  * @see ckmc_remove_alias()
  * @see ckmc_get_data_alias_list()
  */
-int ckmc_get_data(const char *alias, const char *password, ckmc_raw_buffer_s **ppdata);
+int ckmc_get_data(const char *alias, const char *password,
+                  ckmc_raw_buffer_s **ppdata);
 
 /**
  * @brief Gets all alias of data which the client can access.
@@ -541,7 +547,7 @@ int ckmc_get_data(const char *alias, const char *password, ckmc_raw_buffer_s **p
  * @see ckmc_remove_alias()
  * @see ckmc_get_data()
  */
-int ckmc_get_data_alias_list(ckmc_alias_list_s** ppalias_list);
+int ckmc_get_data_alias_list(ckmc_alias_list_s **ppalias_list);
 
 
 
@@ -931,10 +937,10 @@ int ckmc_get_cert_chain_with_alias(const ckmc_cert_s *cert,
  * @see ckmc_cert_list_all_free()
  */
 int ckmc_get_cert_chain_with_trustedcert(const ckmc_cert_s *cert,
-                                         const ckmc_cert_list_s *untrustedcerts,
-                                         const ckmc_cert_list_s *trustedcerts,
-                                         const bool use_trustedsystemcerts,
-                                         ckmc_cert_list_s **ppcert_chain_list);
+        const ckmc_cert_list_s *untrustedcerts,
+        const ckmc_cert_list_s *trustedcerts,
+        const bool use_trustedsystemcerts,
+        ckmc_cert_list_s **ppcert_chain_list);
 
 /**
  * @brief Perform OCSP which checks certificate is whether revoked or not.
@@ -964,7 +970,8 @@ int ckmc_get_cert_chain_with_trustedcert(const ckmc_cert_s *cert,
  * @see ckmc_get_cert_chain())
  * @see ckmc_cert_list_all_free()
  */
-int ckmc_ocsp_check(const ckmc_cert_list_s *pcert_chain_list, ckmc_ocsp_status_e *ocsp_status);
+int ckmc_ocsp_check(const ckmc_cert_list_s *pcert_chain_list,
+                    ckmc_ocsp_status_e *ocsp_status);
 
 /**
  * @deprecated Deprecated since 2.4. [Use ckmc_set_permission() instead]
@@ -994,7 +1001,8 @@ int ckmc_ocsp_check(const ckmc_cert_list_s *pcert_chain_list, ckmc_ocsp_status_e
  *
  * @see ckmc_deny_access()
  */
-int ckmc_allow_access(const char *alias, const char *accessor, ckmc_access_right_e granted);
+int ckmc_allow_access(const char *alias, const char *accessor,
+                      ckmc_access_right_e granted);
 
 /**
  * @brief Allows another application to access client's application data.
@@ -1023,7 +1031,8 @@ int ckmc_allow_access(const char *alias, const char *accessor, ckmc_access_right
  *
  * @pre User is already logged in and the user key is already loaded into memory in plain text form.
  */
-int ckmc_set_permission(const char *alias, const char *accessor, int permissions);
+int ckmc_set_permission(const char *alias, const char *accessor,
+                        int permissions);
 
 /**
  * @deprecated Deprecated since 2.4. [Use ckmc_set_permission() instead]

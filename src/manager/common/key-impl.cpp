@@ -38,7 +38,7 @@
 namespace CKM {
 namespace {
 
-typedef std::unique_ptr<BIO, std::function<void(BIO*)>> BioUniquePtr;
+typedef std::unique_ptr<BIO, std::function<void(BIO *)>> BioUniquePtr;
 
 int passcb(char *buff, int size, int /*rwflag*/, void *userdata)
 {
@@ -52,9 +52,9 @@ int passcb(char *buff, int size, int /*rwflag*/, void *userdata)
     return ptr->size();
 }
 
-typedef int(*I2D_CONV)(BIO*, EVP_PKEY*);
+typedef int(*I2D_CONV)(BIO *, EVP_PKEY *);
 
-CKM::RawBuffer i2d(I2D_CONV fun, EVP_PKEY* pkey)
+CKM::RawBuffer i2d(I2D_CONV fun, EVP_PKEY *pkey)
 {
     BioUniquePtr bio(BIO_new(BIO_s_mem()), BIO_free_all);
 
@@ -99,7 +99,7 @@ KeyImpl::KeyImpl(const RawBuffer &buf, const Password &password) :
         BIO_write(bio.get(), buf.data(), buf.size());
         pkey = d2i_PUBKEY_bio(bio.get(), nullptr);
         isPrivate = false;
-        LogDebug("Trying d2i_PUBKEY_bio Status: " << (void*)pkey);
+        LogDebug("Trying d2i_PUBKEY_bio Status: " << (void *)pkey);
     }
 
     if (!pkey && buf[0] != '-') {
@@ -108,25 +108,27 @@ KeyImpl::KeyImpl(const RawBuffer &buf, const Password &password) :
         BIO_write(bio.get(), buf.data(), buf.size());
         pkey = d2i_PrivateKey_bio(bio.get(), nullptr);
         isPrivate = true;
-        LogDebug("Trying d2i_PrivateKey_bio Status: " << (void*)pkey);
+        LogDebug("Trying d2i_PrivateKey_bio Status: " << (void *)pkey);
     }
 
     if (!pkey && buf[0] == '-') {
         /* cast to void of return val to ignore unused-value warning */
         static_cast<void>(BIO_reset(bio.get()));
         BIO_write(bio.get(), buf.data(), buf.size());
-        pkey = PEM_read_bio_PUBKEY(bio.get(), nullptr, passcb, const_cast<Password*>(&password));
+        pkey = PEM_read_bio_PUBKEY(bio.get(), nullptr, passcb,
+                                   const_cast<Password *>(&password));
         isPrivate = false;
-        LogDebug("PEM_read_bio_PUBKEY Status: " << (void*)pkey);
+        LogDebug("PEM_read_bio_PUBKEY Status: " << (void *)pkey);
     }
 
     if (!pkey && buf[0] == '-') {
         /* cast to void of return val to ignore unused-value warning */
         static_cast<void>(BIO_reset(bio.get()));
         BIO_write(bio.get(), buf.data(), buf.size());
-        pkey = PEM_read_bio_PrivateKey(bio.get(), nullptr, passcb, const_cast<Password*>(&password));
+        pkey = PEM_read_bio_PrivateKey(bio.get(), nullptr, passcb,
+                                       const_cast<Password *>(&password));
         isPrivate = true;
-        LogDebug("PEM_read_bio_PrivateKey Status: " << (void*)pkey);
+        LogDebug("PEM_read_bio_PrivateKey Status: " << (void *)pkey);
     }
 
     if (!pkey) {
@@ -150,7 +152,8 @@ KeyImpl::KeyImpl(const RawBuffer &buf, const Password &password) :
         break;
     }
 
-    LogDebug("KeyType is: " << static_cast<int>(m_type) << " isPrivate: " << isPrivate);
+    LogDebug("KeyType is: " << static_cast<int>(m_type) << " isPrivate: " <<
+             isPrivate);
 }
 
 KeyImpl::KeyImpl(EvpShPtr pkey, KeyType type) : m_pkey(pkey), m_type(type)
@@ -184,6 +187,7 @@ KeyImpl::KeyImpl(EvpShPtr pkey, KeyType type) : m_pkey(pkey), m_type(type)
 
     // verify if actual key type matches the expected tpe
     int given_key_type = EVP_PKEY_type(pkey->type);
+
     if (given_key_type == EVP_PKEY_NONE || expected_type != given_key_type) {
         m_pkey.reset();
         m_type = KeyType::KEY_NONE;
@@ -239,14 +243,17 @@ KeyShPtr Key::create(const RawBuffer &raw, const Password &password)
 {
     try {
         KeyShPtr output = std::make_shared<KeyImpl>(raw, password);
+
         if (output->empty())
             output.reset();
+
         return output;
     } catch (const std::bad_alloc &) {
         LogDebug("Bad alloc was catch during KeyImpl creation");
     } catch (...) {
         LogError("Critical error: Unknown exception was caught during KeyImpl creation");
     }
+
     return KeyShPtr();
 }
 

@@ -30,24 +30,29 @@ namespace CKM {
 
 class CKMLogic;
 
-class CKMService : public ThreadMessageService<MsgKeyRequest, MsgRemoveAppData> {
+class CKMService : public
+    ThreadMessageService<MsgKeyRequest, MsgRemoveAppData> {
 public:
     CKMService();
     CKMService(const CKMService &) = delete;
     CKMService(CKMService &&) = delete;
-    CKMService& operator=(const CKMService &) = delete;
-    CKMService& operator=(CKMService &&) = delete;
+    CKMService &operator=(const CKMService &) = delete;
+    CKMService &operator=(CKMService &&) = delete;
 
     // Custom add custom support for ReadEvent and SecurityEvent
     // because we want to bypass security check in CKMService
     virtual void Event(const ReadEvent &event)
     {
-        CreateEvent([this, event]() { this->CustomHandle(event); });
+        CreateEvent([this, event]() {
+            this->CustomHandle(event);
+        });
     }
 
     virtual void Event(const SecurityEvent &event)
     {
-        CreateEvent([this, event]() { this->CustomHandle(event); });
+        CreateEvent([this, event]() {
+            this->CustomHandle(event);
+        });
     }
 
     virtual void Start(void);

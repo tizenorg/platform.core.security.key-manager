@@ -27,7 +27,7 @@
 namespace CKM {
 namespace Log {
 class OldStyleLogProvider : public AbstractLogProvider {
-  public:
+public:
     OldStyleLogProvider();
     virtual ~OldStyleLogProvider() {}
 

@@ -39,7 +39,7 @@ public:
     virtual void Start(const XML::Parser::Attributes &);
     virtual void End();
 
-    const Label & getAccessor() const
+    const Label &getAccessor() const
     {
         return m_accessor;
     }

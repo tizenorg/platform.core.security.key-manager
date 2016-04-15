@@ -38,21 +38,25 @@ DescriptorSet::~DescriptorSet()
 
 void DescriptorSet::purge()
 {
-    for (auto it:m_descriptors)
+    for (auto it : m_descriptors)
         close(it.first);
+
     m_descriptors.clear();
 }
 
-void DescriptorSet::add(int fd, short events, Callback&& callback)
+void DescriptorSet::add(int fd, short events, Callback &&callback)
 {
     // map operator[] requires empty DescriptorData constructor
     auto it = m_descriptors.find(fd);
+
     if (it == m_descriptors.end()) {
-        m_descriptors.insert(std::make_pair(fd, DescriptorData(events, std::move(callback))));
+        m_descriptors.insert(std::make_pair(fd, DescriptorData(events,
+                                            std::move(callback))));
     } else {
         it->second.events = events;
         it->second.callback = std::move(callback);
     }
+
     m_dirty = true;
 }
 
@@ -61,6 +65,7 @@ void DescriptorSet::remove(int fd, bool close_fd)
     if (0 != m_descriptors.erase(fd)) {
         if (close_fd)
             close(fd);
+
         m_dirty = true;
     }
 }
@@ -72,6 +77,7 @@ void DescriptorSet::wait(int timeout_ms)
 
     // wait
     int ret = TEMP_FAILURE_RETRY(poll(m_fds, m_descriptors.size(), timeout_ms));
+
     if (ret == 0) {
         ThrowMsg(Timeout, "Poll timeout");
     } else if (ret < 0) {
@@ -85,30 +91,36 @@ void DescriptorSet::wait(int timeout_ms)
 bool DescriptorSet::rebuildPollfd()
 {
     if (m_dirty) {
-       delete[] m_fds;
-       m_fds = NULL;
-       if (m_descriptors.empty()) {
-           LogWarning("Nothing to wait for");
-           return false;
-       }
+        delete[] m_fds;
+        m_fds = NULL;
 
-       m_fds = new pollfd[m_descriptors.size()];
-       size_t idx = 0;
-       for (const auto& it : m_descriptors) {
-           m_fds[idx].fd = it.first;
-           m_fds[idx].events = it.second.events;
-           idx++;
-       }
-       m_dirty = false;
+        if (m_descriptors.empty()) {
+            LogWarning("Nothing to wait for");
+            return false;
+        }
+
+        m_fds = new pollfd[m_descriptors.size()];
+        size_t idx = 0;
+
+        for (const auto &it : m_descriptors) {
+            m_fds[idx].fd = it.first;
+            m_fds[idx].events = it.second.events;
+            idx++;
+        }
+
+        m_dirty = false;
     }
+
     return true;
 }
 
 void DescriptorSet::notify(int descCount)
 {
     size_t size = m_descriptors.size();
-    for (size_t idx = 0;idx < size;++idx) {
-        const pollfd& pfd = m_fds[idx];
+
+    for (size_t idx = 0; idx < size; ++idx) {
+        const pollfd &pfd = m_fds[idx];
+
         if (pfd.revents == 0)
             continue;
 
@@ -125,6 +137,7 @@ void DescriptorSet::notify(int descCount)
         if (descCount == 0)
             break;
     }
+
     if (descCount != 0)
         ThrowMsg(InternalError, "Number of notified descriptors do not match");
 }

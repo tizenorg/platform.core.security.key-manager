@@ -35,9 +35,10 @@ int assignToString(std::vector<char> &vec, socklen_t len, std::string &res)
     if (vec.size() <= len)
         return -1;
 
-    vec[len] = 0;            // old implementation getsockopt returns cstring without 0
+    vec[len] =
+        0;            // old implementation getsockopt returns cstring without 0
 
-    if (vec[len-1] == 0)
+    if (vec[len - 1] == 0)
         --len;               // new implementation of getsockopt returns cstring size+1
 
     res.assign(vec.data(), len);
@@ -48,7 +49,7 @@ int assignToString(std::vector<char> &vec, socklen_t len, std::string &res)
 
 int Socket2Id::getCredentialsFromSocket(int sock, std::string &res)
 {
-    std::vector<char> result(SMACK_LABEL_LEN+1);
+    std::vector<char> result(SMACK_LABEL_LEN + 1);
     socklen_t length = SMACK_LABEL_LEN;
 
     if (0 == getsockopt(sock, SOL_SOCKET, SO_PEERSEC, result.data(), &length))
@@ -59,7 +60,7 @@ int Socket2Id::getCredentialsFromSocket(int sock, std::string &res)
         return -1;
     }
 
-    result.resize(length+1);
+    result.resize(length + 1);
 
     if (0 > getsockopt(sock, SOL_SOCKET, SO_PEERSEC, result.data(), &length)) {
         LogError("getsockopt failed with errno: " << errno);

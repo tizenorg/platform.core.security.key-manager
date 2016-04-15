@@ -47,18 +47,23 @@ RawBuffer MessageBuffer::Pop()
 bool MessageBuffer::Ready()
 {
     CountBytesLeft();
+
     if (m_bytesLeft == 0)
         return false;
+
     if (m_bytesLeft > m_buffer.Size())
         return false;
+
     return true;
 }
 
 void MessageBuffer::Read(size_t num, void *bytes)
 {
     CountBytesLeft();
+
     if (num > m_bytesLeft) {
-        LogDebug("Protocol broken. OutOfData. Asked for: " << num << " Ready: " << m_bytesLeft << " Buffer.size(): " << m_buffer.Size());
+        LogDebug("Protocol broken. OutOfData. Asked for: " << num << " Ready: " <<
+                 m_bytesLeft << " Buffer.size(): " << m_buffer.Size());
         Throw(Exception::OutOfData);
     }
 

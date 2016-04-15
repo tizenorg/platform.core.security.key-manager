@@ -29,11 +29,11 @@ typedef bio_st BIO;
 namespace CKM {
 
 class COMMON_API Base64Encoder {
-  public:
+public:
     NONCOPYABLE(Base64Encoder)
 
     class Exception {
-      public:
+    public:
         DECLARE_EXCEPTION_TYPE(CKM::Exception, Base)
         DECLARE_EXCEPTION_TYPE(Base, InternalError)
         DECLARE_EXCEPTION_TYPE(Base, NotFinalized)
@@ -46,18 +46,18 @@ class COMMON_API Base64Encoder {
     void reset();
     ~Base64Encoder();
 
-  private:
+private:
     BIO *m_b64;
     BIO *m_bmem;
     bool m_finalized;
 };
 
 class COMMON_API Base64Decoder {
-  public:
+public:
     NONCOPYABLE(Base64Decoder)
 
     class Exception {
-      public:
+    public:
         DECLARE_EXCEPTION_TYPE(CKM::Exception, Base)
         DECLARE_EXCEPTION_TYPE(Base, InternalError)
         DECLARE_EXCEPTION_TYPE(Base, NotFinalized)
@@ -77,7 +77,7 @@ class COMMON_API Base64Decoder {
     {
     }
 
-  private:
+private:
     RawBuffer m_input;
     RawBuffer m_output;
     bool m_finalized;

@@ -29,13 +29,17 @@
 
 namespace CKM {
 
-char const * const SERVICE_SOCKET_ECHO = "/tmp/.central-key-manager-echo.sock";
-char const * const SERVICE_SOCKET_CKM_CONTROL = "/tmp/.central-key-manager-api-control.sock";
-char const * const SERVICE_SOCKET_CKM_STORAGE = "/tmp/.central-key-manager-api-storage.sock";
-char const * const SERVICE_SOCKET_OCSP = "/tmp/.central-key-manager-api-ocsp.sock";
-char const * const SERVICE_SOCKET_ENCRYPTION = "/tmp/.central-key-manager-api-encryption.sock";
-char const * const LABEL_NAME_SEPARATOR = " ";
-char const * const OWNER_ID_SYSTEM = "/System";
+char const *const SERVICE_SOCKET_ECHO = "/tmp/.central-key-manager-echo.sock";
+char const *const SERVICE_SOCKET_CKM_CONTROL =
+    "/tmp/.central-key-manager-api-control.sock";
+char const *const SERVICE_SOCKET_CKM_STORAGE =
+    "/tmp/.central-key-manager-api-storage.sock";
+char const *const SERVICE_SOCKET_OCSP =
+    "/tmp/.central-key-manager-api-ocsp.sock";
+char const *const SERVICE_SOCKET_ENCRYPTION =
+    "/tmp/.central-key-manager-api-encryption.sock";
+char const *const LABEL_NAME_SEPARATOR = " ";
+char const *const OWNER_ID_SYSTEM = "/System";
 
 PKCS12Serializable::PKCS12Serializable()
 {
@@ -67,44 +71,55 @@ PKCS12Serializable::PKCS12Serializable(IStream &stream)
 {
     bool keyPresent = false;
     Deserialization::Deserialize(stream, keyPresent);
+
     if (keyPresent) {
         int keyType;
         RawBuffer keyData;
         Deserialization::Deserialize(stream, keyType);
         Deserialization::Deserialize(stream, keyData);
         m_pkey = CKM::Key::create(keyData);
+
         if (m_pkey)
-            LogDebug("private key from pkcs deserialized success. key size: " << keyData.size() << " and DER size: " << m_pkey->getDER().size());
+            LogDebug("private key from pkcs deserialized success. key size: " <<
+                     keyData.size() << " and DER size: " << m_pkey->getDER().size());
         else
             LogError("private key from pkcs deserialized fail");
     }
 
     bool certPresent = false;
     Deserialization::Deserialize(stream, certPresent);
+
     if (certPresent) {
         RawBuffer certData;
         Deserialization::Deserialize(stream, certData);
         m_cert = CKM::Certificate::create(certData, DataFormat::FORM_DER);
+
         if (m_cert)
-            LogDebug("certificate from pkcs deserialized success. cert size: " << certData.size() << " and DER size: " << m_cert->getDER().size());
+            LogDebug("certificate from pkcs deserialized success. cert size: " <<
+                     certData.size() << " and DER size: " << m_cert->getDER().size());
         else
             LogError("certificate from pkcs deserialized fail");
     }
 
     size_t numCA = 0;
     Deserialization::Deserialize(stream, numCA);
+
     for (size_t i = 0; i < numCA; i++) {
         RawBuffer CAcertData;
         Deserialization::Deserialize(stream, CAcertData);
         m_ca.emplace_back(CKM::Certificate::create(CAcertData, DataFormat::FORM_DER));
+
         if (m_pkey)
-            LogDebug("ca certificate from pkcs deserialized success. cert size: " << CAcertData.size() << " and DER size: " << CKM::Certificate::create(CAcertData, DataFormat::FORM_DER)->getDER().size());
+            LogDebug("ca certificate from pkcs deserialized success. cert size: " <<
+                     CAcertData.size() << " and DER size: " << CKM::Certificate::create(CAcertData,
+                             DataFormat::FORM_DER)->getDER().size());
         else
             LogError("ca certificate from pkcs deserialized fail");
     }
 }
 
-PKCS12Serializable::PKCS12Serializable(KeyShPtr &&privKey, CertificateShPtr &&cert, CertificateShPtrVector &&chainCerts)
+PKCS12Serializable::PKCS12Serializable(KeyShPtr &&privKey,
+                                       CertificateShPtr &&cert, CertificateShPtrVector &&chainCerts)
 {
     m_pkey = std::move(privKey);
     m_cert = std::move(cert);
@@ -121,25 +136,31 @@ void PKCS12Serializable::Serialize(IStream &stream) const
     // (what if no key or cert present? attempt to deserialize a not present key/cert would
     // throw an error and close the connection).
     Serialization::Serialize(stream, isKeyPresent);
+
     if (isKeyPresent) {
         Serialization::Serialize(stream, DataType(keyPtr->getType()));
         Serialization::Serialize(stream, keyPtr->getDER());
-        LogDebug("private key from pkcs serialized success. key DER size: " << keyPtr->getDER().size());
+        LogDebug("private key from pkcs serialized success. key DER size: " <<
+                 keyPtr->getDER().size());
     }
 
     auto certPtr = getCertificate();
     bool isCertPresent = !!certPtr;
     Serialization::Serialize(stream, isCertPresent);
+
     if (isCertPresent) {
         Serialization::Serialize(stream, certPtr->getDER());
-        LogDebug("certificate from pkcs serialized success. cert DER size: " << certPtr->getDER().size());
+        LogDebug("certificate from pkcs serialized success. cert DER size: " <<
+                 certPtr->getDER().size());
     }
 
     auto caCertPtrVec = getCaCertificateShPtrVector();
     Serialization::Serialize(stream, caCertPtrVec.size());
+
     for (auto &caCertPtr : getCaCertificateShPtrVector()) {
         Serialization::Serialize(stream, caCertPtr->getDER());
-        LogDebug("ca certificate from pkcs serialized success. cert DER size: " << caCertPtr->getDER().size());
+        LogDebug("ca certificate from pkcs serialized success. cert DER size: " <<
+                 caCertPtr->getDER().size());
     }
 };
 
@@ -148,7 +169,8 @@ CryptoAlgorithmSerializable::CryptoAlgorithmSerializable()
 {
 }
 
-CryptoAlgorithmSerializable::CryptoAlgorithmSerializable(const CryptoAlgorithm &algo) :
+CryptoAlgorithmSerializable::CryptoAlgorithmSerializable(
+    const CryptoAlgorithm &algo) :
     CryptoAlgorithm(algo)
 {
 }
@@ -157,6 +179,7 @@ CryptoAlgorithmSerializable::CryptoAlgorithmSerializable(IStream &stream)
 {
     size_t plen = 0;
     Deserializer<size_t>::Deserialize(stream, plen);
+
     while (plen) {
         ParamName name;
         uint64_t integer;
@@ -164,6 +187,7 @@ CryptoAlgorithmSerializable::CryptoAlgorithmSerializable(IStream &stream)
         int tmpName;
         Deserializer<int>::Deserialize(stream, tmpName);
         name = static_cast<ParamName>(tmpName);
+
         switch (name) {
         case ParamName::ED_IV:
         case ParamName::ED_AAD:
@@ -186,6 +210,7 @@ CryptoAlgorithmSerializable::CryptoAlgorithmSerializable(IStream &stream)
         default:
             ThrowMsg(UnsupportedParam, "Unsupported param name");
         }
+
         plen--;
     }
 }
@@ -193,10 +218,12 @@ CryptoAlgorithmSerializable::CryptoAlgorithmSerializable(IStream &stream)
 void CryptoAlgorithmSerializable::Serialize(IStream &stream) const
 {
     Serializer<size_t>::Serialize(stream, m_params.size());
-    for (const auto& it : m_params) {
+
+    for (const auto &it : m_params) {
         Serializer<int>::Serialize(stream, static_cast<int>(it.first));
         uint64_t integer;
         RawBuffer buffer;
+
         if (it.second->getInt(integer))
             Serializer<uint64_t>::Serialize(stream, integer);
         else if (it.second->getBuffer(buffer))

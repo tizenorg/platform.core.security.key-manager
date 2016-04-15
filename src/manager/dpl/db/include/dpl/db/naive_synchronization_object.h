@@ -32,9 +32,8 @@ namespace DB {
  * to the same database across different threads and processes
  */
 class NaiveSynchronizationObject :
-    public SqlConnection::SynchronizationObject
-{
-  public:
+    public SqlConnection::SynchronizationObject {
+public:
     // [SqlConnection::SynchronizationObject]
     virtual void Synchronize();
     virtual void NotifyAll();

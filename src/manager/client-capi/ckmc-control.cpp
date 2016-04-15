@@ -31,6 +31,7 @@ CKM::Password _toPasswordStr(const char *str)
 {
     if (str == NULL)
         return CKM::Password();
+
     return CKM::Password(str);
 }
 
@@ -59,7 +60,8 @@ int ckmc_remove_user_data(uid_t user)
 }
 
 KEY_MANAGER_CAPI
-int ckmc_change_user_password(uid_t user, const char *oldPassword, const char *newPassword)
+int ckmc_change_user_password(uid_t user, const char *oldPassword,
+                              const char *newPassword)
 {
     auto control = CKM::Control::create();
     int ret = control->changeUserPassword(user,
@@ -77,32 +79,39 @@ int ckmc_reset_user_password(uid_t user, const char *newPassword)
 }
 
 KEY_MANAGER_CAPI
-int ckmc_allow_access_by_adm(uid_t user, const char* owner, const char *alias, const char *accessor, ckmc_access_right_e granted)
+int ckmc_allow_access_by_adm(uid_t user, const char *owner, const char *alias,
+                             const char *accessor, ckmc_access_right_e granted)
 {
     if (!owner || !alias)
         return CKMC_ERROR_INVALID_PARAMETER;
 
     int ec, permissionMask;
     ec = access_to_permission_mask(granted, permissionMask);
+
     if (ec != CKMC_ERROR_NONE)
         return ec;
 
     // if label given twice, service will return an error
-    return ckmc_set_permission_by_adm(user, CKM::AliasSupport::merge(CKM::Label(owner), CKM::Name(alias)).c_str(), accessor, permissionMask);
+    return ckmc_set_permission_by_adm(user,
+                                      CKM::AliasSupport::merge(CKM::Label(owner), CKM::Name(alias)).c_str(), accessor,
+                                      permissionMask);
 }
 
 KEY_MANAGER_CAPI
-int ckmc_set_permission_by_adm(uid_t user, const char *alias, const char *accessor, int permissions)
+int ckmc_set_permission_by_adm(uid_t user, const char *alias,
+                               const char *accessor, int permissions)
 {
     if (!alias || !accessor)
         return CKMC_ERROR_INVALID_PARAMETER;
 
     auto control = CKM::Control::create();
-    return to_ckmc_error(control->setPermission(user, alias, accessor, permissions));
+    return to_ckmc_error(control->setPermission(user, alias, accessor,
+                         permissions));
 }
 
 KEY_MANAGER_CAPI
-int ckmc_deny_access_by_adm(uid_t user, const char* owner, const char *alias, const char *accessor)
+int ckmc_deny_access_by_adm(uid_t user, const char *owner, const char *alias,
+                            const char *accessor)
 {
     if (!owner || !alias)
         return CKMC_ERROR_INVALID_PARAMETER;
@@ -110,8 +119,8 @@ int ckmc_deny_access_by_adm(uid_t user, const char* owner, const char *alias, co
     // if label given twice, service will return an error
     auto control = CKM::Control::create();
     return to_ckmc_error(control->setPermission(
-                                user,
-                                CKM::AliasSupport::merge(CKM::Label(owner), CKM::Name(alias)).c_str(),
-                                accessor,
-                                CKM::Permission::NONE));
+                             user,
+                             CKM::AliasSupport::merge(CKM::Label(owner), CKM::Name(alias)).c_str(),
+                             accessor,
+                             CKM::Permission::NONE));
 }

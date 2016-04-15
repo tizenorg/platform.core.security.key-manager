@@ -34,18 +34,18 @@ namespace CKM {
 class COMMON_API CertificateImpl : public Certificate {
 public:
     CertificateImpl() : m_x509(nullptr) {}
-    explicit CertificateImpl(X509* x509, bool duplicate = true);
+    explicit CertificateImpl(X509 *x509, bool duplicate = true);
     CertificateImpl(const RawBuffer &data, DataFormat format);
 
     CertificateImpl(const CertificateImpl &) = delete;
     CertificateImpl &operator=(const CertificateImpl &) = delete;
 
     CertificateImpl(CertificateImpl &&);
-    CertificateImpl& operator=(CertificateImpl &&);
+    CertificateImpl &operator=(CertificateImpl &&);
 
     virtual RawBuffer getDER() const;
     virtual bool empty() const;
-    virtual X509* getX509() const;
+    virtual X509 *getX509() const;
 
     KeyImpl::EvpShPtr getEvpShPtr() const;
     std::string getOCSPURL() const;
@@ -53,7 +53,7 @@ public:
     virtual ~CertificateImpl();
 
 protected:
-    X509* m_x509;
+    X509 *m_x509;
 };
 
 typedef std::vector<CertificateImpl> CertificateImplVector;

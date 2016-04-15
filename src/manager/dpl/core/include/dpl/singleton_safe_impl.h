@@ -30,14 +30,14 @@
         static Singleton<Class> instance;                                          \
         return instance;                                                           \
     }                                                                              \
-                                                                               \
+    \
     template<>                                                                     \
     Class & Singleton<Class>::Instance()                                            \
     {                                                                              \
         Singleton<Class>& instance = Singleton<Class>::InternalInstance();         \
         return instance;                                                           \
     }                                                                              \
-                                                                               \
+    \
     template Singleton<Class>&Singleton<Class>::InternalInstance();               \
     template Class & Singleton<Class>::Instance();                                  \
     } // namespace CKM

@@ -37,11 +37,14 @@ public:
     int getKey(const Alias &alias, const Password &password, KeyShPtr &key);
     int getKeyAliasVector(AliasVector &aliasVector);
 
-    int saveCertificate(const Alias &alias, const CertificateShPtr &cert, const Policy &policy);
-    int getCertificate(const Alias &alias, const Password &password, CertificateShPtr &cert);
+    int saveCertificate(const Alias &alias, const CertificateShPtr &cert,
+                        const Policy &policy);
+    int getCertificate(const Alias &alias, const Password &password,
+                       CertificateShPtr &cert);
     int getCertificateAliasVector(AliasVector &aliasVector);
 
-    int saveData(const Alias &alias, const RawBuffer &rawData, const Policy &policy);
+    int saveData(const Alias &alias, const RawBuffer &rawData,
+                 const Policy &policy);
     int getData(const Alias &alias, const Password &password, RawBuffer &cert);
     int getDataAliasVector(AliasVector &aliasVector);
 
@@ -51,7 +54,8 @@ public:
         const Policy &keyPolicy,
         const Policy &certPolicy);
     int getPKCS12(const Alias &alias, PKCS12ShPtr &pkcs);
-    int getPKCS12(const Alias &alias, const Password &keyPass, const Password &certPass, PKCS12ShPtr &pkcs);
+    int getPKCS12(const Alias &alias, const Password &keyPass,
+                  const Password &certPass, PKCS12ShPtr &pkcs);
 
     int removeAlias(const Alias &alias);
 
@@ -111,19 +115,20 @@ public:
 
     int ocspCheck(const CertificateShPtrVector &certificateChain, int &ocspCheck);
 
-    int setPermission(const Alias &alias, const Label &accessor, PermissionMask permissionMask);
+    int setPermission(const Alias &alias, const Label &accessor,
+                      PermissionMask permissionMask);
 
     int encrypt(const CryptoAlgorithm &algo,
                 const Alias &keyAlias,
                 const Password &password,
-                const RawBuffer& plain,
-                RawBuffer& encrypted);
+                const RawBuffer &plain,
+                RawBuffer &encrypted);
 
     int decrypt(const CryptoAlgorithm &algo,
                 const Alias &keyAlias,
                 const Password &password,
-                const RawBuffer& encrypted,
-                RawBuffer& decrypted);
+                const RawBuffer &encrypted,
+                RawBuffer &decrypted);
 
 protected:
     int saveBinaryData(
@@ -145,7 +150,8 @@ protected:
 
     int createKeyPair(
         const KeyType key_type,
-        const int     additional_param, // key size for [RSA|DSA], elliptic curve type for ECDSA
+        const int
+        additional_param, // key size for [RSA|DSA], elliptic curve type for ECDSA
         const Alias  &privateKeyAlias,
         const Alias  &publicKeyAlias,
         const Policy &policyPrivateKey,
@@ -155,8 +161,8 @@ protected:
               const CryptoAlgorithm &algo,
               const Alias &keyAlias,
               const Password &password,
-              const RawBuffer& input,
-              RawBuffer& output);
+              const RawBuffer &input,
+              RawBuffer &output);
 
     int m_counter;
     CKM::ServiceConnection m_storageConnection;

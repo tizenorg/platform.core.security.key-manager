@@ -42,27 +42,30 @@ EncryptionService::~EncryptionService()
 {
 }
 
-void EncryptionService::RespondToClient(const CryptoRequest& request,
+void EncryptionService::RespondToClient(const CryptoRequest &request,
                                         int retCode,
-                                        const RawBuffer& data)
+                                        const RawBuffer &data)
 {
     try {
         RawBuffer response = MessageBuffer::Serialize(
-                static_cast<int>(request.command), request.msgId, retCode, data).Pop();
+                                 static_cast<int>(request.command), request.msgId, retCode, data).Pop();
         m_serviceManager->Write(request.conn, response);
     } catch (...) {
         LogError("Failed to send response to the client");
     }
 }
 
-void EncryptionService::RequestKey(const CryptoRequest& request)
+void EncryptionService::RequestKey(const CryptoRequest &request)
 {
-    MsgKeyRequest kReq(request.msgId, request.cred, request.name, request.label, request.password);
+    MsgKeyRequest kReq(request.msgId, request.cred, request.name, request.label,
+                       request.password);
+
     if (!m_commMgr->SendMessage(kReq))
         throw std::runtime_error("No listener found");// TODO
 }
 
-GenericSocketService::ServiceDescriptionVector EncryptionService::GetServiceDescription()
+GenericSocketService::ServiceDescriptionVector
+EncryptionService::GetServiceDescription()
 {
     return ServiceDescriptionVector {
         {SERVICE_SOCKET_ENCRYPTION, "http://tizen.org/privilege/keymanager", SOCKET_ID_ENCRYPTION}
@@ -93,6 +96,7 @@ bool EncryptionService::ProcessOne(
     bool /*allowed*/)
 {
     LogDebug("process One");
+
     try {
         if (!info.buffer.Ready())
             return false;
@@ -117,15 +121,18 @@ void EncryptionService::ProcessMessage(MsgKeyResponse msg)
 }
 
 void EncryptionService::ProcessEncryption(const ConnectionID &conn,
-                                          const Credentials &cred,
-                                          MessageBuffer &buffer)
+        const Credentials &cred,
+        MessageBuffer &buffer)
 {
     int tmpCmd = 0;
     CryptoRequest req;
 
-    buffer.Deserialize(tmpCmd, req.msgId, req.cas, req.name, req.label, req.password, req.input);
+    buffer.Deserialize(tmpCmd, req.msgId, req.cas, req.name, req.label,
+                       req.password, req.input);
     req.command = static_cast<EncryptionCommand>(tmpCmd);
-    if (req.command != EncryptionCommand::ENCRYPT && req.command != EncryptionCommand::DECRYPT)
+
+    if (req.command != EncryptionCommand::ENCRYPT &&
+            req.command != EncryptionCommand::DECRYPT)
         throw std::runtime_error("Unsupported command: " + tmpCmd);
 
     req.conn = conn;
@@ -138,6 +145,7 @@ void EncryptionService::CustomHandle(const ReadEvent &event)
     LogDebug("Read event");
     auto &info = m_connectionInfoMap[event.connectionID.counter];
     info.buffer.Push(event.rawBuffer);
+
     while (ProcessOne(event.connectionID, info, true));
 }
 

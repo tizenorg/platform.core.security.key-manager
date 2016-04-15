@@ -21,8 +21,8 @@
 #include <certificate-impl.h>
 
 extern "C" {
-struct x509_store_st;
-typedef struct x509_store_st X509_STORE;
+    struct x509_store_st;
+    typedef struct x509_store_st X509_STORE;
 }
 
 namespace CKM {
@@ -32,8 +32,8 @@ public:
     CertificateStore();
     CertificateStore(const CertificateStore &) = delete;
     CertificateStore(CertificateStore &&) = delete;
-    CertificateStore& operator=(CertificateStore &&) = delete;
-    CertificateStore& operator=(const CertificateStore &) = delete;
+    CertificateStore &operator=(CertificateStore &&) = delete;
+    CertificateStore &operator=(const CertificateStore &) = delete;
     virtual ~CertificateStore();
 
     int verifyCertificate(
@@ -49,7 +49,7 @@ private:
     int addSystemCertificateFiles();
     int addCustomTrustedCertificates(const CertificateImplVector &trustedVector);
 
-    X509_STORE* m_store;
+    X509_STORE *m_store;
 };
 
 } // namespace CKM

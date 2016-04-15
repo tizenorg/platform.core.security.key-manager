@@ -46,7 +46,8 @@ public:
     virtual int removeUserData(uid_t user) = 0;
 
     // change password for user
-    virtual int changeUserPassword(uid_t user, const Password &oldPassword, const Password &newPassword) = 0;
+    virtual int changeUserPassword(uid_t user, const Password &oldPassword,
+                                   const Password &newPassword) = 0;
 
     // This is work around for security-server api - resetPassword that may be called without passing oldPassword.
     // This api should not be supported on tizen 3.0

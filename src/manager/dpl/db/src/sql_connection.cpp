@@ -38,7 +38,10 @@ namespace {
 const int MAX_RETRY = 10;
 
 struct ScopedVaList {
-    ~ScopedVaList() { va_end(args); }
+    ~ScopedVaList()
+    {
+        va_end(args);
+    }
     va_list args;
 };
 
@@ -48,12 +51,11 @@ struct ScopedVaList {
 namespace CKM {
 namespace DB {
 namespace { // anonymous
-class ScopedNotifyAll
-{
-  private:
+class ScopedNotifyAll {
+private:
     SqlConnection::SynchronizationObject *m_synchronizationObject;
 
-  public:
+public:
     NONCOPYABLE(ScopedNotifyAll)
 
     explicit ScopedNotifyAll(
@@ -85,8 +87,8 @@ SqlConnection::DataCommand::DataCommand(SqlConnection *connection,
 
     for (int i = 0; i < MAX_RETRY; i++) {
         int ret = sqlcipher3_prepare_v2(connection->m_connection,
-                                     buffer, strlen(buffer),
-                                     &m_stmt, NULL);
+                                        buffer, strlen(buffer),
+                                        &m_stmt, NULL);
 
         if (ret == SQLCIPHER_OK) {
             LogPedantic("Prepared data command: " << buffer);
@@ -136,7 +138,7 @@ void SqlConnection::DataCommand::CheckBindResult(int result)
 {
     if (result != SQLCIPHER_OK) {
         const char *error = sqlcipher3_errmsg(
-                m_masterConnection->m_connection);
+                                m_masterConnection->m_connection);
 
         LogError("Failed to bind SQL statement parameter");
         LogError("    Error: " << error);
@@ -167,7 +169,7 @@ void SqlConnection::DataCommand::BindInt8(
     int8_t value)
 {
     CheckBindResult(sqlcipher3_bind_int(m_stmt, position,
-                                     static_cast<int>(value)));
+                                        static_cast<int>(value)));
     LogPedantic("SQL data command bind int8: ["
                 << position << "] -> " << value);
 }
@@ -177,7 +179,7 @@ void SqlConnection::DataCommand::BindInt16(
     int16_t value)
 {
     CheckBindResult(sqlcipher3_bind_int(m_stmt, position,
-                                     static_cast<int>(value)));
+                                        static_cast<int>(value)));
     LogPedantic("SQL data command bind int16: ["
                 << position << "] -> " << value);
 }
@@ -187,7 +189,7 @@ void SqlConnection::DataCommand::BindInt32(
     int32_t value)
 {
     CheckBindResult(sqlcipher3_bind_int(m_stmt, position,
-                                     static_cast<int>(value)));
+                                        static_cast<int>(value)));
     LogPedantic("SQL data command bind int32: ["
                 << position << "] -> " << value);
 }
@@ -197,7 +199,7 @@ void SqlConnection::DataCommand::BindInt64(
     int64_t value)
 {
     CheckBindResult(sqlcipher3_bind_int64(m_stmt, position,
-                                       static_cast<sqlcipher3_int64>(value)));
+                                          static_cast<sqlcipher3_int64>(value)));
     LogPedantic("SQL data command bind int64: ["
                 << position << "] -> " << value);
 }
@@ -207,7 +209,7 @@ void SqlConnection::DataCommand::BindFloat(
     float value)
 {
     CheckBindResult(sqlcipher3_bind_double(m_stmt, position,
-                                        static_cast<double>(value)));
+                                           static_cast<double>(value)));
     LogPedantic("SQL data command bind float: ["
                 << position << "] -> " << value);
 }
@@ -232,8 +234,8 @@ void SqlConnection::DataCommand::BindString(
 
     // Assume that text may disappear
     CheckBindResult(sqlcipher3_bind_text(m_stmt, position,
-                                      value, strlen(value),
-                                      SQLCIPHER_TRANSIENT));
+                                         value, strlen(value),
+                                         SQLCIPHER_TRANSIENT));
 
     LogPedantic("SQL data command bind string: ["
                 << position << "] -> " << value);
@@ -250,8 +252,8 @@ void SqlConnection::DataCommand::BindBlob(
 
     // Assume that blob may dissappear
     CheckBindResult(sqlcipher3_bind_blob(m_stmt, position,
-                                      raw.data(), raw.size(),
-                                      SQLCIPHER_TRANSIENT));
+                                         raw.data(), raw.size(),
+                                         SQLCIPHER_TRANSIENT));
     LogPedantic("SQL data command bind blob of size: ["
                 << position << "] -> " << raw.size());
 }
@@ -359,10 +361,11 @@ bool SqlConnection::DataCommand::Step()
                 LogPedantic("Performing synchronization");
 
                 m_masterConnection->
-                    m_synchronizationObject->Synchronize();
+                m_synchronizationObject->Synchronize();
 
                 continue;
             }
+
             // No synchronization object defined. Fail.
         }
 
@@ -486,7 +489,7 @@ std::string SqlConnection::DataCommand::GetColumnString(
     CheckColumnIndex(column);
 
     const char *value = reinterpret_cast<const char *>(
-            sqlcipher3_column_text(m_stmt, column));
+                            sqlcipher3_column_text(m_stmt, column));
 
     LogPedantic("Value: " << (value ? value : "NULL"));
 
@@ -502,8 +505,8 @@ RawBuffer SqlConnection::DataCommand::GetColumnBlob(
     LogPedantic("SQL data command get column blog: [" << column << "]");
     CheckColumnIndex(column);
 
-    const unsigned char *value = reinterpret_cast<const unsigned char*>(
-            sqlcipher3_column_blob(m_stmt, column));
+    const unsigned char *value = reinterpret_cast<const unsigned char *>(
+                                     sqlcipher3_column_blob(m_stmt, column));
 
     if (value == NULL)
         return RawBuffer();
@@ -520,6 +523,7 @@ boost::optional<int> SqlConnection::DataCommand::GetColumnOptionalInteger(
     LogPedantic("SQL data command get column optional integer: ["
                 << column << "]");
     CheckColumnIndex(column);
+
     if (sqlcipher3_column_type(m_stmt, column) == SQLCIPHER_NULL)
         return boost::optional<int>();
 
@@ -534,6 +538,7 @@ boost::optional<int8_t> SqlConnection::DataCommand::GetColumnOptionalInt8(
     LogPedantic("SQL data command get column optional int8: ["
                 << column << "]");
     CheckColumnIndex(column);
+
     if (sqlcipher3_column_type(m_stmt, column) == SQLCIPHER_NULL)
         return boost::optional<int8_t>();
 
@@ -548,6 +553,7 @@ boost::optional<int16_t> SqlConnection::DataCommand::GetColumnOptionalInt16(
     LogPedantic("SQL data command get column optional int16: ["
                 << column << "]");
     CheckColumnIndex(column);
+
     if (sqlcipher3_column_type(m_stmt, column) == SQLCIPHER_NULL)
         return boost::optional<int16_t>();
 
@@ -562,6 +568,7 @@ boost::optional<int32_t> SqlConnection::DataCommand::GetColumnOptionalInt32(
     LogPedantic("SQL data command get column optional int32: ["
                 << column << "]");
     CheckColumnIndex(column);
+
     if (sqlcipher3_column_type(m_stmt, column) == SQLCIPHER_NULL)
         return boost::optional<int32_t>();
 
@@ -576,6 +583,7 @@ boost::optional<int64_t> SqlConnection::DataCommand::GetColumnOptionalInt64(
     LogPedantic("SQL data command get column optional int64: ["
                 << column << "]");
     CheckColumnIndex(column);
+
     if (sqlcipher3_column_type(m_stmt, column) == SQLCIPHER_NULL)
         return boost::optional<int64_t>();
 
@@ -590,6 +598,7 @@ boost::optional<float> SqlConnection::DataCommand::GetColumnOptionalFloat(
     LogPedantic("SQL data command get column optional float: ["
                 << column << "]");
     CheckColumnIndex(column);
+
     if (sqlcipher3_column_type(m_stmt, column) == SQLCIPHER_NULL)
         return boost::optional<float>();
 
@@ -604,6 +613,7 @@ boost::optional<double> SqlConnection::DataCommand::GetColumnOptionalDouble(
     LogPedantic("SQL data command get column optional double: ["
                 << column << "]");
     CheckColumnIndex(column);
+
     if (sqlcipher3_column_type(m_stmt, column) == SQLCIPHER_NULL)
         return boost::optional<double>();
 
@@ -621,8 +631,8 @@ boost::optional<RawBuffer> SqlConnection::DataCommand::GetColumnOptionalBlob(
     if (sqlcipher3_column_type(m_stmt, column) == SQLCIPHER_NULL)
         return boost::optional<RawBuffer>();
 
-    const unsigned char *value = reinterpret_cast<const unsigned char*>(
-            sqlcipher3_column_blob(m_stmt, column));
+    const unsigned char *value = reinterpret_cast<const unsigned char *>(
+                                     sqlcipher3_column_blob(m_stmt, column));
 
     int length = sqlcipher3_column_bytes(m_stmt, column);
     LogPedantic("Got blob of length: " << length);
@@ -638,15 +648,16 @@ void SqlConnection::Connect(const std::string &address,
         LogPedantic("Already connected.");
         return;
     }
+
     LogPedantic("Connecting to DB: " << address << "...");
 
     // Connect to database
     int result;
     result = sqlcipher3_open_v2(
-            address.c_str(),
-            &m_connection,
-            flag,
-            NULL);
+                 address.c_str(),
+                 &m_connection,
+                 flag,
+                 NULL);
 
     if (result == SQLCIPHER_OK) {
         LogPedantic("Connected to DB");
@@ -666,12 +677,14 @@ const std::size_t SQLCIPHER_RAW_DATA_SIZE = 32;
 RawBuffer rawToHexString(const RawBuffer &raw)
 {
     RawBuffer output;
-    for (auto &e: raw) {
+
+    for (auto &e : raw) {
         char result[3];
         snprintf(result, sizeof(result), "%02X", (e & 0xff));
         output.push_back(static_cast<unsigned char>(result[0]));
         output.push_back(static_cast<unsigned char>(result[1]));
     }
+
     return output;
 }
 
@@ -681,29 +694,33 @@ RawBuffer createHexPass(const RawBuffer &rawPass)
     // binary data
     RawBuffer output;
     std::copy(SQLCIPHER_RAW_PREFIX.begin(), SQLCIPHER_RAW_PREFIX.end(),
-        std::back_inserter(output));
+              std::back_inserter(output));
 
     RawBuffer password = rawToHexString(rawPass);
 
     std::copy(password.begin(), password.end(),
-        std::back_inserter(output));
+              std::back_inserter(output));
 
     std::copy(SQLCIPHER_RAW_SUFIX.begin(), SQLCIPHER_RAW_SUFIX.end(),
-        std::back_inserter(output));
+              std::back_inserter(output));
 
     return output;
 }
 
-void SqlConnection::SetKey(const RawBuffer &rawPass){
+void SqlConnection::SetKey(const RawBuffer &rawPass)
+{
     if (m_connection == NULL) {
         LogPedantic("Cannot set key. No connection to DB!");
         return;
     }
+
     if (rawPass.size() != SQLCIPHER_RAW_DATA_SIZE)
-            ThrowMsg(Exception::InvalidArguments,
-                    "Binary data for raw password should be 32 bytes long.");
+        ThrowMsg(Exception::InvalidArguments,
+                 "Binary data for raw password should be 32 bytes long.");
+
     RawBuffer pass = createHexPass(rawPass);
     int result = sqlcipher3_key(m_connection, pass.data(), pass.size());
+
     if (result == SQLCIPHER_OK) {
         LogPedantic("Set key on DB");
     } else {
@@ -717,20 +734,24 @@ void SqlConnection::SetKey(const RawBuffer &rawPass){
 };
 
 void SqlConnection::ResetKey(const RawBuffer &rawPassOld,
-                             const RawBuffer &rawPassNew) {
+                             const RawBuffer &rawPassNew)
+{
     if (m_connection == NULL) {
         LogPedantic("Cannot reset key. No connection to DB!");
         return;
     }
+
     AssertMsg(rawPassOld.size() == SQLCIPHER_RAW_DATA_SIZE &&
               rawPassNew.size() == SQLCIPHER_RAW_DATA_SIZE,
-            "Binary data for raw password should be 32 bytes long.");
+              "Binary data for raw password should be 32 bytes long.");
+
     // sqlcipher3_rekey requires for key to be already set
     if (!m_isKeySet)
         SetKey(rawPassOld);
 
     RawBuffer pass = createHexPass(rawPassNew);
     int result = sqlcipher3_rekey(m_connection, pass.data(), pass.size());
+
     if (result == SQLCIPHER_OK) {
         LogPedantic("Reset key on DB");
     } else {
@@ -752,8 +773,8 @@ void SqlConnection::Disconnect()
 
     // All stored data commands must be deleted before disconnect
     AssertMsg(m_dataCommandsCount == 0,
-           "All stored procedures must be deleted"
-           " before disconnecting SqlConnection");
+              "All stored procedures must be deleted"
+              " before disconnecting SqlConnection");
 
     int result;
 
@@ -813,36 +834,40 @@ SqlConnection::~SqlConnection()
     LogPedantic("Closing database connection");
 
     // Disconnect from DB
-    Try
-    {
+    Try {
         SqlConnection::Disconnect();
     }
-    Catch(Exception::Base)
-    {
+    Catch(Exception::Base) {
         LogError("Failed to disconnect from database");
     }
 }
 
-int SqlConnection::Output::Callback(void* param, int columns, char** values, char** names)
+int SqlConnection::Output::Callback(void *param, int columns, char **values,
+                                    char **names)
 {
     if (param)
-        static_cast<Output*>(param)->SetResults(columns, values, names);
+        static_cast<Output *>(param)->SetResults(columns, values, names);
+
     return 0;
 }
 
-void SqlConnection::Output::SetResults(int columns, char** values, char** names)
+void SqlConnection::Output::SetResults(int columns, char **values, char **names)
 {
     if (m_names.empty()) {
-        for (int i=0; i < columns; i++)
+        for (int i = 0; i < columns; i++)
             m_names.push_back(names[i] ? names[i] : "NULL");
     }
+
     Row row;
-    for (int i=0; i < columns; i++)
+
+    for (int i = 0; i < columns; i++)
         row.push_back(values[i] ? values[i] : "NULL");
+
     m_values.push_back(std::move(row));
 }
 
-void SqlConnection::ExecCommandHelper(Output* out, const char* format, va_list args)
+void SqlConnection::ExecCommandHelper(Output *out, const char *format,
+                                      va_list args)
 {
     if (m_connection == NULL) {
         LogError("Cannot execute command. Not connected to DB!");
@@ -909,7 +934,7 @@ void SqlConnection::ExecCommandHelper(Output* out, const char* format, va_list a
     ThrowMsg(Exception::InternalError, "sqlite permanently busy");
 }
 
-void SqlConnection::ExecCommand(Output* out, const char *format, ...)
+void SqlConnection::ExecCommand(Output *out, const char *format, ...)
 {
     scoped_va_start(svl, format);
 

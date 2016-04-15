@@ -40,17 +40,18 @@ namespace {
 
 // TODO replace it with custom exception when they are implemented
 template <typename... Args>
-std::runtime_error io_exception(const Args&... args)
+std::runtime_error io_exception(const Args &... args)
 {
     return std::runtime_error(Stringify::Merge(args...));
 };
 
 } // namespace anonymous
 
-FileLock::FileLock(const char* const file)
+FileLock::FileLock(const char *const file)
 {
     // Open lock file
     m_lockFd = TEMP_FAILURE_RETRY(creat(file, 0644));
+
     if (m_lockFd == -1)
         throw io_exception("Cannot open lock file. Errno: ", GetErrnoString());
 
@@ -64,10 +65,12 @@ FileLock::FileLock(const char* const file)
     std::string pid = std::to_string(getpid());
 
     ssize_t written = TEMP_FAILURE_RETRY(write(m_lockFd, pid.c_str(), pid.size()));
+
     if (-1 == written || static_cast<ssize_t>(pid.size()) > written)
         throw io_exception("Can't write file lock. Errno: ", GetErrnoString());
 
     int ret = fsync(m_lockFd);
+
     if (-1 == ret)
         throw io_exception("Fsync failed. Errno: ", GetErrnoString());
 }

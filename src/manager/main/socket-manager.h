@@ -81,14 +81,38 @@ protected:
     void CloseSocket(int sock);
 
     struct SocketDescription {
-        bool isOpen() { return m_flags & OPEN; }
-        bool isListen() { return m_flags & LISTEN; }
-        bool isCynara() { return m_flags & CYNARA; }
-        bool isTimeout() { return m_flags & TIMEOUT; }
-        void setOpen(bool isSet) { isSet ? m_flags |= OPEN : m_flags &= ~OPEN; }
-        void setListen(bool isSet) { isSet ? m_flags |= LISTEN : m_flags &= ~LISTEN; }
-        void setCynara(bool isSet) { isSet ? m_flags |= CYNARA : m_flags &= ~CYNARA; }
-        void setTimeout(bool isSet) { isSet ? m_flags |= TIMEOUT : m_flags &= ~TIMEOUT; }
+        bool isOpen()
+        {
+            return m_flags & OPEN;
+        }
+        bool isListen()
+        {
+            return m_flags & LISTEN;
+        }
+        bool isCynara()
+        {
+            return m_flags & CYNARA;
+        }
+        bool isTimeout()
+        {
+            return m_flags & TIMEOUT;
+        }
+        void setOpen(bool isSet)
+        {
+            isSet ? m_flags |= OPEN : m_flags &= ~OPEN;
+        }
+        void setListen(bool isSet)
+        {
+            isSet ? m_flags |= LISTEN : m_flags &= ~LISTEN;
+        }
+        void setCynara(bool isSet)
+        {
+            isSet ? m_flags |= CYNARA : m_flags &= ~CYNARA;
+        }
+        void setTimeout(bool isSet)
+        {
+            isSet ? m_flags |= TIMEOUT : m_flags &= ~TIMEOUT;
+        }
 
         InterfaceID interfaceID;
         GenericSocketService *service;
@@ -100,11 +124,11 @@ protected:
         std::string cynaraClient;
 
         SocketDescription()
-          : interfaceID(-1)
-          , service(nullptr)
-          , timeout(::time(nullptr))
-          , counter(0)
-          , m_flags(0)
+            : interfaceID(-1)
+            , service(nullptr)
+            , timeout(::time(nullptr))
+            , counter(0)
+            , m_flags(0)
         {
         }
 
@@ -116,7 +140,7 @@ protected:
         int m_flags;
     };
 
-    SocketDescription& CreateDefaultReadSocketDescription(int sock, bool timeout);
+    SocketDescription &CreateDefaultReadSocketDescription(int sock, bool timeout);
 
     typedef std::vector<SocketDescription> SocketDescriptionVector;
 
@@ -125,7 +149,9 @@ protected:
     template <typename E>
     void AddEvent(E event)
     {
-        CreateEvent([this, event]() {this->Handle(event);});
+        CreateEvent([this, event]() {
+            this->Handle(event);
+        });
     }
     void CreateEvent(EventFunction fun);
 
@@ -163,7 +189,7 @@ protected:
     std::priority_queue<Timeout> m_timeoutQueue;
     CommMgr m_commMgr;
     std::unique_ptr<Cynara> m_cynara;
-    std::vector<GenericSocketService*> m_serviceVector;
+    std::vector<GenericSocketService *> m_serviceVector;
 };
 
 } // namespace CKM

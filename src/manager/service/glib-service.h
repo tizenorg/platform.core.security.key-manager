@@ -54,6 +54,7 @@ public:
 
     virtual ServiceDescriptionVector GetServiceDescription();
     virtual void SetCommManager(CommMgr *manager);
+
 protected:
     static void ThreadLoopStatic(GLIBService *ptr);
     void ThreadLoop();

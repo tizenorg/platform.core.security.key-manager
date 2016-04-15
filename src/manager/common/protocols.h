@@ -35,11 +35,11 @@
 
 namespace CKM {
 
-COMMON_API extern char const * const SERVICE_SOCKET_ECHO;
-COMMON_API extern char const * const SERVICE_SOCKET_CKM_CONTROL;
-COMMON_API extern char const * const SERVICE_SOCKET_CKM_STORAGE;
-COMMON_API extern char const * const SERVICE_SOCKET_OCSP;
-COMMON_API extern char const * const SERVICE_SOCKET_ENCRYPTION;
+COMMON_API extern char const *const SERVICE_SOCKET_ECHO;
+COMMON_API extern char const *const SERVICE_SOCKET_CKM_CONTROL;
+COMMON_API extern char const *const SERVICE_SOCKET_CKM_STORAGE;
+COMMON_API extern char const *const SERVICE_SOCKET_OCSP;
+COMMON_API extern char const *const SERVICE_SOCKET_ENCRYPTION;
 
 enum class ControlCommand : int {
     UNLOCK_USER_KEY,
@@ -74,11 +74,11 @@ enum class EncryptionCommand : int {
 };
 
 // (client side) Alias = (service side) Label::Name
-COMMON_API extern char const * const LABEL_NAME_SEPARATOR;
-COMMON_API extern char const * const OWNER_ID_SYSTEM;
+COMMON_API extern char const *const LABEL_NAME_SEPARATOR;
+COMMON_API extern char const *const OWNER_ID_SYSTEM;
 
 typedef std::string Name;
-typedef std::vector<std::pair<Label, Name> > LabelNameVector;
+typedef std::vector<std::pair<Label, Name>> LabelNameVector;
 
 class IStream;
 
@@ -113,12 +113,13 @@ struct COMMON_API PKCS12Serializable : public PKCS12Impl, ISerializable {
     explicit PKCS12Serializable(const PKCS12 &);
     explicit PKCS12Serializable(IStream &);
     PKCS12Serializable(KeyShPtr &&privKey,
-            CertificateShPtr &&cert,
-            CertificateShPtrVector &&chainCerts);
+                       CertificateShPtr &&cert,
+                       CertificateShPtrVector &&chainCerts);
     void Serialize(IStream &) const;
 };
 
-struct COMMON_API CryptoAlgorithmSerializable : public CryptoAlgorithm, ISerializable {
+struct COMMON_API CryptoAlgorithmSerializable : public CryptoAlgorithm,
+    ISerializable {
     DECLARE_EXCEPTION_TYPE(Exception, Base);
     DECLARE_EXCEPTION_TYPE(Exception, UnsupportedParam);
 

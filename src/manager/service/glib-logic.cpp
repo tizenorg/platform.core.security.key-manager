@@ -73,25 +73,28 @@ std::set<PkgmgrEvent> pkgmgrEventSet;
 namespace CKM {
 
 GLIBLogic::GLIBLogic()
-  : m_commMgr(nullptr)
-  , m_reqid(0)
+    : m_commMgr(nullptr)
+    , m_reqid(0)
 {
     LogDebug("Allocation g_main_loop");
     m_gMainLoop = g_main_loop_new(nullptr, FALSE);
 }
 
-void GLIBLogic::LoopStart() {
+void GLIBLogic::LoopStart()
+{
     LogDebug("Register uninstalledApp event callback start");
 
     std::unique_ptr<pkgmgr_client, int(*)(pkgmgr_client *)>
-        client(pkgmgr_client_new(PC_LISTENING), pkgmgr_client_free);
+    client(pkgmgr_client_new(PC_LISTENING), pkgmgr_client_free);
 
     if (!client) {
         LogError("Error in pkgmgr_client_new");
         return;
     }
 
-    m_reqid = pkgmgr_client_listen_status(client.get(), packageEventCallbackStatic, this);
+    m_reqid = pkgmgr_client_listen_status(client.get(), packageEventCallbackStatic,
+                                          this);
+
     if (m_reqid < 0) {
         LogError("Error in pkgmgr_client_listen_status. reqid(errcode): " << m_reqid);
         return;
@@ -102,59 +105,62 @@ void GLIBLogic::LoopStart() {
     LogDebug("...g_main_loop ended");
 }
 
-void GLIBLogic::LoopStop() {
+void GLIBLogic::LoopStop()
+{
     LogDebug("Closing g_main_loop");
     g_main_loop_quit(m_gMainLoop);
 }
 
-GLIBLogic::~GLIBLogic() {
+GLIBLogic::~GLIBLogic()
+{
     LogDebug("Destroying g_main_loop");
     g_main_loop_unref(m_gMainLoop);
 }
 
-void GLIBLogic::SetCommManager(CommMgr *manager) {
+void GLIBLogic::SetCommManager(CommMgr *manager)
+{
     m_commMgr = manager;
 }
 
 int GLIBLogic::packageEventCallbackStatic(
-        uid_t uid,
-        int reqid,
-        const char *pkgtype,
-        const char *pkgid,
-        const char *key,
-        const char *val,
-        const void *pmsg,
-        void *data)
+    uid_t uid,
+    int reqid,
+    const char *pkgtype,
+    const char *pkgid,
+    const char *key,
+    const char *val,
+    const void *pmsg,
+    void *data)
 {
     LogDebug("Some event was caught");
 
     if (!data)
         return -1;
     else
-        return static_cast<GLIBLogic*>(data)->packageEventCallback(
-            uid,
-            reqid,
-            pkgtype,
-            pkgid,
-            key,
-            val,
-            pmsg,
-            data);
+        return static_cast<GLIBLogic *>(data)->packageEventCallback(
+                   uid,
+                   reqid,
+                   pkgtype,
+                   pkgid,
+                   key,
+                   val,
+                   pmsg,
+                   data);
 }
 
 int GLIBLogic::packageEventCallback(
-        uid_t uid,
-        int reqid,
-        const char */*pkgtype*/,
-        const char *pkgid,
-        const char *key,
-        const char *val,
-        const void */*pmsg*/,
-        void */*data*/)
+    uid_t uid,
+    int reqid,
+    const char */*pkgtype*/,
+    const char *pkgid,
+    const char *key,
+    const char *val,
+    const void */*pmsg*/,
+    void */*data*/)
 {
     if (reqid != m_reqid) {
         LogError("pkgmgr event reqid[" << reqid
-            << "] isn't same with mine[" << m_reqid << "]");
+                 << "] isn't same with mine[" << m_reqid << "]");
         return -1;
     } else if (pkgid == nullptr || key == nullptr || val == nullptr) {
         LogError("Invalid parameter.");
@@ -164,6 +170,7 @@ int GLIBLogic::packageEventCallback(
     PkgmgrEvent event(uid, pkgid);
     std::string keystr(key);
     std::string valstr(val);
+
     if (keystr.compare("start") == 0 && valstr.compare("uninstall") == 0) {
         pkgmgrEventSet.insert(event);
     } else if (keystr.compare("end") == 0 && valstr.compare("ok") == 0) {

@@ -26,7 +26,7 @@
 #include <memory>
 
 namespace CKM {
-struct free_deleter{
+struct free_deleter {
     void operator()(char *p)
     {
         free(p);

@@ -18,7 +18,7 @@
 /**
  * @ingroup CAPI_SECURITY_FRAMEWORK
  * @defgroup CAPI_KEY_MANAGER_MODULE Key Manager
- * @brief    The key manager provides a secure repository protected by Tizen platform for keys, certificates, and sensitive data of users and/or their APPs. 
+ * @brief    The key manager provides a secure repository protected by Tizen platform for keys, certificates, and sensitive data of users and/or their APPs.
  *           Additionally, the key manager provides secure cryptographic operations for non-exportable keys without revealing key values to clients.
  *
  * @section CAPI_KEY_MANAGER_MODULE_OVERVIEW Overview

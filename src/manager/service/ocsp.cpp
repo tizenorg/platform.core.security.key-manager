@@ -39,18 +39,20 @@
 namespace CKM {
 
 namespace {
-typedef std::unique_ptr<BIO, std::function<void(BIO*)>> BioUniquePtr;
+typedef std::unique_ptr<BIO, std::function<void(BIO *)>> BioUniquePtr;
 
-void BIO_write_and_free(BIO* bio)
+void BIO_write_and_free(BIO *bio)
 {
     if (!bio)
         return;
 
     std::vector<char> message(1024);
     int size = BIO_read(bio, message.data(), message.size());
+
     if (size > 0) {
         message.resize(size);
-        LogError("OCSP error description:" << std::string(message.begin(), message.end()));
+        LogError("OCSP error description:" << std::string(message.begin(),
+                 message.end()));
     }
 
     BIO_free_all(bio);
@@ -70,33 +72,38 @@ OCSPModule::~OCSPModule()
 
 int OCSPModule::verify(const CertificateImplVector &certificateChain)
 {
-    bool unsupported = false; // ocsp is unsupported in certificate in chain (except root CA)
+    bool unsupported =
+        false; // ocsp is unsupported in certificate in chain (except root CA)
 
     // create trusted store
     X509_STACK_PTR trustedCerts = create_x509_stack();
 
     // skip first 2 certificates
-    for (auto it = certificateChain.cbegin() + 2; it < certificateChain.cend(); it++) {
+    for (auto it = certificateChain.cbegin() + 2; it < certificateChain.cend();
+            it++) {
         if (it->empty()) {
             LogError("Error. Broken certificate chain.");
             return CKM_API_OCSP_STATUS_INTERNAL_ERROR;
         }
+
         sk_X509_push(trustedCerts.get(), it->getX509());
     }
 
-    for (int i = 0; i < static_cast<int>(certificateChain.size()) - 1; i++) {// except root certificate
-        if (certificateChain[i].empty() || certificateChain[i+1].empty()) {
+    for (int i = 0; i < static_cast<int>(certificateChain.size()) - 1;
+            i++) {// except root certificate
+        if (certificateChain[i].empty() || certificateChain[i + 1].empty()) {
             LogError("Error. Broken certificate chain.");
             return CKM_API_OCSP_STATUS_INTERNAL_ERROR;
         }
 
         X509 *cert   = certificateChain[i].getX509();
-        X509 *issuer = certificateChain[i+1].getX509();
+        X509 *issuer = certificateChain[i + 1].getX509();
 
         std::string url = certificateChain[i].getOCSPURL();
 
         if (url.empty()) {
-            LogError("Certificate in certchain[" << i << "] does not provide OCSP extension.");
+            LogError("Certificate in certchain[" << i <<
+                     "] does not provide OCSP extension.");
             unsupported = true;
             continue;
         }
@@ -107,7 +114,7 @@ int OCSPModule::verify(const CertificateImplVector &certificateChain)
 
         if (result != CKM_API_OCSP_STATUS_GOOD) {
             LogError("Fail to OCSP certification check. Errorcode=[" << result <<
-                "], on certChain[" << i << "]");
+                     "], on certChain[" << i << "]");
             return result;
         }
     }
@@ -118,7 +125,8 @@ int OCSPModule::verify(const CertificateImplVector &certificateChain)
     return CKM_API_OCSP_STATUS_GOOD;
 }
 
-int OCSPModule::ocsp_verify(X509 *cert, X509 *issuer, STACK_OF(X509) *trustedCerts, const std::string &constUrl)
+int OCSPModule::ocsp_verify(X509 *cert, X509 *issuer,
+                            STACK_OF(X509) *trustedCerts, const std::string &constUrl)
 {
     OCSP_REQUEST *req = NULL;
     OCSP_RESPONSE *resp = NULL;
@@ -153,6 +161,7 @@ int OCSPModule::ocsp_verify(X509 *cert, X509 *issuer, STACK_OF(X509) *trustedCer
     LogDebug("Use_ssl: " << use_ssl);
 
     cbio = BIO_new_connect(host);
+
     if (cbio == NULL) {
         /*BIO_printf(bio_err, "Error creating connect BIO\n");*/
         /* report error */
@@ -165,6 +174,7 @@ int OCSPModule::ocsp_verify(X509 *cert, X509 *issuer, STACK_OF(X509) *trustedCer
     if (use_ssl == 1) {
         BIO *sbio = NULL;
         use_ssl_ctx = SSL_CTX_new(SSLv23_client_method());
+
         if (use_ssl_ctx == NULL) {
             /* report error */
             return CKM_API_OCSP_STATUS_INTERNAL_ERROR;
@@ -172,12 +182,14 @@ int OCSPModule::ocsp_verify(X509 *cert, X509 *issuer, STACK_OF(X509) *trustedCer
 
         SSL_CTX_set_mode(use_ssl_ctx, SSL_MODE_AUTO_RETRY);
         sbio = BIO_new_ssl(use_ssl_ctx, 1);
+
         if (sbio == NULL) {
             /* report error */
             return CKM_API_OCSP_STATUS_INTERNAL_ERROR;
         }
 
         cbio = BIO_push(sbio, cbio);
+
         if (cbio == NULL) {
             /* report error */
             return CKM_API_OCSP_STATUS_INTERNAL_ERROR;
@@ -215,12 +227,14 @@ int OCSPModule::ocsp_verify(X509 *cert, X509 *issuer, STACK_OF(X509) *trustedCer
     }
 
     req = OCSP_REQUEST_new();
+
     if (req == NULL) {
         LogDebug("Error in OCPS_REQUEST_new");
         return CKM_API_OCSP_STATUS_INTERNAL_ERROR;
     }
 
     certid = OCSP_cert_to_id(NULL, cert, issuer);
+
     if (certid == NULL) {
         LogDebug("Error in OCSP_cert_to_id");
         return CKM_API_OCSP_STATUS_INTERNAL_ERROR;
@@ -232,6 +246,7 @@ int OCSPModule::ocsp_verify(X509 *cert, X509 *issuer, STACK_OF(X509) *trustedCer
     }
 
     resp = OCSP_sendreq_bio(cbio, path, req);
+
     /* free some stuff we no longer need */
     if (host != NULL)
         OPENSSL_free(host);
@@ -274,6 +289,7 @@ int OCSPModule::ocsp_verify(X509 *cert, X509 *issuer, STACK_OF(X509) *trustedCer
     }
 
     bs = OCSP_response_get1_basic(resp);
+
     if (!bs) {
         /* report error */
         ERR_print_errors(bioLogger.get());
@@ -295,6 +311,7 @@ int OCSPModule::ocsp_verify(X509 *cert, X509 *issuer, STACK_OF(X509) *trustedCer
     }
 
     int response = OCSP_basic_verify(bs, NULL, trustedStore, 0);
+
     if (response <= 0) {
         OCSP_REQUEST_free(req);
         OCSP_RESPONSE_free(resp);
@@ -321,8 +338,9 @@ int OCSPModule::ocsp_verify(X509 *cert, X509 *issuer, STACK_OF(X509) *trustedCer
     }
 
     (void)X509_NAME_oneline(X509_get_subject_name(cert), subj_buf, 255);
+
     if (!OCSP_resp_find_status(bs, certid, &ocspStatus, &reason,
-          &rev, &thisupd, &nextupd)) {
+                               &rev, &thisupd, &nextupd)) {
         /* report error */
         ERR_print_errors(bioLogger.get());
         /* free stuff */
@@ -375,10 +393,13 @@ int OCSPModule::ocsp_verify(X509 *cert, X509 *issuer, STACK_OF(X509) *trustedCer
     switch (ocspStatus) {
     case V_OCSP_CERTSTATUS_GOOD:
         return CKM_API_OCSP_STATUS_GOOD;
+
     case V_OCSP_CERTSTATUS_REVOKED:
         return CKM_API_OCSP_STATUS_REVOKED;
+
     case V_OCSP_CERTSTATUS_UNKNOWN:
         return CKM_API_OCSP_STATUS_UNKNOWN;
+
     default:
         LogError("Internal openssl error: Certificate status have value is out of bound.");
         return CKM_API_OCSP_STATUS_INTERNAL_ERROR;

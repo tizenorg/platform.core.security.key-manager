@@ -66,11 +66,12 @@ bool AccessControl::isSystemService(const CKM::Credentials &cred) const
 
 
 int AccessControl::canSave(
-        const CKM::Credentials &accessorCred,
-        const Label & ownerLabel) const
+    const CKM::Credentials &accessorCred,
+    const Label &ownerLabel) const
 {
     if (isSystemService(accessorCred))
         return CKM_API_SUCCESS;
+
     if (ownerLabel != accessorCred.smackLabel)
         return CKM_API_ERROR_ACCESS_DENIED;
 
@@ -78,18 +79,19 @@ int AccessControl::canSave(
 }
 
 int AccessControl::canModify(
-        const CKM::Credentials &accessorCred,
-        const Label & ownerLabel) const
+    const CKM::Credentials &accessorCred,
+    const Label &ownerLabel) const
 {
     return canSave(accessorCred, ownerLabel);
 }
 
 int AccessControl::canRead(
-        const CKM::Credentials &accessorCred,
-        const PermissionForLabel & permissionLabel) const
+    const CKM::Credentials &accessorCred,
+    const PermissionForLabel &permissionLabel) const
 {
     if (isSystemService(accessorCred))
         return CKM_API_SUCCESS;
+
     if (permissionLabel & Permission::READ)
         return CKM_API_SUCCESS;
 
@@ -97,11 +99,12 @@ int AccessControl::canRead(
 }
 
 int AccessControl::canExport(
-        const CKM::Credentials &accessorCred,
-        const DB::Row & row,
-        const PermissionForLabel & permissionLabel) const
+    const CKM::Credentials &accessorCred,
+    const DB::Row &row,
+    const PermissionForLabel &permissionLabel) const
 {
     int ec;
+
     if (CKM_API_SUCCESS != (ec = canRead(accessorCred, permissionLabel)))
         return ec;
 
@@ -117,13 +120,15 @@ int AccessControl::canExport(
 }
 
 int AccessControl::canDelete(
-        const CKM::Credentials &accessorCred,
-        const PermissionForLabel & permissionLabel) const
+    const CKM::Credentials &accessorCred,
+    const PermissionForLabel &permissionLabel) const
 {
     if (isSystemService(accessorCred))
         return CKM_API_SUCCESS;
+
     if (permissionLabel & Permission::REMOVE)
         return CKM_API_SUCCESS;
+
     if (permissionLabel & Permission::READ)
         return CKM_API_ERROR_ACCESS_DENIED;
 

@@ -29,11 +29,11 @@ namespace Log {
 
 namespace {
 std::map<AbstractLogProvider::LogLevel, int> journalLevel = {
-        { AbstractLogProvider::LogLevel::Error,     LOG_ERR },
-        { AbstractLogProvider::LogLevel::Warning,   LOG_WARNING },
-        { AbstractLogProvider::LogLevel::Info,      LOG_INFO },
-        { AbstractLogProvider::LogLevel::Debug,     LOG_DEBUG},
-        { AbstractLogProvider::LogLevel::Pedantic,  LOG_DEBUG}
+    { AbstractLogProvider::LogLevel::Error,     LOG_ERR },
+    { AbstractLogProvider::LogLevel::Warning,   LOG_WARNING },
+    { AbstractLogProvider::LogLevel::Info,      LOG_INFO },
+    { AbstractLogProvider::LogLevel::Debug,     LOG_DEBUG},
+    { AbstractLogProvider::LogLevel::Pedantic,  LOG_DEBUG}
 };
 
 } // namespace anonymous
@@ -54,21 +54,22 @@ void JournalLogProvider::Log(AbstractLogProvider::LogLevel level,
 {
     try {
         sd_journal_send("PRIORITY=%d", journalLevel.at(level),
-                "CODE_FILE=%s", fileName,
-                "CODE_FUNC=%s", function,
-                "CODE_LINE=%d", line,
-                // add file, line & function info to log message
-                "MESSAGE=[%s:%d] %s(): %s", fileName, line, function, message,
-                NULL);
-    } catch (const std::out_of_range&) {
+                        "CODE_FILE=%s", fileName,
+                        "CODE_FUNC=%s", function,
+                        "CODE_LINE=%d", line,
+                        // add file, line & function info to log message
+                        "MESSAGE=[%s:%d] %s(): %s", fileName, line, function, message,
+                        NULL);
+    } catch (const std::out_of_range &) {
         sd_journal_send(
-                "PRIORITY=%d", LOG_ERR,
-                "CODE_FILE=%s", fileName,
-                "CODE_FUNC=%s", function,
-                "CODE_LINE=%d", line,
-                // add file, line & function info to log message
-                "MESSAGE=[%s:%d] %s(): Unsupported log level %d", fileName, line, function, level,
-                NULL);
+            "PRIORITY=%d", LOG_ERR,
+            "CODE_FILE=%s", fileName,
+            "CODE_FUNC=%s", function,
+            "CODE_LINE=%d", line,
+            // add file, line & function info to log message
+            "MESSAGE=[%s:%d] %s(): Unsupported log level %d", fileName, line, function,
+            level,
+            NULL);
     }
 }
 

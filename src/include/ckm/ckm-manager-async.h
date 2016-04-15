@@ -34,15 +34,14 @@ namespace CKM {
 
 // Asynchronous interface to Central Key Manager. This implementation uses
 // internal thread for connection. Key Manager is not thread safe.
-class KEY_MANAGER_API ManagerAsync
-{
+class KEY_MANAGER_API ManagerAsync {
 public:
     class Impl;
 
     ManagerAsync();
 
-    ManagerAsync(const ManagerAsync&) = delete;
-    ManagerAsync& operator=(const ManagerAsync&) = delete;
+    ManagerAsync(const ManagerAsync &) = delete;
+    ManagerAsync &operator=(const ManagerAsync &) = delete;
 
     // Observer will observer custom operation.
     struct Observer {
@@ -87,126 +86,129 @@ public:
     virtual ~ManagerAsync();
 
     void saveKey(
-            const ObserverPtr& observer,
-            const Alias& alias,
-            const KeyShPtr& key,
-            const Policy& policy);
+        const ObserverPtr &observer,
+        const Alias &alias,
+        const KeyShPtr &key,
+        const Policy &policy);
     void saveCertificate(
-            const ObserverPtr& observer,
-            const Alias& alias,
-            const CertificateShPtr& cert,
-            const Policy& policy);
+        const ObserverPtr &observer,
+        const Alias &alias,
+        const CertificateShPtr &cert,
+        const Policy &policy);
     void saveData(
-            const ObserverPtr& observer,
-            const Alias& alias,
-            const RawBuffer& data,
-            const Policy& policy);
+        const ObserverPtr &observer,
+        const Alias &alias,
+        const RawBuffer &data,
+        const Policy &policy);
     void savePKCS12(
-            const ObserverPtr& observer,
-            const Alias &alias,
-            const PKCS12ShPtr &pkcs,
-            const Policy &keyPolicy,
-            const Policy &certPolicy);
+        const ObserverPtr &observer,
+        const Alias &alias,
+        const PKCS12ShPtr &pkcs,
+        const Policy &keyPolicy,
+        const Policy &certPolicy);
 
-    void removeAlias(const ObserverPtr& observer, const Alias& alias);
+    void removeAlias(const ObserverPtr &observer, const Alias &alias);
 
-    void getKey(const ObserverPtr& observer, const Alias& alias, const Password& password);
-    void getCertificate(const ObserverPtr& observer, const Alias& alias, const Password& password);
-    void getData(const ObserverPtr& observer, const Alias& alias, const Password& password);
+    void getKey(const ObserverPtr &observer, const Alias &alias,
+                const Password &password);
+    void getCertificate(const ObserverPtr &observer, const Alias &alias,
+                        const Password &password);
+    void getData(const ObserverPtr &observer, const Alias &alias,
+                 const Password &password);
 
     void getPKCS12(
-        const ObserverPtr& observer,
+        const ObserverPtr &observer,
         const Alias &alias,
-        const Password& passwordKey = Password(),
-        const Password& passwordCert = Password());
+        const Password &passwordKey = Password(),
+        const Password &passwordCert = Password());
 
     // send request for list of all keys/certificates/data that application/user may use
-    void getKeyAliasVector(const ObserverPtr& observer);
-    void getCertificateAliasVector(const ObserverPtr& observer);
-    void getDataAliasVector(const ObserverPtr& observer);
+    void getKeyAliasVector(const ObserverPtr &observer);
+    void getCertificateAliasVector(const ObserverPtr &observer);
+    void getDataAliasVector(const ObserverPtr &observer);
 
     void createKeyPairRSA(
-            const ObserverPtr& observer,
-            int size,
-            const Alias& privateKeyAlias,
-            const Alias& publicKeyAlias,
-            const Policy& policyPrivateKey = Policy(),
-            const Policy& policyPublicKey = Policy());
+        const ObserverPtr &observer,
+        int size,
+        const Alias &privateKeyAlias,
+        const Alias &publicKeyAlias,
+        const Policy &policyPrivateKey = Policy(),
+        const Policy &policyPublicKey = Policy());
     void createKeyPairDSA(
-            const ObserverPtr& observer,
-            int size,
-            const Alias& privateKeyAlias,
-            const Alias& publicKeyAlias,
-            const Policy& policyPrivateKey = Policy(),
-            const Policy& policyPublicKey = Policy());
+        const ObserverPtr &observer,
+        int size,
+        const Alias &privateKeyAlias,
+        const Alias &publicKeyAlias,
+        const Policy &policyPrivateKey = Policy(),
+        const Policy &policyPublicKey = Policy());
     void createKeyPairECDSA(
-            const ObserverPtr& observer,
-            const ElipticCurve type,
-            const Alias& privateKeyAlias,
-            const Alias& publicKeyAlias,
-            const Policy& policyPrivateKey = Policy(),
-            const Policy& policyPublicKey = Policy());
+        const ObserverPtr &observer,
+        const ElipticCurve type,
+        const Alias &privateKeyAlias,
+        const Alias &publicKeyAlias,
+        const Policy &policyPrivateKey = Policy(),
+        const Policy &policyPublicKey = Policy());
     void createKeyAES(
-            const ObserverPtr& observer,
-            int sizeBits,
-            const Alias &keyAlias,
-            const Policy &policyKey = Policy());
+        const ObserverPtr &observer,
+        int sizeBits,
+        const Alias &keyAlias,
+        const Policy &policyKey = Policy());
 
     void getCertificateChain(
-            const ObserverPtr& observer,
-            const CertificateShPtr& certificate,
-            const CertificateShPtrVector& untrustedCertificates,
-            const CertificateShPtrVector& trustedCertificates,
-            bool useSystemTrustedCertificates);
+        const ObserverPtr &observer,
+        const CertificateShPtr &certificate,
+        const CertificateShPtrVector &untrustedCertificates,
+        const CertificateShPtrVector &trustedCertificates,
+        bool useSystemTrustedCertificates);
     void getCertificateChain(
-            const ObserverPtr& observer,
-            const CertificateShPtr& certificate,
-            const AliasVector& untrustedCertificates,
-            const AliasVector& trustedCertificates,
-            bool useSystemTrustedCertificates);
+        const ObserverPtr &observer,
+        const CertificateShPtr &certificate,
+        const AliasVector &untrustedCertificates,
+        const AliasVector &trustedCertificates,
+        bool useSystemTrustedCertificates);
 
     void createSignature(
-            const ObserverPtr& observer,
-            const Alias& privateKeyAlias,
-            const Password& password,           // password for private_key
-            const RawBuffer& message,
-            const HashAlgorithm hash,
-            const RSAPaddingAlgorithm padding);
+        const ObserverPtr &observer,
+        const Alias &privateKeyAlias,
+        const Password &password,           // password for private_key
+        const RawBuffer &message,
+        const HashAlgorithm hash,
+        const RSAPaddingAlgorithm padding);
     void verifySignature(
-            const ObserverPtr& observer,
-            const Alias& publicKeyOrCertAlias,
-            const Password& password,           // password for public_key (optional)
-            const RawBuffer& message,
-            const RawBuffer& signature,
-            const HashAlgorithm hash,
-            const RSAPaddingAlgorithm padding);
+        const ObserverPtr &observer,
+        const Alias &publicKeyOrCertAlias,
+        const Password &password,           // password for public_key (optional)
+        const RawBuffer &message,
+        const RawBuffer &signature,
+        const HashAlgorithm hash,
+        const RSAPaddingAlgorithm padding);
 
     // This function will check all certificates in chain except Root CA.
     // This function will delegate task to service. You may use this even
     // if application does not have permission to use network.
     void ocspCheck(
-            const ObserverPtr& observer,
-            const CertificateShPtrVector& certificateChainVector);
+        const ObserverPtr &observer,
+        const CertificateShPtrVector &certificateChainVector);
 
     void setPermission(
-            const ObserverPtr& observer,
-            const Alias& alias,
-            const Label& accessor,
-            PermissionMask permissionMask);
+        const ObserverPtr &observer,
+        const Alias &alias,
+        const Label &accessor,
+        PermissionMask permissionMask);
 
     void encrypt(
-            const ObserverPtr& observer,
-            const CryptoAlgorithm& algo,
-            const Alias& keyAlias,
-            const Password& password,
-            const RawBuffer& plain);
+        const ObserverPtr &observer,
+        const CryptoAlgorithm &algo,
+        const Alias &keyAlias,
+        const Password &password,
+        const RawBuffer &plain);
 
     void decrypt(
-            const ObserverPtr& observer,
-            const CryptoAlgorithm& algo,
-            const Alias& keyAlias,
-            const Password& password,
-            const RawBuffer& encrypted);
+        const ObserverPtr &observer,
+        const CryptoAlgorithm &algo,
+        const Alias &keyAlias,
+        const Password &password,
+        const RawBuffer &encrypted);
 
 private:
     std::unique_ptr<Impl> m_impl;

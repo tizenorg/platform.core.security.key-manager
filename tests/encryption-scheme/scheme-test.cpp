@@ -51,8 +51,8 @@ using namespace std;
 namespace {
 const uid_t UID = 7654;
 const gid_t GID = 7654;
-const char* const DBPASS = "db-pass";
-const char* const LABEL = "my-label";
+const char *const DBPASS = "db-pass";
+const char *const LABEL = "my-label";
 const Label DB_LABEL = "/" + string(LABEL);
 const int ENC_SCHEME_OFFSET = 24;
 const string TEST_DATA_STR = "test-data";
@@ -73,8 +73,8 @@ enum {
 
 // [password][exportable]
 Policy policy[2][2] = {
-        {{ Password(), false }, { Password(), true }},
-        {{ TEST_PASS,  false }, { TEST_PASS,  true }},
+    {{ Password(), false }, { Password(), true }},
+    {{ TEST_PASS,  false }, { TEST_PASS,  true }},
 };
 
 struct Group {
@@ -88,85 +88,123 @@ struct Group {
 
 Group GROUPS[] = {
     // Data
-    { Group::SINGLE_ITEM, {
+    {
+        Group::SINGLE_ITEM, {
             Item("data-alias1", DataType::BINARY_DATA,  policy[NO_PASS][EXP])
-    }},
-    { Group::SINGLE_ITEM, {
+        }
+    },
+    {
+        Group::SINGLE_ITEM, {
             Item("data-alias2", DataType::BINARY_DATA,  policy[PASS][EXP])
-    }},
+        }
+    },
 
     // RSA keys
-    { Group::KEY_PAIR_RSA, {
+    {
+        Group::KEY_PAIR_RSA, {
             Item("key-rsa-alias-prv1", DataType::KEY_RSA_PRIVATE,  policy[NO_PASS][NO_EXP]),
             Item("key-rsa-alias-pub1", DataType::KEY_RSA_PUBLIC,   policy[NO_PASS][NO_EXP])
-    }},
-    { Group::KEY_PAIR_RSA, {
+        }
+    },
+    {
+        Group::KEY_PAIR_RSA, {
             Item("key-rsa-alias-prv2", DataType::KEY_RSA_PRIVATE,  policy[NO_PASS][EXP]),
             Item("key-rsa-alias-pub2", DataType::KEY_RSA_PUBLIC,   policy[NO_PASS][EXP]),
-    }},
-    { Group::KEY_PAIR_RSA, {
+        }
+    },
+    {
+        Group::KEY_PAIR_RSA, {
             Item("key-rsa-alias-prv3", DataType::KEY_RSA_PRIVATE,  policy[PASS][NO_EXP]),
             Item("key-rsa-alias-pub3", DataType::KEY_RSA_PUBLIC,   policy[PASS][NO_EXP]),
-    }},
-    { Group::KEY_PAIR_RSA, {
+        }
+    },
+    {
+        Group::KEY_PAIR_RSA, {
             Item("key-rsa-alias-prv4", DataType::KEY_RSA_PRIVATE,  policy[PASS][EXP]),
             Item("key-rsa-alias-pub4", DataType::KEY_RSA_PUBLIC,   policy[PASS][EXP]),
-    }},
+        }
+    },
     // different policies
-    { Group::KEY_PAIR_RSA, {
+    {
+        Group::KEY_PAIR_RSA, {
             Item("key-rsa-alias-prv5", DataType::KEY_RSA_PRIVATE,  policy[PASS][NO_EXP]),
             Item("key-rsa-alias-pub5", DataType::KEY_RSA_PUBLIC,   policy[NO_PASS][EXP]),
-    }},
+        }
+    },
 
     // AES
-    { Group::SINGLE_ITEM, {
+    {
+        Group::SINGLE_ITEM, {
             Item("key-aes-alias1",     DataType::KEY_AES,          policy[NO_PASS][NO_EXP]),
-    }},
-    { Group::SINGLE_ITEM, {
+        }
+    },
+    {
+        Group::SINGLE_ITEM, {
             Item("key-aes-alias2",     DataType::KEY_AES,          policy[NO_PASS][EXP]),
-    }},
-    { Group::SINGLE_ITEM, {
+        }
+    },
+    {
+        Group::SINGLE_ITEM, {
             Item("key-aes-alias3",     DataType::KEY_AES,          policy[PASS][NO_EXP]),
-    }},
-    { Group::SINGLE_ITEM, {
+        }
+    },
+    {
+        Group::SINGLE_ITEM, {
             Item("key-aes-alias4",     DataType::KEY_AES,          policy[PASS][EXP]),
-    }},
+        }
+    },
 
     // Certificates
-    { Group::CERT_CHAIN, {
+    {
+        Group::CERT_CHAIN, {
             Item("cert-root-alias1",   DataType::CERTIFICATE,      policy[NO_PASS][NO_EXP]),
             Item("cert-im-ca-alias1",  DataType::CERTIFICATE,      policy[NO_PASS][NO_EXP]),
             Item("cert-leaf-alias1",   DataType::CERTIFICATE,      policy[NO_PASS][NO_EXP]),
-    }},
-    { Group::CERT_CHAIN, {
+        }
+    },
+    {
+        Group::CERT_CHAIN, {
             Item("cert-root-alias2",   DataType::CERTIFICATE,      policy[NO_PASS][EXP]),
             Item("cert-im-ca-alias2",  DataType::CERTIFICATE,      policy[NO_PASS][EXP]),
             Item("cert-leaf-alias2",   DataType::CERTIFICATE,      policy[NO_PASS][EXP]),
-    }},
-    { Group::CERT_CHAIN, {
+        }
+    },
+    {
+        Group::CERT_CHAIN, {
             Item("cert-root-alias3",   DataType::CERTIFICATE,      policy[PASS][NO_EXP]),
             Item("cert-im-ca-alias3",  DataType::CERTIFICATE,      policy[PASS][NO_EXP]),
             Item("cert-leaf-alias3",   DataType::CERTIFICATE,      policy[PASS][NO_EXP]),
-    }},
-    { Group::CERT_CHAIN, {
+        }
+    },
+    {
+        Group::CERT_CHAIN, {
             Item("cert-root-alias4",   DataType::CERTIFICATE,      policy[PASS][EXP]),
             Item("cert-im-ca-alias4",  DataType::CERTIFICATE,      policy[PASS][EXP]),
             Item("cert-leaf-alias4",   DataType::CERTIFICATE,      policy[PASS][EXP]),
-    }},
+        }
+    },
 
     // PKCS
-    { Group::SINGLE_ITEM, {
+    {
+        Group::SINGLE_ITEM, {
             Item("pkcs-alias1",        DataType::CHAIN_CERT_0,     policy[NO_PASS][NO_EXP]),
-    }},
-    { Group::SINGLE_ITEM, {
+        }
+    },
+    {
+        Group::SINGLE_ITEM, {
             Item("pkcs-alias2",        DataType::CHAIN_CERT_0,     policy[NO_PASS][EXP]),
-    }},
-    { Group::SINGLE_ITEM, {
+        }
+    },
+    {
+        Group::SINGLE_ITEM, {
             Item("pkcs-alias3",        DataType::CHAIN_CERT_0,     policy[PASS][NO_EXP]),
-    }},
-    { Group::SINGLE_ITEM, {
+        }
+    },
+    {
+        Group::SINGLE_ITEM, {
             Item("pkcs-alias4",        DataType::CHAIN_CERT_0,     policy[PASS][EXP]),
-    }},
+        }
+    },
 };
 
 const size_t CHAIN_SIZE = 3;
@@ -247,18 +285,21 @@ std::string TEST_LEAF =
 
 
 struct FdCloser {
-    void operator()(int* fd) {
-        if(fd)
+    void operator()(int *fd)
+    {
+        if (fd)
             close(*fd);
     }
 };
 
 typedef std::unique_ptr<int, FdCloser> FdPtr;
 
-uid_t getUid(const char *name) {
+uid_t getUid(const char *name)
+{
     struct passwd pwd;
     struct passwd *result = nullptr;
     int bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
+
     if (bufsize <= 0)
         bufsize = 16384; /* should be more than enough */
 
@@ -272,10 +313,12 @@ uid_t getUid(const char *name) {
     return pwd.pw_uid;
 }
 
-gid_t getGid(const char *name) {
+gid_t getGid(const char *name)
+{
     struct group grp;
     struct group *result = nullptr;
     size_t bufsize = sysconf(_SC_GETGR_R_SIZE_MAX);
+
     if (bufsize <= 0)
         bufsize = 16384; /* should be more than enough */
 
@@ -289,7 +332,8 @@ gid_t getGid(const char *name) {
     return grp.gr_gid;
 }
 
-void restoreFile(const string& filename) {
+void restoreFile(const string &filename)
+{
     static uid_t CKM_UID = getUid(USER_NAME);
     static gid_t CKM_GID = getGid(GROUP_NAME);
     string sourcePath = string(DB_TEST_DIR) + "/" + filename;
@@ -299,13 +343,15 @@ void restoreFile(const string& filename) {
 
     int sourceFd = TEMP_FAILURE_RETRY(open(sourcePath.c_str(), O_RDONLY));
     err = errno;
-    BOOST_REQUIRE_MESSAGE(sourceFd > 0, "Opening " << sourcePath << " failed: " << GetErrnoString(err));
+    BOOST_REQUIRE_MESSAGE(sourceFd > 0,
+                          "Opening " << sourcePath << " failed: " << GetErrnoString(err));
 
     FdPtr sourceFdPtr(&sourceFd);
 
     int targetFd = TEMP_FAILURE_RETRY(creat(targetPath.c_str(), 0644));
     err = errno;
-    BOOST_REQUIRE_MESSAGE(targetFd > 0, "Creating " << targetPath << " failed: " << GetErrnoString(err));
+    BOOST_REQUIRE_MESSAGE(targetFd > 0,
+                          "Creating " << targetPath << " failed: " << GetErrnoString(err));
 
     ret = fchown(targetFd, CKM_UID, CKM_GID);
     err = errno;
@@ -329,14 +375,17 @@ void restoreFile(const string& filename) {
 
 void generateRandom(size_t random_bytes, unsigned char *output)
 {
-    if(random_bytes<=0 || !output)
+    if (random_bytes <= 0 || !output)
         throw runtime_error("Invalid param");
 
     std::ifstream is("/dev/urandom", std::ifstream::binary);
-    if(!is)
+
+    if (!is)
         throw runtime_error("Failed to read /dev/urandom");
-    is.read(reinterpret_cast<char*>(output), random_bytes);
-    if(static_cast<std::streamsize>(random_bytes) != is.gcount())
+
+    is.read(reinterpret_cast<char *>(output), random_bytes);
+
+    if (static_cast<std::streamsize>(random_bytes) != is.gcount())
         throw runtime_error("Not enough bytes read from /dev/urandom");
 }
 
@@ -349,7 +398,8 @@ RawBuffer createRandomBuffer(size_t random_bytes)
 } // namespace anonymous
 
 
-SchemeTest::SchemeTest() : m_userChanged(false), m_directAccessEnabled(false) {
+SchemeTest::SchemeTest() : m_userChanged(false), m_directAccessEnabled(false)
+{
     m_control = Control::create();
     m_mgr = Manager::create();
     initOpenSsl();
@@ -361,161 +411,188 @@ SchemeTest::SchemeTest() : m_userChanged(false), m_directAccessEnabled(false) {
     sa.apply();
 }
 
-SchemeTest::~SchemeTest() {
+SchemeTest::~SchemeTest()
+{
     try {
         SwitchToRoot();
     } catch (...) {}
 }
 
-void SchemeTest::RemoveUserData() {
-    if(CKM_API_SUCCESS != m_control->lockUserKey(UID))
+void SchemeTest::RemoveUserData()
+{
+    if (CKM_API_SUCCESS != m_control->lockUserKey(UID))
         throw runtime_error("lockUserKey failed");
 
-    if(CKM_API_SUCCESS != m_control->removeUserData(UID))
+    if (CKM_API_SUCCESS != m_control->removeUserData(UID))
         throw runtime_error("removeUserData failed");
 }
 
-void SchemeTest::SwitchToUser() {
+void SchemeTest::SwitchToUser()
+{
     if (m_userChanged)
         return;
 
-    if(CKM_API_SUCCESS != m_control->unlockUserKey(UID, DBPASS))
+    if (CKM_API_SUCCESS != m_control->unlockUserKey(UID, DBPASS))
         throw runtime_error("unlockUserKey failed");
 
     // get calling label
-    char* label = NULL;
+    char *label = NULL;
+
     if (smack_new_label_from_self(&label) <= 0)
         throw runtime_error("smack_new_label_from_self failed");
 
     m_origLabel = string(label);
     free(label);
 
-    if(0 > smack_set_label_for_self(LABEL))
+    if (0 > smack_set_label_for_self(LABEL))
         throw runtime_error("smack_set_label_for_self failed");
 
-    if(0 > setegid(GID))
+    if (0 > setegid(GID))
         throw runtime_error("setegid failed");
 
-    if(0 > seteuid(UID))
+    if (0 > seteuid(UID))
         throw runtime_error("seteuid failed");
 
     m_userChanged = true;
 }
 
-void SchemeTest::SwitchToRoot() {
+void SchemeTest::SwitchToRoot()
+{
     if (!m_userChanged)
         return;
 
-    if(0 > seteuid(0))
+    if (0 > seteuid(0))
         throw runtime_error("seteuid failed");
-    if(0 > setegid(0))
+
+    if (0 > setegid(0))
         throw runtime_error("setegid failed");
 
-    if(0 > smack_set_label_for_self(m_origLabel.c_str()))
+    if (0 > smack_set_label_for_self(m_origLabel.c_str()))
         throw runtime_error("smack_set_label_for_self failed");
 
-    if(m_control->lockUserKey(UID) != CKM_API_SUCCESS)
+    if (m_control->lockUserKey(UID) != CKM_API_SUCCESS)
         throw runtime_error("lockUserKey failed");
 }
 
-void SchemeTest::FillDb() {
+void SchemeTest::FillDb()
+{
     // pkcs
     ifstream is(DB_TEST_DIR "/encryption-scheme.p12");
-    if(!is)
+
+    if (!is)
         throw runtime_error("Failed to read pkcs");
+
     istreambuf_iterator<char> begin(is), end;
     RawBuffer pkcsBuffer(begin, end);
     auto pkcs = PKCS12::create(pkcsBuffer, Password());
-    if(pkcs->empty())
+
+    if (pkcs->empty())
         throw runtime_error("Empty pkcs");
 
     SwitchToUser();
 
     // certificates
     RawBuffer rootCaBuffer(TEST_ROOT_CA.begin(), TEST_ROOT_CA.end());
-    CertificateShPtr rootCa = CKM::Certificate::create(rootCaBuffer, CKM::DataFormat::FORM_PEM);
+    CertificateShPtr rootCa = CKM::Certificate::create(rootCaBuffer,
+                              CKM::DataFormat::FORM_PEM);
     RawBuffer imCaBuffer(TEST_IM_CA.begin(), TEST_IM_CA.end());
-    CertificateShPtr imCa = CKM::Certificate::create(imCaBuffer, CKM::DataFormat::FORM_PEM);
+    CertificateShPtr imCa = CKM::Certificate::create(imCaBuffer,
+                            CKM::DataFormat::FORM_PEM);
     RawBuffer leafBuffer(TEST_LEAF.begin(), TEST_LEAF.end());
-    CertificateShPtr leaf = CKM::Certificate::create(leafBuffer, CKM::DataFormat::FORM_PEM);
+    CertificateShPtr leaf = CKM::Certificate::create(leafBuffer,
+                            CKM::DataFormat::FORM_PEM);
 
-    for(const auto& g:GROUPS) {
+    for (const auto &g : GROUPS) {
         switch (g.type) {
         case Group::KEY_PAIR_RSA:
-            if(g.items.size() != 2)
+            if (g.items.size() != 2)
                 throw runtime_error("Wrong number of keys");
-            if( g.items[0].type != DataType::KEY_RSA_PRIVATE ||
-                g.items[1].type != DataType::KEY_RSA_PUBLIC)
+
+            if (g.items[0].type != DataType::KEY_RSA_PRIVATE ||
+                    g.items[1].type != DataType::KEY_RSA_PUBLIC)
                 throw runtime_error("Invalid item type");
 
-            if(CKM_API_SUCCESS != m_mgr->createKeyPairRSA(1024,
-                                                          g.items[0].alias,
-                                                          g.items[1].alias,
-                                                          g.items[0].policy,
-                                                          g.items[1].policy))
+            if (CKM_API_SUCCESS != m_mgr->createKeyPairRSA(1024,
+                    g.items[0].alias,
+                    g.items[1].alias,
+                    g.items[0].policy,
+                    g.items[1].policy))
                 throw runtime_error("createKeyPair failed");
+
             break;
 
         case Group::CERT_CHAIN:
-            if(g.items.size() != CHAIN_SIZE)
+            if (g.items.size() != CHAIN_SIZE)
                 throw runtime_error("Wrong number of certificates");
-            if( g.items[0].type != DataType::CERTIFICATE ||
-                g.items[1].type != DataType::CERTIFICATE ||
-                g.items[2].type != DataType::CERTIFICATE)
+
+            if (g.items[0].type != DataType::CERTIFICATE ||
+                    g.items[1].type != DataType::CERTIFICATE ||
+                    g.items[2].type != DataType::CERTIFICATE)
                 throw runtime_error("Invalid item type");
 
-            if(CKM_API_SUCCESS != m_mgr->saveCertificate(g.items[0].alias, rootCa, g.items[0].policy))
+            if (CKM_API_SUCCESS != m_mgr->saveCertificate(g.items[0].alias, rootCa,
+                    g.items[0].policy))
                 throw runtime_error("saveCertificate failed");
-            if(CKM_API_SUCCESS != m_mgr->saveCertificate(g.items[1].alias, imCa, g.items[1].policy))
+
+            if (CKM_API_SUCCESS != m_mgr->saveCertificate(g.items[1].alias, imCa,
+                    g.items[1].policy))
                 throw runtime_error("saveCertificate failed");
-            if(CKM_API_SUCCESS != m_mgr->saveCertificate(g.items[2].alias, leaf, g.items[2].policy))
+
+            if (CKM_API_SUCCESS != m_mgr->saveCertificate(g.items[2].alias, leaf,
+                    g.items[2].policy))
                 throw runtime_error("saveCertificate failed");
+
             break;
 
         default:
-            for(const auto& i:g.items) {
+            for (const auto &i : g.items) {
                 switch (i.type) {
                 case DataType::BINARY_DATA:
-                    if(CKM_API_SUCCESS != m_mgr->saveData(i.alias, TEST_DATA, i.policy))
+                    if (CKM_API_SUCCESS != m_mgr->saveData(i.alias, TEST_DATA, i.policy))
                         throw runtime_error("saveData failed");
+
                     break;
 
                 case DataType::KEY_AES:
-                    if(CKM_API_SUCCESS != m_mgr->createKeyAES(256, i.alias, i.policy))
+                    if (CKM_API_SUCCESS != m_mgr->createKeyAES(256, i.alias, i.policy))
                         throw runtime_error("createKeyAES failed");
+
                     break;
 
                 case DataType::CHAIN_CERT_0:    // PKCS
-                    if(CKM_API_SUCCESS != m_mgr->savePKCS12(i.alias, pkcs, i.policy, i.policy))
+                    if (CKM_API_SUCCESS != m_mgr->savePKCS12(i.alias, pkcs, i.policy, i.policy))
                         throw runtime_error("savePkcs12 failed");
+
                     break;
 
                 default:
                     throw runtime_error("unsupported data type");
                 }
             }
+
             break;
         }
     }
 }
 
-void SchemeTest::ReadAll(bool useWrongPass) {
+void SchemeTest::ReadAll(bool useWrongPass)
+{
     SwitchToUser();
 
-    for(const auto& g:GROUPS) {
-        for(const auto& i:g.items) {
+    for (const auto &g : GROUPS) {
+        for (const auto &i : g.items) {
             int ret;
             Password pass = i.policy.password;
-            if(useWrongPass) {
-                if(pass.empty())
+
+            if (useWrongPass) {
+                if (pass.empty())
                     pass = TEST_PASS;
                 else
                     pass = Password();
             }
 
             switch (i.type) {
-            case DataType::BINARY_DATA:
-            {
+            case DataType::BINARY_DATA: {
                 RawBuffer receivedData;
                 ret = m_mgr->getData(i.alias, pass, receivedData);
                 BOOST_REQUIRE_MESSAGE(useWrongPass || receivedData == TEST_DATA,
@@ -525,22 +602,19 @@ void SchemeTest::ReadAll(bool useWrongPass) {
 
             case DataType::KEY_AES:
             case DataType::KEY_RSA_PRIVATE:
-            case DataType::KEY_RSA_PUBLIC:
-            {
+            case DataType::KEY_RSA_PUBLIC: {
                 KeyShPtr receivedKey;
                 ret = m_mgr->getKey(i.alias, pass, receivedKey);
                 break;
             }
 
-            case DataType::CERTIFICATE:
-            {
+            case DataType::CERTIFICATE: {
                 CertificateShPtr receivedCert;
                 ret = m_mgr->getCertificate(i.alias, pass, receivedCert);
                 break;
             }
 
-            case DataType::CHAIN_CERT_0: // pkcs
-            {
+            case DataType::CHAIN_CERT_0: { // pkcs
                 PKCS12ShPtr pkcs;
                 ret = m_mgr->getPKCS12(i.alias, pass, pass, pkcs);
                 break;
@@ -550,34 +624,34 @@ void SchemeTest::ReadAll(bool useWrongPass) {
                 BOOST_FAIL("Unsupported data type " << i.type);
             }
 
-            if(i.policy.extractable) {
-                if(useWrongPass)
+            if (i.policy.extractable) {
+                if (useWrongPass)
                     BOOST_REQUIRE_MESSAGE(ret == CKM_API_ERROR_AUTHENTICATION_FAILED,
                                           "Reading item " << i.alias << " should fail with " <<
                                           CKM_API_ERROR_AUTHENTICATION_FAILED << " got: " << ret);
                 else
                     BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS, "Reading item " << i.alias <<
                                           " failed with " << ret);
-            }
-            else
+            } else
                 BOOST_REQUIRE_MESSAGE(ret == CKM_API_ERROR_NOT_EXPORTABLE, "Item " << i.alias <<
                                       " should not be exportable");
         }
     }
 }
 
-void SchemeTest::SignVerify() {
+void SchemeTest::SignVerify()
+{
     SwitchToUser();
 
-    for(const auto& g:GROUPS) {
-        if(g.type == Group::KEY_PAIR_RSA) {
+    for (const auto &g : GROUPS) {
+        if (g.type == Group::KEY_PAIR_RSA) {
             BOOST_REQUIRE_MESSAGE(g.items.size() == 2, "Wrong number of keys");
             BOOST_REQUIRE_MESSAGE(g.items[0].type == DataType::KEY_RSA_PRIVATE &&
                                   g.items[1].type == DataType::KEY_RSA_PUBLIC, "Wrong key");
 
             SignVerifyItem(g.items[0], g.items[1]);
         } else {
-            for(const auto& i:g.items) {
+            for (const auto &i : g.items) {
                 switch (i.type) {
                 case DataType::CHAIN_CERT_0:
                     SignVerifyItem(i, i);
@@ -591,18 +665,19 @@ void SchemeTest::SignVerify() {
     }
 }
 
-void SchemeTest::EncryptDecrypt() {
+void SchemeTest::EncryptDecrypt()
+{
     SwitchToUser();
 
-    for(const auto& g:GROUPS) {
-        if(g.type == Group::KEY_PAIR_RSA) {
+    for (const auto &g : GROUPS) {
+        if (g.type == Group::KEY_PAIR_RSA) {
             BOOST_REQUIRE_MESSAGE(g.items.size() == 2, "Wrong number of keys");
             BOOST_REQUIRE_MESSAGE(g.items[0].type == DataType::KEY_RSA_PRIVATE &&
                                   g.items[1].type == DataType::KEY_RSA_PUBLIC, "Wrong key");
 
             EncryptDecryptItem(g.items[0], g.items[1]);
         } else {
-            for(const auto& i:g.items) {
+            for (const auto &i : g.items) {
                 switch (i.type) {
                 case DataType::KEY_AES:
                     EncryptDecryptItem(i);
@@ -620,55 +695,63 @@ void SchemeTest::EncryptDecrypt() {
     }
 }
 
-void SchemeTest::CreateChain() {
+void SchemeTest::CreateChain()
+{
     SwitchToUser();
 
-    for(const auto& g:GROUPS) {
-        if(g.type == Group::CERT_CHAIN) {
+    for (const auto &g : GROUPS) {
+        if (g.type == Group::CERT_CHAIN) {
             BOOST_REQUIRE_MESSAGE(g.items.size() == CHAIN_SIZE, "Not enough certificates");
-            for(const auto& c:g.items)
+
+            for (const auto &c : g.items)
                 BOOST_REQUIRE_MESSAGE(c.type == DataType::CERTIFICATE, "Wrong item type");
-            Items trusted(CHAIN_SIZE-1);
-            std::copy(g.items.begin(), g.items.begin() + CHAIN_SIZE-1, trusted.begin());
+
+            Items trusted(CHAIN_SIZE - 1);
+            std::copy(g.items.begin(), g.items.begin() + CHAIN_SIZE - 1, trusted.begin());
 
             // last one is ee (leaf)
             CreateChainItem(g.items.back(), trusted);
         } else {
-            for(const auto& i:g.items) {
-                if(i.type == DataType::CHAIN_CERT_0) // PKCS
+            for (const auto &i : g.items) {
+                if (i.type == DataType::CHAIN_CERT_0) // PKCS
                     CreateChainItem(i, { i });
             }
         }
     }
 }
 
-void SchemeTest::RemoveAll() {
+void SchemeTest::RemoveAll()
+{
     SwitchToUser();
 
-    for(const auto& g:GROUPS) {
-        for(const auto& i:g.items) {
+    for (const auto &g : GROUPS) {
+        for (const auto &i : g.items) {
             int ret = m_mgr->removeAlias(i.alias);
             BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS,
                                   "removeAlias() failed with " << ret << " for " << i.alias);
         }
     }
 }
-size_t SchemeTest::CountObjects() {
+size_t SchemeTest::CountObjects()
+{
     EnableDirectDbAccess();
 
     size_t ret = 0;
-    for(const auto& g:GROUPS) {
-        for(const auto& i:g.items) {
+
+    for (const auto &g : GROUPS) {
+        for (const auto &i : g.items) {
             DB::RowVector rows;
             // it is assumed that aliases are different
             m_db->getRows(i.alias, DB_LABEL, DataType::DB_FIRST, DataType::DB_LAST, rows);
             ret += rows.size();
         }
     }
+
     return ret;
 }
 
-void SchemeTest::RestoreDb() {
+void SchemeTest::RestoreDb()
+{
     restoreFile("key-7654");
     restoreFile("db-key-7654");
     restoreFile("db-7654");
@@ -676,31 +759,34 @@ void SchemeTest::RestoreDb() {
     m_directAccessEnabled = false;
 }
 
-void SchemeTest::CheckSchemeVersion(const ItemFilter& filter, int version) {
+void SchemeTest::CheckSchemeVersion(const ItemFilter &filter, int version)
+{
     EnableDirectDbAccess();
 
-    for(const auto& g:GROUPS) {
-        for(const auto& i:g.items) {
-            if(!filter.Matches(i))
+    for (const auto &g : GROUPS) {
+        for (const auto &i : g.items) {
+            if (!filter.Matches(i))
                 continue;
 
             DB::RowVector rows;
             m_db->getRows(i.alias, DB_LABEL, filter.typeFrom, filter.typeTo, rows);
             BOOST_REQUIRE_MESSAGE(rows.size() > 0, "No rows found for " << i.alias);
-            for(const auto& r : rows) {
+
+            for (const auto &r : rows) {
                 BOOST_REQUIRE_MESSAGE(
-                        (r.encryptionScheme >> ENC_SCHEME_OFFSET) == version,
-                        "Wrong encryption scheme for " << i.alias << ". Expected " << version <<
-                        " got: " << (r.encryptionScheme >> ENC_SCHEME_OFFSET));
+                    (r.encryptionScheme >> ENC_SCHEME_OFFSET) == version,
+                    "Wrong encryption scheme for " << i.alias << ". Expected " << version <<
+                    " got: " << (r.encryptionScheme >> ENC_SCHEME_OFFSET));
             }
         }
     }
 }
 
-void SchemeTest::EnableDirectDbAccess() {
+void SchemeTest::EnableDirectDbAccess()
+{
     SwitchToRoot();
 
-    if(m_directAccessEnabled)
+    if (m_directAccessEnabled)
         return;
 
     // direct access to db
@@ -715,7 +801,8 @@ void SchemeTest::EnableDirectDbAccess() {
     m_directAccessEnabled = true;
 }
 
-void SchemeTest::SignVerifyItem(const Item& itemPrv, const Item& itemPub) {
+void SchemeTest::SignVerifyItem(const Item &itemPrv, const Item &itemPub)
+{
     int ret;
     KeyShPtr receivedKey;
     RawBuffer signature;
@@ -726,7 +813,8 @@ void SchemeTest::SignVerifyItem(const Item& itemPrv, const Item& itemPub) {
                                  HashAlgorithm::SHA512,
                                  RSAPaddingAlgorithm::X931,
                                  signature);
-    BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS, "createSignature() failed with " << ret <<
+    BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS,
+                          "createSignature() failed with " << ret <<
                           " for " << itemPrv.alias);
     ret = m_mgr->verifySignature(itemPub.alias,
                                  itemPub.policy.password,
@@ -734,12 +822,13 @@ void SchemeTest::SignVerifyItem(const Item& itemPrv, const Item& itemPub) {
                                  signature,
                                  HashAlgorithm::SHA512,
                                  RSAPaddingAlgorithm::X931);
-    BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS, "verifySignature() failed with " << ret <<
+    BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS,
+                          "verifySignature() failed with " << ret <<
                           " for " << itemPub.alias);
-
 }
 
-void SchemeTest::EncryptDecryptItem(const Item& item) {
+void SchemeTest::EncryptDecryptItem(const Item &item)
+{
     CryptoAlgorithm algo;
     RawBuffer iv = createRandomBuffer(IV_LEN);
     RawBuffer encrypted, decrypted;
@@ -748,45 +837,58 @@ void SchemeTest::EncryptDecryptItem(const Item& item) {
     algo.setParam(ParamName::ALGO_TYPE, AlgoType::AES_GCM);
     algo.setParam(ParamName::ED_IV, iv);
 
-    ret = m_mgr->encrypt(algo, item.alias, item.policy.password, TEST_DATA, encrypted);
-    BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS, "encrypt() failed iwth " << ret << " for " <<
+    ret = m_mgr->encrypt(algo, item.alias, item.policy.password, TEST_DATA,
+                         encrypted);
+    BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS,
+                          "encrypt() failed iwth " << ret << " for " <<
                           item.alias);
 
-    ret = m_mgr->decrypt(algo, item.alias, item.policy.password, encrypted, decrypted);
-    BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS, "decrypt() failed iwth " << ret << " for " <<
+    ret = m_mgr->decrypt(algo, item.alias, item.policy.password, encrypted,
+                         decrypted);
+    BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS,
+                          "decrypt() failed iwth " << ret << " for " <<
                           item.alias);
 
-    BOOST_REQUIRE_MESSAGE(decrypted == TEST_DATA, "Decrypted data not equal to original");
+    BOOST_REQUIRE_MESSAGE(decrypted == TEST_DATA,
+                          "Decrypted data not equal to original");
 }
 
-void SchemeTest::EncryptDecryptItem(const Item& itemPrv, const Item& itemPub) {
+void SchemeTest::EncryptDecryptItem(const Item &itemPrv, const Item &itemPub)
+{
     CryptoAlgorithm algo;
     RawBuffer encrypted, decrypted;
     int ret;
 
     algo.setParam(ParamName::ALGO_TYPE, AlgoType::RSA_OAEP);
 
-    ret = m_mgr->encrypt(algo, itemPub.alias, itemPub.policy.password, TEST_DATA, encrypted);
-    BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS, "encrypt() failed iwth " << ret << " for " <<
+    ret = m_mgr->encrypt(algo, itemPub.alias, itemPub.policy.password, TEST_DATA,
+                         encrypted);
+    BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS,
+                          "encrypt() failed iwth " << ret << " for " <<
                           itemPub.alias);
 
-    ret = m_mgr->decrypt(algo, itemPrv.alias, itemPrv.policy.password, encrypted, decrypted);
-    BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS, "decrypt() failed iwth " << ret << " for " <<
+    ret = m_mgr->decrypt(algo, itemPrv.alias, itemPrv.policy.password, encrypted,
+                         decrypted);
+    BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS,
+                          "decrypt() failed iwth " << ret << " for " <<
                           itemPrv.alias);
 
-    BOOST_REQUIRE_MESSAGE(decrypted == TEST_DATA, "Decrypted data not equal to original");
+    BOOST_REQUIRE_MESSAGE(decrypted == TEST_DATA,
+                          "Decrypted data not equal to original");
 }
 
-void SchemeTest::CreateChainItem(const Item& leaf, const Items& certs) {
+void SchemeTest::CreateChainItem(const Item &leaf, const Items &certs)
+{
     CertificateShPtrVector chain;
     AliasVector trusted;
 
-    if(!leaf.policy.extractable || !leaf.policy.password.empty())
+    if (!leaf.policy.extractable || !leaf.policy.password.empty())
         return;
 
-    for(const auto& i : certs) {
-        if(!i.policy.extractable || !i.policy.password.empty())
+    for (const auto &i : certs) {
+        if (!i.policy.extractable || !i.policy.password.empty())
             return;
+
         trusted.push_back(i.alias);
     }
 
@@ -799,5 +901,6 @@ void SchemeTest::CreateChainItem(const Item& leaf, const Items& certs) {
     ret = m_mgr->getCertificateChain(leafCrt, AliasVector(), trusted, false, chain);
     BOOST_REQUIRE_MESSAGE(ret == CKM_API_SUCCESS,
                           "getCertificateChain() failed with " << ret);
-    BOOST_REQUIRE_MESSAGE(chain.size() == CHAIN_LEN, "Wrong chain length: " << chain.size());
+    BOOST_REQUIRE_MESSAGE(chain.size() == CHAIN_LEN,
+                          "Wrong chain length: " << chain.size());
 }

@@ -25,7 +25,8 @@
 
 namespace CKM {
 
-EncryptionReceiver::EncryptionReceiver(MessageBuffer& buffer, AsyncRequest::Map& requests) :
+EncryptionReceiver::EncryptionReceiver(MessageBuffer &buffer,
+                                       AsyncRequest::Map &requests) :
     m_buffer(buffer),
     m_requests(requests)
 {
@@ -40,6 +41,7 @@ void EncryptionReceiver::processResponse()
     m_buffer.Deserialize(command, id, retCode, output);
 
     auto it = m_requests.find(id);
+
     if (it == m_requests.end()) {
         LogError("Request with id " << id << " not found!");
         ThrowMsg(BadResponse, "Request with id " << id << " not found!");
@@ -55,13 +57,17 @@ void EncryptionReceiver::processResponse()
             req.observer->ReceivedEncrypted(std::move(output));
         else
             req.observer->ReceivedError(retCode);
+
         break;
+
     case EncryptionCommand::DECRYPT:
         if (retCode == CKM_API_SUCCESS)
             req.observer->ReceivedDecrypted(std::move(output));
         else
             req.observer->ReceivedError(retCode);
+
         break;
+
     default:
         LogError("Unknown command id: " << command);
         ThrowMsg(BadResponse, "Unknown command id: " << command);

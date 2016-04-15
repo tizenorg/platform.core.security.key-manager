@@ -34,11 +34,12 @@
 namespace CKM {
 namespace {
 
-typedef std::unique_ptr<BIO, std::function<void(BIO*)>> BioUniquePtr;
+typedef std::unique_ptr<BIO, std::function<void(BIO *)>> BioUniquePtr;
 
 } // anonymous namespace
 
-PKCS12Impl::PKCS12Impl(const KeyShPtr &key, const CertificateShPtr &cert, const CertificateShPtrVector &caChain)
+PKCS12Impl::PKCS12Impl(const KeyShPtr &key, const CertificateShPtr &cert,
+                       const CertificateShPtrVector &caChain)
     : m_pkey(key),
       m_cert(cert),
       m_ca(caChain)
@@ -56,8 +57,10 @@ PKCS12Impl::PKCS12Impl(const RawBuffer &buffer, const Password &password)
     LogDebug("Start to parse PKCS12");
 
     int result = BIO_write(bio.get(), buffer.data(), buffer.size());
+
     if (result != static_cast<int>(buffer.size())) {
-        LogError("BIO_write failed. result = " << result << " Expected: " << buffer.size());
+        LogError("BIO_write failed. result = " << result << " Expected: " <<
+                 buffer.size());
         return;
     }
 
@@ -83,6 +86,7 @@ PKCS12Impl::PKCS12Impl(const RawBuffer &buffer, const Password &password)
 
     if (pkey) {
         KeyImpl::EvpShPtr ptr(pkey, EVP_PKEY_free);
+
         switch (EVP_PKEY_type(pkey->type)) {
         case EVP_PKEY_RSA:
             m_pkey = std::make_shared<KeyImpl>(ptr, KeyType::KEY_RSA_PRIVATE);
@@ -170,14 +174,17 @@ PKCS12ShPtr PKCS12::create(const RawBuffer &rawBuffer, const Password &password)
 {
     try {
         auto output = std::make_shared<PKCS12Impl>(rawBuffer, password);
+
         if (output->empty())
             output.reset();
+
         return output;
     } catch (const std::bad_alloc &e) {
         LogDebug("Bad alloc was caught during PKCS12 creation");
     } catch (...) {
         LogError("Critical error: Unknown exception was caught during PCKS12Impl creation!");
     }
+
     return PKCS12ShPtr();
 }
 

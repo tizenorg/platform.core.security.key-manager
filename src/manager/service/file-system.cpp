@@ -53,7 +53,7 @@ const std::string CKM_LOCK_FILE = RUN_DIR "/" SERVICE_NAME "/key-manager.pid";
 namespace CKM {
 
 FileSystem::FileSystem(uid_t uid)
-  : m_uid(uid)
+    : m_uid(uid)
 {
 }
 
@@ -99,7 +99,8 @@ RawBuffer FileSystem::loadFile(const std::string &path) const
     }
 
     std::istreambuf_iterator<char> begin(is), end;
-    std::vector<char> buff(begin, end); // This trick does not work with boost vector
+    std::vector<char> buff(begin,
+                           end); // This trick does not work with boost vector
 
     RawBuffer buffer(buff.size());
     memcpy(buffer.data(), buff.data(), buff.size());
@@ -116,9 +117,11 @@ RawBuffer FileSystem::getDBDEK() const
     return loadFile(getDBDEKPath());
 }
 
-void FileSystem::saveFile(const std::string &path, const RawBuffer &buffer) const
+void FileSystem::saveFile(const std::string &path,
+                          const RawBuffer &buffer) const
 {
-    std::ofstream os(path, std::ios::out | std::ofstream::binary | std::ofstream::trunc);
+    std::ofstream os(path, std::ios::out | std::ofstream::binary |
+                     std::ofstream::trunc);
     std::copy(buffer.begin(), buffer.end(), std::ostreambuf_iterator<char>(os));
 
     // Prevent desynchronization in batter remove test.
@@ -146,6 +149,7 @@ void FileSystem::addRemovedApp(const std::string &smackLabel) const
     outfile.open(getRemovedAppsPath(), std::ios_base::app);
     outfile << smackLabel << std::endl;
     outfile.close();
+
     if (outfile.fail()) {
         auto desc = GetErrnoString(errno);
         ThrowErr(Exc::FileSystemFailed,
@@ -159,17 +163,22 @@ AppLabelVector FileSystem::clearRemovedsApps() const
     AppLabelVector removedApps;
     std::string line;
     std::ifstream removedAppsFile(getRemovedAppsPath());
+
     if (removedAppsFile.is_open()) {
         while (!removedAppsFile.eof()) {
             getline(removedAppsFile, line);
+
             if (line.size() > 0)
                 removedApps.push_back(line);
         }
+
         removedAppsFile.close();
     }
+
     // truncate the contents
     std::ofstream truncateFile;
-    truncateFile.open(getRemovedAppsPath(), std::ofstream::out | std::ofstream::trunc);
+    truncateFile.open(getRemovedAppsPath(),
+                      std::ofstream::out | std::ofstream::trunc);
     truncateFile.close();
     return removedApps;
 }
@@ -177,11 +186,14 @@ AppLabelVector FileSystem::clearRemovedsApps() const
 int FileSystem::init()
 {
     errno = 0;
+
     if ((mkdir(RW_DATA_DIR, 0700)) && (errno != EEXIST)) {
         int err = errno;
-        LogError("Error in mkdir " << RW_DATA_DIR << ". Reason: " << GetErrnoString(err));
+        LogError("Error in mkdir " << RW_DATA_DIR << ". Reason: " << GetErrnoString(
+                     err));
         return -1; // TODO set up some error code
     }
+
     return 0;
 }
 
@@ -189,21 +201,21 @@ UidVector FileSystem::getUIDsFromDBFile()
 {
     UidVector uids;
 
-    forEachFile(RW_DATA_DIR, [&uids](const std::string &filename) {
+    forEachFile(RW_DATA_DIR, [&uids](const std::string & filename) {
         if (strncmp(filename.c_str(), CKM_KEY_PREFIX.c_str(), CKM_KEY_PREFIX.size()))
             return;
 
         try {
             uids.emplace_back(static_cast<uid_t>(std::stoi((filename.c_str())
-                    + CKM_KEY_PREFIX.size())));
+                                                 + CKM_KEY_PREFIX.size())));
         } catch (const std::invalid_argument) {
             LogDebug("Error in extracting uid from db file. "
-                "Error=std::invalid_argument. "
-                "This will be ignored.File=" << filename);
-        } catch(const std::out_of_range) {
+                     "Error=std::invalid_argument. "
+                     "This will be ignored.File=" << filename);
+        } catch (const std::out_of_range) {
             LogDebug("Error in extracting uid from db file. "
-                "Error=std::out_of_range. "
-                "This will be ignored. File="<< filename);
+                     "Error=std::out_of_range. "
+                     "This will be ignored. File=" << filename);
         }
 
         return;
@@ -220,28 +232,28 @@ int FileSystem::removeUserData() const
         retCode = -1;
         err = errno;
         LogDebug("Error in unlink user database: " << getDBPath()
-            << "Errno: " << errno << " " << GetErrnoString(err));
+                 << "Errno: " << errno << " " << GetErrnoString(err));
     }
 
     if (unlink(getDKEKPath().c_str())) {
         retCode = -1;
         err = errno;
         LogDebug("Error in unlink user DKEK: " << getDKEKPath()
-            << "Errno: " << errno << " " << GetErrnoString(err));
+                 << "Errno: " << errno << " " << GetErrnoString(err));
     }
 
     if (unlink(getDBDEKPath().c_str())) {
         retCode = -1;
         err = errno;
         LogDebug("Error in unlink user DBDEK: " << getDBDEKPath()
-            << "Errno: " << errno << " " << GetErrnoString(err));
+                 << "Errno: " << errno << " " << GetErrnoString(err));
     }
 
     if (unlink(getRemovedAppsPath().c_str())) {
         retCode = -1;
         err = errno;
         LogDebug("Error in unlink user's Removed Apps File: " << getRemovedAppsPath()
-            << "Errno: " << errno << " " << GetErrnoString(err));
+                 << "Errno: " << errno << " " << GetErrnoString(err));
     }
 
     return retCode;

@@ -39,7 +39,7 @@ namespace InitialValues {
 class InitialValuesFile {
 public:
     InitialValuesFile(const std::string &XML_filename,
-                      CKMLogic & db_logic);
+                      CKMLogic &db_logic);
 
     int Validate(const std::string &XSD_file);
     int Parse();
@@ -51,7 +51,8 @@ protected:
         DATA
     };
 
-    XML::Parser::ElementHandlerPtr GetObjectHandler(ObjectType type, const CKM::RawBuffer &encryptedKey);
+    XML::Parser::ElementHandlerPtr GetObjectHandler(ObjectType type,
+            const CKM::RawBuffer &encryptedKey);
     void ReleaseObjectHandler(ObjectType type);
 
     XML::Parser::ElementHandlerPtr GetBufferHandler(EncodingType type);
@@ -63,8 +64,8 @@ protected:
 private:
     class HeaderHandler : public XML::Parser::ElementHandler {
     public:
-        explicit HeaderHandler(InitialValuesFile & parent);
-        virtual void Start(const XML::Parser::Attributes & attr);
+        explicit HeaderHandler(InitialValuesFile &parent);
+        virtual void Start(const XML::Parser::Attributes &attr);
         virtual void Characters(const std::string &) {}
         virtual void End() {}
 
@@ -72,12 +73,12 @@ private:
 
     private:
         int m_version;
-        InitialValuesFile & m_parent;
+        InitialValuesFile &m_parent;
     };
 
     class EncryptionKeyHandler : public XML::Parser::ElementHandler {
     public:
-        explicit EncryptionKeyHandler(InitialValuesFile & parent);
+        explicit EncryptionKeyHandler(InitialValuesFile &parent);
         virtual void Start(const XML::Parser::Attributes &) {}
         virtual void Characters(const std::string &data);
         virtual void End();
@@ -86,13 +87,13 @@ private:
 
     private:
         CKM::RawBuffer m_encryptedKey;
-        InitialValuesFile & m_parent;
+        InitialValuesFile &m_parent;
     };
 
     std::string m_filename;
     XML::Parser m_parser;
     InitialValueHandler::InitialValueHandlerPtr m_currentHandler;
-    CKMLogic & m_db_logic;
+    CKMLogic &m_db_logic;
     typedef std::shared_ptr<HeaderHandler> HeaderHandlerPtr;
     typedef std::shared_ptr<EncryptionKeyHandler> EncryptionKeyHandlerPtr;
     HeaderHandlerPtr m_header;
@@ -101,7 +102,7 @@ private:
 
     void registerElementListeners();
     static void Error(const XML::Parser::ErrorType errorType,
-                      const std::string & logMsg);
+                      const std::string &logMsg);
 };
 
 }

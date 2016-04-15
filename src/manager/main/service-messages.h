@@ -44,10 +44,10 @@ struct MsgBase {
 // key request
 struct MsgKeyRequest : public MsgBase {
     MsgKeyRequest(int id,
-                  const Credentials& cred,
-                  const Name& name,
-                  const Label& label,
-                  const Password& password) :
+                  const Credentials &cred,
+                  const Name &name,
+                  const Label &label,
+                  const Password &password) :
         MsgBase(id),
         cred(cred),
         name(name),
@@ -64,7 +64,8 @@ struct MsgKeyRequest : public MsgBase {
 
 // key response
 struct MsgKeyResponse : public MsgBase {
-    MsgKeyResponse(int id, const Crypto::GObjShPtr& key, int errorCode = CKM_API_SUCCESS) :
+    MsgKeyResponse(int id, const Crypto::GObjShPtr &key,
+                   int errorCode = CKM_API_SUCCESS) :
         MsgBase(id),
         key(key),
         error(errorCode)
@@ -77,12 +78,13 @@ struct MsgKeyResponse : public MsgBase {
 
 struct MsgRemoveAppData {
     explicit MsgRemoveAppData(std::string pkgIdT)
-      : pkgId(std::move(pkgIdT))
+        : pkgId(std::move(pkgIdT))
     {}
 
     std::string pkgId;
 };
 
-typedef CommunicationManager<MsgKeyRequest, MsgKeyResponse, MsgRemoveAppData> CommMgr;
+typedef CommunicationManager<MsgKeyRequest, MsgKeyResponse, MsgRemoveAppData>
+CommMgr;
 
 } /* namespace CKM */

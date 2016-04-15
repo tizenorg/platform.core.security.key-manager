@@ -29,8 +29,7 @@
 
 namespace CKM {
 
-class ManagerAsync::Impl
-{
+class ManagerAsync::Impl {
 public:
     Impl();
 
@@ -39,130 +38,135 @@ public:
     virtual ~Impl();
 
     void saveKey(
-            const ObserverPtr& observer,
-            const Alias& alias,
-            const KeyShPtr& key,
-            const Policy& policy);
+        const ObserverPtr &observer,
+        const Alias &alias,
+        const KeyShPtr &key,
+        const Policy &policy);
     void saveCertificate(
-            const ObserverPtr& observer,
-            const Alias& alias,
-            const CertificateShPtr& cert,
-            const Policy& policy);
+        const ObserverPtr &observer,
+        const Alias &alias,
+        const CertificateShPtr &cert,
+        const Policy &policy);
     void saveData(
-            const ObserverPtr& observer,
-            const Alias& alias,
-            const RawBuffer& data,
-            const Policy& policy);
+        const ObserverPtr &observer,
+        const Alias &alias,
+        const RawBuffer &data,
+        const Policy &policy);
     void savePKCS12(
-            const ObserverPtr& observer,
-            const Alias &alias,
-            const PKCS12ShPtr &pkcs,
-            const Policy &keyPolicy,
-            const Policy &certPolicy);
+        const ObserverPtr &observer,
+        const Alias &alias,
+        const PKCS12ShPtr &pkcs,
+        const Policy &keyPolicy,
+        const Policy &certPolicy);
 
     void createSignature(
-            const ObserverPtr& observer,
-            const Alias& privateKeyAlias,
-            const Password& password,
-            const RawBuffer& message,
-            const CryptoAlgorithm& cAlgorithm);
+        const ObserverPtr &observer,
+        const Alias &privateKeyAlias,
+        const Password &password,
+        const RawBuffer &message,
+        const CryptoAlgorithm &cAlgorithm);
     void verifySignature(
-            const ObserverPtr& observer,
-            const Alias& publicKeyOrCertAlias,
-            const Password& password,
-            const RawBuffer& message,
-            const RawBuffer& signature,
-            const CryptoAlgorithm& cAlgorithm);
+        const ObserverPtr &observer,
+        const Alias &publicKeyOrCertAlias,
+        const Password &password,
+        const RawBuffer &message,
+        const RawBuffer &signature,
+        const CryptoAlgorithm &cAlgorithm);
 
     void ocspCheck(
-            const ObserverPtr& observer,
-            const CertificateShPtrVector& certificateChainVector);
+        const ObserverPtr &observer,
+        const CertificateShPtrVector &certificateChainVector);
 
     void setPermission(
-            const ObserverPtr& observer,
-            const Alias& alias,
-            const Label& accessor,
-            PermissionMask permissionMask);
+        const ObserverPtr &observer,
+        const Alias &alias,
+        const Label &accessor,
+        PermissionMask permissionMask);
 
     // generic methods
     void saveBinaryData(
-            const ManagerAsync::ObserverPtr& observer,
-            const Alias& alias,
-            DataType dataType,
-            const RawBuffer& rawData,
-            const Policy& policy);
+        const ManagerAsync::ObserverPtr &observer,
+        const Alias &alias,
+        DataType dataType,
+        const RawBuffer &rawData,
+        const Policy &policy);
 
     void removeAlias(
-            const ManagerAsync::ObserverPtr& observer,
-            const Alias &alias);
+        const ManagerAsync::ObserverPtr &observer,
+        const Alias &alias);
 
     void getBinaryData(
-            const ManagerAsync::ObserverPtr& observer,
-            const Alias &alias,
-            DataType sendDataType,
-            const Password &password);
+        const ManagerAsync::ObserverPtr &observer,
+        const Alias &alias,
+        DataType sendDataType,
+        const Password &password);
 
     void getPKCS12(
-            const ManagerAsync::ObserverPtr& observer,
-            const Alias &alias,
-            const Password &keyPassword,
-            const Password &certPassword);
+        const ManagerAsync::ObserverPtr &observer,
+        const Alias &alias,
+        const Password &keyPassword,
+        const Password &certPassword);
 
     void getBinaryDataAliasVector(
-            const ManagerAsync::ObserverPtr& observer,
-            DataType dataType);
+        const ManagerAsync::ObserverPtr &observer,
+        DataType dataType);
 
     void createKeyPair(
-            const ManagerAsync::ObserverPtr& observer,
-            const KeyType key_type,
-            const int     additional_param,
-            const Alias  &privateKeyAlias,
-            const Alias  &publicKeyAlias,
-            const Policy &policyPrivateKey,
-            const Policy &policyPublicKey);
+        const ManagerAsync::ObserverPtr &observer,
+        const KeyType key_type,
+        const int     additional_param,
+        const Alias  &privateKeyAlias,
+        const Alias  &publicKeyAlias,
+        const Policy &policyPrivateKey,
+        const Policy &policyPublicKey);
 
     void createKeyAES(
-            const ManagerAsync::ObserverPtr& observer,
-            const size_t  size,
-            const Alias  &keyAlias,
-            const Policy &policyKey);
+        const ManagerAsync::ObserverPtr &observer,
+        const size_t  size,
+        const Alias  &keyAlias,
+        const Policy &policyKey);
 
     template <typename T>
     void getCertChain(
-            const ManagerAsync::ObserverPtr& observer,
-            LogicCommand command,
-            const CertificateShPtr &certificate,
-            const T &untrusted,
-            const T &trusted,
-            bool useSystemTrustedCertificates)
+        const ManagerAsync::ObserverPtr &observer,
+        LogicCommand command,
+        const CertificateShPtr &certificate,
+        const T &untrusted,
+        const T &trusted,
+        bool useSystemTrustedCertificates)
     {
         observerCheck(observer);
+
         if (!certificate) {
             observer->ReceivedError(CKM_API_ERROR_INPUT_PARAM);
             return;
         }
+
         try_catch_async([&] {
             sendToStorage(observer,
-                          static_cast<int>(command),
-                          m_counter,
-                          certificate->getDER(),
-                          untrusted,
-                          trusted,
-                          useSystemTrustedCertificates);
-        }, [&observer](int error){ observer->ReceivedError(error);});
+            static_cast<int>(command),
+            m_counter,
+            certificate->getDER(),
+            untrusted,
+            trusted,
+            useSystemTrustedCertificates);
+        }, [&observer](int error) {
+            observer->ReceivedError(error);
+        });
     }
 
     void crypt(
-            const ObserverPtr& observer,
-            const CryptoAlgorithm& algo,
-            const Alias& keyAlias,
-            const Password& password,
-            const RawBuffer& input,
-            bool encryption);
+        const ObserverPtr &observer,
+        const CryptoAlgorithm &algo,
+        const Alias &keyAlias,
+        const Password &password,
+        const RawBuffer &input,
+        bool encryption);
 
 private:
     template <typename... Args>
-    void sendToStorage(const ManagerAsync::ObserverPtr& observer, const Args&... args)
+    void sendToStorage(const ManagerAsync::ObserverPtr &observer,
+                       const Args &... args)
     {
         m_counter++; // yes, it changes m_counter argument passed in args
 
@@ -173,15 +177,17 @@ private:
                                            m_counter));
     }
 
-    void observerCheck(const ManagerAsync::ObserverPtr& observer);
+    void observerCheck(const ManagerAsync::ObserverPtr &observer);
 
     typedef std::unique_ptr<ConnectionThread> ConnectionThreadPtr;
 
-    ConnectionThreadPtr& thread() {
+    ConnectionThreadPtr &thread()
+    {
         if (!m_thread || m_thread->finished()) {
             m_thread.reset(new ConnectionThread());
             m_thread->run();
         }
+
         return m_thread;
     }
 

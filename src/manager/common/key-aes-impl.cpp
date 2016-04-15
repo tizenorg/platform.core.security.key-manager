@@ -62,8 +62,10 @@ KeyShPtr Key::createAES(const RawBuffer &raw)
 {
     try {
         KeyShPtr output = std::make_shared<KeyAESImpl>(raw);
+
         if (output->empty())
             output.reset();
+
         return output;
     } catch (const std::bad_alloc &) {
         LogDebug("Bad alloc during KeyAESImpl creation");
@@ -72,6 +74,7 @@ KeyShPtr Key::createAES(const RawBuffer &raw)
     } catch (...) {
         LogError("Critical error: Unknown exception was caught during KeyAESImpl creation");
     }
+
     return KeyShPtr();
 }
 

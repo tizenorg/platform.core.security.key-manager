@@ -37,17 +37,18 @@ namespace {
 const size_t RECV_BUFFER_SIZE = 2048;
 }
 
-Service::Service(IDescriptorSet& descriptors, const std::string& interface) :
+Service::Service(IDescriptorSet &descriptors, const std::string &interface) :
     m_interface(interface),
     m_descriptors(descriptors)
 {
 }
 
-void Service::addRequest(AsyncRequest&& req)
+void Service::addRequest(AsyncRequest &&req)
 {
     if (!m_socket) {
         m_socket.reset(new SockRAII());
         int ret;
+
         if (CKM_API_SUCCESS != (ret = m_socket->connect(m_interface.c_str()))) {
             LogError("Socket connection failed: " << ret);
             m_socket.reset();
@@ -72,7 +73,7 @@ void Service::serviceError(int error)
     }
 
     // notify observers waiting for response
-    for (const auto& it: m_responseMap)
+    for (const auto &it : m_responseMap)
         it.second.observer->ReceivedError(error);
 
     m_responseMap.clear();
@@ -104,7 +105,7 @@ void Service::socketReady(int sock, short revents)
             LogError("Unexpected event: " << revents << "!=" << POLLOUT);
             serviceError(CKM_API_ERROR_SOCKET);
         }
-    } catch (const IReceiver::BadResponse&) {
+    } catch (const IReceiver::BadResponse &) {
         serviceError(CKM_API_ERROR_BAD_RESPONSE);
     } catch (std::exception &e) {
         LogError("STD exception " << e.what());
@@ -124,14 +125,16 @@ void Service::sendData()
     }
 
     while (!m_sendQueue.empty()) {
-        AsyncRequest& req = m_sendQueue.front();
+        AsyncRequest &req = m_sendQueue.front();
 
         ssize_t temp = TEMP_FAILURE_RETRY(::send(m_socket->get(),
-                                                 &req.buffer[req.written],
-                                                 req.buffer.size() - req.written,
-                                                 MSG_NOSIGNAL));
+                                          &req.buffer[req.written],
+                                          req.buffer.size() - req.written,
+                                          MSG_NOSIGNAL));
+
         if (-1 == temp) {
             int err = errno;
+
             // can't write? -> go to sleep
             if (EAGAIN == err || EWOULDBLOCK == err)
                 return;
@@ -150,7 +153,7 @@ void Service::sendData()
 
             // update poll flags if necessary
             if (m_sendQueue.empty() || m_responseMap.empty())
-                watch((m_sendQueue.empty()? 0 : POLLOUT) | POLLIN);
+                watch((m_sendQueue.empty() ? 0 : POLLOUT) | POLLIN);
 
             m_responseMap.insert(std::make_pair(finished.id, finished));
         }
@@ -161,7 +164,9 @@ void Service::receiveData()
 {
     char buffer[RECV_BUFFER_SIZE];
 
-    ssize_t temp = TEMP_FAILURE_RETRY(::recv(m_socket->get(), buffer, RECV_BUFFER_SIZE, 0));
+    ssize_t temp = TEMP_FAILURE_RETRY(::recv(m_socket->get(), buffer,
+                                      RECV_BUFFER_SIZE, 0));
+
     if (-1 == temp) {
         int err = errno;
         LogError("Error in recv: " << GetErrnoString(err));
@@ -178,12 +183,13 @@ void Service::receiveData()
     if (!m_responseBuffer)
         m_responseBuffer.reset(new MessageBuffer());
 
-    RawBuffer raw(buffer, buffer+temp);
+    RawBuffer raw(buffer, buffer + temp);
     m_responseBuffer->Push(raw);
 
     // parse while you can
     while (m_responseBuffer->Ready()) {
         std::unique_ptr<IReceiver> receiver;
+
         if (m_interface == SERVICE_SOCKET_CKM_STORAGE)
             receiver.reset(new StorageReceiver(*m_responseBuffer, m_responseMap));
         else if (m_interface == SERVICE_SOCKET_OCSP)
@@ -195,10 +201,11 @@ void Service::receiveData()
             serviceError(CKM_API_ERROR_RECV_FAILED);
             return;
         }
+
         receiver->processResponse();
 
         if (m_responseMap.empty())
-            watch(m_sendQueue.empty()?0:POLLOUT);
+            watch(m_sendQueue.empty() ? 0 : POLLOUT);
     }
 }
 
@@ -209,7 +216,9 @@ void Service::watch(short events)
     else
         m_descriptors.add(m_socket->get(),
                           events,
-                          [this](int sock, short revents){ socketReady(sock, revents); });
+        [this](int sock, short revents) {
+        socketReady(sock, revents);
+    });
 }
 
 } // namespace CKM

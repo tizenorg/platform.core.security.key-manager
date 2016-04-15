@@ -39,6 +39,7 @@ public:
     void LoopStop();
     void SetCommManager(CommMgr *manager);
     virtual ~GLIBLogic();
+
 protected:
     static int packageEventCallbackStatic(
         uid_t uid,

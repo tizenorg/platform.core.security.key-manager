@@ -28,10 +28,9 @@
 
 namespace CKM {
 
-class OcspReceiver : public IReceiver
-{
+class OcspReceiver : public IReceiver {
 public:
-    OcspReceiver(MessageBuffer& buffer, AsyncRequest::Map& reqMap);
+    OcspReceiver(MessageBuffer &buffer, AsyncRequest::Map &reqMap);
     virtual ~OcspReceiver() {}
 
     NONCOPYABLE(OcspReceiver);
@@ -39,8 +38,8 @@ public:
     void processResponse();
 
 private:
-    MessageBuffer& m_buffer;
-    AsyncRequest::Map& m_requests;
+    MessageBuffer &m_buffer;
+    AsyncRequest::Map &m_requests;
 };
 
 } /* namespace CKM */

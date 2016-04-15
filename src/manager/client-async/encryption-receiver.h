@@ -28,10 +28,9 @@
 
 namespace CKM {
 
-class EncryptionReceiver : public IReceiver
-{
+class EncryptionReceiver : public IReceiver {
 public:
-    EncryptionReceiver(MessageBuffer& buffer, AsyncRequest::Map& reqMap);
+    EncryptionReceiver(MessageBuffer &buffer, AsyncRequest::Map &reqMap);
     virtual ~EncryptionReceiver() {}
 
     NONCOPYABLE(EncryptionReceiver);
@@ -39,8 +38,8 @@ public:
     void processResponse();
 
 private:
-    MessageBuffer& m_buffer;
-    AsyncRequest::Map& m_requests;
+    MessageBuffer &m_buffer;
+    AsyncRequest::Map &m_requests;
 };
 
 } /* namespace CKM */

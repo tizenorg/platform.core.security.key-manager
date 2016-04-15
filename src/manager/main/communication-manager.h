@@ -37,17 +37,18 @@ public:
 
     // Listener is an object callable with const M& as argument
     template <typename L>
-    void Register(L&& listener)
+    void Register(L &&listener)
     {
         m_listeners.push_back(std::move(listener));
     }
 
     // Sends message of type M to all registered listeners
     // Returns the number of listeners called
-    size_t SendMessage(const M& msg) const
+    size_t SendMessage(const M &msg) const
     {
-        for (auto& it : m_listeners)
+        for (auto &it : m_listeners)
             it(msg);
+
         return m_listeners.size();
     }
 
@@ -57,7 +58,7 @@ protected:
     ~MessageManager() {}
 
 private:
-    std::list<std::function<void(const M&)>> m_listeners;
+    std::list<std::function<void(const M &)>> m_listeners;
 };
 
 // generic template declaration
@@ -77,7 +78,7 @@ public:
 
     // M - message type, L - listener to register
     template <typename M, typename L>
-    void Register(L&& listener)
+    void Register(L &&listener)
     {
         MessageManager<M>::Register(std::move(listener));
     }
@@ -85,7 +86,7 @@ public:
     // M message type
     // Sending a message calls an unknown listener callback on the receiving side. It may throw.
     template <typename M>
-    size_t SendMessage(const M& msg) const
+    size_t SendMessage(const M &msg) const
     {
         return MessageManager<M>::SendMessage(msg);
     }

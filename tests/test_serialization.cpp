@@ -36,26 +36,28 @@ std::string AAD_STR("sdfdsgsghrtkghwiuho3irhfoewituhre");
 RawBuffer IV(IV_STR.begin(), IV_STR.end());
 RawBuffer AAD(AAD_STR.begin(), AAD_STR.end());
 
-void checkIntParam(const CryptoAlgorithm& algo, ParamName name, uint64_t expected)
+void checkIntParam(const CryptoAlgorithm &algo, ParamName name,
+                   uint64_t expected)
 {
     uint64_t integer;
     BOOST_REQUIRE_MESSAGE(algo.getParam(name, integer),
                           "Failed to get parameter " << static_cast<int>(name));
     BOOST_REQUIRE_MESSAGE(
-            integer == expected,
-            "Parameter " << static_cast<int>(name) <<
-            " expected value: " << expected <<
-            " got: " << integer);
+        integer == expected,
+        "Parameter " << static_cast<int>(name) <<
+        " expected value: " << expected <<
+        " got: " << integer);
 }
 
-void checkIntParamNegative(const CryptoAlgorithm& algo, ParamName name)
+void checkIntParamNegative(const CryptoAlgorithm &algo, ParamName name)
 {
     uint64_t integer;
     BOOST_REQUIRE_MESSAGE(!algo.getParam(name, integer),
                           "Getting int parameter " << static_cast<int>(name) << " should fail");
 }
 
-void checkBufferParam(const CryptoAlgorithm& algo, ParamName name, RawBuffer expected)
+void checkBufferParam(const CryptoAlgorithm &algo, ParamName name,
+                      RawBuffer expected)
 {
     RawBuffer buffer;
     BOOST_REQUIRE_MESSAGE(algo.getParam(name, buffer),
@@ -64,7 +66,7 @@ void checkBufferParam(const CryptoAlgorithm& algo, ParamName name, RawBuffer exp
                           "Parameter " << static_cast<int>(name) << " different than expected");
 }
 
-void checkBufferParamNegative(const CryptoAlgorithm& algo, ParamName name)
+void checkBufferParamNegative(const CryptoAlgorithm &algo, ParamName name)
 {
     RawBuffer buffer;
     BOOST_REQUIRE_MESSAGE(!algo.getParam(name, buffer),
@@ -72,24 +74,27 @@ void checkBufferParamNegative(const CryptoAlgorithm& algo, ParamName name)
 }
 
 template <typename T>
-void setParam(CryptoAlgorithm& algo, ParamName name, const T& value, bool success)
+void setParam(CryptoAlgorithm &algo, ParamName name, const T &value,
+              bool success)
 {
     BOOST_REQUIRE_MESSAGE(success == algo.setParam(name, value),
                           "Adding param " << static_cast<int>(name) <<
-                          " should " << (success ? "succeed":"fail"));
+                          " should " << (success ? "succeed" : "fail"));
 }
 
 } // namespace anonymous
 
 BOOST_AUTO_TEST_SUITE(SERIALIZATION_TEST)
 
-BOOST_AUTO_TEST_CASE(Serialization_CryptoAlgorithm) {
+BOOST_AUTO_TEST_CASE(Serialization_CryptoAlgorithm)
+{
     CryptoAlgorithm ca;
-    setParam(ca,ParamName::ALGO_TYPE, static_cast<uint64_t>(AlgoType::AES_GCM), true);
-    setParam(ca,ParamName::ED_IV, AAD, true);
-    setParam(ca,ParamName::ED_IV, IV, true); // try to overwrite
-    setParam(ca,ParamName::ED_TAG_LEN, 128, true);
-    setParam(ca,ParamName::ED_AAD, AAD, true);
+    setParam(ca, ParamName::ALGO_TYPE, static_cast<uint64_t>(AlgoType::AES_GCM),
+             true);
+    setParam(ca, ParamName::ED_IV, AAD, true);
+    setParam(ca, ParamName::ED_IV, IV, true); // try to overwrite
+    setParam(ca, ParamName::ED_TAG_LEN, 128, true);
+    setParam(ca, ParamName::ED_AAD, AAD, true);
 
     CryptoAlgorithmSerializable input(ca);
     CryptoAlgorithmSerializable output;
@@ -99,7 +104,8 @@ BOOST_AUTO_TEST_CASE(Serialization_CryptoAlgorithm) {
     resp.Push(buffer);
     resp.Deserialize(output);
 
-    checkIntParam(output, ParamName::ALGO_TYPE, static_cast<uint64_t>(AlgoType::AES_GCM));
+    checkIntParam(output, ParamName::ALGO_TYPE,
+                  static_cast<uint64_t>(AlgoType::AES_GCM));
     checkBufferParam(output, ParamName::ED_IV, IV);
     checkIntParam(output, ParamName::ED_TAG_LEN, 128);
     checkBufferParam(output, ParamName::ED_AAD, AAD);
@@ -119,7 +125,8 @@ BOOST_AUTO_TEST_CASE(Serialization_CryptoAlgorithm) {
     checkIntParamNegative(output, static_cast<ParamName>(666));
 }
 
-BOOST_AUTO_TEST_CASE(Serialization_CryptoAlgorithm_wrong_name) {
+BOOST_AUTO_TEST_CASE(Serialization_CryptoAlgorithm_wrong_name)
+{
     CryptoAlgorithm ca;
     // param name out of range
     setParam(ca, static_cast<ParamName>(666), 666, false);
@@ -132,7 +139,8 @@ BOOST_AUTO_TEST_CASE(Serialization_CryptoAlgorithm_wrong_name) {
     RawBuffer buffer = msg.Pop();
     MessageBuffer resp;
     resp.Push(buffer);
-    BOOST_REQUIRE_THROW(resp.Deserialize(output), CryptoAlgorithmSerializable::UnsupportedParam);
+    BOOST_REQUIRE_THROW(resp.Deserialize(output),
+                        CryptoAlgorithmSerializable::UnsupportedParam);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -30,23 +30,23 @@ namespace CKM {
 // Do not call directly
 // Always use Assert macro
 CENT_KEY_NORETURN void AssertProc(const char *condition,
-                             const char *file,
-                             int line,
-                             const char *function);
+                                  const char *file,
+                                  int line,
+                                  const char *function);
 } // namespace CKM
 
 #define Assert(Condition) do { if (!(Condition)) { CKM::AssertProc(#Condition, \
-                                                                   __FILE__, \
-                                                                   __LINE__, \
-                                                                   __FUNCTION__); \
-                               } } while (0)
+                __FILE__, \
+                __LINE__, \
+                __FUNCTION__); \
+    } } while (0)
 
 #define AssertMsg(Condition, Msg)                                         \
     do {                                                                  \
         if (!(Condition)) {                                               \
             CKM::AssertProc(                                              \
-                (std::string(std::string(#Condition)+" ") + Msg).c_str(), \
-                __FILE__, __LINE__, __FUNCTION__);                        \
+                    (std::string(std::string(#Condition)+" ") + Msg).c_str(), \
+                    __FILE__, __LINE__, __FUNCTION__);                        \
         }                                                                 \
     } while (0)
 

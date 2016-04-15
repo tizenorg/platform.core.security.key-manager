@@ -34,11 +34,26 @@ public:
     virtual ~ThreadService();
     NONCOPYABLE(ThreadService);
 
-    void Event(const AcceptEvent& event) { ThreadEvent(event); }
-    void Event(const WriteEvent& event) { ThreadEvent(event); }
-    void Event(const ReadEvent& event) { ThreadEvent(event); }
-    void Event(const CloseEvent& event) { ThreadEvent(event); }
-    void Event(const SecurityEvent &event) { ThreadEvent(event); }
+    void Event(const AcceptEvent &event)
+    {
+        ThreadEvent(event);
+    }
+    void Event(const WriteEvent &event)
+    {
+        ThreadEvent(event);
+    }
+    void Event(const ReadEvent &event)
+    {
+        ThreadEvent(event);
+    }
+    void Event(const CloseEvent &event)
+    {
+        ThreadEvent(event);
+    }
+    void Event(const SecurityEvent &event)
+    {
+        ThreadEvent(event);
+    }
 
 protected:
     virtual bool ProcessOne(const ConnectionID &conn,
@@ -46,9 +61,11 @@ protected:
                             bool allowed) = 0;
 
     template <typename E>
-    void ThreadEvent(const E& event)
+    void ThreadEvent(const E &event)
     {
-        CreateEvent([this, event]() { this->Handle(event); });
+        CreateEvent([this, event]() {
+            this->Handle(event);
+        });
     }
 
     void Handle(const AcceptEvent &event);

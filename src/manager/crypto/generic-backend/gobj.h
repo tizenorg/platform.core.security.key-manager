@@ -55,7 +55,8 @@ public:
         ThrowErr(Exc::Crypto::OperationNotSupported);
     }
 
-    virtual int verify(const CryptoAlgorithm &, const RawBuffer &, const RawBuffer &)
+    virtual int verify(const CryptoAlgorithm &, const RawBuffer &,
+                       const RawBuffer &)
     {
         ThrowErr(Exc::Crypto::OperationNotSupported);
     }

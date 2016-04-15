@@ -32,7 +32,7 @@
 
 namespace CKM {
 template<typename Class>
-Singleton<Class>& Singleton<Class>::InternalInstance()
+Singleton<Class> &Singleton<Class>::InternalInstance()
 {
     static Singleton<Class> instance;
     return instance;
@@ -41,7 +41,7 @@ Singleton<Class>& Singleton<Class>::InternalInstance()
 template<typename Class>
 Class &Singleton<Class>::Instance()
 {
-    Singleton<Class>& instance = Singleton<Class>::InternalInstance();
+    Singleton<Class> &instance = Singleton<Class>::InternalInstance();
     return instance;
 }
 } // namespace CKM

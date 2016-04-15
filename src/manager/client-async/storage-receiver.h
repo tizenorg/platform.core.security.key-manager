@@ -29,10 +29,9 @@
 
 namespace CKM {
 
-class StorageReceiver : public IReceiver
-{
+class StorageReceiver : public IReceiver {
 public:
-    StorageReceiver(MessageBuffer& buffer, AsyncRequest::Map& reqMap);
+    StorageReceiver(MessageBuffer &buffer, AsyncRequest::Map &reqMap);
     virtual ~StorageReceiver() {}
 
     NONCOPYABLE(StorageReceiver);
@@ -54,8 +53,8 @@ private:
 
     void parseRetCode(ObserverCb callback);
 
-    MessageBuffer& m_buffer;
-    AsyncRequest::Map& m_requests;
+    MessageBuffer &m_buffer;
+    AsyncRequest::Map &m_requests;
     ManagerAsync::ObserverPtr m_observer;
 };
 

@@ -78,10 +78,10 @@ public:
     explicit DataType(KeyType key);
     explicit DataType(AlgoType algorithmType);
     DataType(const DataType &) = default;
-    DataType& operator=(const DataType &) = default;
+    DataType &operator=(const DataType &) = default;
 
     operator int () const;
-    operator KeyType () const;
+    operator KeyType() const;
     bool operator==(const DataType &second) const;
 
     bool isKey() const;

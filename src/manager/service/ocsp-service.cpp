@@ -35,7 +35,7 @@ const CKM::InterfaceID SOCKET_ID_OCSP = 0;
 namespace CKM {
 
 OCSPService::OCSPService()
-  : m_logic(new OCSPLogic())
+    : m_logic(new OCSPLogic())
 {
 }
 
@@ -54,7 +54,8 @@ void OCSPService::Stop()
     Join();
 }
 
-GenericSocketService::ServiceDescriptionVector OCSPService::GetServiceDescription()
+GenericSocketService::ServiceDescriptionVector
+OCSPService::GetServiceDescription()
 {
     return ServiceDescriptionVector {
         {SERVICE_SOCKET_OCSP, "http://tizen.org/privilege/internet", SOCKET_ID_OCSP}
@@ -84,7 +85,8 @@ bool OCSPService::ProcessOne(
         return true;
     } Catch(MessageBuffer::Exception::Base) {
         LogError("Broken protocol. Closing socket.");
-    } catch (const std::string &e) {
+    }
+    catch (const std::string &e) {
         LogError("String exception(" << e << "). Closing socket");
     } catch (...) {
         LogError("Unknown exception. Closing socket.");

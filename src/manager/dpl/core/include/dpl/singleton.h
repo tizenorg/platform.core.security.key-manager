@@ -27,8 +27,7 @@
 namespace CKM {
 template<typename Class>
 class COMMON_API Singleton :
-    private Class
-{
+    private Class {
     //
     // Note:
     //
@@ -36,13 +35,13 @@ class COMMON_API Singleton :
     // make Class' default constructor protected
     //
 
-  private:
+private:
     Singleton()
     {}
 
     static Singleton &InternalInstance();
 
-  public:
+public:
     virtual ~Singleton()
     {}
 

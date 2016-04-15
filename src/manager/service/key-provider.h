@@ -68,12 +68,12 @@ typedef struct WrappedKeyAndInfo_ {
 class WrappedKeyAndInfoContainer {
 public:
     WrappedKeyAndInfoContainer();
-    WrappedKeyAndInfoContainer(const unsigned char*);
-    WrappedKeyAndInfo& getWrappedKeyAndInfo();
+    WrappedKeyAndInfoContainer(const unsigned char *);
+    WrappedKeyAndInfo &getWrappedKeyAndInfo();
     void setKeyInfoKeyLength(const unsigned int);
     void setKeyInfoLabel(const std::string);
-    void setKeyInfoSalt(const unsigned char*, const int);
-    void setKeyInfo(const KeyComponentsInfo*);
+    void setKeyInfoSalt(const unsigned char *, const int);
+    void setKeyInfo(const KeyComponentsInfo *);
     ~WrappedKeyAndInfoContainer();
 
 private:
@@ -83,10 +83,10 @@ private:
 class KeyAndInfoContainer {
 public:
     KeyAndInfoContainer();
-    KeyAndInfoContainer(const unsigned char*);
-    KeyAndInfo& getKeyAndInfo();
+    KeyAndInfoContainer(const unsigned char *);
+    KeyAndInfo &getKeyAndInfo();
     void setKeyInfoKeyLength(const unsigned int);
-    void setKeyInfo(const KeyComponentsInfo*);
+    void setKeyInfo(const KeyComponentsInfo *);
     ~KeyAndInfoContainer();
 
 private:
@@ -108,8 +108,8 @@ public:
 
     KeyProvider(KeyProvider &&);
     KeyProvider(const KeyProvider &) = delete;
-    KeyProvider& operator=(const KeyProvider &) = delete;
-    KeyProvider& operator=(KeyProvider &&);
+    KeyProvider &operator=(const KeyProvider &) = delete;
+    KeyProvider &operator=(KeyProvider &&);
 
     bool isInitialized();
 
@@ -138,7 +138,8 @@ public:
 
     // First run of application for some user. DomainKEK was not created yet. We must create one.
     // This key will be used to encrypt user database.
-    static RawBuffer generateDomainKEK(const std::string &user, const Password &userPassword);
+    static RawBuffer generateDomainKEK(const std::string &user,
+                                       const Password &userPassword);
 
     // This will be called by framework at the begin of the program
     static int initializeLibrary();
@@ -168,7 +169,7 @@ private:
         const unsigned char *iv,
         unsigned char *plaintext);
 
-    static char * concat_password_user(
+    static char *concat_password_user(
         const char *user,
         const char *password);
 };

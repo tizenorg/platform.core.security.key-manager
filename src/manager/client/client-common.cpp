@@ -55,7 +55,7 @@ SockRAII::~SockRAII()
     disconnect();
 }
 
-int SockRAII::connect(const char * interface)
+int SockRAII::connect(const char *interface)
 {
     if (!interface) {
         LogError("No valid interface address given.");
@@ -88,7 +88,8 @@ int SockRAII::connectWrapper(int sock, const char *interface)
     int flags;
 
     // we need to be sure that socket is in blocking mode
-    if ((flags = fcntl(sock, F_GETFL, 0)) < 0 || fcntl(sock, F_SETFL, flags & ~O_NONBLOCK) < 0) {
+    if ((flags = fcntl(sock, F_GETFL, 0)) < 0 ||
+            fcntl(sock, F_SETFL, flags & ~O_NONBLOCK) < 0) {
         LogError("Error in fcntl: " << CKM::GetErrnoString(errno));
         return CKM_API_ERROR_SOCKET;
     }
@@ -99,14 +100,15 @@ int SockRAII::connectWrapper(int sock, const char *interface)
 
     if (strlen(interface) >= sizeof(clientAddr.sun_path)) {
         LogError("Error: interface name " << interface << "is too long."
-            " Max len is:" << sizeof(clientAddr.sun_path));
+                 " Max len is:" << sizeof(clientAddr.sun_path));
         return CKM_API_ERROR_INPUT_PARAM;
     }
 
     strncpy(clientAddr.sun_path, interface, sizeof(clientAddr.sun_path) - 1);
     LogDebug("ClientAddr.sun_path = " << interface);
 
-    int retval = TEMP_FAILURE_RETRY(::connect(sock, (struct sockaddr*)&clientAddr, SUN_LEN(&clientAddr)));
+    int retval = TEMP_FAILURE_RETRY(::connect(sock, (struct sockaddr *)&clientAddr,
+                                    SUN_LEN(&clientAddr)));
 
     // we don't need to support EINPROGRESS because the socket is in blocking mode
     if (-1 == retval) {
@@ -114,12 +116,14 @@ int SockRAII::connectWrapper(int sock, const char *interface)
             LogError("Access denied to interface: " << interface);
             return CKM_API_ERROR_ACCESS_DENIED;
         }
+
         LogError("Error connecting socket: " << CKM::GetErrnoString(errno));
         return CKM_API_ERROR_SOCKET;
     }
 
     // make the socket non-blocking
-    if ((flags = fcntl(sock, F_GETFL, 0)) < 0 || fcntl(sock, F_SETFL, flags | O_NONBLOCK) < 0) {
+    if ((flags = fcntl(sock, F_GETFL, 0)) < 0 ||
+            fcntl(sock, F_SETFL, flags | O_NONBLOCK) < 0) {
         LogError("Error in fcntl: " << CKM::GetErrnoString(errno));
         return CKM_API_ERROR_SOCKET;
     }
@@ -136,6 +140,7 @@ void SockRAII::disconnect()
 {
     if (isConnected())
         close(m_sock);
+
     m_sock = -1;
 }
 
@@ -167,6 +172,7 @@ int SockRAII::get() const
 AliasSupport::AliasSupport(const Alias &alias)
 {
     std::size_t separator_pos = alias.rfind(CKM::LABEL_NAME_SEPARATOR);
+
     if (separator_pos == Alias::npos) {
         m_label.clear();
         m_name = alias;
@@ -186,12 +192,12 @@ Alias AliasSupport::merge(const Label &label, const Name &name)
     return output.str();
 }
 
-const Name & AliasSupport::getName() const
+const Name &AliasSupport::getName() const
 {
     return m_name;
 }
 
-const Label & AliasSupport::getLabel() const
+const Label &AliasSupport::getLabel() const
 {
     return m_label;
 }
@@ -212,6 +218,7 @@ int ServiceConnection::processRequest(
     CKM::MessageBuffer &recv_buf)
 {
     int ec;
+
     if (CKM_API_SUCCESS != (ec = send(send_buf)))
         return ec;
 
@@ -236,6 +243,7 @@ int ServiceConnection::send(const CKM::RawBuffer &send_buf)
     }
 
     ssize_t done = 0;
+
     while ((send_buf.size() - done) > 0) {
         if (0 >= m_socket.waitForSocket(POLLOUT, POLL_TIMEOUT)) {
             LogError("Error in WaitForSocket.");
@@ -244,9 +252,10 @@ int ServiceConnection::send(const CKM::RawBuffer &send_buf)
         }
 
         ssize_t temp = TEMP_FAILURE_RETRY(::send(m_socket.get(),
-                                                 &send_buf[done],
-                                                 send_buf.size() - done,
-                                                 MSG_NOSIGNAL));
+                                          &send_buf[done],
+                                          send_buf.size() - done,
+                                          MSG_NOSIGNAL));
+
         if (-1 == temp) {
             LogError("Error in write: " << CKM::GetErrnoString(errno));
             retCode = CKM_API_ERROR_SOCKET;
@@ -272,6 +281,7 @@ int ServiceConnection::receive(CKM::MessageBuffer &recv_buf)
     int ec = CKM_API_SUCCESS;
     const size_t c_recv_buf_len = 2048;
     char buffer[c_recv_buf_len];
+
     do {
         if (0 >= m_socket.waitForSocket(POLLIN, POLL_TIMEOUT)) {
             LogError("Error in WaitForSocket.");
@@ -280,9 +290,10 @@ int ServiceConnection::receive(CKM::MessageBuffer &recv_buf)
         }
 
         ssize_t temp = TEMP_FAILURE_RETRY(::recv(m_socket.get(),
-                                                 buffer,
-                                                 sizeof(buffer),
-                                                 0));
+                                          buffer,
+                                          sizeof(buffer),
+                                          0));
+
         if (-1 == temp) {
             LogError("Error in read: " << CKM::GetErrnoString(errno));
             ec = CKM_API_ERROR_SOCKET;
@@ -295,7 +306,7 @@ int ServiceConnection::receive(CKM::MessageBuffer &recv_buf)
             break;
         }
 
-        CKM::RawBuffer raw(buffer, buffer+temp);
+        CKM::RawBuffer raw(buffer, buffer + temp);
         recv_buf.Push(raw);
     } while (!recv_buf.Ready());
 
@@ -309,9 +320,10 @@ ServiceConnection::~ServiceConnection()
 {
 }
 
-int try_catch(const std::function<int()>& func)
+int try_catch(const std::function<int()> &func)
 {
     int retval = CKM_API_ERROR_UNKNOWN;
+
     try {
         return func();
     } catch (const MessageBuffer::Exception::Base &e) {
@@ -323,21 +335,22 @@ int try_catch(const std::function<int()>& func)
     } catch (...) {
         LogError("Unknown exception occured");
     }
+
     return retval;
 }
 
-void try_catch_async(const std::function<void()>& func,
-                     const std::function<void(int)>& error)
+void try_catch_async(const std::function<void()> &func,
+                     const std::function<void(int)> &error)
 {
     try {
         func();
-    } catch (const MessageBuffer::Exception::Base& e) {
+    } catch (const MessageBuffer::Exception::Base &e) {
         LogError("CKM::MessageBuffer::Exception " << e.DumpToString());
         error(CKM_API_ERROR_BAD_REQUEST);
     } catch (const DataType::Exception::Base &e) {
         LogError("CKM::DBDataType conversion failed:" << e.DumpToString());
         error(CKM_API_ERROR_UNKNOWN);
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         LogError("STD exception " << e.what());
         error(CKM_API_ERROR_UNKNOWN);
     } catch (...) {

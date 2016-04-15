@@ -32,8 +32,10 @@ BOOST_AUTO_TEST_SUITE(DATA_TYPE_TEST)
 
 BOOST_AUTO_TEST_CASE(CONSTRUCTOR)
 {
-    BOOST_REQUIRE_THROW(DataType(static_cast<DataType::Type>(999)), DataType::Exception::OutOfRange);
-    BOOST_REQUIRE_THROW(DataType(static_cast<KeyType>(999)), DataType::Exception::OutOfRange);
+    BOOST_REQUIRE_THROW(DataType(static_cast<DataType::Type>(999)),
+                        DataType::Exception::OutOfRange);
+    BOOST_REQUIRE_THROW(DataType(static_cast<KeyType>(999)),
+                        DataType::Exception::OutOfRange);
 
     std::vector<DataType> types;
 
@@ -42,6 +44,7 @@ BOOST_AUTO_TEST_CASE(CONSTRUCTOR)
     types.emplace_back(AlgoType::AES_GCM);
     types.emplace_back(AlgoType::AES_CFB);
     types.emplace_back(AlgoType::AES_GEN);
+
     for (auto &type : types)
         BOOST_REQUIRE(type == DataType(DataType::KEY_AES));
 
@@ -50,6 +53,7 @@ BOOST_AUTO_TEST_CASE(CONSTRUCTOR)
     types.emplace_back(AlgoType::RSA_SV);
     types.emplace_back(AlgoType::RSA_OAEP);
     types.emplace_back(AlgoType::RSA_GEN);
+
     for (auto &type : types)
         BOOST_REQUIRE(type == DataType(DataType::KEY_RSA_PUBLIC));
 
@@ -57,6 +61,7 @@ BOOST_AUTO_TEST_CASE(CONSTRUCTOR)
 
     types.emplace_back(AlgoType::DSA_SV);
     types.emplace_back(AlgoType::DSA_GEN);
+
     for (auto &type : types)
         BOOST_REQUIRE(type == DataType(DataType::KEY_DSA_PUBLIC));
 
@@ -64,6 +69,7 @@ BOOST_AUTO_TEST_CASE(CONSTRUCTOR)
 
     types.emplace_back(AlgoType::ECDSA_SV);
     types.emplace_back(AlgoType::ECDSA_GEN);
+
     for (auto &type : types)
         BOOST_REQUIRE(type == DataType(DataType::KEY_ECDSA_PUBLIC));
 

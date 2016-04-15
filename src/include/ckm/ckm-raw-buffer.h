@@ -35,23 +35,23 @@ struct std_erase_on_dealloc {
     // becomes supported in STL containers (i.e. list, vector and string)
     typedef size_t    size_type;
     typedef ptrdiff_t difference_type;
-    typedef T*        pointer;
-    typedef const T*  const_pointer;
-    typedef T&        reference;
-    typedef const T&  const_reference;
+    typedef T        *pointer;
+    typedef const T  *const_pointer;
+    typedef T        &reference;
+    typedef const T  &const_reference;
     typedef T         value_type;
 
     std_erase_on_dealloc() = default;
 
     template <typename U>
-    std_erase_on_dealloc(const std_erase_on_dealloc<U>&) {}
+    std_erase_on_dealloc(const std_erase_on_dealloc<U> &) {}
 
-    T* allocate(std::size_t n)
+    T *allocate(std::size_t n)
     {
-        return static_cast<T*>(::operator new(n*sizeof(T)));
+        return static_cast<T *>(::operator new(n * sizeof(T)));
     }
 
-    void deallocate(T* ptr, std::size_t n)
+    void deallocate(T *ptr, std::size_t n)
     {
         // clear the memory before deleting
         memset(ptr, 0 , n * sizeof(T));
@@ -63,9 +63,9 @@ struct std_erase_on_dealloc {
         typedef std_erase_on_dealloc<_Tp1> other;
     };
 
-    void construct(pointer p, const T& val)
+    void construct(pointer p, const T &val)
     {
-        new (p) T(val);
+        new(p) T(val);
     }
 
     void destroy(pointer p)
@@ -80,13 +80,15 @@ struct std_erase_on_dealloc {
 };
 
 template <typename T, typename U>
-inline bool operator == (const std_erase_on_dealloc<T>&, const std_erase_on_dealloc<U>&)
+inline bool operator == (const std_erase_on_dealloc<T> &,
+                         const std_erase_on_dealloc<U> &)
 {
     return true;
 }
 
 template <typename T, typename U>
-inline bool operator != (const std_erase_on_dealloc<T>& a, const std_erase_on_dealloc<U>& b)
+inline bool operator != (const std_erase_on_dealloc<T> &a,
+                         const std_erase_on_dealloc<U> &b)
 {
     return !(a == b);
 }

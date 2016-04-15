@@ -27,17 +27,19 @@
 namespace CKM {
 
 Manager::Manager()
-  : m_impl(new Impl())
+    : m_impl(new Impl())
 {}
 
 Manager::~Manager() {}
 
-int Manager::saveKey(const Alias &alias, const KeyShPtr &key, const Policy &policy)
+int Manager::saveKey(const Alias &alias, const KeyShPtr &key,
+                     const Policy &policy)
 {
     return m_impl->saveKey(alias, key, policy);
 }
 
-int Manager::saveCertificate(const Alias &alias, const CertificateShPtr &cert, const Policy &policy)
+int Manager::saveCertificate(const Alias &alias, const CertificateShPtr &cert,
+                             const Policy &policy)
 {
     return m_impl->saveCertificate(alias, cert, policy);
 }
@@ -51,7 +53,8 @@ int Manager::savePKCS12(
     return m_impl->savePKCS12(alias, pkcs, keyPolicy, certPolicy);
 }
 
-int Manager::saveData(const Alias &alias, const RawBuffer &data, const Policy &policy)
+int Manager::saveData(const Alias &alias, const RawBuffer &data,
+                      const Policy &policy)
 {
     return m_impl->saveData(alias, data, policy);
 }
@@ -74,7 +77,8 @@ int Manager::getCertificate(
     return m_impl->getCertificate(alias, password, certificate);
 }
 
-int Manager::getData(const Alias &alias, const Password &password, RawBuffer &data)
+int Manager::getData(const Alias &alias, const Password &password,
+                     RawBuffer &data)
 {
     return m_impl->getData(alias, password, data);
 }
@@ -115,7 +119,8 @@ int Manager::createKeyPairRSA(
     const Policy &policyPrivateKey,
     const Policy &policyPublicKey)
 {
-    return m_impl->createKeyPairRSA(size, privateKeyAlias, publicKeyAlias, policyPrivateKey, policyPublicKey);
+    return m_impl->createKeyPairRSA(size, privateKeyAlias, publicKeyAlias,
+                                    policyPrivateKey, policyPublicKey);
 }
 
 int Manager::createKeyPairDSA(
@@ -125,7 +130,8 @@ int Manager::createKeyPairDSA(
     const Policy &policyPrivateKey,
     const Policy &policyPublicKey)
 {
-    return m_impl->createKeyPairDSA(size, privateKeyAlias, publicKeyAlias, policyPrivateKey, policyPublicKey);
+    return m_impl->createKeyPairDSA(size, privateKeyAlias, publicKeyAlias,
+                                    policyPrivateKey, policyPublicKey);
 }
 
 int Manager::createKeyPairECDSA(
@@ -135,7 +141,8 @@ int Manager::createKeyPairECDSA(
     const Policy &policyPrivateKey,
     const Policy &policyPublicKey)
 {
-    return m_impl->createKeyPairECDSA(type, privateKeyAlias, publicKeyAlias, policyPrivateKey, policyPublicKey);
+    return m_impl->createKeyPairECDSA(type, privateKeyAlias, publicKeyAlias,
+                                      policyPrivateKey, policyPublicKey);
 }
 
 int Manager::createKeyAES(
@@ -154,11 +161,11 @@ int Manager::getCertificateChain(
     CertificateShPtrVector &certificateChainVector)
 {
     return m_impl->getCertificateChain(
-        certificate,
-        untrustedCertificates,
-        trustedCertificates,
-        useTrustedSystemCertificates,
-        certificateChainVector);
+               certificate,
+               untrustedCertificates,
+               trustedCertificates,
+               useTrustedSystemCertificates,
+               certificateChainVector);
 }
 
 int Manager::getCertificateChain(
@@ -169,11 +176,11 @@ int Manager::getCertificateChain(
     CertificateShPtrVector &certificateChainVector)
 {
     return m_impl->getCertificateChain(
-        certificate,
-        untrustedCertificates,
-        trustedCertificates,
-        useTrustedSystemCertificates,
-        certificateChainVector);
+               certificate,
+               untrustedCertificates,
+               trustedCertificates,
+               useTrustedSystemCertificates,
+               certificateChainVector);
 }
 
 int Manager::createSignature(
@@ -188,11 +195,11 @@ int Manager::createSignature(
     cAlg.setParam(ParamName::SV_HASH_ALGO, hash);
     cAlg.setParam(ParamName::SV_RSA_PADDING, padding);
     return m_impl->createSignature(
-        privateKeyAlias,
-        password,
-        message,
-        cAlg,
-        signature);
+               privateKeyAlias,
+               password,
+               message,
+               cAlg,
+               signature);
 }
 
 int Manager::verifySignature(
@@ -207,14 +214,15 @@ int Manager::verifySignature(
     cAlg.setParam(ParamName::SV_HASH_ALGO, hash);
     cAlg.setParam(ParamName::SV_RSA_PADDING, padding);
     return m_impl->verifySignature(
-        publicKeyOrCertAlias,
-        password,
-        message,
-        signature,
-        cAlg);
+               publicKeyOrCertAlias,
+               password,
+               message,
+               signature,
+               cAlg);
 }
 
-int Manager::ocspCheck(const CertificateShPtrVector &certificateChainVector, int &ocspStatus)
+int Manager::ocspCheck(const CertificateShPtrVector &certificateChainVector,
+                       int &ocspStatus)
 {
     return m_impl->ocspCheck(certificateChainVector, ocspStatus);
 }
@@ -231,8 +239,8 @@ int Manager::encrypt(
     const CryptoAlgorithm &algo,
     const Alias &keyAlias,
     const Password &password,
-    const RawBuffer& plain,
-    RawBuffer& encrypted)
+    const RawBuffer &plain,
+    RawBuffer &encrypted)
 {
     return m_impl->encrypt(algo, keyAlias, password, plain, encrypted);
 }
@@ -241,8 +249,8 @@ int Manager::decrypt(
     const CryptoAlgorithm &algo,
     const Alias &keyAlias,
     const Password &password,
-    const RawBuffer& encrypted,
-    RawBuffer& decrypted)
+    const RawBuffer &encrypted,
+    RawBuffer &decrypted)
 {
     return m_impl->decrypt(algo, keyAlias, password, encrypted, decrypted);
 }

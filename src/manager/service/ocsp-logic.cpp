@@ -42,7 +42,8 @@ const std::vector<std::string> FEATURES = {
     "tizen.org/feature/network.internet",
     "tizen.org/feature/network.telephony",
     "tizen.org/feature/network.tethering.bluetooth",
-    "tizen.org/feature/network.ethernet"};
+    "tizen.org/feature/network.ethernet"
+};
 
 } // namespace anonymous
 
@@ -62,6 +63,7 @@ void OCSPLogic::setNetAvailable()
         value = false;
 
         ret = system_info_get_platform_bool(feature.c_str(), &value);
+
         if (ret != SYSTEM_INFO_ERROR_NONE) {
             LogError("Error in system_info_get_platform_bool. ret : " << ret);
             continue;
@@ -76,7 +78,8 @@ void OCSPLogic::setNetAvailable()
     m_isNetAvailable = false;
 }
 
-RawBuffer OCSPLogic::ocspCheck(int commandId, const RawBufferVector &rawChain, bool allowed)
+RawBuffer OCSPLogic::ocspCheck(int commandId, const RawBufferVector &rawChain,
+                               bool allowed)
 {
     CertificateImplVector certChain;
     OCSPModule ocsp;
@@ -96,8 +99,9 @@ RawBuffer OCSPLogic::ocspCheck(int commandId, const RawBufferVector &rawChain, b
         LogError("Certificate chain should contain at least 2 certificates");
         retCode = CKM_API_ERROR_INPUT_PARAM;
     } else {
-        for (auto &e: rawChain) {
+        for (auto &e : rawChain) {
             certChain.push_back(CertificateImpl(e, DataFormat::FORM_DER));
+
             if (certChain.rbegin()->empty()) {
                 LogDebug("Error in parsing certificates!");
                 retCode = CKM_API_ERROR_INPUT_PARAM;

@@ -34,7 +34,7 @@ public:
     // int is for descriptor, short is for revents,
     typedef std::function<void(int, short)> Callback;
 
-    virtual void add(int fd, short events, Callback&& callback) = 0;
+    virtual void add(int fd, short events, Callback &&callback) = 0;
     virtual void remove(int fd, bool close_fd = true) = 0;
 protected:
     // I don't want anyone to manage object lifetime via interface.
@@ -61,7 +61,7 @@ public:
      * @param events   events to watch for
      * @param callback callback to be called when an event on descriptor occurs
      */
-    virtual void add(int fd, short events, Callback&& callback);
+    virtual void add(int fd, short events, Callback &&callback);
     /*
      * Removes give descriptor from watched set and closes it.
      *
@@ -93,7 +93,7 @@ protected:
     void notify(int descCount);
 
     struct DescriptorData {
-        DescriptorData(short e, Callback&& c) : events(e), callback(std::move(c)) {}
+        DescriptorData(short e, Callback &&c) : events(e), callback(std::move(c)) {}
 
         short events;
         Callback callback;
@@ -103,7 +103,7 @@ protected:
 
     // true if pollfd needs update
     bool m_dirty;
-    pollfd* m_fds;
+    pollfd *m_fds;
 };
 
 } /* namespace CKM */

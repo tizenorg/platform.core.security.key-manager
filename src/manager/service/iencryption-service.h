@@ -31,10 +31,10 @@ namespace CKM {
 
 class IEncryptionService {
 public:
-    virtual void RespondToClient(const CryptoRequest& request,
+    virtual void RespondToClient(const CryptoRequest &request,
                                  int retCode,
-                                 const RawBuffer& data = RawBuffer()) = 0;
-    virtual void RequestKey(const CryptoRequest& request) = 0;
+                                 const RawBuffer &data = RawBuffer()) = 0;
+    virtual void RequestKey(const CryptoRequest &request) = 0;
 };
 
 } // namespace CKM

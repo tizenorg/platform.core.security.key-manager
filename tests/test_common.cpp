@@ -25,11 +25,13 @@
 
 using namespace CKM;
 
-RawBuffer createDefaultPass() {
+RawBuffer createDefaultPass()
+{
     return createPass(0, RAW_PASS_SIZE);
 }
 
-RawBuffer createPass(std::size_t from, std::size_t to) {
+RawBuffer createPass(std::size_t from, std::size_t to)
+{
     RawBuffer raw;
 
     for (std::size_t i = from; i < to; i++)
@@ -38,12 +40,14 @@ RawBuffer createPass(std::size_t from, std::size_t to) {
     return raw;
 }
 
-RawBuffer createBigBlob(std::size_t size) {
+RawBuffer createBigBlob(std::size_t size)
+{
     return createPass(0, size);
 }
 
 //raw to hex string conversion from SqlConnection
-std::string rawToHexString(const RawBuffer &raw) {
+std::string rawToHexString(const RawBuffer &raw)
+{
     std::string dump;
 
     for (auto &e : raw) {

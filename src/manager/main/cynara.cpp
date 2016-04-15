@@ -31,10 +31,11 @@
 namespace CKM {
 
 Cynara::Cynara(GenericSocketManager *socketManager)
-  : m_socketManager(socketManager)
-  , m_cynara(nullptr)
+    : m_socketManager(socketManager)
+    , m_cynara(nullptr)
 {
-    if (CYNARA_API_SUCCESS != cynara_async_initialize(&m_cynara, NULL, ChangeStatusCallback, this)) {
+    if (CYNARA_API_SUCCESS != cynara_async_initialize(&m_cynara, NULL,
+            ChangeStatusCallback, this)) {
         LogError("Cynara initialization failed.");
         throw std::runtime_error("Cynara initialization failed.");
     }
@@ -48,20 +49,22 @@ void Cynara::Request(
     StatusCallback callback)
 {
     int ret = cynara_async_check_cache(
-      m_cynara,
-      client.c_str(),
-      session.c_str(),
-      user.c_str(),
-      privilege.c_str());
+                  m_cynara,
+                  client.c_str(),
+                  session.c_str(),
+                  user.c_str(),
+                  privilege.c_str());
 
     switch (ret) {
     default:
     case CYNARA_API_ACCESS_DENIED:
         callback(false);
         break;
+
     case CYNARA_API_ACCESS_ALLOWED:
         callback(true);
         break;
+
     case CYNARA_API_CACHE_MISS:
         SendRequest(
             user,
@@ -115,14 +118,14 @@ void Cynara::SendRequest(
 {
     cynara_check_id checkId = 0;
     int ret = cynara_async_create_request(
-        m_cynara,
-        client.c_str(),
-        session.c_str(),
-        user.c_str(),
-        privilege.c_str(),
-        &checkId,
-        ProcessResponseCallback,
-        this);
+                  m_cynara,
+                  client.c_str(),
+                  session.c_str(),
+                  user.c_str(),
+                  privilege.c_str(),
+                  &checkId,
+                  ProcessResponseCallback,
+                  this);
 
     if (ret != CYNARA_API_SUCCESS)
         return callback(false);
@@ -131,28 +134,31 @@ void Cynara::SendRequest(
 }
 
 void Cynara::ChangeStatusCallback(
-  int oldFd,
-  int newFd,
-  cynara_async_status status,
-  void *ptr)
+    int oldFd,
+    int newFd,
+    cynara_async_status status,
+    void *ptr)
 {
-    static_cast<Cynara*>(ptr)->ChangeStatus(oldFd, newFd, status);
+    static_cast<Cynara *>(ptr)->ChangeStatus(oldFd, newFd, status);
 }
 
 void Cynara::ProcessResponseCallback(
-  cynara_check_id checkId,
-  cynara_async_call_cause cause,
-  int response,
-  void *ptr)
+    cynara_check_id checkId,
+    cynara_async_call_cause cause,
+    int response,
+    void *ptr)
 {
-    static_cast<Cynara*>(ptr)->ProcessResponse(checkId, cause, response);
+    static_cast<Cynara *>(ptr)->ProcessResponse(checkId, cause, response);
 }
 
 bool Cynara::GetUserFromSocket(int socket, std::string &user)
 {
     char *ptr;
-    if (CYNARA_API_SUCCESS != cynara_creds_socket_get_user(socket, USER_METHOD_DEFAULT, &ptr))
+
+    if (CYNARA_API_SUCCESS != cynara_creds_socket_get_user(socket,
+            USER_METHOD_DEFAULT, &ptr))
         return false;
+
     user = ptr;
     free(ptr);
     return true;
@@ -161,8 +167,11 @@ bool Cynara::GetUserFromSocket(int socket, std::string &user)
 bool Cynara::GetClientFromSocket(int socket, std::string &client)
 {
     char *ptr;
-    if (CYNARA_API_SUCCESS != cynara_creds_socket_get_client(socket, CLIENT_METHOD_DEFAULT, &ptr))
+
+    if (CYNARA_API_SUCCESS != cynara_creds_socket_get_client(socket,
+            CLIENT_METHOD_DEFAULT, &ptr))
         return false;
+
     client = ptr;
     free(ptr);
     return true;

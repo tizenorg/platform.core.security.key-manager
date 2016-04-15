@@ -27,8 +27,7 @@
 using namespace CKM;
 using namespace XML;
 
-namespace
-{
+namespace {
 const char *XML_1_okay          = "XML_1_okay.xml";
 const char *XSD_1_okay          = "XML_1_okay.xsd";
 const char *XML_1_wrong         = "XML_1_wrong.xml";
@@ -64,19 +63,22 @@ BOOST_AUTO_TEST_CASE(XmlParserTest_wrong_argument)
 {
     std::string emptyPath;
     XML::Parser parser(emptyPath);
-    BOOST_REQUIRE(Parser::ErrorCode::ERROR_INVALID_ARGUMENT == parser.Validate(emptyPath));
+    BOOST_REQUIRE(Parser::ErrorCode::ERROR_INVALID_ARGUMENT == parser.Validate(
+                      emptyPath));
 
     // no listeners
     BOOST_REQUIRE(Parser::ErrorCode::ERROR_INVALID_ARGUMENT == parser.Parse());
 
-    BOOST_REQUIRE(Parser::ErrorCode::PARSE_SUCCESS == parser.RegisterElementCb("Key", dummyStartCallback, dummyEndCallback));
+    BOOST_REQUIRE(Parser::ErrorCode::PARSE_SUCCESS ==
+                  parser.RegisterElementCb("Key", dummyStartCallback, dummyEndCallback));
     BOOST_REQUIRE(Parser::ErrorCode::ERROR_XML_PARSE_FAILED == parser.Parse());
 }
 
 BOOST_AUTO_TEST_CASE(XmlParserTest_no_XML_file)
 {
     XML::Parser parser(format_test_path("i-am-not-here").c_str());
-    BOOST_REQUIRE(Parser::ErrorCode::ERROR_XML_VALIDATION_FAILED == parser.Validate(format_test_path(XSD_1_okay).c_str()));
+    BOOST_REQUIRE(Parser::ErrorCode::ERROR_XML_VALIDATION_FAILED == parser.Validate(
+                      format_test_path(XSD_1_okay).c_str()));
 }
 
 BOOST_AUTO_TEST_CASE(XmlParserTest_XML1_correct_verify)
@@ -88,13 +90,15 @@ BOOST_AUTO_TEST_CASE(XmlParserTest_XML1_correct_verify)
 BOOST_AUTO_TEST_CASE(XmlParserTest_XML1_wrong_verify)
 {
     XML::Parser parser(format_test_path(XML_1_wrong).c_str());
-    BOOST_REQUIRE(Parser::ErrorCode::ERROR_XML_VALIDATION_FAILED == parser.Validate(format_test_path(XSD_1_okay).c_str()));
+    BOOST_REQUIRE(Parser::ErrorCode::ERROR_XML_VALIDATION_FAILED == parser.Validate(
+                      format_test_path(XSD_1_okay).c_str()));
 }
 
 BOOST_AUTO_TEST_CASE(XmlParserTest_XML1_wrong_schema)
 {
     XML::Parser parser(format_test_path(XML_1_okay).c_str());
-    BOOST_REQUIRE(Parser::ErrorCode::ERROR_XSD_PARSE_FAILED == parser.Validate(format_test_path(XSD_1_wrong).c_str()));
+    BOOST_REQUIRE(Parser::ErrorCode::ERROR_XSD_PARSE_FAILED == parser.Validate(
+                      format_test_path(XSD_1_wrong).c_str()));
 }
 
 BOOST_AUTO_TEST_CASE(XmlParserTest_XML1_correct_parse_incorrect_callbacks)
@@ -102,7 +106,8 @@ BOOST_AUTO_TEST_CASE(XmlParserTest_XML1_correct_parse_incorrect_callbacks)
     XML::Parser parser(format_test_path(XML_1_okay).c_str());
     BOOST_REQUIRE(0 == parser.Validate(format_test_path(XSD_1_okay).c_str()));
 
-    BOOST_REQUIRE(Parser::ErrorCode::PARSE_SUCCESS == parser.RegisterElementCb("Data", NULL, NULL));
+    BOOST_REQUIRE(Parser::ErrorCode::PARSE_SUCCESS ==
+                  parser.RegisterElementCb("Data", NULL, NULL));
     BOOST_REQUIRE(Parser::ErrorCode::PARSE_SUCCESS == parser.Parse());
 }
 
@@ -111,8 +116,10 @@ BOOST_AUTO_TEST_CASE(XmlParserTest_XML1_correct_parse)
     XML::Parser parser(format_test_path(XML_1_okay).c_str());
     BOOST_REQUIRE(0 == parser.Validate(format_test_path(XSD_1_okay).c_str()));
 
-    BOOST_REQUIRE(Parser::ErrorCode::PARSE_SUCCESS == parser.RegisterElementCb("Key", dummyStartCallback, NULL));
-    BOOST_REQUIRE(Parser::ErrorCode::PARSE_SUCCESS == parser.RegisterElementCb("Cert", NULL, dummyEndCallback));
+    BOOST_REQUIRE(Parser::ErrorCode::PARSE_SUCCESS ==
+                  parser.RegisterElementCb("Key", dummyStartCallback, NULL));
+    BOOST_REQUIRE(Parser::ErrorCode::PARSE_SUCCESS ==
+                  parser.RegisterElementCb("Cert", NULL, dummyEndCallback));
     startCallbackFlag = false;
     endCallbackFlag = false;
     BOOST_REQUIRE(Parser::ErrorCode::PARSE_SUCCESS == parser.Parse());
@@ -120,148 +127,141 @@ BOOST_AUTO_TEST_CASE(XmlParserTest_XML1_correct_parse)
     BOOST_REQUIRE(endCallbackFlag == true);
 }
 
-class StructureTest
-{
+class StructureTest {
 public:
-    class ExpectedSumHandler : public XML::Parser::ElementHandler
-    {
-        public:
-            ExpectedSumHandler() : m_value(0) {}
+    class ExpectedSumHandler : public XML::Parser::ElementHandler {
+    public:
+        ExpectedSumHandler() : m_value(0) {}
 
-            virtual void Start(const XML::Parser::Attributes &) {}
-            virtual void Characters(const std::string &data) {
-                m_value = atoi(data.c_str());
-            }
-            virtual void End() {}
+        virtual void Start(const XML::Parser::Attributes &) {}
+        virtual void Characters(const std::string &data)
+        {
+            m_value = atoi(data.c_str());
+        }
+        virtual void End() {}
 
-            int getSum() const {
-                return m_value;
-            }
+        int getSum() const
+        {
+            return m_value;
+        }
 
-        protected:
-            int m_value;
+    protected:
+        int m_value;
     };
 
-    class MathHandler : public XML::Parser::ElementHandler
-    {
-        public:
-            MathHandler() : m_valueSet(false), m_value(0), m_powerFactor(1) {}
+    class MathHandler : public XML::Parser::ElementHandler {
+    public:
+        MathHandler() : m_valueSet(false), m_value(0), m_powerFactor(1) {}
 
-            virtual void Start(const XML::Parser::Attributes &attr) {
-                const auto & it = attr.find("powerFactor");
-                if(it != attr.end())
-                    m_powerFactor = atoi(it->second.c_str());
-            }
-            virtual void Characters(const std::string &data) {
-                m_value = pow(atoi(data.c_str()), m_powerFactor);
-                m_valueSet = true;
-            }
-            virtual void End() {}
+        virtual void Start(const XML::Parser::Attributes &attr)
+        {
+            const auto &it = attr.find("powerFactor");
 
-            virtual int compute(int prevVal) = 0;
+            if (it != attr.end())
+                m_powerFactor = atoi(it->second.c_str());
+        }
+        virtual void Characters(const std::string &data)
+        {
+            m_value = pow(atoi(data.c_str()), m_powerFactor);
+            m_valueSet = true;
+        }
+        virtual void End() {}
 
-        protected:
-            bool m_valueSet;
-            int m_value;
-            int m_powerFactor;
+        virtual int compute(int prevVal) = 0;
+
+    protected:
+        bool m_valueSet;
+        int m_value;
+        int m_powerFactor;
     };
-    class AddHandler : public MathHandler
-    {
-        public:
-            virtual int compute(int prevVal) {
-                if( !m_valueSet )
-                    return prevVal;
+    class AddHandler : public MathHandler {
+    public:
+        virtual int compute(int prevVal)
+        {
+            if (!m_valueSet)
+                return prevVal;
 
-                return prevVal + m_value;
-            }
-    };
-
-    class MultiplyHandler : public MathHandler
-    {
-        public:
-            virtual int compute(int prevVal) {
-                if( !m_valueSet )
-                    return prevVal;
-
-                return prevVal * m_value;
-            }
+            return prevVal + m_value;
+        }
     };
 
-    class DivHandler : public MathHandler
-    {
-        public:
-            virtual int compute(int prevVal) {
-                if( !m_valueSet )
-                    return prevVal;
+    class MultiplyHandler : public MathHandler {
+    public:
+        virtual int compute(int prevVal)
+        {
+            if (!m_valueSet)
+                return prevVal;
 
-                if(m_value == 0)
-                    return prevVal;
-                return prevVal / m_value;
-            }
+            return prevVal * m_value;
+        }
     };
 
-    StructureTest(const char *filename) : m_parser(filename), m_sum(0), m_expectedSum(0)
+    class DivHandler : public MathHandler {
+    public:
+        virtual int compute(int prevVal)
+        {
+            if (!m_valueSet)
+                return prevVal;
+
+            if (m_value == 0)
+                return prevVal;
+
+            return prevVal / m_value;
+        }
+    };
+
+    StructureTest(const char *filename) : m_parser(filename), m_sum(0),
+        m_expectedSum(0)
     {
         m_parser.RegisterErrorCb(StructureTest::Error);
         m_parser.RegisterElementCb("Add",
-                [this]() -> XML::Parser::ElementHandlerPtr
-                {
-                    return std::make_shared<AddHandler>();
-                },
-                [this](const XML::Parser::ElementHandlerPtr & element)
-                {
-                    // add computation
-                    if(element)
-                    {
-                        MathHandler *mathElement = reinterpret_cast<MathHandler*>(element.get());
-                        m_sum = mathElement->compute(m_sum);
-                    }
-                });
+        [this]() -> XML::Parser::ElementHandlerPtr {
+            return std::make_shared<AddHandler>();
+        },
+        [this](const XML::Parser::ElementHandlerPtr & element) {
+            // add computation
+            if (element) {
+                MathHandler *mathElement = reinterpret_cast<MathHandler *>(element.get());
+                m_sum = mathElement->compute(m_sum);
+            }
+        });
         m_parser.RegisterElementCb("Multiply",
-                [this]() -> XML::Parser::ElementHandlerPtr
-                {
-                    return std::make_shared<MultiplyHandler>();
-                },
-                [this](const XML::Parser::ElementHandlerPtr &element)
-                {
-                    // multiply computation
-                    if(element)
-                    {
-                        MathHandler *mathElement = reinterpret_cast<MathHandler*>(element.get());
-                        m_sum = mathElement->compute(m_sum);
-                    }
-                });
+        [this]() -> XML::Parser::ElementHandlerPtr {
+            return std::make_shared<MultiplyHandler>();
+        },
+        [this](const XML::Parser::ElementHandlerPtr & element) {
+            // multiply computation
+            if (element) {
+                MathHandler *mathElement = reinterpret_cast<MathHandler *>(element.get());
+                m_sum = mathElement->compute(m_sum);
+            }
+        });
         m_parser.RegisterElementCb("Div",
-                [this]() -> XML::Parser::ElementHandlerPtr
-                {
-                    return std::make_shared<DivHandler>();
-                },
-                [this](const XML::Parser::ElementHandlerPtr &element)
-                {
-                    // division computation
-                    if(element)
-                    {
-                        MathHandler *mathElement = reinterpret_cast<MathHandler*>(element.get());
-                        m_sum = mathElement->compute(m_sum);
-                    }
-                });
+        [this]() -> XML::Parser::ElementHandlerPtr {
+            return std::make_shared<DivHandler>();
+        },
+        [this](const XML::Parser::ElementHandlerPtr & element) {
+            // division computation
+            if (element) {
+                MathHandler *mathElement = reinterpret_cast<MathHandler *>(element.get());
+                m_sum = mathElement->compute(m_sum);
+            }
+        });
         m_parser.RegisterElementCb("ExpectedSum",
-                [this]() -> XML::Parser::ElementHandlerPtr
-                {
-                    return std::make_shared<ExpectedSumHandler>();
-                },
-                [this](const XML::Parser::ElementHandlerPtr &element)
-                {
-                    if(element)
-                    {
-                        ExpectedSumHandler *sumElement = reinterpret_cast<ExpectedSumHandler*>(element.get());
-                        m_expectedSum = sumElement->getSum();
-                    }
-                });
+        [this]() -> XML::Parser::ElementHandlerPtr {
+            return std::make_shared<ExpectedSumHandler>();
+        },
+        [this](const XML::Parser::ElementHandlerPtr & element) {
+            if (element) {
+                ExpectedSumHandler *sumElement = reinterpret_cast<ExpectedSumHandler *>
+                                                 (element.get());
+                m_expectedSum = sumElement->getSum();
+            }
+        });
     }
 
     static void Error(const Parser::ErrorType /*errorType*/,
-                      const std::string & log_msg)
+                      const std::string &log_msg)
     {
         BOOST_FAIL(log_msg);
     }
@@ -271,12 +271,16 @@ public:
         return m_parser.Parse();
     }
 
-    int getSum() const {
+    int getSum() const
+    {
         return m_sum;
     }
-    int getExpectedSum() const {
+
+    int getExpectedSum() const
+    {
         return m_expectedSum;
     }
+
 private:
     XML::Parser m_parser;
     int m_sum;
@@ -288,7 +292,8 @@ BOOST_AUTO_TEST_CASE(XmlParserTest_XML2_structure)
     StructureTest parser(format_test_path(XML_2_structure).c_str());
     BOOST_REQUIRE(0 == parser.Parse());
     BOOST_REQUIRE_MESSAGE(parser.getSum() == parser.getExpectedSum(),
-                          "got sum: " << parser.getSum() << " while expected: " << parser.getExpectedSum());
+                          "got sum: " << parser.getSum() << " while expected: " <<
+                          parser.getExpectedSum());
 }
 
 BOOST_AUTO_TEST_CASE(XmlParserTest_XML3_encrypted_correct_parse)
@@ -296,8 +301,10 @@ BOOST_AUTO_TEST_CASE(XmlParserTest_XML3_encrypted_correct_parse)
     XML::Parser parser(format_test_path(XML_3_encrypted).c_str());
     BOOST_REQUIRE(0 == parser.Validate(format_test_path(XSD_3_encrypted).c_str()));
 
-    BOOST_REQUIRE(Parser::ErrorCode::PARSE_SUCCESS == parser.RegisterElementCb("Key", dummyStartCallback, NULL));
-    BOOST_REQUIRE(Parser::ErrorCode::PARSE_SUCCESS == parser.RegisterElementCb("Cert", NULL, dummyEndCallback));
+    BOOST_REQUIRE(Parser::ErrorCode::PARSE_SUCCESS ==
+                  parser.RegisterElementCb("Key", dummyStartCallback, NULL));
+    BOOST_REQUIRE(Parser::ErrorCode::PARSE_SUCCESS ==
+                  parser.RegisterElementCb("Cert", NULL, dummyEndCallback));
     startCallbackFlag = false;
     endCallbackFlag = false;
     BOOST_REQUIRE(Parser::ErrorCode::PARSE_SUCCESS == parser.Parse());
@@ -310,7 +317,8 @@ BOOST_AUTO_TEST_CASE(XmlParserTest_XML4_device_key_correct_parse)
     XML::Parser parser(format_test_path(XML_4_device_key).c_str());
     BOOST_REQUIRE(0 == parser.Validate(format_test_path(XSD_4_device_key).c_str()));
 
-    BOOST_REQUIRE(Parser::ErrorCode::PARSE_SUCCESS == parser.RegisterElementCb("RSAPrivateKey", dummyStartCallback, NULL));
+    BOOST_REQUIRE(Parser::ErrorCode::PARSE_SUCCESS ==
+                  parser.RegisterElementCb("RSAPrivateKey", dummyStartCallback, NULL));
     startCallbackFlag = false;
     BOOST_REQUIRE(Parser::ErrorCode::PARSE_SUCCESS == parser.Parse());
     BOOST_REQUIRE(startCallbackFlag == true);

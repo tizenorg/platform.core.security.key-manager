@@ -60,7 +60,7 @@ RawBuffer symmetricEncrypt(
 RawBuffer symmetricDecrypt(
     const RawBuffer &key,
     const CryptoAlgorithm &alg,
-       const RawBuffer &cipher);
+    const RawBuffer &cipher);
 RawBuffer asymmetricEncrypt(
     const EvpShPtr &key,
     const CryptoAlgorithm &alg,
@@ -85,46 +85,46 @@ RawBuffer decryptDataAesGcm(
     const RawBuffer &aad = RawBuffer());
 
 RawBuffer encryptDataAes(AlgoType type,
-    const RawBuffer &key,
-    const RawBuffer &data,
-    const RawBuffer &iv);
+                         const RawBuffer &key,
+                         const RawBuffer &data,
+                         const RawBuffer &iv);
 
 RawBuffer decryptDataAes(AlgoType type,
-    const RawBuffer &key,
-    const RawBuffer &data,
-    const RawBuffer &iv);
+                         const RawBuffer &key,
+                         const RawBuffer &data,
+                         const RawBuffer &iv);
 
 RawBuffer sign(EVP_PKEY *pkey,
-    const CryptoAlgorithm &alg,
-    const RawBuffer &message);
+               const CryptoAlgorithm &alg,
+               const RawBuffer &message);
 
 int verify(EVP_PKEY *pkey,
-    const CryptoAlgorithm &alg,
-    const RawBuffer &message,
-    const RawBuffer &signature);
+           const CryptoAlgorithm &alg,
+           const RawBuffer &message,
+           const RawBuffer &signature);
 
 const EVP_MD *getMdAlgo(const HashAlgorithm hashAlgo);
 int getRsaPadding(const RSAPaddingAlgorithm padAlgo);
 
 RawBuffer signMessage(EVP_PKEY *privKey,
-    const RawBuffer &message,
-    const int rsa_padding);
+                      const RawBuffer &message,
+                      const int rsa_padding);
 
 RawBuffer digestSignMessage(EVP_PKEY *privKey,
-    const RawBuffer &message,
-    const EVP_MD *md_algo,
-    const int rsa_padding);
+                            const RawBuffer &message,
+                            const EVP_MD *md_algo,
+                            const int rsa_padding);
 
 int verifyMessage(EVP_PKEY *pubKey,
-    const RawBuffer &message,
-    const RawBuffer &signature,
-    const int rsa_padding);
+                  const RawBuffer &message,
+                  const RawBuffer &signature,
+                  const int rsa_padding);
 
 int digestVerifyMessage(EVP_PKEY *pubKey,
-    const RawBuffer &message,
-    const RawBuffer &signature,
-    const EVP_MD *md_algo,
-    const int rsa_padding);
+                        const RawBuffer &message,
+                        const RawBuffer &signature,
+                        const EVP_MD *md_algo,
+                        const int rsa_padding);
 
 bool verifyBinaryData(DataType dataType, const RawBuffer &buffer);
 

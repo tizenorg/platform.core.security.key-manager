@@ -37,7 +37,7 @@ namespace CKM {
 namespace {
 template <class T>
 int getCertChain(
-    ServiceConnection & serviceConnection,
+    ServiceConnection &serviceConnection,
     LogicCommand command,
     int counter,
     const CertificateShPtr &certificate,
@@ -49,13 +49,14 @@ int getCertChain(
     return try_catch([&] {
         MessageBuffer recv;
         auto send = MessageBuffer::Serialize(static_cast<int>(command),
-                                             counter,
-                                             certificate->getDER(),
-                                             untrustedVector,
-                                             trustedVector,
-                                             useTrustedSystemCertificates);
+        counter,
+        certificate->getDER(),
+        untrustedVector,
+        trustedVector,
+        useTrustedSystemCertificates);
 
         int retCode = serviceConnection.processRequest(send.Pop(), recv);
+
         if (CKM_API_SUCCESS != retCode)
             return retCode;
 
@@ -70,10 +71,13 @@ int getCertChain(
         if (retCode != CKM_API_SUCCESS)
             return retCode;
 
-        for (auto &e: rawBufferVector) {
+        for (auto &e : rawBufferVector)
+        {
             CertificateShPtr cert(new CertificateImpl(e, DataFormat::FORM_DER));
+
             if (cert->empty())
                 return CKM_API_ERROR_BAD_RESPONSE;
+
             certificateChainVector.push_back(cert);
         }
 
@@ -84,10 +88,10 @@ int getCertChain(
 } // namespace anonymous
 
 Manager::Impl::Impl()
-  : m_counter(0),
-    m_storageConnection(SERVICE_SOCKET_CKM_STORAGE),
-    m_ocspConnection(SERVICE_SOCKET_OCSP),
-    m_encryptionConnection(SERVICE_SOCKET_ENCRYPTION)
+    : m_counter(0),
+      m_storageConnection(SERVICE_SOCKET_CKM_STORAGE),
+      m_ocspConnection(SERVICE_SOCKET_OCSP),
+      m_encryptionConnection(SERVICE_SOCKET_ENCRYPTION)
 {
     initOpenSslOnce();
 }
@@ -108,12 +112,12 @@ int Manager::Impl::saveBinaryData(
         MessageBuffer recv;
         AliasSupport helper(alias);
         auto send = MessageBuffer::Serialize(static_cast<int>(LogicCommand::SAVE),
-                                             my_counter,
-                                             static_cast<int>(dataType),
-                                             helper.getName(),
-                                             helper.getLabel(),
-                                             rawData,
-                                             PolicySerializable(policy));
+        my_counter,
+        static_cast<int>(dataType),
+        helper.getName(),
+        helper.getLabel(),
+        rawData,
+        PolicySerializable(policy));
 
         int retCode = m_storageConnection.processRequest(send.Pop(), recv);
         if (CKM_API_SUCCESS != retCode)
@@ -131,10 +135,12 @@ int Manager::Impl::saveBinaryData(
     });
 }
 
-int Manager::Impl::saveKey(const Alias &alias, const KeyShPtr &key, const Policy &policy)
+int Manager::Impl::saveKey(const Alias &alias, const KeyShPtr &key,
+                           const Policy &policy)
 {
     if (key.get() == NULL)
         return CKM_API_ERROR_INPUT_PARAM;
+
     Try {
         return saveBinaryData(alias, DataType(key->getType()), key->getDER(), policy);
     } Catch(DataType::Exception::Base) {
@@ -150,19 +156,22 @@ int Manager::Impl::saveCertificate(
 {
     if (cert.get() == NULL)
         return CKM_API_ERROR_INPUT_PARAM;
+
     return saveBinaryData(alias, DataType::CERTIFICATE, cert->getDER(), policy);
 }
 
-int Manager::Impl::saveData(const Alias &alias, const RawBuffer &rawData, const Policy &policy)
+int Manager::Impl::saveData(const Alias &alias, const RawBuffer &rawData,
+                            const Policy &policy)
 {
     if (!policy.extractable)
         return CKM_API_ERROR_INPUT_PARAM;
+
     return saveBinaryData(alias, DataType::BINARY_DATA, rawData, policy);
 }
 
 
 int Manager::Impl::savePKCS12(
-    const Alias & alias,
+    const Alias &alias,
     const PKCS12ShPtr &pkcs,
     const Policy &keyPolicy,
     const Policy &certPolicy)
@@ -176,14 +185,15 @@ int Manager::Impl::savePKCS12(
         MessageBuffer recv;
         AliasSupport helper(alias);
         auto send = MessageBuffer::Serialize(static_cast<int>(LogicCommand::SAVE_PKCS12),
-                                             my_counter,
-                                             helper.getName(),
-                                             helper.getLabel(),
-                                             PKCS12Serializable(*pkcs.get()),
-                                             PolicySerializable(keyPolicy),
-                                             PolicySerializable(certPolicy));
+        my_counter,
+        helper.getName(),
+        helper.getLabel(),
+        PKCS12Serializable(*pkcs.get()),
+        PolicySerializable(keyPolicy),
+        PolicySerializable(certPolicy));
 
         int retCode = m_storageConnection.processRequest(send.Pop(), recv);
+
         if (CKM_API_SUCCESS != retCode)
             return retCode;
 
@@ -203,7 +213,8 @@ int Manager::Impl::getPKCS12(const Alias &alias, PKCS12ShPtr &pkcs)
     return getPKCS12(alias, Password(), Password(), pkcs);
 }
 
-int Manager::Impl::getPKCS12(const Alias &alias, const Password &keyPass, const Password &certPass, PKCS12ShPtr &pkcs)
+int Manager::Impl::getPKCS12(const Alias &alias, const Password &keyPass,
+                             const Password &certPass, PKCS12ShPtr &pkcs)
 {
     if (alias.empty())
         return CKM_API_ERROR_INPUT_PARAM;
@@ -214,13 +225,14 @@ int Manager::Impl::getPKCS12(const Alias &alias, const Password &keyPass, const 
         MessageBuffer recv;
         AliasSupport helper(alias);
         auto send = MessageBuffer::Serialize(static_cast<int>(LogicCommand::GET_PKCS12),
-                                             my_counter,
-                                             helper.getName(),
-                                             helper.getLabel(),
-                                             keyPass,
-                                             certPass);
+        my_counter,
+        helper.getName(),
+        helper.getLabel(),
+        keyPass,
+        certPass);
 
         int retCode = m_storageConnection.processRequest(send.Pop(), recv);
+
         if (CKM_API_SUCCESS != retCode)
             return retCode;
 
@@ -250,11 +262,12 @@ int Manager::Impl::removeAlias(const Alias &alias)
         MessageBuffer recv;
         AliasSupport helper(alias);
         auto send = MessageBuffer::Serialize(static_cast<int>(LogicCommand::REMOVE),
-                                             my_counter,
-                                             helper.getName(),
-                                             helper.getLabel());
+        my_counter,
+        helper.getName(),
+        helper.getLabel());
 
         int retCode = m_storageConnection.processRequest(send.Pop(), recv);
+
         if (CKM_API_SUCCESS != retCode)
             return retCode;
 
@@ -285,13 +298,14 @@ int Manager::Impl::getBinaryData(
         MessageBuffer recv;
         AliasSupport helper(alias);
         auto send = MessageBuffer::Serialize(static_cast<int>(LogicCommand::GET),
-                                             my_counter,
-                                             static_cast<int>(sendDataType),
-                                             helper.getName(),
-                                             helper.getLabel(),
-                                             password);
+        my_counter,
+        static_cast<int>(sendDataType),
+        helper.getName(),
+        helper.getLabel(),
+        password);
 
         int retCode = m_storageConnection.processRequest(send.Pop(), recv);
+
         if (CKM_API_SUCCESS != retCode)
             return retCode;
 
@@ -308,22 +322,24 @@ int Manager::Impl::getBinaryData(
     });
 }
 
-int Manager::Impl::getKey(const Alias &alias, const Password &password, KeyShPtr &key)
+int Manager::Impl::getKey(const Alias &alias, const Password &password,
+                          KeyShPtr &key)
 {
     DataType recvDataType;
     RawBuffer rawData;
 
     int retCode = getBinaryData(
-        alias,
-        DataType::KEY_RSA_PUBLIC,
-        password,
-        recvDataType,
-        rawData);
+                      alias,
+                      DataType::KEY_RSA_PUBLIC,
+                      password,
+                      recvDataType,
+                      rawData);
 
     if (retCode != CKM_API_SUCCESS)
         return retCode;
 
     KeyShPtr keyParsed;
+
     if (DataType::KEY_AES == recvDataType)
         keyParsed = KeyShPtr(new KeyAESImpl(rawData));
     else
@@ -339,17 +355,18 @@ int Manager::Impl::getKey(const Alias &alias, const Password &password, KeyShPtr
     return CKM_API_SUCCESS;
 }
 
-int Manager::Impl::getCertificate(const Alias &alias, const Password &password, CertificateShPtr &cert)
+int Manager::Impl::getCertificate(const Alias &alias, const Password &password,
+                                  CertificateShPtr &cert)
 {
     DataType recvDataType;
     RawBuffer rawData;
 
     int retCode = getBinaryData(
-        alias,
-        DataType::CERTIFICATE,
-        password,
-        recvDataType,
-        rawData);
+                      alias,
+                      DataType::CERTIFICATE,
+                      password,
+                      recvDataType,
+                      rawData);
 
     if (retCode != CKM_API_SUCCESS)
         return retCode;
@@ -367,16 +384,17 @@ int Manager::Impl::getCertificate(const Alias &alias, const Password &password, 
     return CKM_API_SUCCESS;
 }
 
-int Manager::Impl::getData(const Alias &alias, const Password &password, RawBuffer &rawData)
+int Manager::Impl::getData(const Alias &alias, const Password &password,
+                           RawBuffer &rawData)
 {
     DataType recvDataType = DataType::BINARY_DATA;
 
     int retCode = getBinaryData(
-        alias,
-        DataType::BINARY_DATA,
-        password,
-        recvDataType,
-        rawData);
+                      alias,
+                      DataType::BINARY_DATA,
+                      password,
+                      recvDataType,
+                      rawData);
 
     if (retCode != CKM_API_SUCCESS)
         return retCode;
@@ -387,17 +405,19 @@ int Manager::Impl::getData(const Alias &alias, const Password &password, RawBuff
     return CKM_API_SUCCESS;
 }
 
-int Manager::Impl::getBinaryDataAliasVector(DataType dataType, AliasVector &aliasVector)
+int Manager::Impl::getBinaryDataAliasVector(DataType dataType,
+        AliasVector &aliasVector)
 {
     int my_counter = ++m_counter;
 
     return try_catch([&] {
         MessageBuffer recv;
         auto send = MessageBuffer::Serialize(static_cast<int>(LogicCommand::GET_LIST),
-                                             my_counter,
-                                             static_cast<int>(dataType));
+        my_counter,
+        static_cast<int>(dataType));
 
         int retCode = m_storageConnection.processRequest(send.Pop(), recv);
+
         if (CKM_API_SUCCESS != retCode)
             return retCode;
 
@@ -440,7 +460,8 @@ int Manager::Impl::createKeyPairRSA(
     const Policy &policyPrivateKey,
     const Policy &policyPublicKey)
 {
-    return this->createKeyPair(CKM::KeyType::KEY_RSA_PUBLIC, size, privateKeyAlias, publicKeyAlias, policyPrivateKey, policyPublicKey);
+    return this->createKeyPair(CKM::KeyType::KEY_RSA_PUBLIC, size, privateKeyAlias,
+                               publicKeyAlias, policyPrivateKey, policyPublicKey);
 }
 
 int Manager::Impl::createKeyPairDSA(
@@ -450,7 +471,8 @@ int Manager::Impl::createKeyPairDSA(
     const Policy &policyPrivateKey,
     const Policy &policyPublicKey)
 {
-    return this->createKeyPair(CKM::KeyType::KEY_DSA_PUBLIC, size, privateKeyAlias, publicKeyAlias, policyPrivateKey, policyPublicKey);
+    return this->createKeyPair(CKM::KeyType::KEY_DSA_PUBLIC, size, privateKeyAlias,
+                               publicKeyAlias, policyPrivateKey, policyPublicKey);
 }
 
 int Manager::Impl::createKeyPairECDSA(
@@ -460,7 +482,9 @@ int Manager::Impl::createKeyPairECDSA(
     const Policy &policyPrivateKey,
     const Policy &policyPublicKey)
 {
-    return this->createKeyPair(CKM::KeyType::KEY_ECDSA_PUBLIC, static_cast<int>(type), privateKeyAlias, publicKeyAlias, policyPrivateKey, policyPublicKey);
+    return this->createKeyPair(CKM::KeyType::KEY_ECDSA_PUBLIC,
+                               static_cast<int>(type), privateKeyAlias, publicKeyAlias, policyPrivateKey,
+                               policyPublicKey);
 }
 
 int Manager::Impl::createKeyAES(
@@ -475,13 +499,14 @@ int Manager::Impl::createKeyAES(
         MessageBuffer recv;
         AliasSupport aliasHelper(keyAlias);
         auto send = MessageBuffer::Serialize(static_cast<int>(LogicCommand::CREATE_KEY_AES),
-                                             my_counter,
-                                             static_cast<int>(size),
-                                             PolicySerializable(policyKey),
-                                             aliasHelper.getName(),
-                                             aliasHelper.getLabel());
+        my_counter,
+        static_cast<int>(size),
+        PolicySerializable(policyKey),
+        aliasHelper.getName(),
+        aliasHelper.getLabel());
 
         int retCode = m_storageConnection.processRequest(send.Pop(), recv);
+
         if (CKM_API_SUCCESS != retCode)
             return retCode;
 
@@ -506,27 +531,28 @@ int Manager::Impl::createKeyPair(
 {
     // input type check
     CryptoAlgorithm keyGenAlgorithm;
+
     switch (key_type) {
-        case KeyType::KEY_RSA_PUBLIC:
-        case KeyType::KEY_RSA_PRIVATE:
-            keyGenAlgorithm.setParam(ParamName::ALGO_TYPE, AlgoType::RSA_GEN);
-            keyGenAlgorithm.setParam(ParamName::GEN_KEY_LEN, additional_param);
-            break;
+    case KeyType::KEY_RSA_PUBLIC:
+    case KeyType::KEY_RSA_PRIVATE:
+        keyGenAlgorithm.setParam(ParamName::ALGO_TYPE, AlgoType::RSA_GEN);
+        keyGenAlgorithm.setParam(ParamName::GEN_KEY_LEN, additional_param);
+        break;
 
-        case KeyType::KEY_DSA_PUBLIC:
-        case KeyType::KEY_DSA_PRIVATE:
-            keyGenAlgorithm.setParam(ParamName::ALGO_TYPE, AlgoType::DSA_GEN);
-            keyGenAlgorithm.setParam(ParamName::GEN_KEY_LEN, additional_param);
-            break;
+    case KeyType::KEY_DSA_PUBLIC:
+    case KeyType::KEY_DSA_PRIVATE:
+        keyGenAlgorithm.setParam(ParamName::ALGO_TYPE, AlgoType::DSA_GEN);
+        keyGenAlgorithm.setParam(ParamName::GEN_KEY_LEN, additional_param);
+        break;
 
-        case KeyType::KEY_ECDSA_PUBLIC:
-        case KeyType::KEY_ECDSA_PRIVATE:
-            keyGenAlgorithm.setParam(ParamName::ALGO_TYPE, AlgoType::ECDSA_GEN);
-            keyGenAlgorithm.setParam(ParamName::GEN_EC, additional_param);
-            break;
+    case KeyType::KEY_ECDSA_PUBLIC:
+    case KeyType::KEY_ECDSA_PRIVATE:
+        keyGenAlgorithm.setParam(ParamName::ALGO_TYPE, AlgoType::ECDSA_GEN);
+        keyGenAlgorithm.setParam(ParamName::GEN_EC, additional_param);
+        break;
 
-        default:
-            return CKM_API_ERROR_INPUT_PARAM;
+    default:
+        return CKM_API_ERROR_INPUT_PARAM;
     }
 
     // proceed with sending request
@@ -537,16 +563,17 @@ int Manager::Impl::createKeyPair(
         AliasSupport privateHelper(privateKeyAlias);
         AliasSupport publicHelper(publicKeyAlias);
         auto send = MessageBuffer::Serialize(static_cast<int>(LogicCommand::CREATE_KEY_PAIR),
-                                             my_counter,
-                                             CryptoAlgorithmSerializable(keyGenAlgorithm),
-                                             PolicySerializable(policyPrivateKey),
-                                             PolicySerializable(policyPublicKey),
-                                             privateHelper.getName(),
-                                             privateHelper.getLabel(),
-                                             publicHelper.getName(),
-                                             publicHelper.getLabel());
+        my_counter,
+        CryptoAlgorithmSerializable(keyGenAlgorithm),
+        PolicySerializable(policyPrivateKey),
+        PolicySerializable(policyPublicKey),
+        privateHelper.getName(),
+        privateHelper.getLabel(),
+        publicHelper.getName(),
+        publicHelper.getLabel());
 
         int retCode = m_storageConnection.processRequest(send.Pop(), recv);
+
         if (CKM_API_SUCCESS != retCode)
             return retCode;
 
@@ -573,21 +600,21 @@ int Manager::Impl::getCertificateChain(
     if (!certificate || certificate->empty())
         return CKM_API_ERROR_INPUT_PARAM;
 
-    for (auto &e: untrustedCertificates)
+    for (auto &e : untrustedCertificates)
         untrustedVector.push_back(e->getDER());
 
-    for (auto &e: trustedCertificates)
+    for (auto &e : trustedCertificates)
         trustedVector.push_back(e->getDER());
 
     return getCertChain(
-            m_storageConnection,
-            LogicCommand::GET_CHAIN_CERT,
-            ++m_counter,
-            certificate,
-            untrustedVector,
-            trustedVector,
-            useTrustedSystemCertificates,
-            certificateChainVector);
+               m_storageConnection,
+               LogicCommand::GET_CHAIN_CERT,
+               ++m_counter,
+               certificate,
+               untrustedVector,
+               trustedVector,
+               useTrustedSystemCertificates,
+               certificateChainVector);
 }
 
 int Manager::Impl::getCertificateChain(
@@ -603,24 +630,25 @@ int Manager::Impl::getCertificateChain(
     if (!certificate || certificate->empty())
         return CKM_API_ERROR_INPUT_PARAM;
 
-    for (auto &e: untrustedCertificates) {
+    for (auto &e : untrustedCertificates) {
         AliasSupport helper(e);
         untrustedVector.push_back(std::make_pair(helper.getLabel(), helper.getName()));
     }
-    for (auto &e: trustedCertificates) {
+
+    for (auto &e : trustedCertificates) {
         AliasSupport helper(e);
         trustedVector.push_back(std::make_pair(helper.getLabel(), helper.getName()));
     }
 
     return getCertChain(
-            m_storageConnection,
-            LogicCommand::GET_CHAIN_ALIAS,
-            ++m_counter,
-            certificate,
-            untrustedVector,
-            trustedVector,
-            useTrustedSystemCertificates,
-            certificateChainVector);
+               m_storageConnection,
+               LogicCommand::GET_CHAIN_ALIAS,
+               ++m_counter,
+               certificate,
+               untrustedVector,
+               trustedVector,
+               useTrustedSystemCertificates,
+               certificateChainVector);
 }
 
 int Manager::Impl::createSignature(
@@ -636,14 +664,15 @@ int Manager::Impl::createSignature(
         MessageBuffer recv;
         AliasSupport helper(privateKeyAlias);
         auto send = MessageBuffer::Serialize(static_cast<int>(LogicCommand::CREATE_SIGNATURE),
-                                             my_counter,
-                                             helper.getName(),
-                                             helper.getLabel(),
-                                             password,
-                                             message,
-                                             CryptoAlgorithmSerializable(cAlgorithm));
+        my_counter,
+        helper.getName(),
+        helper.getLabel(),
+        password,
+        message,
+        CryptoAlgorithmSerializable(cAlgorithm));
 
         int retCode = m_storageConnection.processRequest(send.Pop(), recv);
+
         if (CKM_API_SUCCESS != retCode)
             return retCode;
 
@@ -652,7 +681,7 @@ int Manager::Impl::createSignature(
         recv.Deserialize(command, counter, retCode, signature);
 
         if ((command != static_cast<int>(LogicCommand::CREATE_SIGNATURE))
-            || (counter != my_counter))
+        || (counter != my_counter))
             return CKM_API_ERROR_UNKNOWN;
 
         return retCode;
@@ -672,15 +701,16 @@ int Manager::Impl::verifySignature(
         MessageBuffer recv;
         AliasSupport helper(publicKeyOrCertAlias);
         auto send = MessageBuffer::Serialize(static_cast<int>(LogicCommand::VERIFY_SIGNATURE),
-                                             my_counter,
-                                             helper.getName(),
-                                             helper.getLabel(),
-                                             password,
-                                             message,
-                                             signature,
-                                             CryptoAlgorithmSerializable(cAlg));
+        my_counter,
+        helper.getName(),
+        helper.getLabel(),
+        password,
+        message,
+        signature,
+        CryptoAlgorithmSerializable(cAlg));
 
         int retCode = m_storageConnection.processRequest(send.Pop(), recv);
+
         if (CKM_API_SUCCESS != retCode)
             return retCode;
 
@@ -689,31 +719,36 @@ int Manager::Impl::verifySignature(
         recv.Deserialize(command, counter, retCode);
 
         if ((command != static_cast<int>(LogicCommand::VERIFY_SIGNATURE))
-            || (counter != my_counter))
+        || (counter != my_counter))
             return CKM_API_ERROR_UNKNOWN;
 
         return retCode;
     });
 }
 
-int Manager::Impl::ocspCheck(const CertificateShPtrVector &certChain, int &ocspStatus)
+int Manager::Impl::ocspCheck(const CertificateShPtrVector &certChain,
+                             int &ocspStatus)
 {
     return try_catch([&] {
         int my_counter = ++m_counter;
         MessageBuffer recv;
 
         RawBufferVector rawCertChain;
-        for (auto &e: certChain) {
+
+        for (auto &e : certChain)
+        {
             if (!e || e->empty()) {
                 LogError("Empty certificate");
                 return CKM_API_ERROR_INPUT_PARAM;
             }
+
             rawCertChain.push_back(e->getDER());
         }
 
         auto send = MessageBuffer::Serialize(my_counter, rawCertChain);
 
         int retCode = m_ocspConnection.processRequest(send.Pop(), recv);
+
         if (CKM_API_SUCCESS != retCode)
             return retCode;
 
@@ -728,8 +763,8 @@ int Manager::Impl::ocspCheck(const CertificateShPtrVector &certChain, int &ocspS
 }
 
 int Manager::Impl::setPermission(const Alias &alias,
-                               const Label &accessor,
-                               PermissionMask permissionMask)
+                                 const Label &accessor,
+                                 PermissionMask permissionMask)
 {
     int my_counter = ++m_counter;
 
@@ -737,13 +772,14 @@ int Manager::Impl::setPermission(const Alias &alias,
         MessageBuffer recv;
         AliasSupport helper(alias);
         auto send = MessageBuffer::Serialize(static_cast<int>(LogicCommand::SET_PERMISSION),
-                                             my_counter,
-                                             helper.getName(),
-                                             helper.getLabel(),
-                                             accessor,
-                                             permissionMask);
+        my_counter,
+        helper.getName(),
+        helper.getLabel(),
+        accessor,
+        permissionMask);
 
         int retCode = m_storageConnection.processRequest(send.Pop(), recv);
+
         if (CKM_API_SUCCESS != retCode)
             return retCode;
 
@@ -759,11 +795,11 @@ int Manager::Impl::setPermission(const Alias &alias,
 }
 
 int Manager::Impl::crypt(EncryptionCommand command,
-          const CryptoAlgorithm &algo,
-          const Alias &keyAlias,
-          const Password &password,
-          const RawBuffer& input,
-          RawBuffer& output)
+                         const CryptoAlgorithm &algo,
+                         const Alias &keyAlias,
+                         const Password &password,
+                         const RawBuffer &input,
+                         RawBuffer &output)
 {
     int my_counter = ++m_counter;
 
@@ -772,14 +808,15 @@ int Manager::Impl::crypt(EncryptionCommand command,
         AliasSupport helper(keyAlias);
         CryptoAlgorithmSerializable cas(algo);
         auto send = MessageBuffer::Serialize(static_cast<int>(command),
-                                             my_counter,
-                                             cas,
-                                             helper.getName(),
-                                             helper.getLabel(),
-                                             password,
-                                             input);
+        my_counter,
+        cas,
+        helper.getName(),
+        helper.getLabel(),
+        password,
+        input);
 
         int retCode = m_encryptionConnection.processRequest(send.Pop(), recv);
+
         if (CKM_API_SUCCESS != retCode)
             return retCode;
 
@@ -795,21 +832,23 @@ int Manager::Impl::crypt(EncryptionCommand command,
 }
 
 int Manager::Impl::encrypt(const CryptoAlgorithm &algo,
-            const Alias &keyAlias,
-            const Password &password,
-            const RawBuffer& plain,
-            RawBuffer& encrypted)
+                           const Alias &keyAlias,
+                           const Password &password,
+                           const RawBuffer &plain,
+                           RawBuffer &encrypted)
 {
-    return crypt(EncryptionCommand::ENCRYPT, algo, keyAlias, password, plain, encrypted);
+    return crypt(EncryptionCommand::ENCRYPT, algo, keyAlias, password, plain,
+                 encrypted);
 }
 
 int Manager::Impl::decrypt(const CryptoAlgorithm &algo,
-                         const Alias &keyAlias,
-                         const Password &password,
-                         const RawBuffer& encrypted,
-                         RawBuffer& decrypted)
+                           const Alias &keyAlias,
+                           const Password &password,
+                           const RawBuffer &encrypted,
+                           RawBuffer &decrypted)
 {
-    return crypt(EncryptionCommand::DECRYPT, algo, keyAlias, password, encrypted, decrypted);
+    return crypt(EncryptionCommand::DECRYPT, algo, keyAlias, password, encrypted,
+                 decrypted);
 }
 
 } // namespace CKM

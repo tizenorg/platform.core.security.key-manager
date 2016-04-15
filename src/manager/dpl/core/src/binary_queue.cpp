@@ -101,7 +101,7 @@ void BinaryQueue::Clear()
     m_size = 0;
 }
 
-void BinaryQueue::AppendCopy(const void* buffer, size_t bufferSize)
+void BinaryQueue::AppendCopy(const void *buffer, size_t bufferSize)
 {
     // Create data copy with malloc/free
     void *bufferCopy = malloc(bufferSize);
@@ -123,10 +123,10 @@ void BinaryQueue::AppendCopy(const void* buffer, size_t bufferSize)
     }
 }
 
-void BinaryQueue::AppendUnmanaged(const void* buffer,
+void BinaryQueue::AppendUnmanaged(const void *buffer,
                                   size_t bufferSize,
                                   BufferDeleter deleter,
-                                  void* userParam)
+                                  void *userParam)
 {
     // Do not attach empty buckets
     if (bufferSize == 0) {
@@ -136,6 +136,7 @@ void BinaryQueue::AppendUnmanaged(const void* buffer,
 
     // Just add new bucket with selected deleter
     Bucket *bucket = new Bucket(buffer, bufferSize, deleter, userParam);
+
     try {
         m_buckets.push_back(bucket);
     } catch (const std::bad_alloc &) {
@@ -226,9 +227,9 @@ void BinaryQueue::DeleteBucket(BinaryQueue::Bucket *bucket)
     delete bucket;
 }
 
-void BinaryQueue::BufferDeleterFree(const void* data,
+void BinaryQueue::BufferDeleterFree(const void *data,
                                     size_t dataSize,
-                                    void* userParam)
+                                    void *userParam)
 {
     (void)dataSize;
     (void)userParam;
@@ -237,10 +238,10 @@ void BinaryQueue::BufferDeleterFree(const void* data,
     free(const_cast<void *>(data));
 }
 
-BinaryQueue::Bucket::Bucket(const void* data,
+BinaryQueue::Bucket::Bucket(const void *data,
                             size_t dataSize,
                             BufferDeleter dataDeleter,
-                            void* userParam) :
+                            void *userParam) :
     buffer(data),
     ptr(data),
     size(dataSize),
@@ -289,8 +290,8 @@ BinaryQueueAutoPtr BinaryQueue::Read(size_t size)
     // Simulate input stream
     size_t available = std::min(size, m_size);
 
-    std::unique_ptr<void, std::function<void(void*)>>
-        bufferCopy(malloc(available), free);
+    std::unique_ptr<void, std::function<void(void *)>>
+            bufferCopy(malloc(available), free);
 
     if (!bufferCopy.get())
         throw std::bad_alloc();

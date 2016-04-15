@@ -35,11 +35,12 @@ namespace Exc {
 
 class COMMON_API Exception : public std::exception {
 public:
-    Exception(const char *path, const char *function, int line, const std::string &message = std::string())
-      : m_path(path)
-      , m_function(function)
-      , m_line(line)
-      , m_message(message)
+    Exception(const char *path, const char *function, int line,
+              const std::string &message = std::string())
+        : m_path(path)
+        , m_function(function)
+        , m_line(line)
+        , m_message(message)
     {}
 
     virtual ~Exception() noexcept {}
@@ -52,7 +53,8 @@ public:
     virtual std::string message(void) const
     {
         std::ostringstream msg;
-        msg << "[" << m_path << ":" << m_line << " " << m_function << "()] " << m_message;
+        msg << "[" << m_path << ":" << m_line << " " << m_function << "()] " <<
+            m_message;
         return msg.str();
     }
 
@@ -68,25 +70,28 @@ protected:
 class DefaultExceptionLogger {
 public:
     template <typename... Args>
-    DefaultExceptionLogger(const Args&...) {}
+    DefaultExceptionLogger(const Args &...) {}
 };
 
-template<
+template <
     int Error = 0,
     typename Stringify = StringifyAvoid,
     typename Before = DefaultExceptionLogger,
-    typename After = DefaultExceptionLogger>
+    typename After = DefaultExceptionLogger >
 class COMMON_API DefineException : public Exception {
 public:
     template<typename... Args>
-    DefineException(const char *path, const char *function, int line, const Args&... args)
-      : Exception(path, function, line, Stringify::Merge(args...))
+    DefineException(const char *path, const char *function, int line,
+                    const Args &... args)
+        : Exception(path, function, line, Stringify::Merge(args...))
     {
-        Before(m_path, m_function, m_line, DefineException<Error, Stringify, Before, After>::error(), m_message);
+        Before(m_path, m_function, m_line,
+               DefineException<Error, Stringify, Before, After>::error(), m_message);
     }
     ~DefineException() noexcept
     {
-        After(m_path, m_function, m_line, DefineException<Error, Stringify, Before, After>::error(), m_message);
+        After(m_path, m_function, m_line,
+              DefineException<Error, Stringify, Before, After>::error(), m_message);
     }
     virtual int error(void) const
     {
@@ -128,8 +133,9 @@ typedef DefineException<CKM_API_ERROR_DB_ERROR,
 
 struct TransactionFailed : public DatabaseFailed {
     template<typename... Args>
-    TransactionFailed(const char *path, const char *function, int line, const Args&... args)
-      : DatabaseFailed(path, function, line, args...)
+    TransactionFailed(const char *path, const char *function, int line,
+                      const Args &... args)
+        : DatabaseFailed(path, function, line, args...)
     {}
 };
 
@@ -137,5 +143,5 @@ struct TransactionFailed : public DatabaseFailed {
 } // namespace CKM
 
 #define ThrowErr(name, ...) \
-  throw name(__FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__);
+    throw name(__FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__);
 

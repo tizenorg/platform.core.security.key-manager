@@ -28,7 +28,7 @@
 #include <base64.h>
 
 namespace {
-const char * const XML_ATTR_IV  = "IV";
+const char *const XML_ATTR_IV  = "IV";
 }
 
 namespace CKM {
@@ -51,7 +51,7 @@ void BufferHandler::Start(const XML::Parser::Attributes &attr)
 }
 
 
-void BufferHandler::Characters(const std::string & data)
+void BufferHandler::Characters(const std::string &data)
 {
     m_data.reserve(m_data.size() + data.size());
     m_data.insert(m_data.end(), data.begin(), data.end());
@@ -62,9 +62,9 @@ void BufferHandler::End()
     // decoding section
     switch (m_encoding) {
     // PEM requires that "----- END" section comes right after "\n" character
-    case PEM:
-    {
-        std::string trimmed = XML::trimEachLine(std::string(m_data.begin(), m_data.end()));
+    case PEM: {
+        std::string trimmed = XML::trimEachLine(std::string(m_data.begin(),
+                                                m_data.end()));
         m_data = RawBuffer(trimmed.begin(), trimmed.end());
         break;
     }
@@ -72,9 +72,9 @@ void BufferHandler::End()
     // Base64 decoder also does not accept any whitespaces
     case DER:
     case BASE64:
-    case ENCRYPTED:
-    {
-        std::string trimmed = XML::trimEachLine(std::string(m_data.begin(), m_data.end()));
+    case ENCRYPTED: {
+        std::string trimmed = XML::trimEachLine(std::string(m_data.begin(),
+                                                m_data.end()));
         Base64Decoder base64;
         base64.reset();
         base64.append(RawBuffer(trimmed.begin(), trimmed.end()));

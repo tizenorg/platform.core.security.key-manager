@@ -30,7 +30,7 @@ class SmackAccess {
 public:
     SmackAccess();
     SmackAccess(const SmackAccess &second) = delete;
-    SmackAccess& operator=(const SmackAccess &second) = delete;
+    SmackAccess &operator=(const SmackAccess &second) = delete;
 
     void add(const std::string &subject,
              const std::string &object,

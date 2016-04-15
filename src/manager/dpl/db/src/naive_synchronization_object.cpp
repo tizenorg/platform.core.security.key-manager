@@ -26,7 +26,7 @@
 #include <time.h>
 
 namespace {
-    unsigned int seed = time(NULL);
+unsigned int seed = time(NULL);
 }
 
 //Taken from Thread class, so we don't have to pull whole definition

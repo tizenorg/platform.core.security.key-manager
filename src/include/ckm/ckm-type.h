@@ -72,8 +72,8 @@ enum class CertificateFieldId : int {
 
 struct Policy {
     Policy(const Password &pass = Password(), bool extract = true)
-      : password(pass)
-      , extractable(extract)
+        : password(pass)
+        , extractable(extract)
     {}
     virtual ~Policy() {}
     Password password;  // byte array used to encrypt data inside CKM
@@ -101,17 +101,17 @@ enum class DBCMAlgType : int {
 };
 
 typedef int PermissionMask;
-enum Permission: int {
+enum Permission : int {
     NONE            = 0x00,
     READ            = 0x01,
     REMOVE          = 0x02
-    // keep in sync with ckmc_permission_e !
+                      // keep in sync with ckmc_permission_e !
 };
 
 // algorithm parameters
 enum class ParamName : int {
     ALGO_TYPE = 1,      // If there's no such param, the service will try to deduce the algorithm
-                        // type from the key.
+    // type from the key.
 
     // encryption & decryption
     ED_IV = 101,
@@ -153,17 +153,23 @@ enum class AlgoType : int {
 class KEY_MANAGER_API CryptoAlgorithm {
 public:
     template <typename T>
-    bool getParam(ParamName name, T& value) const;
+    bool getParam(ParamName name, T &value) const;
 
     // returns false if param 'name' is invalid
     template <typename T>
-    bool setParam(ParamName name, const T& value);
+    bool setParam(ParamName name, const T &value);
 
 protected:
     class BaseParam {
     public:
-        virtual bool getBuffer(RawBuffer&) const { return false; }
-        virtual bool getInt(uint64_t&) const { return false; }
+        virtual bool getBuffer(RawBuffer &) const
+        {
+            return false;
+        }
+        virtual bool getInt(uint64_t &) const
+        {
+            return false;
+        }
         virtual ~BaseParam() {}
 
     protected:
@@ -173,10 +179,10 @@ protected:
 
     class BufferParam : public BaseParam {
     public:
-        bool getBuffer(RawBuffer& buffer) const;
-        static BaseParamPtr create(const RawBuffer& buffer);
+        bool getBuffer(RawBuffer &buffer) const;
+        static BaseParamPtr create(const RawBuffer &buffer);
     private:
-        explicit BufferParam(const RawBuffer& value) : m_buffer(value) {}
+        explicit BufferParam(const RawBuffer &value) : m_buffer(value) {}
 
         RawBuffer m_buffer;
     };
@@ -184,7 +190,7 @@ protected:
     class IntParam : public BaseParam {
     public:
         static BaseParamPtr create(uint64_t value);
-        bool getInt(uint64_t& value) const;
+        bool getInt(uint64_t &value) const;
     private:
         explicit IntParam(uint64_t value) : m_int(value) {}
 
@@ -195,36 +201,40 @@ protected:
 };
 
 template <typename T>
-bool CryptoAlgorithm::getParam(ParamName name, T& value) const
+bool CryptoAlgorithm::getParam(ParamName name, T &value) const
 {
     auto param = m_params.find(name);
+
     if (param == m_params.end())
         return false;
 
     assert(param->second);
 
     uint64_t valueTmp;
+
     if (param->second->getInt(valueTmp)) {
         value = static_cast<T>(valueTmp);
         return true;
     }
+
     return false;
 }
 
 template <>
-bool CryptoAlgorithm::getParam(ParamName name, RawBuffer& value) const;
+bool CryptoAlgorithm::getParam(ParamName name, RawBuffer &value) const;
 
 template <typename T>
-bool CryptoAlgorithm::setParam(ParamName name, const T& value)
+bool CryptoAlgorithm::setParam(ParamName name, const T &value)
 {
     if (name < ParamName::FIRST || name > ParamName::LAST)
         return false;
+
     m_params[name] = IntParam::create(static_cast<uint64_t>(value));
     return true;
 }
 
 template <>
-bool CryptoAlgorithm::setParam(ParamName name, const RawBuffer& value);
+bool CryptoAlgorithm::setParam(ParamName name, const RawBuffer &value);
 
 } // namespace CKM
 

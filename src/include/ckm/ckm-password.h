@@ -27,7 +27,8 @@
 
 namespace CKM {
 
-typedef std::basic_string<char, std::char_traits<char>, std_erase_on_dealloc<char>> Password;
+typedef std::basic_string<char, std::char_traits<char>, std_erase_on_dealloc<char>>
+        Password;
 
 } // namespace CKM
 

@@ -53,6 +53,7 @@ void Base64Encoder::finalize()
         LogWarning("Already finalized.");
         ThrowMsg(Exception::AlreadyFinalized, "Already finalized.");
     }
+
     m_finalized = true;
     (void)BIO_flush(m_b64);
 }
@@ -63,8 +64,10 @@ RawBuffer Base64Encoder::get()
         LogWarning("Not finalized");
         ThrowMsg(Exception::NotFinalized, "Not finalized");
     }
+
     BUF_MEM *bptr = nullptr;
     BIO_get_mem_ptr(m_b64, &bptr);
+
     if (!bptr) {
         LogError("Bio internal error");
         ThrowMsg(Exception::InternalError, "Bio internal error");
@@ -82,11 +85,13 @@ void Base64Encoder::reset()
     BIO_free_all(m_b64);
     m_b64 = BIO_new(BIO_f_base64());
     m_bmem = BIO_new(BIO_s_mem());
+
     if (!m_b64 || !m_bmem) {
         LogError("Error during allocation memory in BIO");
         ThrowMsg(Exception::InternalError,
                  "Error during allocation memory in BIO");
     }
+
     BIO_set_flags(m_b64, BIO_FLAGS_BASE64_NO_NL);
     m_b64 = BIO_push(m_b64, m_bmem);
 }
@@ -107,6 +112,7 @@ void Base64Decoder::append(const RawBuffer &data)
         LogWarning("Already finalized.");
         ThrowMsg(Exception::AlreadyFinalized, "Already finalized.");
     }
+
     std::copy(data.begin(), data.end(), std::back_inserter(m_input));
 }
 
@@ -131,9 +137,9 @@ bool Base64Decoder::finalize()
 
     for (size_t i = 0; i < m_input.size(); ++i) {
         if (isalnum(m_input[i])
-            || m_input[i] == '+'
-            || m_input[i] == '/'
-            || m_input[i] == '=')
+                || m_input[i] == '+'
+                || m_input[i] == '/'
+                || m_input[i] == '=')
             continue;
 
         LogError("Base64 input contains illegal chars: " << m_input[i]);
@@ -152,10 +158,12 @@ bool Base64Decoder::finalize()
 
     memset(buffer.data(), 0, buffer.size());
     b64 = BIO_new(BIO_f_base64());
+
     if (!b64) {
         LogError("Couldn't create BIO object.");
         ThrowMsg(Exception::InternalError, "Couldn't create BIO object.");
     }
+
     BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
     RawBuffer tmp(m_input);
     m_input.clear();
@@ -198,6 +206,7 @@ RawBuffer Base64Decoder::get() const
         LogWarning("Not finalized.");
         ThrowMsg(Exception::NotFinalized, "Not finalized");
     }
+
     return m_output;
 }
 

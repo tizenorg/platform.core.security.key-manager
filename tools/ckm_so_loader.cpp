@@ -42,50 +42,56 @@ void clear_cache()
 {
     sync();
     ofstream of("/proc/sys/vm/drop_caches");
+
     if (of.bad()) {
         cerr << "Cache clearing failed with errno: " << errno << endl;
         return;
     }
+
     of << "3";
 }
 
-void test(int flags, const string& library, const string& symbol)
+void test(int flags, const string &library, const string &symbol)
 {
     bool lazy = (flags & LAZY);
+
     if (flags & CLEAR_CACHE)
         clear_cache();
 
     chrono::time_point<chrono::high_resolution_clock> tp[4];
 
     tp[0] = chrono::high_resolution_clock::now();
-    void* handle = dlopen(library.c_str(), (lazy?RTLD_LAZY:RTLD_NOW));
+    void *handle = dlopen(library.c_str(), (lazy ? RTLD_LAZY : RTLD_NOW));
     tp[1] = chrono::high_resolution_clock::now();
+
     if (!handle) {
         cerr << "dlopen failed: " << dlerror() << endl;
         exit(1);
     }
 
-    if (!symbol.empty())
-    {
+    if (!symbol.empty()) {
         tp[2] = chrono::high_resolution_clock::now();
-        void* sym = dlsym(handle, symbol.c_str());
+        void *sym = dlsym(handle, symbol.c_str());
         tp[3] = chrono::high_resolution_clock::now();
+
         if (!sym) {
             cerr << "dlsym failed: " << dlerror() << endl;
             exit(1);
         }
     }
+
     dlclose(handle);
 
     cout << (tp[1] - tp[0]).count() << ";" << (tp[3] - tp[2]).count() << endl;
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     if (argc < 5) {
         cerr << "Usage: ckm_so_loader [flags] [repeats] [library] [symbol]" << endl;
         cerr << " flags: 1-clear cache, 2-lazy binding" << endl;
-        cerr << "Example: ckm_so_loader 3 100 /usr/lib/libkey-manager-client.so ckmc_save_key" << endl;
+        cerr << "Example: ckm_so_loader 3 100 /usr/lib/libkey-manager-client.so ckmc_save_key"
+             << endl;
         return -1;
     }
 
@@ -96,12 +102,14 @@ int main(int argc, char* argv[])
         string symbol(argv[4]);
 
         cout << "dlopen[us];dlsym[us]" << endl;
+
         for (int cnt = 0 ; cnt < repeats; cnt++) {
             /*
              * It has to be a different process each time. Glibc somehow caches the library information
              * and consecutive calls are faster
              */
             pid_t pid = fork();
+
             if (pid < 0) {
                 cerr << "fork failed with errno: " << errno << endl;
                 return -1;
@@ -109,9 +117,9 @@ int main(int argc, char* argv[])
                 test(flags, so_path, symbol);
                 exit(0);
             } else {
-
                 int status;
                 pid_t ret = waitpid(pid, &status, 0);
+
                 if (ret != pid) {
                     cerr << "waitpid failed with errno: " << errno << endl;
                     exit(1);

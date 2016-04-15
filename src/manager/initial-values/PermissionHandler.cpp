@@ -24,7 +24,7 @@
 #include <PermissionHandler.h>
 
 namespace {
-const char * const XML_ATTR_ACCESSOR    = "accessor";
+const char *const XML_ATTR_ACCESSOR    = "accessor";
 }
 
 namespace CKM {
@@ -32,7 +32,7 @@ namespace InitialValues {
 
 PermissionHandler::~PermissionHandler() {}
 
-void PermissionHandler::Start(const XML::Parser::Attributes & attr)
+void PermissionHandler::Start(const XML::Parser::Attributes &attr)
 {
     // get accessor label
     if (attr.find(XML_ATTR_ACCESSOR) != attr.end())

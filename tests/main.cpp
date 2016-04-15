@@ -31,19 +31,23 @@
 #include <exception.h>
 
 struct TestConfig {
-    TestConfig() {
-        boost::unit_test::unit_test_log.set_threshold_level( boost::unit_test::log_test_units);
+    TestConfig()
+    {
+        boost::unit_test::unit_test_log.set_threshold_level(
+            boost::unit_test::log_test_units);
         boost::unit_test::results_reporter::set_level(boost::unit_test::SHORT_REPORT);
         boost::unit_test::unit_test_log.set_formatter(new CKM::colour_log_formatter);
     }
-    ~TestConfig(){
+    ~TestConfig()
+    {
     }
 };
 
 bool isLibInitialized = false;
 
 struct KeyProviderLib {
-    KeyProviderLib() {
+    KeyProviderLib()
+    {
         try {
             CKM::KeyProvider::initializeLibrary();
             isLibInitialized = true;
@@ -51,7 +55,8 @@ struct KeyProviderLib {
             std::cout << "Library initialization failed!" << std::endl;
         }
     }
-    ~KeyProviderLib() {
+    ~KeyProviderLib()
+    {
         try {
             CKM::KeyProvider::closeLibrary();
         } catch (const CKM::Exc::Exception &) {
@@ -61,7 +66,8 @@ struct KeyProviderLib {
 };
 
 struct LogSetup {
-    LogSetup() {
+    LogSetup()
+    {
         CKM::SetupClientLogSystem();
         CKM::Singleton<CKM::Log::LogSystem>::Instance().SetTag("CKM_INTERNAL_TESTS");
     }

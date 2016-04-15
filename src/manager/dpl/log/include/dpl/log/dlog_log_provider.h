@@ -28,7 +28,7 @@
 namespace CKM {
 namespace Log {
 class DLOGLogProvider : public AbstractLogProvider {
-  public:
+public:
     DLOGLogProvider();
     virtual ~DLOGLogProvider();
 
@@ -41,7 +41,7 @@ class DLOGLogProvider : public AbstractLogProvider {
     // Set global Tag according to DLOG
     void SetTag(const char *tag);
 
-  private:
+private:
     std::unique_ptr<char[]> m_tag;
 };
 

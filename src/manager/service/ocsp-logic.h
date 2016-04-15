@@ -30,10 +30,11 @@ public:
     OCSPLogic();
     OCSPLogic(const OCSPLogic &) = delete;
     OCSPLogic(OCSPLogic &&) = delete;
-    OCSPLogic& operator=(const OCSPLogic &) = delete;
-    OCSPLogic& operator=(OCSPLogic &&) = delete;
+    OCSPLogic &operator=(const OCSPLogic &) = delete;
+    OCSPLogic &operator=(OCSPLogic &&) = delete;
 
-    RawBuffer ocspCheck(int commandId, const RawBufferVector &rawChain, bool allowed);
+    RawBuffer ocspCheck(int commandId, const RawBufferVector &rawChain,
+                        bool allowed);
     virtual ~OCSPLogic() {}
 
 private:

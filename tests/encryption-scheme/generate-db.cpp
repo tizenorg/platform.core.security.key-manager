@@ -30,7 +30,7 @@ int main()
         SchemeTest st;
         st.FillDb();
         return 0;
-    } catch (const std::runtime_error& e) {
+    } catch (const std::runtime_error &e) {
         std::cerr << e.what() << std::endl;
         return -1;
     } catch (...) {

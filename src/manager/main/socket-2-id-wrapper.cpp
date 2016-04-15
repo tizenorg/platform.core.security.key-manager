@@ -28,14 +28,15 @@
 
 namespace {
 
-int getPkgIdFromSocket(int sock, std::string &pkgId) {
+int getPkgIdFromSocket(int sock, std::string &pkgId)
+{
     char *pkg = nullptr;
 
     int ret = security_manager_identify_app_from_socket(sock, &pkg, nullptr);
 
     if (ret == SECURITY_MANAGER_ERROR_NO_SUCH_OBJECT) {
         LogInfo("Owner of socket is not connected with pkgid. "
-            "This case must be special-labled client. e.g. User, System");
+                "This case must be special-labled client. e.g. User, System");
         return 1;
     }
 
@@ -55,7 +56,8 @@ int getPkgIdFromSocket(int sock, std::string &pkgId) {
 
 namespace CKM {
 
-int Socket2Id::translate(int sock, std::string &result) {
+int Socket2Id::translate(int sock, std::string &result)
+{
     std::string smack;
 
     if (0 > getCredentialsFromSocket(sock, smack))

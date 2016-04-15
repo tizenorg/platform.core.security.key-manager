@@ -29,7 +29,7 @@
 namespace CKM {
 
 struct GenericEvent {
-    virtual ~GenericEvent(){}
+    virtual ~GenericEvent() {}
 };
 
 } // namespace CKM

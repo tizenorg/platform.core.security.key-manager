@@ -39,14 +39,13 @@ COMMON_API void LogUnhandledException(const std::string &str,
 }
 
 namespace CKM {
-class COMMON_API Exception
-{
-  private:
+class COMMON_API Exception {
+private:
     static unsigned int m_exceptionCount;
-    static Exception* m_lastException;
+    static Exception *m_lastException;
     static void (*m_terminateHandler)();
 
-    static void AddRef(Exception* exception)
+    static void AddRef(Exception *exception)
     {
         if (!m_exceptionCount)
             m_terminateHandler = std::set_terminate(&TerminateHandler);
@@ -55,7 +54,7 @@ class COMMON_API Exception
         m_lastException = exception;
     }
 
-    static void UnRef(Exception* e)
+    static void UnRef(Exception *e)
     {
         if (m_lastException == e)
             m_lastException = NULL;
@@ -84,16 +83,16 @@ class COMMON_API Exception
     std::string m_function;
     int m_line;
 
-  protected:
+protected:
     std::string m_message;
     std::string m_className;
 
-  public:
+public:
     static std::string KnownExceptionToString(const Exception &e)
     {
         std::ostringstream message;
         message <<
-        "\033[1;5;31m\n=== Unhandled CKM exception occurred ===\033[m\n\n";
+                "\033[1;5;31m\n=== Unhandled CKM exception occurred ===\033[m\n\n";
         message << "\033[1;33mException trace:\033[m\n\n";
         message << e.DumpToString();
         message << "\033[1;31m\n=== Will now abort ===\033[m\n";
@@ -105,13 +104,13 @@ class COMMON_API Exception
     {
         std::ostringstream message;
         message <<
-        "\033[1;5;31m\n=== Unhandled non-CKM exception occurred ===\033[m\n\n";
+                "\033[1;5;31m\n=== Unhandled non-CKM exception occurred ===\033[m\n\n";
         message << "\033[1;31m\n=== Will now abort ===\033[m\n";
 
         return message.str();
     }
 
-    static void DisplayKnownException(const Exception& e)
+    static void DisplayKnownException(const Exception &e)
     {
         LogUnhandledException(KnownExceptionToString(e).c_str());
     }
@@ -223,6 +222,7 @@ class COMMON_API Exception
     std::string DumpToString() const
     {
         std::string ret;
+
         if (m_reason != NULL)
             ret = m_reason->DumpToString();
 
@@ -310,7 +310,7 @@ class COMMON_API Exception
     class Class :                                                                                                                                 \
         public BaseClass                                                                                                                \
     {                                                                                                                                     \
-      public:                                                                                                                               \
+    public:                                                                                                                               \
         Class(const char *path, \
               const char *function, \
               int line, \
@@ -319,7 +319,7 @@ class COMMON_API Exception
         {                                                                                                                                 \
             BaseClass::m_className = #Class;                                                                                              \
         }                                                                                                                                 \
-                                                                                                                                          \
+        \
         Class(const char *path, \
               const char *function, \
               int line, \
@@ -368,8 +368,8 @@ namespace CommonException {
  * important messages.
  */
 DECLARE_EXCEPTION_TYPE(Exception, InternalError) ///< Unexpected error from
-                                                 // underlying libraries or
-                                                 // kernel
+// underlying libraries or
+// kernel
 }
 }
 

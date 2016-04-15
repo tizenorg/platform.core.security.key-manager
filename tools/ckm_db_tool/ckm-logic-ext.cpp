@@ -24,10 +24,13 @@
 
 namespace CKM {
 
-DB::SqlConnection::Output CKMLogicExt::Execute(uid_t user, const std::string& cmd) {
-    if(user < 5000 && !m_systemDbUnlocked) {
-        if(CKM_API_SUCCESS != unlockSystemDB())
+DB::SqlConnection::Output CKMLogicExt::Execute(uid_t user,
+        const std::string &cmd)
+{
+    if (user < 5000 && !m_systemDbUnlocked) {
+        if (CKM_API_SUCCESS != unlockSystemDB())
             ThrowErr(Exc::DatabaseLocked, "can not unlock system database");
+
         m_systemDbUnlocked = true;
     }
 
@@ -42,12 +45,13 @@ DB::SqlConnection::Output CKMLogicExt::Execute(uid_t user, const std::string& cm
      * into DB::CryptoExt and moved back to m_userDataMap after the call to Execute().
      */
     DB::CryptoExt db(std::move(m_userDataMap[user].database));
+
     try {
         output = db.Execute(cmd);
-        m_userDataMap[user].database = std::move(*static_cast<DB::Crypto*>(&db));
+        m_userDataMap[user].database = std::move(*static_cast<DB::Crypto *>(&db));
         return output;
-    } catch (const DB::SqlConnection::Exception::Base& e) {
-        m_userDataMap[user].database = std::move(*static_cast<DB::Crypto*>(&db));
+    } catch (const DB::SqlConnection::Exception::Base &e) {
+        m_userDataMap[user].database = std::move(*static_cast<DB::Crypto *>(&db));
         throw;
     }
 }

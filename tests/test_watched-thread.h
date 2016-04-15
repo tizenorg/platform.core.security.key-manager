@@ -35,28 +35,30 @@ template <typename F, typename... Args>
 class WatchedThread {
 public:
     // can't use rreferences for Args because std::thread needs to copy all arguments
-    explicit WatchedThread(F&& function, const Args&... args) :
+    explicit WatchedThread(F &&function, const Args &... args) :
         m_function(std::move(function)),
         m_thread(&WatchedThread::Wrapper, this, args...)
     {}
 
-    ~WatchedThread() {
+    ~WatchedThread()
+    {
         m_thread.join();
+
         if (!m_error.empty())
             BOOST_FAIL(m_error);
     }
 
     NONCOPYABLE(WatchedThread);
 
-    WatchedThread(WatchedThread&&) = default;
-    WatchedThread& operator=(WatchedThread&&) = default;
+    WatchedThread(WatchedThread &&) = default;
+    WatchedThread &operator=(WatchedThread &&) = default;
 
 protected:
-
-    void Wrapper(const Args&... args) {
+    void Wrapper(const Args &... args)
+    {
         try {
             m_function(args...);
-        } catch (const ThreadErrorMessage& e) {
+        } catch (const ThreadErrorMessage &e) {
             m_error = e.DumpToString();
         }
     }
@@ -67,7 +69,8 @@ protected:
 };
 
 template <typename F, typename... Args>
-WatchedThread<F, Args...> CreateWatchedThread(F&& function, const Args&... args)
+WatchedThread<F, Args...> CreateWatchedThread(F &&function,
+        const Args &... args)
 {
     return WatchedThread<F, Args...>(std::move(function), args...);
 }
@@ -75,5 +78,5 @@ WatchedThread<F, Args...> CreateWatchedThread(F&& function, const Args&... args)
 #define THREAD_REQUIRE_MESSAGE(expr, message)                \
     do {                                                     \
         if (!(expr))                                         \
-            ThrowMsg( ThreadErrorMessage, message);          \
+            ThrowMsg(ThreadErrorMessage, message);           \
     } while (false);

@@ -33,8 +33,8 @@ public:
     OCSPService();
     OCSPService(const OCSPService &) = delete;
     OCSPService(OCSPService &&) = delete;
-    OCSPService& operator=(const OCSPService &) = delete;
-    OCSPService& operator=(OCSPService &&) = delete;
+    OCSPService &operator=(const OCSPService &) = delete;
+    OCSPService &operator=(OCSPService &&) = delete;
 
     virtual void Start();
     virtual void Stop();

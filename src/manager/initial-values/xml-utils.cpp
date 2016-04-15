@@ -26,22 +26,22 @@
 #include <xml-utils.h>
 
 namespace {
-const char * const WHITESPACE       = " \n\r\t\v";
-const char * const LINE_WHITESPACE  = " \r\t\v";
+const char *const WHITESPACE       = " \n\r\t\v";
+const char *const LINE_WHITESPACE  = " \r\t\v";
 
-std::string trim_left(const std::string& s, const char *whitespaces)
+std::string trim_left(const std::string &s, const char *whitespaces)
 {
     size_t startpos = s.find_first_not_of(whitespaces);
     return (startpos == std::string::npos) ? "" : s.substr(startpos);
 }
 
-std::string trim_right(const std::string& s, const char *whitespaces)
+std::string trim_right(const std::string &s, const char *whitespaces)
 {
     size_t endpos = s.find_last_not_of(whitespaces);
-    return (endpos == std::string::npos) ? "" : s.substr(0, endpos+1);
+    return (endpos == std::string::npos) ? "" : s.substr(0, endpos + 1);
 }
 
-std::string trim(const std::string& s, const char *whitespaces)
+std::string trim(const std::string &s, const char *whitespaces)
 {
     return trim_right(trim_left(s, whitespaces), whitespaces);
 }
@@ -52,17 +52,17 @@ namespace CKM {
 namespace XML {
 
 template <typename T>
-T removeChars(const T& input, const char *what)
+T removeChars(const T &input, const char *what)
 {
     T out(input);
     auto endit = std::remove_if(out.begin(), out.end(),
-        [what](char c)
-        {
-            for (const char *ptr = what; *ptr; ++ptr)
-                if (*ptr == c)
-                    return true;
-            return false;
-        });
+    [what](char c) {
+        for (const char *ptr = what; *ptr; ++ptr)
+            if (*ptr == c)
+                return true;
+
+        return false;
+    });
 
     out.erase(endit, out.end());
     return out;
@@ -73,7 +73,7 @@ RawBuffer removeWhiteChars(const RawBuffer &buffer)
     return removeChars(buffer, WHITESPACE);
 }
 
-std::string trimEachLine(const std::string& input)
+std::string trimEachLine(const std::string &input)
 {
     std::stringstream ss(input);
     std::stringstream output;
@@ -81,6 +81,7 @@ std::string trimEachLine(const std::string& input)
 
     while (std::getline(ss, line, '\n')) {
         auto afterTrim = ::trim(line, LINE_WHITESPACE);
+
         if (!afterTrim.empty())
             output << afterTrim << std::endl;
     }

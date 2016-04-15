@@ -38,7 +38,7 @@ constexpr unsigned char RAW_DATA[] =  {
 };
 
 const std::vector<unsigned char>
-    RAW_DATA_VEC(RAW_DATA, RAW_DATA + sizeof(RAW_DATA) / sizeof(unsigned char));
+RAW_DATA_VEC(RAW_DATA, RAW_DATA + sizeof(RAW_DATA) / sizeof(unsigned char));
 
 const RawBuffer rawbuf(RAW_DATA_VEC.begin(), RAW_DATA_VEC.end());
 
@@ -65,10 +65,11 @@ BOOST_AUTO_TEST_CASE(ENCODE_DECODE_POSITIVE)
     RawBuffer decdata;
     BOOST_REQUIRE_NO_THROW(decdata = decoder.get());
     BOOST_REQUIRE_NO_THROW(decoder.reset());
-    
+
     /* compare with orig data */
     BOOST_REQUIRE_MESSAGE(
-        rawbuf.size() == decdata.size() && memcmp(rawbuf.data(), decdata.data(), rawbuf.size()) == 0,
+        rawbuf.size() == decdata.size() &&
+        memcmp(rawbuf.data(), decdata.data(), rawbuf.size()) == 0,
         "Original data and encoded-decoded data is different!");
 }
 
@@ -81,8 +82,10 @@ BOOST_AUTO_TEST_CASE(THROW_SOMETHING)
     BOOST_REQUIRE_NO_THROW(encoder.append(rawbuf));
     BOOST_REQUIRE_NO_THROW(encoder.finalize());
 
-    BOOST_REQUIRE_THROW(encoder.append(rawbuf), Base64Encoder::Exception::AlreadyFinalized);
-    BOOST_REQUIRE_THROW(encoder.finalize(), Base64Encoder::Exception::AlreadyFinalized);
+    BOOST_REQUIRE_THROW(encoder.append(rawbuf),
+                        Base64Encoder::Exception::AlreadyFinalized);
+    BOOST_REQUIRE_THROW(encoder.finalize(),
+                        Base64Encoder::Exception::AlreadyFinalized);
 
     RawBuffer encdata;
     BOOST_REQUIRE_NO_THROW(encdata = encoder.get());
@@ -94,8 +97,10 @@ BOOST_AUTO_TEST_CASE(THROW_SOMETHING)
     BOOST_REQUIRE_NO_THROW(decoder.append(encdata));
     BOOST_REQUIRE_NO_THROW(decoder.finalize());
 
-    BOOST_REQUIRE_THROW(decoder.append(encdata), Base64Decoder::Exception::AlreadyFinalized);
-    BOOST_REQUIRE_THROW(decoder.finalize(), Base64Decoder::Exception::AlreadyFinalized);
+    BOOST_REQUIRE_THROW(decoder.append(encdata),
+                        Base64Decoder::Exception::AlreadyFinalized);
+    BOOST_REQUIRE_THROW(decoder.finalize(),
+                        Base64Decoder::Exception::AlreadyFinalized);
 
     RawBuffer decdata;
     BOOST_REQUIRE_NO_THROW(decdata = decoder.get());

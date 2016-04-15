@@ -40,9 +40,11 @@
     registerSocketService<service>(manager, #service)
 
 template<typename T>
-void registerSocketService(CKM::SocketManager &manager, const std::string& serviceName)
+void registerSocketService(CKM::SocketManager &manager,
+                           const std::string &serviceName)
 {
     T *service = NULL;
+
     try {
         service = new T();
         service->Start();
@@ -51,25 +53,27 @@ void registerSocketService(CKM::SocketManager &manager, const std::string& servi
     } catch (const CKM::Exception &exception) {
         LogError("Error in creating service " << serviceName <<
                  ", details:\n" << exception.DumpToString());
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         LogError("Error in creating service " << serviceName <<
                  ", details:\n" << e.what());
     } catch (...) {
         LogError("Error in creating service " << serviceName <<
                  ", unknown exception occured");
     }
+
     if (service)
         delete service;
 }
 
 int main(void)
 {
-    UNHANDLED_EXCEPTION_HANDLER_BEGIN
-    {
+    UNHANDLED_EXCEPTION_HANDLER_BEGIN {
         CKM::Singleton<CKM::Log::LogSystem>::Instance().SetTag("CKM");
 
         int retCode = CKM::FileSystem::init();
-        if (retCode) {
+
+        if (retCode)
+        {
             LogError("Fatal error in FileSystem::init()");
             return 1;
         }
@@ -80,10 +84,13 @@ int main(void)
         sigemptyset(&mask);
         sigaddset(&mask, SIGTERM);
         sigaddset(&mask, SIGPIPE);
-        if (-1 == pthread_sigmask(SIG_BLOCK, &mask, NULL)) {
+
+        if (-1 == pthread_sigmask(SIG_BLOCK, &mask, NULL))
+        {
             LogError("Error in pthread_sigmask");
             return 1;
         }
+
         LogInfo("Init external libraries SKMM and openssl");
 
         CKM::initOpenSsl();
@@ -106,9 +113,10 @@ int main(void)
         CKM::KeyProvider::closeLibrary();
 
         CKM::deinitOpenSsl();
-    } catch (const std::runtime_error& e) {
+    } catch (const std::runtime_error &e) {
         LogError(e.what());
     }
+
     UNHANDLED_EXCEPTION_HANDLER_END
     return 0;
 }

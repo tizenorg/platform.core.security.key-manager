@@ -10,6 +10,7 @@ namespace CKM {
 int smack_runtime_check(void)
 {
     static int smack_present = -1;
+
     if (-1 == smack_present) {
         if (NULL == smack_smackfs_path()) {
             LogDebug("no smack found on device");
@@ -19,6 +20,7 @@ int smack_runtime_check(void)
             smack_present = 1;
         }
     }
+
     return smack_present;
 }
 

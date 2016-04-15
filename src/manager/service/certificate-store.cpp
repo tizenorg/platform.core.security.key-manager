@@ -55,12 +55,15 @@ int CertificateStore::verifyCertificate(
     CertificateImplVector &chainVector)
 {
     int ret;
-    LogDebug("Certificate for verfication ptr: " << (void*)cert.getX509());
-    LogDebug("Verfication with " << untrustedVector.size() << " untrusted certificates" <<
-             trustedVector.size() << "trusted certificates" << " and system certificates set to: "
+    LogDebug("Certificate for verfication ptr: " << (void *)cert.getX509());
+    LogDebug("Verfication with " << untrustedVector.size() <<
+             " untrusted certificates" <<
+             trustedVector.size() << "trusted certificates" <<
+             " and system certificates set to: "
              << useTrustedSystemCertificates);
 
     X509_STORE_CTX_PTR csc = create_x509_store_ctx();
+
     if (!csc) {
         LogError("failed to create csc");
         return CKM_API_ERROR_UNKNOWN;
@@ -68,20 +71,24 @@ int CertificateStore::verifyCertificate(
 
     if (useTrustedSystemCertificates) {
         ret = addSystemCertificateDirs();
+
         if (ret != CKM_API_SUCCESS)
             return ret;
 
         ret = addSystemCertificateFiles();
+
         if (ret != CKM_API_SUCCESS)
             return ret;
     }
 
     ret = addCustomTrustedCertificates(trustedVector);
+
     if (ret != CKM_API_SUCCESS)
         return ret;
 
     // create stack of untrusted certificates
     X509_STACK_PTR untrusted = create_x509_stack();
+
     if (!untrustedVector.empty()) {
         for (auto &e : untrustedVector) {
             // we don't want to free certificates because we wont create copies
@@ -89,7 +96,8 @@ int CertificateStore::verifyCertificate(
         }
     }
 
-    if (0 == X509_STORE_CTX_init(csc.get(), m_store, cert.getX509(), untrusted.get())) {
+    if (0 == X509_STORE_CTX_init(csc.get(), m_store, cert.getX509(),
+                                 untrusted.get())) {
         LogError("failed to X509_STORE_CTX_init");
         return CKM_API_ERROR_UNKNOWN;
     }
@@ -103,8 +111,9 @@ int CertificateStore::verifyCertificate(
 
     if (result > 0) {
         STACK_OF(X509) *chain = X509_STORE_CTX_get_chain(csc.get());
+
         for (int i = 0; i < sk_X509_num(chain); ++i) {
-            X509* icert = (X509*)sk_X509_value(chain, i);
+            X509 *icert = (X509 *)sk_X509_value(chain, i);
             chainVector.push_back(CertificateImpl(icert));
         }
     }
@@ -112,8 +121,10 @@ int CertificateStore::verifyCertificate(
     switch (result) {
     case 0:
         return CKM_API_ERROR_VERIFICATION_FAILED;
+
     case 1:
         return CKM_API_SUCCESS;
+
     default:
         return CKM_API_ERROR_UNKNOWN;
     }
@@ -121,18 +132,20 @@ int CertificateStore::verifyCertificate(
 
 int CertificateStore::addSystemCertificateDirs()
 {
-    const auto& dirs = CertificateConfig::getSystemCertificateDirs();
+    const auto &dirs = CertificateConfig::getSystemCertificateDirs();
+
     if (dirs.empty())
         return CKM_API_SUCCESS;
 
     // add system certificate directories
     auto dir_lookup = X509_STORE_add_lookup(m_store, X509_LOOKUP_hash_dir());
+
     if (!dir_lookup) {
         LogError("Error in X509_STORE_add_lookup");
         return CKM_API_ERROR_UNKNOWN;
     }
 
-    for (const auto& i : dirs) {
+    for (const auto &i : dirs) {
         if (!X509_LOOKUP_add_dir(dir_lookup, i.c_str(), X509_FILETYPE_PEM)) {
             LogError("Error in X509_LOOKUP_add_dir");
             return CKM_API_ERROR_UNKNOWN;
@@ -144,35 +157,40 @@ int CertificateStore::addSystemCertificateDirs()
 
 int CertificateStore::addSystemCertificateFiles()
 {
-    const auto& files = CertificateConfig::getSystemCertificateFiles();
+    const auto &files = CertificateConfig::getSystemCertificateFiles();
+
     if (files.empty())
         return CKM_API_SUCCESS;
 
     // add system certificate files
     auto file_lookup = X509_STORE_add_lookup(m_store, X509_LOOKUP_file());
+
     if (!file_lookup) {
         LogError("Error in X509_STORE_add_lookup");
         return CKM_API_ERROR_UNKNOWN;
     }
 
-    for (const auto& i : files) {
+    for (const auto &i : files) {
         if (!X509_LOOKUP_load_file(file_lookup, i.c_str(), X509_FILETYPE_PEM)) {
             LogError("Error in X509_LOOKUP_load_file");
             return CKM_API_ERROR_UNKNOWN;
         }
     }
+
     return CKM_API_SUCCESS;
 }
 
-int CertificateStore::addCustomTrustedCertificates(const CertificateImplVector &trustedVector)
+int CertificateStore::addCustomTrustedCertificates(const CertificateImplVector
+        &trustedVector)
 {
     // add trusted certificates to store
-    for (const auto& i:trustedVector) {
+    for (const auto &i : trustedVector) {
         if (1 != X509_STORE_add_cert(m_store, i.getX509())) {
             LogError("failed to add certificate to the store");
             return CKM_API_ERROR_UNKNOWN;
         }
     }
+
     return CKM_API_SUCCESS;
 }
 

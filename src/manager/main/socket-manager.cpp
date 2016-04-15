@@ -95,8 +95,10 @@ struct SignalService : public GenericSocketService {
         sigset_t mask;
         sigemptyset(&mask);
         sigaddset(&mask, SIGTERM);
+
         if (-1 == pthread_sigmask(SIG_BLOCK, &mask, NULL))
             return -1;
+
         return signalfd(-1, &mask, 0);
     }
 
@@ -119,16 +121,16 @@ struct SignalService : public GenericSocketService {
 
         if (sizeof(struct signalfd_siginfo) != event.rawBuffer.size()) {
             LogError("Wrong size of signalfd_siginfo struct. Expected: "
-                << sizeof(signalfd_siginfo) << " Get: "
-                << event.rawBuffer.size());
+                     << sizeof(signalfd_siginfo) << " Get: "
+                     << event.rawBuffer.size());
             return;
         }
 
-        signalfd_siginfo *siginfo = (signalfd_siginfo*)(&(event.rawBuffer[0]));
+        signalfd_siginfo *siginfo = (signalfd_siginfo *)(&(event.rawBuffer[0]));
 
         if (siginfo->ssi_signo == SIGTERM) {
             LogInfo("Got signal: SIGTERM");
-            static_cast<SocketManager*>(m_serviceManager)->MainLoopStop();
+            static_cast<SocketManager *>(m_serviceManager)->MainLoopStop();
             return;
         }
 
@@ -136,11 +138,11 @@ struct SignalService : public GenericSocketService {
     }
 };
 
-SocketManager::SocketDescription&
+SocketManager::SocketDescription &
 SocketManager::CreateDefaultReadSocketDescription(int sock, bool timeout)
 {
     if ((int)m_socketDescriptionVector.size() <= sock)
-        m_socketDescriptionVector.resize(sock+20);
+        m_socketDescriptionVector.resize(sock + 20);
 
     auto &desc = m_socketDescriptionVector[sock];
     desc.setListen(false);
@@ -178,7 +180,8 @@ SocketManager::SocketManager() :
         ThrowMsg(Exception::InitFailed, "Error in pipe: " << GetErrnoString(err));
     }
 
-    LogInfo("Pipe: Read desc: " << m_notifyMe[0] << " Write desc: " << m_notifyMe[1]);
+    LogInfo("Pipe: Read desc: " << m_notifyMe[0] << " Write desc: " <<
+            m_notifyMe[1]);
 
     auto &desc = CreateDefaultReadSocketDescription(m_notifyMe[0], false);
     desc.service = new DummyService;
@@ -217,9 +220,11 @@ SocketManager::~SocketManager()
 
     // Time to destroy all services.
     for (auto service : m_serviceVector) {
-        LogDebug("delete " << (void*)(service));
+        LogDebug("delete " << (void *)(service));
+
         if (service)
             service->Stop();
+
         delete service;
     }
 
@@ -235,7 +240,8 @@ void SocketManager::ReadyForAccept(int sock)
 {
     struct sockaddr_un clientAddr;
     unsigned int clientLen = sizeof(clientAddr);
-    int client = accept4(sock, (struct sockaddr*) &clientAddr, &clientLen, SOCK_NONBLOCK);
+    int client = accept4(sock, (struct sockaddr *) &clientAddr, &clientLen,
+                         SOCK_NONBLOCK);
 
     if (-1 == client) {
         int err = errno;
@@ -248,8 +254,8 @@ void SocketManager::ReadyForAccept(int sock)
     Credentials peerCred;
 
     if (0 > getCredentialsFromSocket(client, peerCred)
-        || !Cynara::GetUserFromSocket(client, user)
-        || !Cynara::GetClientFromSocket(client, smack)) {
+            || !Cynara::GetUserFromSocket(client, user)
+            || !Cynara::GetClientFromSocket(client, smack)) {
         LogDebug("Error in getting credentials from socket.");
         TEMP_FAILURE_RETRY(close(client));
         return;
@@ -273,15 +279,16 @@ void SocketManager::ReadyForAccept(int sock)
 void SocketManager::SecurityStatus(int sock, int counter, bool allowed)
 {
     auto &desc = m_socketDescriptionVector[sock];
+
     if (!desc.isOpen()) {
         LogDebug("Client from socket " << sock <<
-            " closed connection before cynara answer was received.");
+                 " closed connection before cynara answer was received.");
         return;
     }
 
     if (desc.counter != counter) {
         LogDebug("Client from socket " << sock <<
-            " closed connection before cynara answer was received.");
+                 " closed connection before cynara answer was received.");
         return;
     }
 
@@ -321,10 +328,12 @@ void SocketManager::ReadyForRead(int sock)
         desc.service->Event(event);
     } else if (size == -1) {
         int err = errno;
+
         switch (err) {
         case EAGAIN:
         case EINTR:
             break;
+
         default:
             LogDebug("Reading sock error: " << GetErrnoString(err));
             CloseSocket(sock);
@@ -345,21 +354,24 @@ void SocketManager::ReadyForWrite(int sock)
 
     if (result == -1) {
         int err = errno;
+
         switch (err) {
         case EAGAIN:
         case EINTR:
             // select will trigger write once again, nothing to do
             break;
+
         case EPIPE:
         default:
             LogDebug("Error during write: " << GetErrnoString(err));
             CloseSocket(sock);
             break;
         }
+
         return; // We do not want to propagate error to next layer
     }
 
-    desc.rawBuffer.erase(desc.rawBuffer.begin(), desc.rawBuffer.begin()+result);
+    desc.rawBuffer.erase(desc.rawBuffer.begin(), desc.rawBuffer.begin() + result);
 
     desc.timeout = time(NULL) + SOCKET_TIMEOUT;
 
@@ -384,6 +396,7 @@ void SocketManager::MainLoop()
     sd_notify(0, "READY=1");
 
     m_working = true;
+
     while (m_working) {
         fd_set readSet = m_readSet;
         fd_set writeSet = m_writeSet;
@@ -420,11 +433,11 @@ void SocketManager::MainLoop()
 
             // 0 means that select won't block and socket will be closed ;-)
             ptrTimeout->tv_sec =
-              currentTime < pqTimeout.time ? pqTimeout.time - currentTime : 0;
+                currentTime < pqTimeout.time ? pqTimeout.time - currentTime : 0;
             ptrTimeout->tv_usec = 0;
         }
 
-        int ret = select(m_maxDesc+1, &readSet, &writeSet, NULL, ptrTimeout);
+        int ret = select(m_maxDesc + 1, &readSet, &writeSet, NULL, ptrTimeout);
 
         if (0 == ret) { // timeout
             Assert(!m_timeoutQueue.empty());
@@ -463,23 +476,28 @@ void SocketManager::MainLoop()
             case EINTR:
                 LogDebug("EINTR in select");
                 break;
+
             default:
                 int err = errno;
                 LogError("Error in select: " << GetErrnoString(err));
                 return;
             }
+
             continue;
         }
-        for (int i = 0; i < m_maxDesc+1 && ret; ++i) {
+
+        for (int i = 0; i < m_maxDesc + 1 && ret; ++i) {
             if (FD_ISSET(i, &readSet)) {
                 ReadyForRead(i);
                 --ret;
             }
+
             if (FD_ISSET(i, &writeSet)) {
                 ReadyForWrite(i);
                 --ret;
             }
         }
+
         ProcessQueue();
     }
 }
@@ -506,14 +524,15 @@ int SocketManager::GetSocketFromSystemD(
         ThrowMsg(Exception::InitFailed, "Error in sd_listend_fds");
     }
 
-    for (fd = SD_LISTEN_FDS_START; fd < SD_LISTEN_FDS_START+n; ++fd) {
+    for (fd = SD_LISTEN_FDS_START; fd < SD_LISTEN_FDS_START + n; ++fd) {
         if (0 < sd_is_socket_unix(fd, SOCK_STREAM, 1,
                                   desc.serviceHandlerPath.c_str(), 0)) {
             LogInfo("Useable socket " << desc.serviceHandlerPath <<
-                " was passed by SystemD under descriptor " << fd);
+                    " was passed by SystemD under descriptor " << fd);
             return fd;
         }
     }
+
     LogError("No useable sockets were passed by systemd.");
     return -1;
 }
@@ -523,8 +542,9 @@ int SocketManager::CreateDomainSocketHelp(
 {
     int sockfd;
 
-    if (desc.serviceHandlerPath.size()*sizeof(decltype(desc.serviceHandlerPath)::value_type) >=
-         sizeof(static_cast<sockaddr_un*>(0)->sun_path)) {
+    if (desc.serviceHandlerPath.size()*sizeof(decltype(desc.serviceHandlerPath)
+            ::value_type) >=
+            sizeof(static_cast<sockaddr_un *>(0)->sun_path)) {
         LogError("Service handler path too long: " << desc.serviceHandlerPath.size());
         ThrowMsg(Exception::InitFailed,
                  "Service handler path too long: " << desc.serviceHandlerPath.size());
@@ -539,15 +559,16 @@ int SocketManager::CreateDomainSocketHelp(
     if (smack_check()) {
         LogInfo("Set up smack label: " << desc.privilege);
 
-//        if (0 != smack_fsetlabel(sockfd, desc.smackLabel.c_str(), SMACK_LABEL_IPIN)) {
-//            LogError("Error in smack_fsetlabel");
-//            ThrowMsg(Exception::InitFailed, "Error in smack_fsetlabel");
-//        }
+        //        if (0 != smack_fsetlabel(sockfd, desc.smackLabel.c_str(), SMACK_LABEL_IPIN)) {
+        //            LogError("Error in smack_fsetlabel");
+        //            ThrowMsg(Exception::InitFailed, "Error in smack_fsetlabel");
+        //        }
     } else {
         LogInfo("No smack on platform. Socket won't be securied with smack label!");
     }
 
     int flags;
+
     if (-1 == (flags = fcntl(sockfd, F_GETFL, 0)))
         flags = 0;
 
@@ -561,13 +582,15 @@ int SocketManager::CreateDomainSocketHelp(
     sockaddr_un serverAddress;
     memset(&serverAddress, 0, sizeof(serverAddress));
     serverAddress.sun_family = AF_UNIX;
-    strncpy(serverAddress.sun_path, desc.serviceHandlerPath.c_str(), sizeof(serverAddress.sun_path) - 1);
+    strncpy(serverAddress.sun_path, desc.serviceHandlerPath.c_str(),
+            sizeof(serverAddress.sun_path) - 1);
     unlink(serverAddress.sun_path);
 
     mode_t originalUmask;
     originalUmask = umask(0);
 
-    if (-1 == bind(sockfd, (struct sockaddr*)&serverAddress, sizeof(serverAddress))) {
+    if (-1 == bind(sockfd, (struct sockaddr *)&serverAddress,
+                   sizeof(serverAddress))) {
         int err = errno;
         close(sockfd);
         LogError("Error in bind: " << GetErrnoString(err));
@@ -591,6 +614,7 @@ void SocketManager::CreateDomainSocket(
     const GenericSocketService::ServiceDescription &desc)
 {
     int sockfd = GetSocketFromSystemD(desc);
+
     if (-1 == sockfd)
         sockfd = CreateDomainSocketHelp(desc);
 
@@ -602,7 +626,7 @@ void SocketManager::CreateDomainSocket(
     description.cynaraPrivilege = desc.privilege;
 
     LogDebug("Listen on socket: " << sockfd <<
-        " Handler: " << desc.serviceHandlerPath.c_str());
+             " Handler: " << desc.serviceHandlerPath.c_str());
 }
 
 void SocketManager::RegisterSocketService(GenericSocketService *service)
@@ -615,13 +639,15 @@ void SocketManager::RegisterSocketService(GenericSocketService *service)
         for (auto iter = serviceVector.begin(); iter != serviceVector.end(); ++iter)
             CreateDomainSocket(service, *iter);
     } Catch(Exception::Base) {
-        for (int i =0; i < (int)m_socketDescriptionVector.size(); ++i) {
+        for (int i = 0; i < (int)m_socketDescriptionVector.size(); ++i) {
             auto &desc = m_socketDescriptionVector[i];
+
             if (desc.service == service && desc.isOpen()) {
                 close(i);
                 desc.setOpen(false);
             }
         }
+
         ReThrow(Exception::Base);
     }
 }
@@ -668,8 +694,10 @@ void SocketManager::ProcessQueue()
         EventFunction fun;
         {
             std::lock_guard<std::mutex> ulock(m_eventQueueMutex);
+
             if (m_eventQueue.empty())
                 return;
+
             fun = std::move(m_eventQueue.front());
             m_eventQueue.pop();
         }
@@ -712,7 +740,8 @@ void SocketManager::Handle(const CloseEvent &event)
 
 void SocketManager::Handle(const SecurityEvent &event)
 {
-    auto& desc = m_socketDescriptionVector[event.sock];
+    auto &desc = m_socketDescriptionVector[event.sock];
+
     if (!desc.isOpen())
         return;
 
@@ -725,9 +754,9 @@ void SocketManager::Handle(const SecurityEvent &event)
                       desc.cynaraClient,
                       session,
                       desc.cynaraPrivilege,
-                      [this, event](bool allowed) {
-                          this->SecurityStatus(event.sock, event.counter, allowed);
-                      });
+    [this, event](bool allowed) {
+        this->SecurityStatus(event.sock, event.counter, allowed);
+    });
 }
 
 void SocketManager::CloseSocket(int sock)

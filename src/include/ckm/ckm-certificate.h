@@ -27,8 +27,8 @@
 #include <ckm/ckm-type.h>
 
 extern "C" {
-struct x509_st;
-typedef struct x509_st X509;
+    struct x509_st;
+    typedef struct x509_st X509;
 }
 
 // Central Key Manager namespace

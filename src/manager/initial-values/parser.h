@@ -73,14 +73,14 @@ public:
         // and remove all element listeners.
         // In this case, parsing error code returned to the user after std::exception.
         virtual void Start(const Attributes &) = 0;
-        virtual void Characters(const std::string & data) = 0;
+        virtual void Characters(const std::string &data) = 0;
         virtual void End() = 0;
     };
     typedef std::shared_ptr<ElementHandler> ElementHandlerPtr;
 
-    typedef std::function<ElementHandlerPtr ()> StartCb;
+    typedef std::function<ElementHandlerPtr()> StartCb;
     typedef std::function<void (const ElementHandlerPtr &)> EndCb;
-    int RegisterElementCb(const char * elementName,
+    int RegisterElementCb(const char *elementName,
                           const StartCb startCb,
                           const EndCb endCb);
 

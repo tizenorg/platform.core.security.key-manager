@@ -61,8 +61,8 @@ CertificateImpl::CertificateImpl(const RawBuffer &der, DataFormat format)
     if (!m_x509) {
         // TODO
         LogError("Certificate could not be parsed.");
-//      ThrowMsg(Exception::OpensslInternalError,
-//         "Internal Openssl error in d2i_X509 function.");
+        //      ThrowMsg(Exception::OpensslInternalError,
+        //         "Internal Openssl error in d2i_X509 function.");
     }
 }
 
@@ -78,22 +78,24 @@ CertificateImpl::CertificateImpl(CertificateImpl &&second)
 {
     m_x509 = second.m_x509;
     second.m_x509 = nullptr;
-    LogDebug("Certificate moved: " << (void*)m_x509);
+    LogDebug("Certificate moved: " << (void *)m_x509);
 }
 
-CertificateImpl& CertificateImpl::operator=(CertificateImpl &&second)
+CertificateImpl &CertificateImpl::operator=(CertificateImpl &&second)
 {
     if (this == &second)
         return *this;
+
     if (m_x509)
         X509_free(m_x509);
+
     m_x509 = second.m_x509;
     second.m_x509 = nullptr;
-    LogDebug("Certificate moved: " << (void*)m_x509);
+    LogDebug("Certificate moved: " << (void *)m_x509);
     return *this;
 }
 
-X509* CertificateImpl::getX509() const
+X509 *CertificateImpl::getX509() const
 {
     return m_x509;
 }
@@ -102,14 +104,15 @@ RawBuffer CertificateImpl::getDER(void) const
 {
     unsigned char *rawDer = nullptr;
     int size = i2d_X509(m_x509, &rawDer);
+
     if (!rawDer || size <= 0) {
         LogError("i2d_X509 failed");
         return RawBuffer();
     }
 
     RawBuffer output(
-        reinterpret_cast<char*>(rawDer),
-        reinterpret_cast<char*>(rawDer) + size);
+        reinterpret_cast<char *>(rawDer),
+        reinterpret_cast<char *>(rawDer) + size);
     OPENSSL_free(rawDer);
     return output;
 }
@@ -145,18 +148,22 @@ CertificateImpl::~CertificateImpl()
         X509_free(m_x509);
 }
 
-CertificateShPtr Certificate::create(const RawBuffer &rawBuffer, DataFormat format)
+CertificateShPtr Certificate::create(const RawBuffer &rawBuffer,
+                                     DataFormat format)
 {
     try {
         CertificateShPtr output = std::make_shared<CertificateImpl>(rawBuffer, format);
+
         if (output->empty())
             output.reset();
+
         return output;
     } catch (const std::bad_alloc &) {
         LogDebug("Bad alloc was caught during CertificateImpl creation");
     } catch (...) {
         LogError("Critical error: Unknown exception was caught during CertificateImpl creation!");
     }
+
     return CertificateShPtr();
 }
 

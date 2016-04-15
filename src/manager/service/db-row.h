@@ -37,12 +37,12 @@ struct Row : public Token {
         const Label &pLabel,
         int pExportable) :
         Token(std::move(token))
-      , name(pName)
-      , ownerLabel(pLabel)
-      , exportable(pExportable)
-      , algorithmType(DBCMAlgType::NONE)
-      , encryptionScheme(0)
-      , dataSize(data.size())
+        , name(pName)
+        , ownerLabel(pLabel)
+        , exportable(pExportable)
+        , algorithmType(DBCMAlgType::NONE)
+        , encryptionScheme(0)
+        , dataSize(data.size())
     {
     }
 

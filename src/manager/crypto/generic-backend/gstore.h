@@ -34,7 +34,7 @@ namespace Crypto {
 // Data is very generic and does not say anything about content.
 struct Data {
     Data() {};
-    Data(const DataType& t, RawBuffer d) : type(t), data(std::move(d)) {}
+    Data(const DataType &t, RawBuffer d) : type(t), data(std::move(d)) {}
     DataType type;
     RawBuffer data; // buffer will be better?
 };
@@ -43,8 +43,8 @@ struct Data {
 struct DataEncryption {
     DataEncryption() {};
     DataEncryption(RawBuffer encKey, RawBuffer ivector)
-      : encryptedKey(std::move(encKey))
-      , iv(std::move(ivector))
+        : encryptedKey(std::move(encKey))
+        , iv(std::move(ivector))
     {}
     RawBuffer encryptedKey;
     RawBuffer iv;
@@ -56,7 +56,8 @@ public:
     {
         ThrowErr(Exc::Crypto::OperationNotSupported);
     }
-    virtual TokenPair generateAKey(const CryptoAlgorithm &, const Password &, const Password &)
+    virtual TokenPair generateAKey(const CryptoAlgorithm &, const Password &,
+                                   const Password &)
     {
         ThrowErr(Exc::Crypto::OperationNotSupported);
     }
@@ -68,7 +69,8 @@ public:
     {
         ThrowErr(Exc::Crypto::OperationNotSupported);
     }
-    virtual Token importEncrypted(const Data &, const Password &, const DataEncryption &)
+    virtual Token importEncrypted(const Data &, const Password &,
+                                  const DataEncryption &)
     {
         ThrowErr(Exc::Crypto::OperationNotSupported);
     }

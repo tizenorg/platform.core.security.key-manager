@@ -77,10 +77,11 @@ CryptoLogic::CryptoLogic(CryptoLogic &&second)
     m_keyMap = std::move(second.m_keyMap);
 }
 
-CryptoLogic& CryptoLogic::operator=(CryptoLogic &&second)
+CryptoLogic &CryptoLogic::operator=(CryptoLogic &&second)
 {
     if (this == &second)
         return *this;
+
     m_keyMap = std::move(second.m_keyMap);
     return *this;
 }
@@ -101,7 +102,7 @@ void CryptoLogic::pushKey(const Label &smackLabel,
 
     if (haveKey(smackLabel))
         ThrowErr(Exc::InternalError, "Application key for ", smackLabel,
-            "label already exists.");
+                 "label already exists.");
 
     m_keyMap[smackLabel] = applicationKey;
 }
@@ -157,7 +158,7 @@ void CryptoLogic::encryptRow(DB::Row &row)
 
         if (!haveKey(row.ownerLabel))
             ThrowErr(Exc::InternalError, "Missing application key for ",
-              row.ownerLabel, " label.");
+                     row.ownerLabel, " label.");
 
         if (crow.iv.empty())
             crow.iv = generateRandIV();
@@ -165,7 +166,8 @@ void CryptoLogic::encryptRow(DB::Row &row)
         key = m_keyMap[row.ownerLabel];
         crow.encryptionScheme = ENCR_APPKEY;
 
-        auto dataPair = Crypto::SW::Internals::encryptDataAesGcm(key, crow.data, crow.iv, AES_GCM_TAG_SIZE);
+        auto dataPair = Crypto::SW::Internals::encryptDataAesGcm(key, crow.data,
+                        crow.iv, AES_GCM_TAG_SIZE);
         crow.data = dataPair.first;
 
         crow.tag = dataPair.second;
@@ -178,9 +180,9 @@ void CryptoLogic::encryptRow(DB::Row &row)
         crow.encryptionScheme |= ENCR_ORDER_V2;
 
         row = std::move(crow);
-    } catch(const CKM::Base64Encoder::Exception::Base &e) {
+    } catch (const CKM::Base64Encoder::Exception::Base &e) {
         ThrowErr(Exc::InternalError, e.GetMessage());
-    } catch(const CKM::Base64Decoder::Exception::Base &e) {
+    } catch (const CKM::Base64Decoder::Exception::Base &e) {
         ThrowErr(Exc::InternalError, e.GetMessage());
     }
 }
@@ -215,23 +217,27 @@ void CryptoLogic::decryptRow(const Password &password, DB::Row &row)
                      " label.");
 
         decBase64(crow.iv);
+
         if (crow.encryptionScheme & ENCR_BASE64)
             decBase64(crow.data);
 
         if ((crow.encryptionScheme >> ENCR_ORDER_OFFSET) == ENCR_ORDER_V2) {
             if (crow.encryptionScheme & ENCR_APPKEY) {
                 key = m_keyMap[crow.ownerLabel];
-                crow.data = Crypto::SW::Internals::decryptDataAesGcm(key, crow.data, crow.iv, crow.tag);
+                crow.data = Crypto::SW::Internals::decryptDataAesGcm(key, crow.data, crow.iv,
+                            crow.tag);
             }
         } else {
             if (crow.encryptionScheme & ENCR_PASSWORD) {
                 key = passwordToKey(password, crow.iv, AES_CBC_KEY_SIZE);
-                crow.data = Crypto::SW::Internals::decryptDataAes(AlgoType::AES_CBC, key, crow.data, crow.iv);
+                crow.data = Crypto::SW::Internals::decryptDataAes(AlgoType::AES_CBC, key,
+                            crow.data, crow.iv);
             }
 
             if (crow.encryptionScheme & ENCR_APPKEY) {
                 key = m_keyMap[crow.ownerLabel];
-                crow.data = Crypto::SW::Internals::decryptDataAesGcm(key, crow.data, crow.iv, crow.tag);
+                crow.data = Crypto::SW::Internals::decryptDataAesGcm(key, crow.data, crow.iv,
+                            crow.tag);
             }
         }
 
@@ -242,11 +248,11 @@ void CryptoLogic::decryptRow(const Password &password, DB::Row &row)
             crow.data.resize(crow.dataSize);
 
         row = std::move(crow);
-    } catch(const CKM::Base64Encoder::Exception::Base &e) {
+    } catch (const CKM::Base64Encoder::Exception::Base &e) {
         ThrowErr(Exc::InternalError, e.GetMessage());
-    } catch(const CKM::Base64Decoder::Exception::Base &e) {
+    } catch (const CKM::Base64Decoder::Exception::Base &e) {
         ThrowErr(Exc::InternalError, e.GetMessage());
-    } catch(const Exc::Exception &e) {
+    } catch (const Exc::Exception &e) {
         ThrowErr(Exc::AuthenticationFailed, e.message());
     }
 }
@@ -273,6 +279,7 @@ void CryptoLogic::decBase64(RawBuffer &data)
 
     bdec.reset();
     bdec.append(data);
+
     if (!bdec.finalize())
         ThrowErr(Exc::InternalError, "Failed in Base64Decoder.finalize.");
 

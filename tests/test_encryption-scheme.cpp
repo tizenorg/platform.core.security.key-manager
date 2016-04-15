@@ -36,7 +36,8 @@ const int NEW_ENC_SCHEME  = 1;
 BOOST_AUTO_TEST_SUITE(ENCRYPTION_SCHEME_TEST)
 
 // Test database should have the old scheme
-BOOST_AUTO_TEST_CASE(T010_Check_old_scheme) {
+BOOST_AUTO_TEST_CASE(T010_Check_old_scheme)
+{
     SchemeTest test;
     test.RestoreDb();
 
@@ -45,7 +46,8 @@ BOOST_AUTO_TEST_CASE(T010_Check_old_scheme) {
 }
 
 // Newly written data should use the new scheme
-BOOST_AUTO_TEST_CASE(T020_Check_new_scheme) {
+BOOST_AUTO_TEST_CASE(T020_Check_new_scheme)
+{
     SchemeTest test;
     test.RemoveUserData();
     test.FillDb();
@@ -54,7 +56,8 @@ BOOST_AUTO_TEST_CASE(T020_Check_new_scheme) {
     test.CheckSchemeVersion(filter, NEW_ENC_SCHEME);
 }
 
-BOOST_AUTO_TEST_CASE(T030_Remove_old_scheme) {
+BOOST_AUTO_TEST_CASE(T030_Remove_old_scheme)
+{
     SchemeTest test;
     test.RestoreDb();
     test.RemoveAll();
@@ -63,7 +66,8 @@ BOOST_AUTO_TEST_CASE(T030_Remove_old_scheme) {
     BOOST_REQUIRE_MESSAGE(aliases == 0, "All aliases should be removed");
 }
 
-BOOST_AUTO_TEST_CASE(T040_Remove_new_scheme) {
+BOOST_AUTO_TEST_CASE(T040_Remove_new_scheme)
+{
     SchemeTest test;
     test.RemoveUserData();
     test.FillDb();
@@ -74,7 +78,8 @@ BOOST_AUTO_TEST_CASE(T040_Remove_new_scheme) {
 }
 
 // Reading old db should reencrypt objects with new scheme
-BOOST_AUTO_TEST_CASE(T100_Read) {
+BOOST_AUTO_TEST_CASE(T100_Read)
+{
     SchemeTest test;
     test.RestoreDb();
     test.ReadAll();
@@ -84,7 +89,8 @@ BOOST_AUTO_TEST_CASE(T100_Read) {
     test.CheckSchemeVersion(filter, NEW_ENC_SCHEME);
 }
 
-BOOST_AUTO_TEST_CASE(T110_Count_objects_after_read) {
+BOOST_AUTO_TEST_CASE(T110_Count_objects_after_read)
+{
     SchemeTest test;
     test.RestoreDb();
     size_t orig = test.CountObjects();
@@ -98,7 +104,8 @@ BOOST_AUTO_TEST_CASE(T110_Count_objects_after_read) {
 }
 
 // Reading old db with incorrect passwords should leave the scheme unchanged
-BOOST_AUTO_TEST_CASE(T120_Read_wrong_pass) {
+BOOST_AUTO_TEST_CASE(T120_Read_wrong_pass)
+{
     SchemeTest test;
     test.RestoreDb();
     test.ReadAll(true);
@@ -108,7 +115,8 @@ BOOST_AUTO_TEST_CASE(T120_Read_wrong_pass) {
 }
 
 // Signing/verification should reencrypt objects with new scheme
-BOOST_AUTO_TEST_CASE(T200_SignVerify) {
+BOOST_AUTO_TEST_CASE(T200_SignVerify)
+{
     SchemeTest test;
     test.RestoreDb();
     test.SignVerify();
@@ -118,7 +126,8 @@ BOOST_AUTO_TEST_CASE(T200_SignVerify) {
 }
 
 // Encryption/decryption should reencrypt objects with new scheme
-BOOST_AUTO_TEST_CASE(T210_EncryptDecrypt) {
+BOOST_AUTO_TEST_CASE(T210_EncryptDecrypt)
+{
     SchemeTest test;
     test.RestoreDb();
     test.EncryptDecrypt();
@@ -131,7 +140,8 @@ BOOST_AUTO_TEST_CASE(T210_EncryptDecrypt) {
 }
 
 // Chain creation should reencrypt objects with new scheme
-BOOST_AUTO_TEST_CASE(T220_CreateChain) {
+BOOST_AUTO_TEST_CASE(T220_CreateChain)
+{
     SchemeTest test;
     test.RestoreDb();
     test.CreateChain();

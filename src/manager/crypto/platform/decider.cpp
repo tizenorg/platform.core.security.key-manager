@@ -32,13 +32,14 @@ namespace CKM {
 namespace Crypto {
 
 namespace {
-CryptoBackend chooseCryptoBackend(DataType dataType, bool exportable, bool encrypted)
+CryptoBackend chooseCryptoBackend(DataType dataType, bool exportable,
+                                  bool encrypted)
 {
-// Only software backend supports device encyption key
+    // Only software backend supports device encyption key
     if (encrypted)
         return CryptoBackend::OpenSSL;
 
-// The list of items that MUST be support by OpenSSL
+    // The list of items that MUST be support by OpenSSL
     if (dataType.isCertificate())
         return CryptoBackend::OpenSSL;
 
@@ -48,33 +49,35 @@ CryptoBackend chooseCryptoBackend(DataType dataType, bool exportable, bool encry
     if (exportable)
         return CryptoBackend::OpenSSL;
 
-//  This is the place where we can use trust zone backend
-//  Examples:
-//
-//  if (dataType.isKeyPrivate())
-//      return CryptoBackend::TrustZone;
+    //  This is the place where we can use trust zone backend
+    //  Examples:
+    //
+    //  if (dataType.isKeyPrivate())
+    //      return CryptoBackend::TrustZone;
 
-// This item does not met Trust Zone requirements. Let's use software backend
+    // This item does not met Trust Zone requirements. Let's use software backend
     return CryptoBackend::OpenSSL;
 }
 } // namespace
 
 Decider::Decider()
-  : m_swStore(new SW::Store(CryptoBackend::OpenSSL))
-  , m_tzStore(new TZ::Store(CryptoBackend::TrustZone))
+    : m_swStore(new SW::Store(CryptoBackend::OpenSSL))
+    , m_tzStore(new TZ::Store(CryptoBackend::TrustZone))
 {
 }
 
-GStore& Decider::getStore(const Token &token) const
+GStore &Decider::getStore(const Token &token) const
 {
     return getStore(token.backendId);
 };
 
-GStore& Decider::getStore(CryptoBackend cryptoBackend) const
+GStore &Decider::getStore(CryptoBackend cryptoBackend) const
 {
     GStore *gStore = NULL;
+
     if (cryptoBackend == CryptoBackend::OpenSSL)
         gStore = m_swStore.get();
+
     if (cryptoBackend == CryptoBackend::TrustZone)
         gStore = m_tzStore.get();
 
@@ -85,7 +88,7 @@ GStore& Decider::getStore(CryptoBackend cryptoBackend) const
              "Backend not available. BackendId: ", (int)cryptoBackend);
 }
 
-GStore& Decider::getStore(DataType data, bool exportable, bool encrypted) const
+GStore &Decider::getStore(DataType data, bool exportable, bool encrypted) const
 {
     return getStore(chooseCryptoBackend(data, exportable, encrypted));
 }

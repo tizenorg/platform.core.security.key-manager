@@ -45,31 +45,34 @@ namespace { // anonymous
  * CKM_LOG_LEVEL=3
  * CKM_LOG_PROVIDER=JOURNALD
  */
-const char * const CKM_LOG_LEVEL =      "CKM_LOG_LEVEL";
-const char * const CKM_LOG_PROVIDER =   "CKM_LOG_PROVIDER";
+const char *const CKM_LOG_LEVEL =      "CKM_LOG_LEVEL";
+const char *const CKM_LOG_PROVIDER =   "CKM_LOG_PROVIDER";
 
-const char * const CONSOLE =  "CONSOLE";
-const char * const DLOG =     "DLOG";
-const char * const JOURNALD = "JOURNALD";
+const char *const CONSOLE =  "CONSOLE";
+const char *const DLOG =     "DLOG";
+const char *const JOURNALD = "JOURNALD";
 } // namespace anonymous
 
 LogSystem::LogSystem() :
-    m_providerCtor({
+    m_providerCtor(
+{
 #ifdef BUILD_TYPE_DEBUG
-            { CONSOLE,  []{ return static_cast<AbstractLogProvider*>(new OldStyleLogProvider()); } },
+    { CONSOLE,  []{ return static_cast<AbstractLogProvider *>(new OldStyleLogProvider()); } },
 #endif // BUILD_TYPE_DEBUG
-            { DLOG,     []{ return static_cast<AbstractLogProvider*>(new DLOGLogProvider()); } },
-            { JOURNALD, []{ return static_cast<AbstractLogProvider*>(new JournalLogProvider()); } }
-    })
+    { DLOG,     []{ return static_cast<AbstractLogProvider *>(new DLOGLogProvider()); } },
+    { JOURNALD, []{ return static_cast<AbstractLogProvider *>(new JournalLogProvider()); } }
+})
 {
     SetLogLevel(getenv(CKM_LOG_LEVEL));
 
-    AbstractLogProvider* prv = NULL;
+    AbstractLogProvider *prv = NULL;
+
     try {
         prv = m_providerCtor.at(getenv(CKM_LOG_PROVIDER))();
-    } catch(const std::exception&) {
+    } catch (const std::exception &) {
         prv = m_providerCtor[DLOG]();
     }
+
     AddProvider(prv);
 }
 
@@ -78,7 +81,7 @@ LogSystem::~LogSystem()
     RemoveProviders();
 }
 
-void LogSystem::SetTag(const char* tag)
+void LogSystem::SetTag(const char *tag)
 {
     for (auto it : m_providers)
         it->SetTag(tag);
@@ -94,20 +97,20 @@ void LogSystem::RemoveProvider(AbstractLogProvider *provider)
     m_providers.remove(provider);
 }
 
-void LogSystem::SelectProvider(const std::string& name)
+void LogSystem::SelectProvider(const std::string &name)
 {
     // let it throw
-    ProviderFn& prv = m_providerCtor.at(name);
+    ProviderFn &prv = m_providerCtor.at(name);
 
     RemoveProviders();
     AddProvider(prv());
 }
 
-void LogSystem::SetLogLevel(const char* level)
+void LogSystem::SetLogLevel(const char *level)
 {
     try {
         m_level = static_cast<AbstractLogProvider::LogLevel>(std::stoi(level));
-    } catch(const std::exception&) {
+    } catch (const std::exception &) {
         m_level = AbstractLogProvider::LogLevel::Debug;
     }
 
@@ -117,8 +120,10 @@ void LogSystem::SetLogLevel(const char* level)
         m_level = AbstractLogProvider::LogLevel::Pedantic;
 
 #ifndef BUILD_TYPE_DEBUG
+
     if (m_level > AbstractLogProvider::LogLevel::Error)
         m_level = AbstractLogProvider::LogLevel::Error;
+
 #endif // BUILD_TYPE_DEBUG
 }
 
@@ -128,7 +133,7 @@ void LogSystem::Log(AbstractLogProvider::LogLevel level,
                     int line,
                     const char *function)
 {
-    for (const auto& it : m_providers )
+    for (const auto &it : m_providers)
         it->Log(level, message, filename, line, function);
 }
 

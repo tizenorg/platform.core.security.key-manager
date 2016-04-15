@@ -32,8 +32,7 @@
 
 using namespace CKM;
 
-namespace
-{
+namespace {
 const int restricted_local = 1;
 const int restricted_global = 0;
 
@@ -45,7 +44,8 @@ const unsigned int c_names_per_label = 15;
 } // namespace anonymous
 
 BOOST_FIXTURE_TEST_SUITE(DBCRYPTO_TEST, DBFixture)
-BOOST_AUTO_TEST_CASE(DBtestSimple) {
+BOOST_AUTO_TEST_CASE(DBtestSimple)
+{
     DB::Row rowPattern = create_default_row();
     rowPattern.data = RawBuffer(32, 1);
     rowPattern.dataSize = rowPattern.data.size();
@@ -53,7 +53,8 @@ BOOST_AUTO_TEST_CASE(DBtestSimple) {
 
     check_DB_integrity(rowPattern);
 }
-BOOST_AUTO_TEST_CASE(DBtestBIG) {
+BOOST_AUTO_TEST_CASE(DBtestBIG)
+{
     DB::Row rowPattern = create_default_row();
     rowPattern.data = createBigBlob(4096);
     rowPattern.dataSize = rowPattern.data.size();
@@ -61,7 +62,8 @@ BOOST_AUTO_TEST_CASE(DBtestBIG) {
 
     check_DB_integrity(rowPattern);
 }
-BOOST_AUTO_TEST_CASE(DBtestGlobal) {
+BOOST_AUTO_TEST_CASE(DBtestGlobal)
+{
     DB::Row rowPattern = create_default_row();
     rowPattern.data = RawBuffer(1024, 2);
     rowPattern.dataSize = rowPattern.data.size();
@@ -72,7 +74,8 @@ BOOST_AUTO_TEST_CASE(DBtestGlobal) {
     DB::Row name_duplicate = rowPattern;
     rowPattern.ownerLabel = rowPattern.ownerLabel + "1";
 }
-BOOST_AUTO_TEST_CASE(DBtestTransaction) {
+BOOST_AUTO_TEST_CASE(DBtestTransaction)
+{
     DB::Row rowPattern = create_default_row();
     rowPattern.data = RawBuffer(100, 20);
     rowPattern.dataSize = rowPattern.data.size();
@@ -83,12 +86,14 @@ BOOST_AUTO_TEST_CASE(DBtestTransaction) {
     BOOST_REQUIRE_NO_THROW(transaction.rollback());
 
     DB::Crypto::RowOptional row_optional;
-    BOOST_REQUIRE_NO_THROW(row_optional = m_db.getRow(m_default_name, m_default_label,
-                                                      DataType::BINARY_DATA));
+    BOOST_REQUIRE_NO_THROW(row_optional = m_db.getRow(m_default_name,
+                                          m_default_label,
+                                          DataType::BINARY_DATA));
     BOOST_CHECK_MESSAGE(!row_optional, "Row still present after rollback");
 }
 
-BOOST_AUTO_TEST_CASE(DBtestBackend) {
+BOOST_AUTO_TEST_CASE(DBtestBackend)
+{
     DB::Row rowPattern = create_default_row();
     rowPattern.data = RawBuffer(32, 1);
     rowPattern.dataSize = rowPattern.data.size();
@@ -125,24 +130,26 @@ BOOST_AUTO_TEST_CASE(DBperfLookupAliasByOwner)
     // prepare data
     generate_perf_DB(c_num_names, c_names_per_label);
 
-    unsigned int num_labels = c_num_names/c_names_per_label;
+    unsigned int num_labels = c_num_names / c_names_per_label;
     Name name;
     Label label;
 
     // actual test - successful lookup
     performance_start("getRow");
-    for(unsigned int t=0; t<c_test_retries; t++)
-    {
+
+    for (unsigned int t = 0; t < c_test_retries; t++) {
         int label_num = rand_r(&t) % num_labels;
         generate_label(label_num, label);
 
-        unsigned int start_name = label_num*c_names_per_label;
-        for(unsigned int name_num=start_name; name_num<(start_name+c_names_per_label); name_num++)
-        {
+        unsigned int start_name = label_num * c_names_per_label;
+
+        for (unsigned int name_num = start_name;
+                name_num < (start_name + c_names_per_label); name_num++) {
             generate_name(name_num, name);
             read_row_expect_success(name, label);
         }
     }
+
     performance_stop(c_test_retries * c_num_names);
 }
 
@@ -158,16 +165,17 @@ BOOST_AUTO_TEST_CASE(DBperfLookupAliasRandomOwnershipNoPermissions)
 
     // actual test - random lookup
     performance_start("getRow");
-    for(unsigned int t=0; t<c_test_retries; t++)
-    {
-        int name_idx = rand_r(&t)%c_num_names;
+
+    for (unsigned int t = 0; t < c_test_retries; t++) {
+        int name_idx = rand_r(&t) % c_num_names;
         generate_name(name_idx, name);
-        generate_label(name_idx/c_names_per_label, owner_label);
-        generate_label(rand_r(&t)%num_labels, smack_label);
+        generate_label(name_idx / c_names_per_label, owner_label);
+        generate_label(rand_r(&t) % num_labels, smack_label);
 
         // do not care of result
         m_db.getRow(name, owner_label, DataType::BINARY_DATA);
     }
+
     performance_stop(c_test_retries * c_num_names);
 }
 
@@ -192,22 +200,24 @@ BOOST_AUTO_TEST_CASE(DBperfAliasRemoval)
     performance_start("deleteRow");
     Name name;
     Label label;
-    for(unsigned int t=0; t<c_num_names; t++)
-    {
+
+    for (unsigned int t = 0; t < c_num_names; t++) {
         generate_name(t, name);
-        generate_label(t/c_names_per_label, label);
+        generate_label(t / c_names_per_label, label);
 
         BOOST_REQUIRE_NO_THROW(m_db.deleteRow(name, label));
     }
+
     performance_stop(c_num_names);
 
     // verify everything has been removed
     unsigned int num_labels = c_num_names / c_names_per_label;
-    for(unsigned int l=0; l<num_labels; l++)
-    {
+
+    for (unsigned int l = 0; l < num_labels; l++) {
         generate_label(l, label);
         LabelNameVector expect_no_data;
-        BOOST_REQUIRE_NO_THROW(m_db.listNames(label, expect_no_data, DataType::BINARY_DATA));
+        BOOST_REQUIRE_NO_THROW(m_db.listNames(label, expect_no_data,
+                                              DataType::BINARY_DATA));
         BOOST_REQUIRE(0 == expect_no_data.size());
     }
 }
@@ -223,29 +233,29 @@ BOOST_AUTO_TEST_CASE(DBperfGetAliasList)
 
     // actual test - random lookup
     performance_start("listNames");
-    for(unsigned int t=0; t<(c_test_retries/num_labels); t++)
-    {
+
+    for (unsigned int t = 0; t < (c_test_retries / num_labels); t++) {
         LabelNameVector ret_list;
-        generate_label(rand_r(&t)%num_labels, label);
+        generate_label(rand_r(&t) % num_labels, label);
 
         BOOST_REQUIRE_NO_THROW(m_db.listNames(label, ret_list, DataType::BINARY_DATA));
         BOOST_REQUIRE(c_num_names == ret_list.size());
         ret_list.clear();
     }
-    performance_stop(c_test_retries/num_labels);
+
+    performance_stop(c_test_retries / num_labels);
 }
 BOOST_AUTO_TEST_SUITE_END()
 
 
 BOOST_AUTO_TEST_SUITE(DBCRYPTO_MIGRATION_TEST)
-namespace
-{
+namespace {
 const unsigned migration_names = 16107;
 const unsigned migration_labels = 273;
 const unsigned migration_reference_label_idx = 0;
 const unsigned migration_accessed_element_idx = 7;
 
-void verifyDBisValid(DBFixture & fixture)
+void verifyDBisValid(DBFixture &fixture)
 {
     /**
      * there are (migration_labels), each having (migration_names)/(migration_labels) entries.
@@ -266,41 +276,42 @@ void verifyDBisValid(DBFixture & fixture)
 
     // check number of elements accessible to the reference label
     LabelNameVector ret_list;
-    BOOST_REQUIRE_NO_THROW(fixture.m_db.listNames(reference_label, ret_list, DataType::BINARY_DATA));
-    BOOST_REQUIRE((migration_names/migration_labels)/*own items*/ + (migration_labels-1)/*other labels'*/ == ret_list.size());
+    BOOST_REQUIRE_NO_THROW(fixture.m_db.listNames(reference_label, ret_list,
+                           DataType::BINARY_DATA));
+    BOOST_REQUIRE((migration_names / migration_labels)/*own items*/ +
+                  (migration_labels - 1)/*other labels'*/ == ret_list.size());
     ret_list.clear();
 
     // check number of elements accessible to the other labels
-    for(unsigned int l=0; l<migration_labels; l++)
-    {
+    for (unsigned int l = 0; l < migration_labels; l++) {
         // bypass the reference owner label
-        if(l == migration_reference_label_idx)
+        if (l == migration_reference_label_idx)
             continue;
 
         Label current_label;
         fixture.generate_label(l, current_label);
-        BOOST_REQUIRE_NO_THROW(fixture.m_db.listNames(current_label, ret_list, DataType::BINARY_DATA));
-        BOOST_REQUIRE((migration_names/migration_labels) == ret_list.size());
-        for(auto it: ret_list)
+        BOOST_REQUIRE_NO_THROW(fixture.m_db.listNames(current_label, ret_list,
+                               DataType::BINARY_DATA));
+        BOOST_REQUIRE((migration_names / migration_labels) == ret_list.size());
+
+        for (auto it : ret_list)
             BOOST_REQUIRE(it.first == current_label);
+
         ret_list.clear();
     }
 }
 
-struct DBVer1Migration : public DBFixture
-{
+struct DBVer1Migration : public DBFixture {
     DBVer1Migration() : DBFixture(DB_TEST_DIR "/testme_ver1.db")
     {}
 };
 
-struct DBVer2Migration : public DBFixture
-{
+struct DBVer2Migration : public DBFixture {
     DBVer2Migration() : DBFixture(DB_TEST_DIR "/testme_ver2.db")
     {}
 };
 
-struct DBVer3Migration : public DBFixture
-{
+struct DBVer3Migration : public DBFixture {
     DBVer3Migration() : DBFixture(DB_TEST_DIR "/testme_ver3.db")
     {}
 };
@@ -332,16 +343,16 @@ BOOST_AUTO_TEST_CASE(DBMigrationDBCurrent)
     Label reference_label;
     currentDB.generate_label(migration_reference_label_idx, reference_label);
     {
-        currentDB.generate_perf_DB(migration_names, migration_names/migration_labels);
+        currentDB.generate_perf_DB(migration_names, migration_names / migration_labels);
 
         // only the reference label has access to the other labels element <migration_accessed_element_idx>
-        for(unsigned int l=0; l<migration_labels; l++)
-        {
+        for (unsigned int l = 0; l < migration_labels; l++) {
             // bypass the reference owner label
-            if(l == migration_reference_label_idx)
+            if (l == migration_reference_label_idx)
                 continue;
 
-            unsigned element_index = migration_accessed_element_idx + l*migration_names/migration_labels;
+            unsigned element_index = migration_accessed_element_idx + l * migration_names /
+                                     migration_labels;
 
             // add permission
             Name accessed_name;

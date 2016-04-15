@@ -25,7 +25,7 @@
 
 namespace CKM {
 
-void EncryptionLogic::Crypt(const CryptoRequest& request)
+void EncryptionLogic::Crypt(const CryptoRequest &request)
 {
     // check arguments
     if (request.input.empty()) {
@@ -36,6 +36,7 @@ void EncryptionLogic::Crypt(const CryptoRequest& request)
 
     // store request in the map
     auto ret = m_requestsMap.insert(std::make_pair(request.msgId, request));
+
     if (!ret.second) {
         LogError("Request with id " << request.msgId << " already exists");
         m_service.RespondToClient(request, CKM_API_ERROR_INPUT_PARAM);
@@ -55,10 +56,12 @@ void EncryptionLogic::Crypt(const CryptoRequest& request)
 void EncryptionLogic::KeyRetrieved(MsgKeyResponse response)
 {
     auto it = m_requestsMap.find(response.id);
+
     if (it == m_requestsMap.end()) {
         LogError("No matching request found"); // nothing we can do
         return;
     }
+
     CryptoRequest req = std::move(it->second);
     m_requestsMap.erase(it);
 
@@ -77,12 +80,14 @@ void EncryptionLogic::KeyRetrieved(MsgKeyResponse response)
     // encrypt/decrypt
     try {
         RawBuffer output;
+
         if (req.command == EncryptionCommand::ENCRYPT)
             output = response.key->encrypt(req.cas, req.input);
         else
             output = response.key->decrypt(req.cas, req.input);
+
         m_service.RespondToClient(req, CKM_API_SUCCESS, output);
-    } catch (const Exc::Exception& ex) {
+    } catch (const Exc::Exception &ex) {
         m_service.RespondToClient(req, ex.error());
     } catch (...) {
         LogError("Uncaught exception from encrypt/decrypt.");

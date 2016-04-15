@@ -30,9 +30,10 @@ struct PermissionForLabel {
     Label accessorLabel;        // who is accessing the item
     PermissionMask permissionMask;
 
-    PermissionForLabel(const Label & accessor, const PermissionMaskOptional mask)
+    PermissionForLabel(const Label &accessor, const PermissionMaskOptional mask)
     {
         accessorLabel = accessor;
+
         if (mask)
             permissionMask = *mask;
         else

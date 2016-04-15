@@ -26,7 +26,8 @@
 
 namespace {
 
-int getPkgIdFromSmack(const std::string &smack, std::string &pkgId) {
+int getPkgIdFromSmack(const std::string &smack, std::string &pkgId)
+{
     static const std::string SMACK_PREFIX_APPID  = "User::App::";
 
     if (smack.empty()) {
@@ -56,7 +57,8 @@ int getPkgIdFromSmack(const std::string &smack, std::string &pkgId) {
 
 namespace CKM {
 
-int Socket2Id::translate(int sock, std::string &result) {
+int Socket2Id::translate(int sock, std::string &result)
+{
     std::string smack;
     std::string pkgId;
 

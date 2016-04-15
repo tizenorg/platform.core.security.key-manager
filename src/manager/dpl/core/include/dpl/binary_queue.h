@@ -42,7 +42,7 @@ typedef std::auto_ptr<BinaryQueue> BinaryQueueAutoPtr;
  * @todo Add optimized implementation for FlattenConsume
  */
 class COMMON_API BinaryQueue {
-//  : public AbstractInputOutput
+    //  : public AbstractInputOutput
 public:
     class Exception {
     public:
@@ -109,7 +109,7 @@ private:
         void operator()(Bucket *bucket) const;
     };
 
-  public:
+public:
     /**
      * Construct empty binary queue
      */
@@ -128,7 +128,7 @@ private:
      *
      * @param[in] other Other binary queue to move from
      */
-    BinaryQueue(BinaryQueue&&) = default;
+    BinaryQueue(BinaryQueue &&) = default;
 
     /**
      * Destructor
@@ -148,7 +148,7 @@ private:
      *
      * @param[in] other Other binary queue to move from
      */
-    BinaryQueue &operator=(BinaryQueue&&) = default;
+    BinaryQueue &operator=(BinaryQueue &&) = default;
 
     /**
      * Append copy of @a bufferSize bytes from memory pointed by @a buffer

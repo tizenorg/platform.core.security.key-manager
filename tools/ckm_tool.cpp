@@ -34,13 +34,15 @@ bool parseLong(const char *buf_ptr, long int &val)
     char *temp;
     errno = 0;
     long int val_tmp = strtol(buf_ptr, &temp, 0);
-    if(errno)
+
+    if (errno)
         return true;
+
     val = val_tmp;
     return false;
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     if (argc < 3) {
         cerr << "Usage: ckm_tool [option] [opt_arg]" << endl;
@@ -51,12 +53,11 @@ int main(int argc, char* argv[])
     }
 
     // simple input arg parser
-    for (int i=1; i<argc-1; i++)
-    {
-        if(!strcmp(argv[i], "-d"))
-        {
+    for (int i = 1; i < argc - 1; i++) {
+        if (!strcmp(argv[i], "-d")) {
             long int uid;
-            if(parseLong(argv[i+1], uid) || uid<0) {
+
+            if (parseLong(argv[i + 1], uid) || uid < 0) {
                 cerr << "parameter error: invalid UID provided to the -d option" << endl;
                 exit(-2);
             }
@@ -64,19 +65,20 @@ int main(int argc, char* argv[])
             // lock the database
             auto control = CKM::Control::create();
             int ec = control->lockUserKey(static_cast<uid_t>(uid));
-            if(ec != CKM_API_SUCCESS) {
+
+            if (ec != CKM_API_SUCCESS) {
                 cerr << "Failed, lock DB error: " << ec << endl;
                 exit(ec);
             }
 
             // remove the user content
             ec = control->removeUserData(static_cast<uid_t>(uid));
-            if(ec != CKM_API_SUCCESS) {
+
+            if (ec != CKM_API_SUCCESS) {
                 cerr << "Failed, remove user data error: " << ec << endl;
                 exit(ec);
             }
-        }
-        else {
+        } else {
             std::cout << "Not enough or invalid arguments, please try again.\n";
             exit(-1);
         }

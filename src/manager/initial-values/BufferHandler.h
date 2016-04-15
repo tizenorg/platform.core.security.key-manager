@@ -39,10 +39,10 @@ public:
     virtual ~BufferHandler();
 
     virtual void Start(const XML::Parser::Attributes &);
-    virtual void Characters(const std::string & data);
+    virtual void Characters(const std::string &data);
     virtual void End();
 
-    const RawBuffer & getData() const
+    const RawBuffer &getData() const
     {
         return m_data;
     }
@@ -50,9 +50,10 @@ public:
     {
         if (m_encoding == EncodingType::ENCRYPTED)
             return true;
+
         return false;
     }
-    const RawBuffer & getIV() const
+    const RawBuffer &getIV() const
     {
         return m_IV;
     }

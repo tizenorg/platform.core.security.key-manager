@@ -32,8 +32,8 @@ public:
     CryptoLogic();
     CryptoLogic(const CryptoLogic &second) = delete;
     CryptoLogic(CryptoLogic &&second);
-    CryptoLogic& operator=(CryptoLogic &&second);
-    CryptoLogic& operator=(const CryptoLogic &second) = delete;
+    CryptoLogic &operator=(CryptoLogic &&second);
+    CryptoLogic &operator=(const CryptoLogic &second) = delete;
 
     virtual ~CryptoLogic() {}
 

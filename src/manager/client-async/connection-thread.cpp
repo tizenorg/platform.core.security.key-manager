@@ -66,7 +66,7 @@ void ConnectionThread::run()
     m_thread = std::thread(&ConnectionThread::threadLoop, this);
 }
 
-void ConnectionThread::sendMessage(AsyncRequest&& req)
+void ConnectionThread::sendMessage(AsyncRequest &&req)
 {
     std::unique_lock<std::mutex> lock(m_mutex);
     m_waitingReqs.push(std::move(req));
@@ -81,7 +81,9 @@ void ConnectionThread::threadLoop()
     try {
         m_descriptors.add(m_pipe.output(),
                           POLLIN,
-                          [this](int fd, short revents){ newRequest(fd, revents); });
+        [this](int fd, short revents) {
+            newRequest(fd, revents);
+        });
 
         while (!m_join) {
             // wait for pipe/socket notification
@@ -96,8 +98,9 @@ void ConnectionThread::threadLoop()
     }
 
     // cleanup services
-    for (auto& it: m_services)
+    for (auto &it : m_services)
         it.second.serviceError(CKM_API_ERROR_UNKNOWN);
+
     m_services.clear();
 
     // close all descriptors (including pipe)
@@ -105,10 +108,12 @@ void ConnectionThread::threadLoop()
 
     // remove waiting requests and notify about error
     std::unique_lock<std::mutex> lock(m_mutex);
+
     while (!m_waitingReqs.empty()) {
         m_waitingReqs.front().observer->ReceivedError(CKM_API_ERROR_UNKNOWN);
         m_waitingReqs.pop();
     }
+
     lock.unlock();
 
     m_finished = true;
@@ -127,15 +132,16 @@ void ConnectionThread::readPipe(int pipe, short revents)
     }
 }
 
-Service& ConnectionThread::getService(const std::string& interface)
+Service &ConnectionThread::getService(const std::string &interface)
 {
     auto it = m_services.find(interface);
+
     if (it != m_services.end())
         return it->second;
 
     // create new service, insert it and return
     return m_services.insert(
-            std::make_pair(interface, Service(m_descriptors, interface))).first->second;
+               std::make_pair(interface, Service(m_descriptors, interface))).first->second;
 }
 
 void ConnectionThread::newRequest(int pipe, short revents)
@@ -156,7 +162,7 @@ void ConnectionThread::newRequest(int pipe, short revents)
 
     lock.unlock();
 
-    Service& srv = getService(req.interface);
+    Service &srv = getService(req.interface);
     srv.addRequest(std::move(req));
 }
 

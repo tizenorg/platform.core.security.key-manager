@@ -32,7 +32,7 @@ namespace InitialValues {
 
 class KeyHandler : public InitialValueHandler {
 public:
-    explicit KeyHandler(CKMLogic & db_logic, const CKM::RawBuffer &encryptedKey) :
+    explicit KeyHandler(CKMLogic &db_logic, const CKM::RawBuffer &encryptedKey) :
         InitialValueHandler(db_logic, encryptedKey), m_keyType(KeyType::KEY_NONE) {}
     virtual ~KeyHandler();
 
@@ -41,7 +41,7 @@ public:
     virtual DataType getDataType() const;
 
 protected:
-    static KeyType parseType(const std::string & typeStr);
+    static KeyType parseType(const std::string &typeStr);
 
     KeyType m_keyType;
 };

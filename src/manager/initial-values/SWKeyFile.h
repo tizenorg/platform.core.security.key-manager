@@ -52,8 +52,8 @@ public:
 private:
     class HeaderHandler : public XML::Parser::ElementHandler {
     public:
-        explicit HeaderHandler(SWKeyFile & parent);
-        virtual void Start(const XML::Parser::Attributes & attr);
+        explicit HeaderHandler(SWKeyFile &parent);
+        virtual void Start(const XML::Parser::Attributes &attr);
         virtual void Characters(const std::string &) {}
         virtual void End() {}
 
@@ -61,12 +61,12 @@ private:
 
     private:
         int m_version;
-        SWKeyFile & m_parent;
+        SWKeyFile &m_parent;
     };
 
     class RSAKeyHandler : public XML::Parser::ElementHandler {
     public:
-        explicit RSAKeyHandler(SWKeyFile & parent);
+        explicit RSAKeyHandler(SWKeyFile &parent);
         virtual void Start(const XML::Parser::Attributes &) {}
         virtual void Characters(const std::string &data);
         virtual void End();
@@ -75,7 +75,7 @@ private:
 
     private:
         CKM::RawBuffer m_encryptedKey;
-        SWKeyFile & m_parent;
+        SWKeyFile &m_parent;
     };
 
     std::string m_filename;
@@ -88,7 +88,7 @@ private:
 
     void registerElementListeners();
     static void Error(const XML::Parser::ErrorType errorType,
-                      const std::string & logMsg);
+                      const std::string &logMsg);
 };
 
 }

@@ -53,8 +53,8 @@ public:
     };
 
     ServiceThread()
-      : m_state(State::NoThread)
-      , m_quit(false)
+        : m_state(State::NoThread)
+        , m_quit(false)
     {
     }
 
@@ -79,7 +79,8 @@ public:
 
     virtual ~ServiceThread()
     {
-        assert((m_state == State::NoThread) && "Thread was not stopped before ServiceThread destruction!");
+        assert((m_state == State::NoThread) &&
+               "Thread was not stopped before ServiceThread destruction!");
     }
 
 protected:
@@ -112,8 +113,10 @@ protected:
             EventDescription description;
             {
                 std::unique_lock<std::mutex> ulock(m_eventQueueMutex);
+
                 if (m_quit)
                     return;
+
                 if (!m_eventQueue.empty()) {
                     description = m_eventQueue.front();
                     m_eventQueue.pop();
@@ -123,8 +126,7 @@ protected:
             }
 
             if (description) {
-                UNHANDLED_EXCEPTION_HANDLER_BEGIN
-                {
+                UNHANDLED_EXCEPTION_HANDLER_BEGIN {
                     description();
                 }
                 UNHANDLED_EXCEPTION_HANDLER_END

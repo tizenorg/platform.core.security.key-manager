@@ -54,8 +54,8 @@ public:
     CKMLogic();
     CKMLogic(const CKMLogic &) = delete;
     CKMLogic(CKMLogic &&) = delete;
-    CKMLogic& operator=(const CKMLogic &) = delete;
-    CKMLogic& operator=(CKMLogic &&) = delete;
+    CKMLogic &operator=(const CKMLogic &) = delete;
+    CKMLogic &operator=(CKMLogic &&) = delete;
     virtual ~CKMLogic();
 
     RawBuffer unlockUserKey(uid_t user, const Password &password);
@@ -122,7 +122,7 @@ public:
     RawBuffer createKeyPair(
         const Credentials &cred,
         int commandId,
-        const CryptoAlgorithmSerializable & keyGenParams,
+        const CryptoAlgorithmSerializable &keyGenParams,
         const Name &namePrivate,
         const Label &labelPrivate,
         const Name &namePublic,
@@ -158,7 +158,7 @@ public:
         const Credentials &cred,
         int commandId,
         const Name &privateKeyName,
-        const Label & ownerLabel,
+        const Label &ownerLabel,
         const Password &password,           // password for private_key
         const RawBuffer &message,
         const CryptoAlgorithm &cryptoAlgorithm);
@@ -202,8 +202,8 @@ public:
         const Credentials &cred,
         const Name &name,
         const Label &label,
-        const Password& pass,
-        Crypto::GObjShPtr& key);
+        const Password &pass,
+        Crypto::GObjShPtr &key);
 
     int importInitialData(
         const Name &name,
@@ -217,11 +217,11 @@ protected:
 private:
     // select private/system database depending on asking uid and owner label.
     // output: database handler and effective label
-    UserData & selectDatabase(const Credentials &incoming_cred,
-                              const Label       &incoming_label);
+    UserData &selectDatabase(const Credentials &incoming_cred,
+                             const Label       &incoming_label);
 
     int unlockDatabase(uid_t            user,
-                       const Password & password);
+                       const Password &password);
 
     void loadDKEKFile(
         uid_t user,
@@ -271,9 +271,9 @@ private:
         const Label &label,
         const Password &keyPassword,
         const Password &certPassword,
-        KeyShPtr & privKey,
-        CertificateShPtr & cert,
-        CertificateShPtrVector & caChain);
+        KeyShPtr &privKey,
+        CertificateShPtr &cert,
+        CertificateShPtrVector &caChain);
 
     int extractPKCS12Data(
         CryptoLogic &crypto,
@@ -293,14 +293,14 @@ private:
         const Name &name,
         const Label &ownerLabel,
         DataType dataType,
-        DB::Crypto & database,
+        DB::Crypto &database,
         DB::Row &row);
 
     int readMultiRow(const Name &name,
-        const Label &ownerLabel,
-        DataType dataType,
-        DB::Crypto & database,
-        DB::RowVector &output);
+                     const Label &ownerLabel,
+                     DataType dataType,
+                     DB::Crypto &database,
+                     DB::RowVector &output);
 
     int checkDataPermissionsHelper(
         const Credentials &cred,
@@ -309,12 +309,12 @@ private:
         const Label &accessorLabel,
         const DB::Row &row,
         bool exportFlag,
-        DB::Crypto & database);
+        DB::Crypto &database);
 
     Crypto::GObjUPtr rowToObject(
-        UserData& handler,
+        UserData &handler,
         DB::Row row,
-        const Password& password);
+        const Password &password);
 
     int readDataHelper(
         bool exportFlag,
@@ -333,7 +333,7 @@ private:
         const Label &label,
         const Password &password,
         Crypto::GObjUPtr &obj,
-        DataType& objDataType);
+        DataType &objDataType);
 
     int readDataHelper(
         bool exportFlag,
@@ -353,7 +353,7 @@ private:
 
     int createKeyPairHelper(
         const Credentials &cred,
-        const CryptoAlgorithmSerializable & keyGenParams,
+        const CryptoAlgorithmSerializable &keyGenParams,
         const Name &namePrivate,
         const Label &labelPrivate,
         const Name &namePublic,
@@ -392,7 +392,7 @@ private:
 
     int resetUserPasswordHelper(uid_t user, const Password &newPassword);
 
-    int loadAppKey(UserData& handle, const Label& appLabel);
+    int loadAppKey(UserData &handle, const Label &appLabel);
 
     AccessControl m_accessControl;
     Crypto::Decider m_decider;

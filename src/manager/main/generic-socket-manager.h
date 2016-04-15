@@ -39,7 +39,7 @@
 #include <service-messages.h>
 
 extern "C" {
-struct msghdr;
+    struct msghdr;
 } // extern "C"
 
 namespace CKM {
@@ -49,7 +49,8 @@ typedef int InterfaceID;
 struct ConnectionID {
     int sock;                                 // This is decriptor used for connection
     int counter;                              // Unique handler per socket
-    inline bool operator<(const ConnectionID &second) const {
+    inline bool operator<(const ConnectionID &second) const
+    {
         return counter < second.counter;
     }
 };
@@ -60,17 +61,18 @@ struct GenericSocketService {
     typedef std::string ServiceHandlerPath;
     struct ServiceDescription {
         ServiceDescription(const char *path,
-            const char *privilege,
-            InterfaceID interfaceID = 0,
-            bool useSendMsg = false)
-          : privilege(privilege)
-          , interfaceID(interfaceID)
-          , serviceHandlerPath(path)
-          , useSendMsg(useSendMsg)
+                           const char *privilege,
+                           InterfaceID interfaceID = 0,
+                           bool useSendMsg = false)
+            : privilege(privilege)
+            , interfaceID(interfaceID)
+            , serviceHandlerPath(path)
+            , useSendMsg(useSendMsg)
         {}
 
         std::string privilege;                 // privilege for socket
-        InterfaceID interfaceID;               // All data from serviceHandlerPath will be marked with this interfaceHandler
+        InterfaceID
+        interfaceID;               // All data from serviceHandlerPath will be marked with this interfaceHandler
         ServiceHandlerPath serviceHandlerPath; // Path to file
         bool useSendMsg;
     };
@@ -138,7 +140,7 @@ struct GenericSocketManager {
     virtual void Close(ConnectionID connectionID) = 0;
     virtual void Write(ConnectionID connectionID, const RawBuffer &rawBuffer) = 0;
     virtual void SecurityCheck(ConnectionID connectionID) = 0;
-    virtual ~GenericSocketManager(){}
+    virtual ~GenericSocketManager() {}
 };
 
 } // namespace CKM

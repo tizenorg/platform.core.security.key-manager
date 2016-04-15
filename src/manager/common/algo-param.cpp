@@ -24,18 +24,19 @@
 
 namespace CKM {
 
-bool CryptoAlgorithm::BufferParam::getBuffer(RawBuffer& buffer) const
+bool CryptoAlgorithm::BufferParam::getBuffer(RawBuffer &buffer) const
 {
     buffer = m_buffer;
     return true;
 }
 
-CryptoAlgorithm::BaseParamPtr CryptoAlgorithm::BufferParam::create(const RawBuffer& buffer)
+CryptoAlgorithm::BaseParamPtr CryptoAlgorithm::BufferParam::create(
+    const RawBuffer &buffer)
 {
     return BaseParamPtr(new CryptoAlgorithm::BufferParam(buffer));
 }
 
-bool CryptoAlgorithm::IntParam::getInt(uint64_t& value) const
+bool CryptoAlgorithm::IntParam::getInt(uint64_t &value) const
 {
     value = m_int;
     return true;
@@ -47,9 +48,10 @@ CryptoAlgorithm::BaseParamPtr CryptoAlgorithm::IntParam::create(uint64_t value)
 }
 
 template <>
-bool CryptoAlgorithm::getParam(ParamName name, RawBuffer& value) const
+bool CryptoAlgorithm::getParam(ParamName name, RawBuffer &value) const
 {
     auto param = m_params.find(name);
+
     if (param == m_params.end())
         return false;
 
@@ -58,10 +60,11 @@ bool CryptoAlgorithm::getParam(ParamName name, RawBuffer& value) const
 }
 
 template <>
-bool CryptoAlgorithm::setParam(ParamName name, const RawBuffer& value)
+bool CryptoAlgorithm::setParam(ParamName name, const RawBuffer &value)
 {
     if (name < ParamName::FIRST || name > ParamName::LAST)
         return false;
+
     m_params[name] = BufferParam::create(value);
     return true;
 }

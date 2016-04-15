@@ -67,16 +67,16 @@ std::string GetFormattedTime()
 }
 
 struct ColorMark {
-    const char* const begin;
-    const char* const end;
+    const char *const begin;
+    const char *const end;
 };
 
 std::map<AbstractLogProvider::LogLevel, ColorMark> consoleLevel = {
-        { AbstractLogProvider::LogLevel::Error,     {ERROR_BEGIN,       ERROR_END} },
-        { AbstractLogProvider::LogLevel::Warning,   {WARNING_BEGIN,     WARNING_END} },
-        { AbstractLogProvider::LogLevel::Info,      {INFO_BEGIN,        INFO_END} },
-        { AbstractLogProvider::LogLevel::Debug,     {DEBUG_BEGIN,       DEBUG_END} },
-        { AbstractLogProvider::LogLevel::Pedantic,  {PEDANTIC_BEGIN,    PEDANTIC_END} }
+    { AbstractLogProvider::LogLevel::Error,     {ERROR_BEGIN,       ERROR_END} },
+    { AbstractLogProvider::LogLevel::Warning,   {WARNING_BEGIN,     WARNING_END} },
+    { AbstractLogProvider::LogLevel::Info,      {INFO_BEGIN,        INFO_END} },
+    { AbstractLogProvider::LogLevel::Debug,     {DEBUG_BEGIN,       DEBUG_END} },
+    { AbstractLogProvider::LogLevel::Pedantic,  {PEDANTIC_BEGIN,    PEDANTIC_END} }
 };
 
 } // namespace anonymous
@@ -92,15 +92,18 @@ void OldStyleLogProvider::Log(AbstractLogProvider::LogLevel level,
                               const char *function) const
 {
     try {
-        const struct ColorMark& mark = consoleLevel.at(level);
+        const struct ColorMark &mark = consoleLevel.at(level);
 
         std::ostringstream val;
-        val << mark.begin << std::string("[") << GetFormattedTime() << std::string("] [") <<
-               static_cast<unsigned long>(pthread_self()) << "/" << static_cast<int>(getpid()) <<
-               std::string("] [") << LocateSourceFileName(fileName) << std::string(":") << line <<
-               std::string("] ") << function << std::string("(): ") << message << mark.end;
+        val << mark.begin << std::string("[") << GetFormattedTime() <<
+            std::string("] [") <<
+            static_cast<unsigned long>(pthread_self()) << "/" << static_cast<int>
+            (getpid()) <<
+            std::string("] [") << LocateSourceFileName(fileName) << std::string(":") << line
+            <<
+            std::string("] ") << function << std::string("(): ") << message << mark.end;
         fprintf(stdout, "%s\n", val.str().c_str());
-    } catch (const std::out_of_range&) {
+    } catch (const std::out_of_range &) {
         fprintf(stdout, "Unsupported log level: %d\n", level);
     }
 }

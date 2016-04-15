@@ -29,7 +29,7 @@ namespace InitialValues {
 
 class NoCharactersHandler : public XML::Parser::ElementHandler {
 public:
-    void Characters(const std::string & data);
+    void Characters(const std::string &data);
 
     virtual ~NoCharactersHandler();
 };

@@ -34,18 +34,18 @@ namespace CKM {
 
 void forEachFile(const std::string &dirpath, ActionFunc func)
 {
-    std::unique_ptr<DIR, std::function<int(DIR*)>>
-        dirp(::opendir(dirpath.c_str()), ::closedir);
+    std::unique_ptr<DIR, std::function<int(DIR *)>>
+            dirp(::opendir(dirpath.c_str()), ::closedir);
 
     if (!dirp.get())
         ThrowErr(Exc::FileSystemFailed,
-            "Cannot open dir: ", dirpath, " errno: ", GetErrnoString());
+                 "Cannot open dir: ", dirpath, " errno: ", GetErrnoString());
 
     size_t len =
         offsetof(struct dirent, d_name) + pathconf(dirpath.c_str(), _PC_NAME_MAX) + 1;
 
-    std::unique_ptr<struct dirent, std::function<void(void*)>>
-        pEntry(static_cast<struct dirent*>(::malloc(len)), ::free);
+    std::unique_ptr<struct dirent, std::function<void(void *)>>
+            pEntry(static_cast<struct dirent *>(::malloc(len)), ::free);
 
     if (!pEntry)
         ThrowErr(Exc::InternalError, "Memory allocation failed for dir entry");

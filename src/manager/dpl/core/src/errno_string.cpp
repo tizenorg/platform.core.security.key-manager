@@ -37,12 +37,16 @@ std::string GetErrnoString(int error)
     std::vector<char> buffer(MAX_BUF, '\0');
 
 #if (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600) && !_GNU_SOURCE
+
     if (0 == strerror_r(error, buffer.data(), buffer.size()))
         return std::string(buffer.begin(), buffer.end());
+
 #else
     char *result = strerror_r(error, buffer.data(), buffer.size());
+
     if (result)
         return std::string(result);
+
 #endif
 
     return std::string();

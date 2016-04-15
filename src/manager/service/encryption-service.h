@@ -29,7 +29,8 @@
 
 namespace CKM {
 
-class EncryptionService : public ThreadMessageService<MsgKeyResponse>, public IEncryptionService {
+class EncryptionService : public ThreadMessageService<MsgKeyResponse>,
+    public IEncryptionService {
 public:
     EncryptionService();
     virtual ~EncryptionService();
@@ -42,12 +43,16 @@ public:
     // because we want to bypass security check in EncryptionService
     virtual void Event(const ReadEvent &event)
     {
-        CreateEvent([this, event]() { this->CustomHandle(event); });
+        CreateEvent([this, event]() {
+            this->CustomHandle(event);
+        });
     }
 
     virtual void Event(const SecurityEvent &event)
     {
-        CreateEvent([this, event]() { this->CustomHandle(event); });
+        CreateEvent([this, event]() {
+            this->CustomHandle(event);
+        });
     }
 
     void Start();
@@ -68,10 +73,10 @@ private:
                            MessageBuffer &buffer);
 
     // from IEncryptionService
-    virtual void RespondToClient(const CryptoRequest& request,
+    virtual void RespondToClient(const CryptoRequest &request,
                                  int retCode,
-                                 const RawBuffer& data = RawBuffer());
-    virtual void RequestKey(const CryptoRequest& request);
+                                 const RawBuffer &data = RawBuffer());
+    virtual void RequestKey(const CryptoRequest &request);
 
     EncryptionLogic m_logic;
 };

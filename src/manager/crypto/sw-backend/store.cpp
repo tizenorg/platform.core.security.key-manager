@@ -49,7 +49,7 @@ enum EncryptionScheme {
 };
 
 template <typename T, typename ...Args>
-std::unique_ptr<T> make_unique(Args&& ...args)
+std::unique_ptr<T> make_unique(Args &&...args)
 {
     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
@@ -60,10 +60,12 @@ RawBuffer generateRandIV()
 
     if (1 != RAND_bytes(civ.data(), civ.size()))
         ThrowErr(Exc::Crypto::InternalError, "RAND_bytes failed to generate IV.");
+
     return civ;
 }
 
-RawBuffer passwordToKey(const Password &password, const RawBuffer &salt, size_t keySize)
+RawBuffer passwordToKey(const Password &password, const RawBuffer &salt,
+                        size_t keySize)
 {
     RawBuffer result(keySize);
 
@@ -80,7 +82,7 @@ RawBuffer passwordToKey(const Password &password, const RawBuffer &salt, size_t 
     return result;
 }
 
-RawBuffer unpack(const RawBuffer& packed, const Password& pass)
+RawBuffer unpack(const RawBuffer &packed, const Password &pass)
 {
     MessageBuffer buffer;
     buffer.Push(packed);
@@ -110,61 +112,71 @@ RawBuffer unpack(const RawBuffer& packed, const Password& pass)
     RawBuffer key = passwordToKey(pass, iv, KEY_LENGTH);
 
     RawBuffer ret;
+
     try {
         ret = Crypto::SW::Internals::decryptDataAesGcm(key, encrypted, iv, tag);
-    } catch( const Exc::Crypto::InternalError& e) {
+    } catch (const Exc::Crypto::InternalError &e) {
         ThrowErr(Exc::AuthenticationFailed, "Decryption with custom password failed");
     }
+
     return ret;
 }
 
-RawBuffer pack(const RawBuffer& data, const Password& pass)
+RawBuffer pack(const RawBuffer &data, const Password &pass)
 {
     int scheme = EncryptionScheme::NONE;
     RawBuffer packed = data;
+
     if (!pass.empty()) {
         RawBuffer iv = generateRandIV();
         RawBuffer key = passwordToKey(pass, iv, KEY_LENGTH);
 
         std::pair<RawBuffer, RawBuffer> ret;
+
         try {
-            ret = Crypto::SW::Internals::encryptDataAesGcm(key, data, iv, STORE_AES_GCM_TAG_SIZE);
-        } catch( const Exc::Crypto::InternalError& e) {
+            ret = Crypto::SW::Internals::encryptDataAesGcm(key, data, iv,
+                    STORE_AES_GCM_TAG_SIZE);
+        } catch (const Exc::Crypto::InternalError &e) {
             ThrowErr(Exc::AuthenticationFailed, "Encryption with custom password failed");
         }
+
         scheme |= EncryptionScheme::PASSWORD;
 
         // serialization exceptions will be catched as CKM::Exception and will cause
         // CKM_API_ERROR_SERVER_ERROR
         packed = MessageBuffer::Serialize(ret.first, iv, ret.second).Pop();
     }
+
     // encryption scheme + internal buffer
     return MessageBuffer::Serialize(scheme, packed).Pop();
 }
 
 } // namespace anonymous
 
-namespace
-{
-const char * const DEVICE_KEY_XSD = RO_DATA_DIR "/sw_key.xsd";
-const char * const DEVICE_KEY_SW_FILE = RW_DATA_DIR "/device_key.xml";
+namespace {
+const char *const DEVICE_KEY_XSD = RO_DATA_DIR "/sw_key.xsd";
+const char *const DEVICE_KEY_SW_FILE = RW_DATA_DIR "/device_key.xml";
 }
 
 Store::Store(CryptoBackend backendId)
-  : GStore(backendId)
+    : GStore(backendId)
 {
     // get the device key if present
     InitialValues::SWKeyFile keyFile(DEVICE_KEY_SW_FILE);
     int rc = keyFile.Validate(DEVICE_KEY_XSD);
+
     if (rc == XML::Parser::PARSE_SUCCESS) {
         rc = keyFile.Parse();
+
         if (rc == XML::Parser::PARSE_SUCCESS)
             m_deviceKey = keyFile.getPrivKey();
         else
             // do nothing, bypass encrypted elements
-            LogWarning("invalid SW key file: " << DEVICE_KEY_SW_FILE << ", parsing code: " << rc);
+            LogWarning("invalid SW key file: " << DEVICE_KEY_SW_FILE << ", parsing code: "
+                       << rc);
     } else {
-        LogWarning("invalid SW key file: " << DEVICE_KEY_SW_FILE << ", validation code: " << rc);
+        LogWarning("invalid SW key file: " << DEVICE_KEY_SW_FILE <<
+                   ", validation code: " << rc);
     }
 }
 
@@ -176,10 +188,10 @@ GObjUPtr Store::getObject(const Token &token, const Password &pass)
     RawBuffer data = unpack(token.data, pass);
 
     if (token.dataType.isKeyPrivate() || token.dataType.isKeyPublic())
-         return make_unique<AKey>(data, token.dataType);
+        return make_unique<AKey>(data, token.dataType);
 
     if (token.dataType == DataType(DataType::KEY_AES))
-         return make_unique<SKey>(data, token.dataType);
+        return make_unique<SKey>(data, token.dataType);
 
     if (token.dataType.isCertificate() || token.dataType.isChainCert())
         return make_unique<Cert>(data, token.dataType);
@@ -188,7 +200,7 @@ GObjUPtr Store::getObject(const Token &token, const Password &pass)
         return make_unique<BData>(data, token.dataType);
 
     ThrowErr(Exc::Crypto::DataTypeNotSupported,
-        "This type of data is not supported by openssl backend: ", (int)token.dataType);
+             "This type of data is not supported by openssl backend: ", (int)token.dataType);
 }
 
 TokenPair Store::generateAKey(const CryptoAlgorithm &algorithm,
@@ -197,11 +209,12 @@ TokenPair Store::generateAKey(const CryptoAlgorithm &algorithm,
 {
     Internals::DataPair ret = Internals::generateAKey(algorithm);
     return std::make_pair<Token, Token>(
-            Token(m_backendId, ret.first.type, pack(ret.first.buffer, prvPass)),
-            Token(m_backendId, ret.second.type, pack(ret.second.buffer, pubPass)));
+               Token(m_backendId, ret.first.type, pack(ret.first.buffer, prvPass)),
+               Token(m_backendId, ret.second.type, pack(ret.second.buffer, pubPass)));
 }
 
-Token Store::generateSKey(const CryptoAlgorithm &algorithm, const Password &pass)
+Token Store::generateSKey(const CryptoAlgorithm &algorithm,
+                          const Password &pass)
 {
     Internals::Data ret = Internals::generateSKey(algorithm);
     return Token(m_backendId, ret.type, pack(ret.buffer, pass));
@@ -212,7 +225,8 @@ Token Store::import(const Data &data, const Password &pass)
     return Token(m_backendId, data.type, pack(data.data, pass));
 }
 
-Token Store::importEncrypted(const Data &data, const Password &pass, const DataEncryption &enc)
+Token Store::importEncrypted(const Data &data, const Password &pass,
+                             const DataEncryption &enc)
 {
     if (!m_deviceKey)
         ThrowErr(Exc::Crypto::InternalError, "No device key present");
@@ -220,15 +234,18 @@ Token Store::importEncrypted(const Data &data, const Password &pass, const DataE
     // decrypt the AES key using device key
     CryptoAlgorithm algorithmRSAOAEP;
     algorithmRSAOAEP.setParam(ParamName::ALGO_TYPE, AlgoType::RSA_OAEP);
-    Crypto::SW::SKey aesKey(m_deviceKey->decrypt(algorithmRSAOAEP, enc.encryptedKey), DataType::KEY_AES);
+    Crypto::SW::SKey aesKey(m_deviceKey->decrypt(algorithmRSAOAEP,
+                            enc.encryptedKey), DataType::KEY_AES);
 
     // decrypt the buffer using AES key
     CryptoAlgorithm algorithmAESCBC;
     algorithmAESCBC.setParam(ParamName::ALGO_TYPE, AlgoType::AES_CBC);
     algorithmAESCBC.setParam(ParamName::ED_IV, enc.iv);
     RawBuffer rawData = aesKey.decrypt(algorithmAESCBC, data.data);
+
     if (!Internals::verifyBinaryData(data.type, rawData))
-        ThrowErr(Exc::Crypto::InputParam, "Verification failed. Data could not be imported!");
+        ThrowErr(Exc::Crypto::InputParam,
+                 "Verification failed. Data could not be imported!");
 
     return Token(m_backendId, data.type, pack(rawData, pass));
 }

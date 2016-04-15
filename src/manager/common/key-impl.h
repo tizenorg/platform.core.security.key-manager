@@ -36,7 +36,7 @@ public:
     KeyImpl();
     KeyImpl(const KeyImpl &second) = delete;
     KeyImpl &operator=(const KeyImpl &second) = delete;
-    KeyImpl(const RawBuffer& buffer, const Password &password = Password());
+    KeyImpl(const RawBuffer &buffer, const Password &password = Password());
     KeyImpl(EvpShPtr pkey, KeyType type);
 
     virtual KeyType getType() const;

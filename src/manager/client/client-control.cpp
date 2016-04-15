@@ -35,8 +35,8 @@ public:
     ControlImpl() : m_controlConnection(SERVICE_SOCKET_CKM_CONTROL) {}
     ControlImpl(const ControlImpl &) = delete;
     ControlImpl(ControlImpl &&) = delete;
-    ControlImpl& operator=(const ControlImpl &) = delete;
-    ControlImpl& operator=(ControlImpl &&) = delete;
+    ControlImpl &operator=(const ControlImpl &) = delete;
+    ControlImpl &operator=(ControlImpl &&) = delete;
 
     virtual int unlockUserKey(uid_t user, const Password &password)
     {
@@ -46,8 +46,8 @@ public:
 
             MessageBuffer recv;
             auto send = MessageBuffer::Serialize(static_cast<int>(ControlCommand::UNLOCK_USER_KEY),
-                                                 user,
-                                                 password);
+            user,
+            password);
 
             int retCode = m_controlConnection.processRequest(send.Pop(), recv);
             if (CKM_API_SUCCESS != retCode)
@@ -97,7 +97,8 @@ public:
         });
     }
 
-    virtual int changeUserPassword(uid_t user, const Password &oldPassword, const Password &newPassword)
+    virtual int changeUserPassword(uid_t user, const Password &oldPassword,
+                                   const Password &newPassword)
     {
         return try_catch([&] {
             if ((int)user < 0)
@@ -105,10 +106,10 @@ public:
 
             MessageBuffer recv;
             auto send = MessageBuffer::Serialize(
-                    static_cast<int>(ControlCommand::CHANGE_USER_PASSWORD),
-                    user,
-                    oldPassword,
-                    newPassword);
+                static_cast<int>(ControlCommand::CHANGE_USER_PASSWORD),
+                user,
+                oldPassword,
+                newPassword);
 
             int retCode = m_controlConnection.processRequest(send.Pop(), recv);
             if (CKM_API_SUCCESS != retCode)
@@ -128,9 +129,9 @@ public:
 
             MessageBuffer recv;
             auto send = MessageBuffer::Serialize(
-                    static_cast<int>(ControlCommand::RESET_USER_PASSWORD),
-                    user,
-                    newPassword);
+                static_cast<int>(ControlCommand::RESET_USER_PASSWORD),
+                user,
+                newPassword);
 
             int retCode = m_controlConnection.processRequest(send.Pop(), recv);
             if (CKM_API_SUCCESS != retCode)
@@ -168,6 +169,7 @@ public:
             auto send = MessageBuffer::Serialize(static_cast<int>(ControlCommand::UPDATE_CC_MODE));
 
             int retCode = m_controlConnection.processRequest(send.Pop(), recv);
+
             if (CKM_API_SUCCESS != retCode)
                 return retCode;
 
@@ -186,13 +188,14 @@ public:
             MessageBuffer recv;
             AliasSupport helper(alias);
             auto send = MessageBuffer::Serialize(static_cast<int>(ControlCommand::SET_PERMISSION),
-                                                 static_cast<int>(user),
-                                                 helper.getName(),
-                                                 helper.getLabel(),
-                                                 accessor,
-                                                 permissionMask);
+            static_cast<int>(user),
+            helper.getName(),
+            helper.getLabel(),
+            accessor,
+            permissionMask);
 
             int retCode = m_controlConnection.processRequest(send.Pop(), recv);
+
             if (CKM_API_SUCCESS != retCode)
                 return retCode;
 
@@ -221,6 +224,7 @@ ControlShPtr Control::create()
     } catch (...) {
         LogError("Critical error: Unknown exception was caught druing ControlImpl creation!");
     }
+
     return ControlShPtr();
 }
 

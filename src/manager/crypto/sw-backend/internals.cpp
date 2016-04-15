@@ -52,17 +52,20 @@ namespace SW {
 namespace Internals {
 
 namespace {
-typedef std::unique_ptr<EVP_MD_CTX, std::function<void(EVP_MD_CTX*)>> EvpMdCtxUPtr;
-typedef std::unique_ptr<EVP_PKEY_CTX, std::function<void(EVP_PKEY_CTX*)>> EvpPkeyCtxUPtr;
-typedef std::unique_ptr<EVP_PKEY, std::function<void(EVP_PKEY*)>> EvpPkeyUPtr;
+typedef std::unique_ptr<EVP_MD_CTX, std::function<void(EVP_MD_CTX *)>>
+        EvpMdCtxUPtr;
+typedef std::unique_ptr<EVP_PKEY_CTX, std::function<void(EVP_PKEY_CTX *)>>
+        EvpPkeyCtxUPtr;
+typedef std::unique_ptr<EVP_PKEY, std::function<void(EVP_PKEY *)>> EvpPkeyUPtr;
 
-typedef std::unique_ptr<BIO, std::function<void(BIO*)>> BioUniquePtr;
-typedef int(*I2D_CONV)(BIO*, EVP_PKEY*);
+typedef std::unique_ptr<BIO, std::function<void(BIO *)>> BioUniquePtr;
+typedef int(*I2D_CONV)(BIO *, EVP_PKEY *);
 
-const size_t DEFAULT_AES_GCM_TAG_LEN = 128; // tag length in bits according to W3C Crypto API
+const size_t DEFAULT_AES_GCM_TAG_LEN =
+    128; // tag length in bits according to W3C Crypto API
 const size_t DEFAULT_AES_IV_LEN = 16; // default iv size in bytes for AES
 
-RawBuffer i2d(I2D_CONV fun, EVP_PKEY* pkey)
+RawBuffer i2d(I2D_CONV fun, EVP_PKEY *pkey)
 {
     BioUniquePtr bio(BIO_new(BIO_s_mem()), BIO_free_all);
 
@@ -70,7 +73,8 @@ RawBuffer i2d(I2D_CONV fun, EVP_PKEY* pkey)
         ThrowErr(Exc::Crypto::InternalError, "attempt to parse an empty key!");
 
     if (NULL == bio.get())
-        ThrowErr(Exc::Crypto::InternalError, "Error in memory allocation! Function: BIO_new.");
+        ThrowErr(Exc::Crypto::InternalError,
+                 "Error in memory allocation! Function: BIO_new.");
 
     if (1 != fun(bio.get(), pkey))
         ThrowErr(Exc::Crypto::InternalError, "Error in conversion EVP_PKEY to DER");
@@ -88,119 +92,123 @@ RawBuffer i2d(I2D_CONV fun, EVP_PKEY* pkey)
 
 // encryption / decryption
 typedef ParamCheck<ParamName::ALGO_TYPE,
-                   AlgoType,
-                   true,
-                   Type<AlgoType>::Equals<AlgoType::AES_CTR,
-                                          AlgoType::AES_CBC,
-                                          AlgoType::AES_GCM,
-                                          AlgoType::AES_CFB>> IsSymEncryption;
+        AlgoType,
+        true,
+        Type<AlgoType>::Equals<AlgoType::AES_CTR,
+        AlgoType::AES_CBC,
+        AlgoType::AES_GCM,
+        AlgoType::AES_CFB>> IsSymEncryption;
 
 typedef ParamCheck<ParamName::ALGO_TYPE,
-                   AlgoType,
-                   true,
-                   Type<AlgoType>::Equals<AlgoType::RSA_OAEP>> IsAsymEncryption;
+        AlgoType,
+        true,
+        Type<AlgoType>::Equals<AlgoType::RSA_OAEP>> IsAsymEncryption;
 
 typedef ParamCheck<ParamName::ED_IV,
-                   RawBuffer,
-                   true,
-                   Type<size_t>::Equals<DEFAULT_AES_IV_LEN>,
-                   BufferSizeGetter> IvSizeCheck;
+        RawBuffer,
+        true,
+        Type<size_t>::Equals<DEFAULT_AES_IV_LEN>,
+        BufferSizeGetter> IvSizeCheck;
 
 typedef ParamCheck<ParamName::ED_CTR_LEN,
-                   int,
-                   false,
-                   Type<int>::Equals<128>> CtrLenCheck;
+        int,
+        false,
+        Type<int>::Equals<128>> CtrLenCheck;
 
 typedef ParamCheck<ParamName::ED_IV,
-                   RawBuffer,
-                   true,
-                   DefaultValidator<RawBuffer>> GcmIvCheck;
+        RawBuffer,
+        true,
+        DefaultValidator<RawBuffer>> GcmIvCheck;
 
 typedef ParamCheck<ParamName::ED_TAG_LEN,
-                   int,
-                   false,
-                   Type<int>::Equals<32, 64, 96, 104, 112, 120, 128>> GcmTagCheck;
+        int,
+        false,
+        Type<int>::Equals<32, 64, 96, 104, 112, 120, 128>> GcmTagCheck;
 
 typedef ParamCheck<ParamName::ED_LABEL,
-                   RawBuffer,
-                   false,
-                   Unsupported<RawBuffer>> RsaLabelCheck;
+        RawBuffer,
+        false,
+        Unsupported<RawBuffer>> RsaLabelCheck;
 
 // sign / verify
 typedef ParamCheck<ParamName::ALGO_TYPE,
-                   AlgoType,
-                   false,
-                   Type<AlgoType>::Equals<AlgoType::RSA_SV,
-                                          AlgoType::DSA_SV,
-                                          AlgoType::ECDSA_SV>> IsSignVerify;
+        AlgoType,
+        false,
+        Type<AlgoType>::Equals<AlgoType::RSA_SV,
+        AlgoType::DSA_SV,
+        AlgoType::ECDSA_SV>> IsSignVerify;
 
 typedef ParamCheck<ParamName::SV_HASH_ALGO,
-                   HashAlgorithm,
-                   false,
-                   Type<HashAlgorithm>::Equals<HashAlgorithm::NONE,
-                                               HashAlgorithm::SHA1,
-                                               HashAlgorithm::SHA256,
-                                               HashAlgorithm::SHA384,
-                                               HashAlgorithm::SHA512>> HashAlgoCheck;
+        HashAlgorithm,
+        false,
+        Type<HashAlgorithm>::Equals<HashAlgorithm::NONE,
+        HashAlgorithm::SHA1,
+        HashAlgorithm::SHA256,
+        HashAlgorithm::SHA384,
+        HashAlgorithm::SHA512>> HashAlgoCheck;
 
 typedef ParamCheck<ParamName::SV_RSA_PADDING,
-                   RSAPaddingAlgorithm,
-                   false,
-                   Type<RSAPaddingAlgorithm>::Equals<RSAPaddingAlgorithm::NONE,
-                                                     RSAPaddingAlgorithm::PKCS1,
-                                                     RSAPaddingAlgorithm::X931>> RsaPaddingCheck;
+        RSAPaddingAlgorithm,
+        false,
+        Type<RSAPaddingAlgorithm>::Equals<RSAPaddingAlgorithm::NONE,
+        RSAPaddingAlgorithm::PKCS1,
+        RSAPaddingAlgorithm::X931>> RsaPaddingCheck;
 
 // key generation
 typedef ParamCheck<ParamName::ALGO_TYPE,
-                   AlgoType,
-                   true,
-                   Type<AlgoType>::Equals<AlgoType::RSA_GEN,
-                                          AlgoType::DSA_GEN,
-                                          AlgoType::ECDSA_GEN>> IsAsymGeneration;
+        AlgoType,
+        true,
+        Type<AlgoType>::Equals<AlgoType::RSA_GEN,
+        AlgoType::DSA_GEN,
+        AlgoType::ECDSA_GEN>> IsAsymGeneration;
 
 typedef ParamCheck<ParamName::ALGO_TYPE,
-                   AlgoType,
-                   true,
-                   Type<AlgoType>::Equals<AlgoType::AES_GEN>> IsSymGeneration;
+        AlgoType,
+        true,
+        Type<AlgoType>::Equals<AlgoType::AES_GEN>> IsSymGeneration;
 
 typedef ParamCheck<ParamName::GEN_KEY_LEN,
-                   int,
-                   true,
-                   Type<int>::Equals<1024, 2048, 4096>> RsaKeyLenCheck;
+        int,
+        true,
+        Type<int>::Equals<1024, 2048, 4096>> RsaKeyLenCheck;
 
 typedef ParamCheck<ParamName::GEN_KEY_LEN,
-                   int,
-                   true,
-                   Type<int>::Equals<1024, 2048, 3072, 4096>> DsaKeyLenCheck;
+        int,
+        true,
+        Type<int>::Equals<1024, 2048, 3072, 4096>> DsaKeyLenCheck;
 
 typedef ParamCheck<ParamName::GEN_KEY_LEN,
-                   int,
-                   true,
-                   Type<int>::Equals<128, 192, 256>> AesKeyLenCheck;
+        int,
+        true,
+        Type<int>::Equals<128, 192, 256>> AesKeyLenCheck;
 
 typedef ParamCheck<ParamName::GEN_EC,
-                   ElipticCurve,
-                   true,
-                   Type<ElipticCurve>::Equals<ElipticCurve::prime192v1,
-                                              ElipticCurve::prime256v1,
-                                              ElipticCurve::secp384r1>> EcdsaEcCheck;
+        ElipticCurve,
+        true,
+        Type<ElipticCurve>::Equals<ElipticCurve::prime192v1,
+        ElipticCurve::prime256v1,
+        ElipticCurve::secp384r1>> EcdsaEcCheck;
 
 typedef std::map<AlgoType, ValidatorVector> ValidatorMap;
 ValidatorMap initValidators()
 {
     ValidatorMap validators;
-    validators.emplace(AlgoType::RSA_SV, VBuilder<HashAlgoCheck, RsaPaddingCheck>::Build());
-    validators.emplace(AlgoType::RSA_SV, VBuilder<HashAlgoCheck, RsaPaddingCheck>::Build());
+    validators.emplace(AlgoType::RSA_SV,
+                       VBuilder<HashAlgoCheck, RsaPaddingCheck>::Build());
+    validators.emplace(AlgoType::RSA_SV,
+                       VBuilder<HashAlgoCheck, RsaPaddingCheck>::Build());
     validators.emplace(AlgoType::DSA_SV, VBuilder<HashAlgoCheck>::Build());
     validators.emplace(AlgoType::ECDSA_SV, VBuilder<HashAlgoCheck>::Build());
     validators.emplace(AlgoType::RSA_GEN, VBuilder<RsaKeyLenCheck>::Build());
     validators.emplace(AlgoType::DSA_GEN, VBuilder<DsaKeyLenCheck>::Build());
     validators.emplace(AlgoType::ECDSA_GEN, VBuilder<EcdsaEcCheck>::Build());
     validators.emplace(AlgoType::AES_GEN, VBuilder<AesKeyLenCheck>::Build());
-    validators.emplace(AlgoType::AES_CTR, VBuilder<IvSizeCheck, CtrLenCheck>::Build());
+    validators.emplace(AlgoType::AES_CTR,
+                       VBuilder<IvSizeCheck, CtrLenCheck>::Build());
     validators.emplace(AlgoType::AES_CBC, VBuilder<IvSizeCheck>::Build());
     validators.emplace(AlgoType::AES_CFB, VBuilder<IvSizeCheck>::Build());
-    validators.emplace(AlgoType::AES_GCM, VBuilder<GcmIvCheck, GcmTagCheck>::Build());
+    validators.emplace(AlgoType::AES_GCM,
+                       VBuilder<GcmIvCheck, GcmTagCheck>::Build());
     validators.emplace(AlgoType::RSA_OAEP, VBuilder<RsaLabelCheck>::Build());
     return validators;
 };
@@ -208,30 +216,34 @@ ValidatorMap initValidators()
 ValidatorMap g_validators = initValidators();
 
 template <typename TypeCheck>
-void validateParams(const CryptoAlgorithm& ca)
+void validateParams(const CryptoAlgorithm &ca)
 {
     // check algorithm type (Encryption/Decryption, Sign/Verify, Key generation)
     TypeCheck tc;
     tc.Check(ca);
 
     AlgoType at = unpack<AlgoType>(ca, ParamName::ALGO_TYPE);
+
     try {
-        for (const auto& validator : g_validators.at(at))
+        for (const auto &validator : g_validators.at(at))
             validator->Check(ca);
-    } catch (const std::out_of_range&) {
-        ThrowErr(Exc::Crypto::InputParam, "Unsupported algorithm ", static_cast<int>(at));
+    } catch (const std::out_of_range &) {
+        ThrowErr(Exc::Crypto::InputParam, "Unsupported algorithm ",
+                 static_cast<int>(at));
     }
 }
 
 typedef std::unique_ptr<Cipher::EvpCipherWrapper<RawBuffer>> EvpCipherPtr;
 
-typedef std::function<void(EvpCipherPtr&, const RawBuffer& key, const RawBuffer& iv)> InitCipherFn;
+typedef std::function<void(EvpCipherPtr &, const RawBuffer &key, const RawBuffer &iv)>
+InitCipherFn;
 
 // aes mode, key length in bits, encryption
-typedef std::map<AlgoType, std::map<size_t, std::map<bool, InitCipherFn>>> CipherTree;
+typedef std::map<AlgoType, std::map<size_t, std::map<bool, InitCipherFn>>>
+CipherTree;
 
 template <typename T>
-void initCipher(EvpCipherPtr& ptr, const RawBuffer& key, const RawBuffer& iv)
+void initCipher(EvpCipherPtr &ptr, const RawBuffer &key, const RawBuffer &iv)
 {
     ptr.reset(new T(key, iv));
 }
@@ -277,11 +289,12 @@ CipherTree initializeCipherTree()
 CipherTree g_cipherTree = initializeCipherTree();
 
 // key length in bytes
-InitCipherFn selectCipher(AlgoType type, size_t key_len = 32, bool encryption = true)
+InitCipherFn selectCipher(AlgoType type, size_t key_len = 32,
+                          bool encryption = true)
 {
     try {
-        return g_cipherTree.at(type).at(key_len*8).at(encryption);
-    } catch (const std::out_of_range&) {
+        return g_cipherTree.at(type).at(key_len * 8).at(encryption);
+    } catch (const std::out_of_range &) {
         ThrowErr(Exc::Crypto::InternalError,
                  "Unsupported cipher: ",
                  static_cast<int>(type), ", ",
@@ -291,7 +304,8 @@ InitCipherFn selectCipher(AlgoType type, size_t key_len = 32, bool encryption = 
 }
 
 
-RawBuffer asymmetricHelper(int (*cryptoFn)(int, const unsigned char*, unsigned char*, RSA*, int),
+RawBuffer asymmetricHelper(int (*cryptoFn)(int, const unsigned char *,
+                           unsigned char *, RSA *, int),
                            const std::string &logPrefix,
                            const EvpShPtr &pkey,
                            const CryptoAlgorithm &alg,
@@ -299,7 +313,8 @@ RawBuffer asymmetricHelper(int (*cryptoFn)(int, const unsigned char*, unsigned c
 {
     validateParams<IsAsymEncryption>(alg);
 
-    RSA* rsa = EVP_PKEY_get1_RSA(pkey.get());
+    RSA *rsa = EVP_PKEY_get1_RSA(pkey.get());
+
     if (!rsa)
         ThrowErr(Exc::Crypto::InputParam, logPrefix, "invalid key");
 
@@ -311,11 +326,12 @@ RawBuffer asymmetricHelper(int (*cryptoFn)(int, const unsigned char*, unsigned c
     RawBuffer output;
     output.resize(RSA_size(rsa));
     int ret = cryptoFn(data.size(),
-                   data.data(),
-                   output.data(),
-                   rsa,
-                   RSA_PKCS1_OAEP_PADDING);
+                       data.data(),
+                       output.data(),
+                       rsa,
+                       RSA_PKCS1_OAEP_PADDING);
     RSA_free(rsa);
+
     if (ret < 0)
         ThrowErr(Exc::Crypto::InternalError, logPrefix, "failed");
 
@@ -328,44 +344,56 @@ RawBuffer asymmetricHelper(int (*cryptoFn)(int, const unsigned char*, unsigned c
 const EVP_MD *getMdAlgo(const HashAlgorithm hashAlgo)
 {
     const EVP_MD *md_algo = NULL;
+
     switch (hashAlgo) {
     case HashAlgorithm::NONE:
         md_algo = NULL;
         break;
+
     case HashAlgorithm::SHA1:
         md_algo = EVP_sha1();
-         break;
+        break;
+
     case HashAlgorithm::SHA256:
-         md_algo = EVP_sha256();
-         break;
+        md_algo = EVP_sha256();
+        break;
+
     case HashAlgorithm::SHA384:
-         md_algo = EVP_sha384();
-         break;
+        md_algo = EVP_sha384();
+        break;
+
     case HashAlgorithm::SHA512:
-         md_algo = EVP_sha512();
-         break;
+        md_algo = EVP_sha512();
+        break;
+
     default:
         ThrowErr(Exc::Crypto::InternalError, "Error in hashAlgorithm value");
     }
+
     return md_algo;
 }
 
 int getRsaPadding(const RSAPaddingAlgorithm padAlgo)
 {
     int rsa_padding = -1;
+
     switch (padAlgo) {
     case RSAPaddingAlgorithm::NONE:
         rsa_padding = RSA_NO_PADDING;
         break;
+
     case RSAPaddingAlgorithm::PKCS1:
         rsa_padding = RSA_PKCS1_PADDING;
         break;
+
     case RSAPaddingAlgorithm::X931:
         rsa_padding = RSA_X931_PADDING;
         break;
+
     default:
         ThrowErr(Exc::Crypto::InternalError, "Error in RSAPaddingAlgorithm value");
     }
+
     return rsa_padding;
 }
 
@@ -378,23 +406,29 @@ DataPair createKeyPairRSA(const int size)
         ThrowErr(Exc::Crypto::InputParam, "Error in RSA input size");
 
     EvpPkeyCtxUPtr ctx(EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL), EVP_PKEY_CTX_free);
+
     if (!ctx)
-        ThrowErr(Exc::Crypto::InternalError, "Error in EVP_PKEY_CTX_new_id function !!");
+        ThrowErr(Exc::Crypto::InternalError,
+                 "Error in EVP_PKEY_CTX_new_id function !!");
 
     if (EVP_PKEY_keygen_init(ctx.get()) <= 0)
-        ThrowErr(Exc::Crypto::InternalError, "Error in EVP_PKEY_keygen_init function !!");
+        ThrowErr(Exc::Crypto::InternalError,
+                 "Error in EVP_PKEY_keygen_init function !!");
 
     if (EVP_PKEY_CTX_set_rsa_keygen_bits(ctx.get(), size) <= 0)
-        ThrowErr(Exc::Crypto::InternalError, "Error in EVP_PKEY_CTX_set_rsa_keygen_bits function !!");
+        ThrowErr(Exc::Crypto::InternalError,
+                 "Error in EVP_PKEY_CTX_set_rsa_keygen_bits function !!");
 
     EVP_PKEY *pkeyTmp = NULL;
+
     if (!EVP_PKEY_keygen(ctx.get(), &pkeyTmp))
         ThrowErr(Exc::Crypto::InternalError, "Error in EVP_PKEY_keygen function !!");
+
     pkey = EvpPkeyUPtr(pkeyTmp, EVP_PKEY_free);
 
     return std::make_pair<Data, Data>(
-            {DataType(KeyType::KEY_RSA_PRIVATE), i2d(i2d_PrivateKey_bio, pkey.get())},
-            {DataType(KeyType::KEY_RSA_PUBLIC), i2d(i2d_PUBKEY_bio, pkey.get())});
+    {DataType(KeyType::KEY_RSA_PRIVATE), i2d(i2d_PrivateKey_bio, pkey.get())},
+    {DataType(KeyType::KEY_RSA_PUBLIC), i2d(i2d_PUBKEY_bio, pkey.get())});
 }
 
 
@@ -409,17 +443,21 @@ DataPair createKeyPairDSA(const int size)
 
     /* Create the context for generating the parameters */
     EvpPkeyCtxUPtr pctx(EVP_PKEY_CTX_new_id(EVP_PKEY_DSA, NULL), EVP_PKEY_CTX_free);
+
     if (!pctx)
         ThrowErr(Exc::Crypto::InternalError, "Error in EVP_PKEY_CTX_new_id function");
 
     if (EVP_SUCCESS != EVP_PKEY_paramgen_init(pctx.get()))
-        ThrowErr(Exc::Crypto::InternalError, "Error in EVP_PKEY_paramgen_init function");
+        ThrowErr(Exc::Crypto::InternalError,
+                 "Error in EVP_PKEY_paramgen_init function");
 
     if (EVP_SUCCESS != EVP_PKEY_CTX_set_dsa_paramgen_bits(pctx.get(), size))
-        ThrowErr(Exc::Crypto::InternalError, "Error in EVP_PKEY_CTX_set_dsa_paramgen_bits(", size, ") function");
+        ThrowErr(Exc::Crypto::InternalError,
+                 "Error in EVP_PKEY_CTX_set_dsa_paramgen_bits(", size, ") function");
 
     /* Generate parameters */
     EVP_PKEY *pparamTmp = NULL;
+
     if (EVP_SUCCESS != EVP_PKEY_paramgen(pctx.get(), &pparamTmp))
         ThrowErr(Exc::Crypto::InternalError, "Error in EVP_PKEY_paramgen function");
 
@@ -427,6 +465,7 @@ DataPair createKeyPairDSA(const int size)
 
     // Start to generate key
     EvpPkeyCtxUPtr kctx(EVP_PKEY_CTX_new(pparam.get(), NULL), EVP_PKEY_CTX_free);
+
     if (!kctx)
         ThrowErr(Exc::Crypto::InternalError, "Error in EVP_PKEY_CTX_new function");
 
@@ -435,14 +474,15 @@ DataPair createKeyPairDSA(const int size)
 
     /* Generate the key */
     EVP_PKEY *pkeyTmp = NULL;
+
     if (!EVP_PKEY_keygen(kctx.get(), &pkeyTmp))
         ThrowErr(Exc::Crypto::InternalError, "Error in EVP_PKEY_keygen function !!");
 
     pkey = EvpPkeyUPtr(pkeyTmp, EVP_PKEY_free);
 
     return std::make_pair<Data, Data>(
-            {DataType(KeyType::KEY_DSA_PRIVATE), i2d(i2d_PrivateKey_bio, pkey.get())},
-            {DataType(KeyType::KEY_DSA_PUBLIC), i2d(i2d_PUBKEY_bio, pkey.get())});
+    {DataType(KeyType::KEY_DSA_PRIVATE), i2d(i2d_PrivateKey_bio, pkey.get())},
+    {DataType(KeyType::KEY_DSA_PUBLIC), i2d(i2d_PUBKEY_bio, pkey.get())});
 }
 
 DataPair createKeyPairECDSA(ElipticCurve type)
@@ -455,29 +495,36 @@ DataPair createKeyPairECDSA(ElipticCurve type)
     case ElipticCurve::prime192v1:
         ecCurve = NID_X9_62_prime192v1;
         break;
+
     case ElipticCurve::prime256v1:
         ecCurve = NID_X9_62_prime256v1;
         break;
+
     case ElipticCurve::secp384r1:
         ecCurve = NID_secp384r1;
         break;
+
     default:
         ThrowErr(Exc::Crypto::InputParam, "Error in EC type");
     }
 
     /* Create the context for generating the parameters */
     EvpPkeyCtxUPtr pctx(EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL), EVP_PKEY_CTX_free);
+
     if (!pctx)
         ThrowErr(Exc::Crypto::InternalError, "Error in EVP_PKEY_CTX_new_id function");
 
     if (EVP_SUCCESS != EVP_PKEY_paramgen_init(pctx.get()))
-        ThrowErr(Exc::Crypto::InternalError, "Error in EVP_PKEY_paramgen_init function");
+        ThrowErr(Exc::Crypto::InternalError,
+                 "Error in EVP_PKEY_paramgen_init function");
 
     if (EVP_SUCCESS != EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx.get(), ecCurve))
-        ThrowErr(Exc::Crypto::InternalError, "Error in EVP_PKEY_CTX_set_ec_paramgen_curve_nid function");
+        ThrowErr(Exc::Crypto::InternalError,
+                 "Error in EVP_PKEY_CTX_set_ec_paramgen_curve_nid function");
 
     /* Generate parameters */
     EVP_PKEY *pparamTmp = NULL;
+
     if (EVP_SUCCESS != EVP_PKEY_paramgen(pctx.get(), &pparamTmp))
         ThrowErr(Exc::Crypto::InternalError, "Error in EVP_PKEY_paramgen function");
 
@@ -485,6 +532,7 @@ DataPair createKeyPairECDSA(ElipticCurve type)
 
     // Start to generate key
     EvpPkeyCtxUPtr kctx(EVP_PKEY_CTX_new(pparam.get(), NULL), EVP_PKEY_CTX_free);
+
     if (!kctx)
         ThrowErr(Exc::Crypto::InternalError, "Error in EVP_PKEY_CTX_new function");
 
@@ -493,14 +541,15 @@ DataPair createKeyPairECDSA(ElipticCurve type)
 
     /* Generate the key */
     EVP_PKEY *pkeyTmp = NULL;
+
     if (!EVP_PKEY_keygen(kctx.get(), &pkeyTmp))
         ThrowErr(Exc::Crypto::InternalError, "Error in EVP_PKEY_keygen function !!");
 
     pkey = EvpPkeyUPtr(pkeyTmp, EVP_PKEY_free);
 
     return std::make_pair<Data, Data>(
-            {DataType(KeyType::KEY_ECDSA_PRIVATE), i2d(i2d_PrivateKey_bio, pkey.get())},
-            {DataType(KeyType::KEY_ECDSA_PUBLIC), i2d(i2d_PUBKEY_bio, pkey.get())});
+    {DataType(KeyType::KEY_ECDSA_PRIVATE), i2d(i2d_PrivateKey_bio, pkey.get())},
+    {DataType(KeyType::KEY_ECDSA_PUBLIC), i2d(i2d_PUBKEY_bio, pkey.get())});
 }
 
 Data createKeyAES(const int sizeBits)
@@ -512,13 +561,14 @@ Data createKeyAES(const int sizeBits)
     }
 
     uint8_t key[32];
-    int sizeBytes = sizeBits/8;
+    int sizeBytes = sizeBits / 8;
+
     if (!RAND_bytes(key, sizeBytes)) {
         LogError("Error in AES key generation");
         ThrowMsg(Exc::Crypto::InternalError, "Error in AES key generation");
     }
 
-    return { DataType(KeyType::KEY_AES), CKM::RawBuffer(key, key+sizeBytes)};
+    return { DataType(KeyType::KEY_AES), CKM::RawBuffer(key, key + sizeBytes)};
 }
 
 DataPair generateAKey(const CryptoAlgorithm &algorithm)
@@ -526,8 +576,10 @@ DataPair generateAKey(const CryptoAlgorithm &algorithm)
     validateParams<IsAsymGeneration>(algorithm);
 
     AlgoType keyType = unpack<AlgoType>(algorithm, ParamName::ALGO_TYPE);
+
     if (keyType == AlgoType::RSA_GEN || keyType == AlgoType::DSA_GEN) {
         int keyLength = unpack<int>(algorithm, ParamName::GEN_KEY_LEN);
+
         if (keyType == AlgoType::RSA_GEN)
             return createKeyPairRSA(keyLength);
         else
@@ -577,8 +629,10 @@ std::pair<RawBuffer, RawBuffer> encryptDataAesGcm(
     RawBuffer result = enc->Append(data);
     RawBuffer tmp = enc->Finalize();
     std::copy(tmp.begin(), tmp.end(), std::back_inserter(result));
+
     if (0 == enc->Control(EVP_CTRL_GCM_GET_TAG, tagSize, tag.data()))
-        ThrowErr(Exc::Crypto::InternalError, "Error in AES control function. Get tag failed.");
+        ThrowErr(Exc::Crypto::InternalError,
+                 "Error in AES control function. Get tag failed.");
 
     return std::make_pair(result, tag);
 }
@@ -591,7 +645,8 @@ RawBuffer encryptDataAesGcmPacked(
     const RawBuffer &aad)
 {
     auto pair = encryptDataAesGcm(key, data, iv, tagSize, aad);
-    std::copy(pair.second.begin(), pair.second.end(), std::back_inserter(pair.first));
+    std::copy(pair.second.begin(), pair.second.end(),
+              std::back_inserter(pair.first));
     return pair.first;
 }
 
@@ -618,9 +673,11 @@ RawBuffer decryptDataAesGcm(
 {
     EvpCipherPtr dec;
     selectCipher(AlgoType::AES_GCM, key.size(), false)(dec, key, iv);
-    void *ptr = (void*)tag.data();
+    void *ptr = (void *)tag.data();
+
     if (0 == dec->Control(EVP_CTRL_GCM_SET_TAG, tag.size(), ptr))
-        ThrowErr(Exc::Crypto::InternalError, "Error in AES control function. Set tag failed.");
+        ThrowErr(Exc::Crypto::InternalError,
+                 "Error in AES control function. Set tag failed.");
 
     if (!aad.empty())
         dec->AppendAAD(aad);
@@ -643,11 +700,11 @@ RawBuffer decryptDataAesGcmPacked(
 
     auto tagPos = data.data() + data.size() - tagSize;
     return decryptDataAesGcm(
-        key,
-        RawBuffer(data.data(), tagPos),
-        iv,
-        RawBuffer(tagPos, data.data() + data.size()),
-        aad);
+               key,
+               RawBuffer(data.data(), tagPos),
+               iv,
+               RawBuffer(tagPos, data.data() + data.size()),
+               aad);
 }
 
 RawBuffer symmetricEncrypt(const RawBuffer &key,
@@ -661,9 +718,10 @@ RawBuffer symmetricEncrypt(const RawBuffer &key,
     case AlgoType::AES_CBC:
     case AlgoType::AES_CTR:
     case AlgoType::AES_CFB:
-        return encryptDataAes(keyType, key, data, unpack<RawBuffer>(alg, ParamName::ED_IV));
-    case AlgoType::AES_GCM:
-    {
+        return encryptDataAes(keyType, key, data, unpack<RawBuffer>(alg,
+                              ParamName::ED_IV));
+
+    case AlgoType::AES_GCM: {
         int tagLenBits = DEFAULT_AES_GCM_TAG_LEN;
         alg.getParam(ParamName::ED_TAG_LEN, tagLenBits);
         RawBuffer aad;
@@ -671,13 +729,16 @@ RawBuffer symmetricEncrypt(const RawBuffer &key,
         return encryptDataAesGcmPacked(key,
                                        data,
                                        unpack<RawBuffer>(alg, ParamName::ED_IV),
-                                       tagLenBits/8,
+                                       tagLenBits / 8,
                                        aad);
     }
+
     default:
         break;
     }
-    ThrowErr(Exc::Crypto::OperationNotSupported, "symmetric enc: algorithm not recognized");
+
+    ThrowErr(Exc::Crypto::OperationNotSupported,
+             "symmetric enc: algorithm not recognized");
 }
 
 RawBuffer symmetricDecrypt(const RawBuffer &key,
@@ -691,9 +752,10 @@ RawBuffer symmetricDecrypt(const RawBuffer &key,
     case AlgoType::AES_CBC:
     case AlgoType::AES_CTR:
     case AlgoType::AES_CFB:
-        return decryptDataAes(keyType, key, data, unpack<RawBuffer>(alg, ParamName::ED_IV));
-       case AlgoType::AES_GCM:
-    {
+        return decryptDataAes(keyType, key, data, unpack<RawBuffer>(alg,
+                              ParamName::ED_IV));
+
+    case AlgoType::AES_GCM: {
         int tagLenBits = DEFAULT_AES_GCM_TAG_LEN;
         alg.getParam(ParamName::ED_TAG_LEN, tagLenBits);
         RawBuffer aad;
@@ -701,12 +763,14 @@ RawBuffer symmetricDecrypt(const RawBuffer &key,
         return decryptDataAesGcmPacked(key,
                                        data,
                                        unpack<RawBuffer>(alg, ParamName::ED_IV),
-                                       tagLenBits/8,
+                                       tagLenBits / 8,
                                        aad);
     }
+
     default:
         break;
     }
+
     ThrowErr(Exc::Crypto::InputParam, "symmetric dec: algorithm not recognized");
 }
 
@@ -714,19 +778,21 @@ RawBuffer asymmetricEncrypt(const EvpShPtr &pkey,
                             const CryptoAlgorithm &alg,
                             const RawBuffer &data)
 {
-    return asymmetricHelper(RSA_public_encrypt, "Asymmetric encryption: ", pkey, alg, data);
+    return asymmetricHelper(RSA_public_encrypt, "Asymmetric encryption: ", pkey,
+                            alg, data);
 }
 
 RawBuffer asymmetricDecrypt(const EvpShPtr &pkey,
                             const CryptoAlgorithm &alg,
                             const RawBuffer &data)
 {
-    return asymmetricHelper(RSA_private_decrypt, "Asymmetric decryption: ", pkey, alg, data);
+    return asymmetricHelper(RSA_private_decrypt, "Asymmetric decryption: ", pkey,
+                            alg, data);
 }
 
 RawBuffer sign(EVP_PKEY *pkey,
-    const CryptoAlgorithm &alg,
-    const RawBuffer &message)
+               const CryptoAlgorithm &alg,
+               const RawBuffer &message)
 {
     validateParams<IsSignVerify>(alg);
 
@@ -738,18 +804,18 @@ RawBuffer sign(EVP_PKEY *pkey,
     alg.getParam(ParamName::SV_RSA_PADDING, rsaPad);
     int rsa_padding = getRsaPadding(rsaPad);
 
-//
-//    if ((privateKey.getType() != KeyType::KEY_RSA_PRIVATE) &&
-//       (privateKey.getType() != KeyType::KEY_DSA_PRIVATE) &&
-//       (privateKey.getType() != KeyType::KEY_ECDSA_PRIVATE))
-//    {
-//        LogError("Error in private key type");
-//        ThrowErr(CryptoService::Exception::Crypto_internal, "Error in private key type");
-//    }
-//
-//    if (privateKey.getType()==KeyType::KEY_RSA_PRIVATE) {
-//        rsa_padding = getRsaPadding(padAlgo);
-//    }
+    //
+    //    if ((privateKey.getType() != KeyType::KEY_RSA_PRIVATE) &&
+    //       (privateKey.getType() != KeyType::KEY_DSA_PRIVATE) &&
+    //       (privateKey.getType() != KeyType::KEY_ECDSA_PRIVATE))
+    //    {
+    //        LogError("Error in private key type");
+    //        ThrowErr(CryptoService::Exception::Crypto_internal, "Error in private key type");
+    //    }
+    //
+    //    if (privateKey.getType()==KeyType::KEY_RSA_PRIVATE) {
+    //        rsa_padding = getRsaPadding(padAlgo);
+    //    }
 
     if (NULL == pkey)
         ThrowErr(Exc::Crypto::InternalError, "Error in EVP_PKEY_keygen function");
@@ -761,8 +827,8 @@ RawBuffer sign(EVP_PKEY *pkey,
 }
 
 RawBuffer signMessage(EVP_PKEY *privKey,
-        const RawBuffer &message,
-        const int rsa_padding)
+                      const RawBuffer &message,
+                      const int rsa_padding)
 {
     EvpPkeyCtxUPtr pctx(EVP_PKEY_CTX_new(privKey, NULL), EVP_PKEY_CTX_free);
 
@@ -782,29 +848,32 @@ RawBuffer signMessage(EVP_PKEY *privKey,
     /* First call EVP_PKEY_sign with a NULL sig parameter to obtain the length of the
      * signature. Length is returned in slen */
     size_t slen;
-    if (EVP_SUCCESS != EVP_PKEY_sign(pctx.get(), NULL, &slen, message.data(), message.size()))
+
+    if (EVP_SUCCESS != EVP_PKEY_sign(pctx.get(), NULL, &slen, message.data(),
+                                     message.size()))
         ThrowErr(Exc::Crypto::InternalError, "Error in EVP_PKEY_sign function");
 
     /* Allocate memory for the signature based on size in slen */
     RawBuffer sig(slen);
 
     if (EVP_SUCCESS == EVP_PKEY_sign(pctx.get(),
-                                    sig.data(),
-                                    &slen,
-                                    message.data(),
-                                    message.size())) {
+                                     sig.data(),
+                                     &slen,
+                                     message.data(),
+                                     message.size())) {
         // Set value to return RawData
         sig.resize(slen);
         return sig;
     }
 
-    ThrowErr(Exc::Crypto::InputParam, "Error in EVP_PKEY_sign function. Input param error.");
+    ThrowErr(Exc::Crypto::InputParam,
+             "Error in EVP_PKEY_sign function. Input param error.");
 }
 
 RawBuffer digestSignMessage(EVP_PKEY *privKey,
-        const RawBuffer &message,
-        const EVP_MD *md_algo,
-        const int rsa_padding)
+                            const RawBuffer &message,
+                            const EVP_MD *md_algo,
+                            const int rsa_padding)
 {
     EvpMdCtxUPtr mdctx(EVP_MD_CTX_create(), EVP_MD_CTX_destroy);
 
@@ -814,22 +883,26 @@ RawBuffer digestSignMessage(EVP_PKEY *privKey,
     if (!mdctx.get())
         ThrowErr(Exc::Crypto::InternalError, "Error in EVP_MD_CTX_create function");
 
-    if (EVP_SUCCESS != EVP_DigestSignInit(mdctx.get(), &pctx, md_algo, NULL, privKey))
+    if (EVP_SUCCESS != EVP_DigestSignInit(mdctx.get(), &pctx, md_algo, NULL,
+                                          privKey))
         ThrowErr(Exc::Crypto::InternalError, "Error in EVP_DigestSignInit function");
 
     /* Set padding algorithm */
     if (EVP_PKEY_type(privKey->type) == EVP_PKEY_RSA)
         if (EVP_SUCCESS != EVP_PKEY_CTX_set_rsa_padding(pctx, rsa_padding))
-            ThrowErr(Exc::Crypto::InternalError, "Error in EVP_PKEY_CTX_set_rsa_padding function");
+            ThrowErr(Exc::Crypto::InternalError,
+                     "Error in EVP_PKEY_CTX_set_rsa_padding function");
 
     /* Call update with the message */
-    if (EVP_SUCCESS != EVP_DigestSignUpdate(mdctx.get(), message.data(), message.size()))
+    if (EVP_SUCCESS != EVP_DigestSignUpdate(mdctx.get(), message.data(),
+                                            message.size()))
         ThrowErr(Exc::Crypto::InternalError, "Error in EVP_DigestSignUpdate function");
 
     /* Finalize the DigestSign operation */
     /* First call EVP_DigestSignFinal with a NULL sig parameter to obtain the length of the
      * signature. Length is returned in slen */
     size_t slen;
+
     if (EVP_SUCCESS != EVP_DigestSignFinal(mdctx.get(), NULL, &slen))
         ThrowErr(Exc::Crypto::InternalError, "Error in EVP_DigestSignFinal function");
 
@@ -846,9 +919,9 @@ RawBuffer digestSignMessage(EVP_PKEY *privKey,
 }
 
 int verify(EVP_PKEY *pkey,
-    const CryptoAlgorithm &alg,
-    const RawBuffer &message,
-    const RawBuffer &signature)
+           const CryptoAlgorithm &alg,
+           const RawBuffer &message,
+           const RawBuffer &signature)
 {
     validateParams<IsSignVerify>(alg);
 
@@ -863,20 +936,20 @@ int verify(EVP_PKEY *pkey,
     alg.getParam(ParamName::SV_RSA_PADDING, rsaPad);
     rsa_padding = getRsaPadding(rsaPad);
 
-//
-//    if ((publicKey.getType() != KeyType::KEY_RSA_PUBLIC) &&
-//       (publicKey.getType() != KeyType::KEY_DSA_PUBLIC) &&
-//       (publicKey.getType() != KeyType::KEY_ECDSA_PUBLIC))
-//    {
-//        LogError("Error in private key type");
-//        ThrowErr(CryptoService::Exception::Crypto_internal, "Error in private key type");
-//    }
-//
-//    if (publicKey.getType()==KeyType::KEY_RSA_PUBLIC) {
-//        rsa_padding = getRsaPadding(padAlgo);
-//    }
+    //
+    //    if ((publicKey.getType() != KeyType::KEY_RSA_PUBLIC) &&
+    //       (publicKey.getType() != KeyType::KEY_DSA_PUBLIC) &&
+    //       (publicKey.getType() != KeyType::KEY_ECDSA_PUBLIC))
+    //    {
+    //        LogError("Error in private key type");
+    //        ThrowErr(CryptoService::Exception::Crypto_internal, "Error in private key type");
+    //    }
+    //
+    //    if (publicKey.getType()==KeyType::KEY_RSA_PUBLIC) {
+    //        rsa_padding = getRsaPadding(padAlgo);
+    //    }
 
-//    auto shrPKey = publicKey.getEvpShPtr();
+    //    auto shrPKey = publicKey.getEvpShPtr();
     if (NULL == pkey)
         ThrowErr(Exc::Crypto::InternalError, "Error in getEvpShPtr function");
 
@@ -887,9 +960,9 @@ int verify(EVP_PKEY *pkey,
 }
 
 int verifyMessage(EVP_PKEY *pubKey,
-        const RawBuffer &message,
-        const RawBuffer &signature,
-        const int rsa_padding)
+                  const RawBuffer &message,
+                  const RawBuffer &signature,
+                  const int rsa_padding)
 {
     EvpPkeyCtxUPtr pctx(EVP_PKEY_CTX_new(pubKey, NULL), EVP_PKEY_CTX_free);
 
@@ -902,9 +975,11 @@ int verifyMessage(EVP_PKEY *pubKey,
     /* Set padding algorithm  */
     if (EVP_PKEY_type(pubKey->type) == EVP_PKEY_RSA)
         if (EVP_SUCCESS != EVP_PKEY_CTX_set_rsa_padding(pctx.get(), rsa_padding))
-            ThrowErr(Exc::Crypto::InternalError, "Error in EVP_PKEY_CTX_set_rsa_padding function");
+            ThrowErr(Exc::Crypto::InternalError,
+                     "Error in EVP_PKEY_CTX_set_rsa_padding function");
 
-    if (EVP_SUCCESS == EVP_PKEY_verify(pctx.get(), signature.data(), signature.size(), message.data(), message.size()))
+    if (EVP_SUCCESS == EVP_PKEY_verify(pctx.get(), signature.data(),
+                                       signature.size(), message.data(), message.size()))
         return CKM_API_SUCCESS;
 
     LogError("EVP_PKEY_verify Failed");
@@ -912,10 +987,10 @@ int verifyMessage(EVP_PKEY *pubKey,
 }
 
 int digestVerifyMessage(EVP_PKEY *pubKey,
-        const RawBuffer &message,
-        const RawBuffer &signature,
-        const EVP_MD *md_algo,
-        const int rsa_padding)
+                        const RawBuffer &message,
+                        const RawBuffer &signature,
+                        const EVP_MD *md_algo,
+                        const int rsa_padding)
 {
     EvpMdCtxUPtr mdctx(EVP_MD_CTX_create(), EVP_MD_CTX_destroy);
     EVP_PKEY_CTX *pctx = NULL;
@@ -924,17 +999,22 @@ int digestVerifyMessage(EVP_PKEY *pubKey,
     if (!mdctx.get())
         ThrowErr(Exc::Crypto::InternalError, "Error in EVP_MD_CTX_create function");
 
-    if (EVP_SUCCESS != EVP_DigestVerifyInit(mdctx.get(), &pctx, md_algo, NULL, pubKey))
+    if (EVP_SUCCESS != EVP_DigestVerifyInit(mdctx.get(), &pctx, md_algo, NULL,
+                                            pubKey))
         ThrowErr(Exc::Crypto::InternalError, "Error in EVP_DigestVerifyInit function");
 
     if (EVP_PKEY_type(pubKey->type) == EVP_PKEY_RSA)
         if (EVP_SUCCESS != EVP_PKEY_CTX_set_rsa_padding(pctx, rsa_padding))
-            ThrowErr(Exc::Crypto::InternalError, "Error in EVP_PKEY_CTX_set_rsa_padding function");
+            ThrowErr(Exc::Crypto::InternalError,
+                     "Error in EVP_PKEY_CTX_set_rsa_padding function");
 
-    if (EVP_SUCCESS != EVP_DigestVerifyUpdate(mdctx.get(), message.data(), message.size()))
-        ThrowErr(Exc::Crypto::InternalError, "Error in EVP_DigestVerifyUpdate function");
+    if (EVP_SUCCESS != EVP_DigestVerifyUpdate(mdctx.get(), message.data(),
+            message.size()))
+        ThrowErr(Exc::Crypto::InternalError,
+                 "Error in EVP_DigestVerifyUpdate function");
 
-    if (EVP_SUCCESS == EVP_DigestVerifyFinal(mdctx.get(), const_cast<unsigned char*>(signature.data()), signature.size()))
+    if (EVP_SUCCESS == EVP_DigestVerifyFinal(mdctx.get(),
+            const_cast<unsigned char *>(signature.data()), signature.size()))
         return CKM_API_SUCCESS;
 
     LogError("EVP_PKEY_verify Failed");
@@ -950,6 +1030,7 @@ bool verifyBinaryData(DataType dataType, const RawBuffer &buffer)
         case 256:
             LogDebug("AES key verified.");
             return true;
+
         default:
             LogError("AES key have wrong size.");
             return false;
@@ -961,11 +1042,13 @@ bool verifyBinaryData(DataType dataType, const RawBuffer &buffer)
 
         BIO_write(bio.get(), buffer.data(), buffer.size());
         EVP_PKEY *pkey = d2i_PUBKEY_bio(bio.get(), NULL);
+
         if (pkey) {
             EVP_PKEY_free(pkey);
             LogDebug("Verified with d2i_PUBKEY_bio.");
             return true;
         }
+
         LogError("Key was not verified. Unsupported format.");
         return false;
     }
@@ -975,24 +1058,29 @@ bool verifyBinaryData(DataType dataType, const RawBuffer &buffer)
 
         BIO_write(bio.get(), buffer.data(), buffer.size());
         EVP_PKEY *pkey = d2i_PrivateKey_bio(bio.get(), NULL);
+
         if (pkey) {
             EVP_PKEY_free(pkey);
-            LogDebug("Key verified with d2i_PrivateKey_bio." << (void*)pkey);
+            LogDebug("Key verified with d2i_PrivateKey_bio." << (void *)pkey);
             return true;
         }
+
         LogError("Key was not verified. Unsupported format.");
         return false;
     }
 
     if (dataType.isCertificate() || dataType.isChainCert()) {
-        const unsigned char *ptr = reinterpret_cast<const unsigned char*>(buffer.data());
+        const unsigned char *ptr = reinterpret_cast<const unsigned char *>
+                                   (buffer.data());
         int size = static_cast<int>(buffer.size());
         X509 *x509 = d2i_X509(NULL, &ptr, size);
+
         if (x509) {
             LogDebug("Cerificate verified with d2i_X509");
             X509_free(x509);
             return true;
         }
+
         LogError("Certificate was not verified. Unsupported format.");
         return false;
     }

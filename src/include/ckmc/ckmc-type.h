@@ -58,7 +58,7 @@ extern "C" {
  * @see #ckmc_owner_id_separator
  * @see key-manager_doc.h
  */
-KEY_MANAGER_CAPI extern char const * const ckmc_label_name_separator;
+KEY_MANAGER_CAPI extern char const *const ckmc_label_name_separator;
 
 /**
  * @brief Separator between alias and owner id.
@@ -67,7 +67,7 @@ KEY_MANAGER_CAPI extern char const * const ckmc_label_name_separator;
  *          In this case, separator " " (space bar) is used to separate id and alias.
  * @see key-manager_doc.h
  */
-KEY_MANAGER_CAPI extern char const * const ckmc_owner_id_separator;
+KEY_MANAGER_CAPI extern char const *const ckmc_owner_id_separator;
 
 /**
  * @brief The owner of system database.
@@ -78,7 +78,7 @@ KEY_MANAGER_CAPI extern char const * const ckmc_owner_id_separator;
  *          and stored in system database.
  *          Note: Client must have permission to access proper row.
  */
-KEY_MANAGER_CAPI extern char const * const ckmc_owner_id_system;
+KEY_MANAGER_CAPI extern char const *const ckmc_owner_id_system;
 
 /**
  * @brief Enumeration for key types of key manager.
@@ -165,7 +165,7 @@ typedef enum __ckmc_permission {
  * @since_tizen 2.3
  */
 typedef struct __ckmc_raw_buff {
-    unsigned char* data; /**< Byte array containing binary data */
+    unsigned char *data; /**< Byte array containing binary data */
     size_t size;         /**< The size of the binary data */
 } ckmc_raw_buffer_s;
 
@@ -174,7 +174,7 @@ typedef struct __ckmc_raw_buff {
  * @since_tizen 2.3
  */
 typedef struct __ckmc_policy {
-    char* password;   /**< Byte array used to encrypt data inside CKM. If it is not null, the data
+    char *password;   /**< Byte array used to encrypt data inside CKM. If it is not null, the data
                            (or key, or certificate) is stored encrypted with this password inside
                            key manager */
     bool extractable; /**< If true key may be extracted from storage */
@@ -185,10 +185,11 @@ typedef struct __ckmc_policy {
  * @since_tizen 2.3
  */
 typedef struct __ckmc_key {
-    unsigned char* raw_key;   /**< Byte array of key. raw_key may be encrypted with password */
+    unsigned char
+    *raw_key;   /**< Byte array of key. raw_key may be encrypted with password */
     size_t key_size;          /**< The byte size of raw_key */
     ckmc_key_type_e key_type; /**< The raw_key's type */
-    char* password;           /**< Byte array used to decrypt data raw_key inside key manager. */
+    char *password;           /**< Byte array used to decrypt data raw_key inside key manager. */
 } ckmc_key_s;
 
 /**
@@ -196,7 +197,7 @@ typedef struct __ckmc_key {
  * @since_tizen 2.3
  */
 typedef struct __ckmc_cert {
-    unsigned char* raw_cert;  /**< Byte array of certificate */
+    unsigned char *raw_cert;  /**< Byte array of certificate */
     size_t cert_size;         /**< Byte size of raw_cert */
     ckmc_data_format_e data_format; /**< Raw_cert's encoding format */
 } ckmc_cert_s;
@@ -207,7 +208,8 @@ typedef struct __ckmc_cert {
  */
 typedef struct __ckmc_alias_list {
     char *alias;                    /**< The name of key, certificate or data stored in key manager */
-    struct __ckmc_alias_list *next; /**< The pointer pointing to the next ckmc_alias_list_s */
+    struct __ckmc_alias_list
+        *next; /**< The pointer pointing to the next ckmc_alias_list_s */
 } ckmc_alias_list_s;
 
 /**
@@ -216,7 +218,8 @@ typedef struct __ckmc_alias_list {
  */
 typedef struct __ckmc_cert_list {
     ckmc_cert_s *cert;             /**< The pointer of ckmc_cert_s */
-    struct __ckmc_cert_list *next; /**< The pointer pointing to the next ckmc_cert_list_s */
+    struct __ckmc_cert_list
+        *next; /**< The pointer pointing to the next ckmc_cert_list_s */
 } ckmc_cert_list_s;
 
 /**
@@ -383,7 +386,8 @@ void ckmc_key_free(ckmc_key_s *key);
  * @see ckmc_buffer_free()
  * @see #ckmc_raw_buffer_s
  */
-int ckmc_buffer_new(unsigned char *data, size_t size, ckmc_raw_buffer_s **ppbuffer);
+int ckmc_buffer_new(unsigned char *data, size_t size,
+                    ckmc_raw_buffer_s **ppbuffer);
 
 /**
  * @brief Destroys the @a ckmc_raw_buffer_s handle and releases all its resources.
@@ -710,7 +714,8 @@ int ckmc_cert_list_new(ckmc_cert_s *cert, ckmc_cert_list_s **ppalias_list);
  * @see ckmc_cert_list_all_free()
  * @see #ckmc_cert_list_s
  */
-int ckmc_cert_list_add(ckmc_cert_list_s *previous, ckmc_cert_s *cert, ckmc_cert_list_s **pplast);
+int ckmc_cert_list_add(ckmc_cert_list_s *previous, ckmc_cert_s *cert,
+                       ckmc_cert_list_s **pplast);
 
 /**
  * @brief Destroys the @a ckmc_cert_list_s handle and releases resources of @a ckmc_cert_list_s

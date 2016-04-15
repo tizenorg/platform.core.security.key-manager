@@ -28,7 +28,8 @@
 
 namespace CKM {
 
-StorageReceiver::StorageReceiver(MessageBuffer& buffer, AsyncRequest::Map& requests) :
+StorageReceiver::StorageReceiver(MessageBuffer &buffer,
+                                 AsyncRequest::Map &requests) :
     m_buffer(buffer),
     m_requests(requests),
     m_observer(NULL)
@@ -41,6 +42,7 @@ void StorageReceiver::processResponse()
     m_buffer.Deserialize(command, id);
 
     auto it = m_requests.find(id);
+
     if (it == m_requests.end()) {
         LogError("Request with id " << id << " not found!");
         ThrowMsg(BadResponse, "Request with id " << id << " not found!");
@@ -56,37 +58,48 @@ void StorageReceiver::processResponse()
     case LogicCommand::GET:
         parseGetCommand();
         break;
+
     case LogicCommand::GET_PKCS12:
         parseGetPKCS12Command();
         break;
+
     case LogicCommand::GET_LIST:
         parseGetListCommand();
         break;
+
     case LogicCommand::SAVE:
         parseSaveCommand();
         break;
+
     case LogicCommand::SAVE_PKCS12:
         parseSavePKCS12Command();
         break;
+
     case LogicCommand::REMOVE:
         parseRemoveCommand();
         break;
+
     case LogicCommand::CREATE_KEY_AES:
         parseRetCode(&ManagerAsync::Observer::ReceivedCreateKeyAES);
         break;
+
     case LogicCommand::CREATE_KEY_PAIR:
         parseRetCode(&ManagerAsync::Observer::ReceivedCreateKeyPair);
         break;
+
     case LogicCommand::GET_CHAIN_CERT:
     case LogicCommand::GET_CHAIN_ALIAS:
         parseGetChainCertCommand();
         break;
+
     case LogicCommand::CREATE_SIGNATURE:
         parseCreateSignatureCommand();
         break;
+
     case LogicCommand::VERIFY_SIGNATURE:
         parseRetCode(&ManagerAsync::Observer::ReceivedVerifySignature);
         break;
+
     case LogicCommand::SET_PERMISSION:
         parseRetCode(&ManagerAsync::Observer::ReceivedSetPermission);
         break;
@@ -106,11 +119,12 @@ void StorageReceiver::parseGetCommand()
 
     // check error code
     if (retCode != CKM_API_SUCCESS) {
-         m_observer->ReceivedError(retCode);
-         return;
+        m_observer->ReceivedError(retCode);
+        return;
     }
 
     DataType type(dataType);
+
     if (type.isKey())
         m_observer->ReceivedKey(KeyImpl(rawData));
     else if (type.isCertificate())
@@ -129,8 +143,8 @@ void StorageReceiver::parseGetPKCS12Command()
 
     // check error code
     if (retCode != CKM_API_SUCCESS) {
-         m_observer->ReceivedError(retCode);
-         return;
+        m_observer->ReceivedError(retCode);
+        return;
     }
 
     m_observer->ReceivedPKCS12(std::make_shared<PKCS12Impl>(std::move(gotPkcs)));
@@ -144,11 +158,12 @@ void StorageReceiver::parseGetListCommand()
 
     // check error code
     if (retCode != CKM_API_SUCCESS) {
-         m_observer->ReceivedError(retCode);
-         return;
+        m_observer->ReceivedError(retCode);
+        return;
     }
 
     AliasVector aliasVector;
+
     for (const auto &it : labelNameVector)
         aliasVector.push_back(AliasSupport::merge(it.first, it.second));
 
@@ -171,11 +186,12 @@ void StorageReceiver::parseSaveCommand()
 
     // check error code
     if (retCode != CKM_API_SUCCESS) {
-         m_observer->ReceivedError(retCode);
-         return;
+        m_observer->ReceivedError(retCode);
+        return;
     }
 
     DataType type(dataType);
+
     if (type.isKey())
         m_observer->ReceivedSaveKey();
     else if (type.isCertificate())
@@ -193,8 +209,8 @@ void StorageReceiver::parseSavePKCS12Command()
 
     // check error code
     if (retCode != CKM_API_SUCCESS) {
-         m_observer->ReceivedError(retCode);
-         return;
+        m_observer->ReceivedError(retCode);
+        return;
     }
 
     m_observer->ReceivedSavePKCS12();
@@ -207,8 +223,8 @@ void StorageReceiver::parseRemoveCommand()
 
     // check error code
     if (retCode != CKM_API_SUCCESS) {
-         m_observer->ReceivedError(retCode);
-         return;
+        m_observer->ReceivedError(retCode);
+        return;
     }
 
     m_observer->ReceivedRemovedAlias();
@@ -223,18 +239,21 @@ void StorageReceiver::parseGetChainCertCommand()
 
     // check error code
     if (retCode != CKM_API_SUCCESS) {
-         m_observer->ReceivedError(retCode);
-         return;
+        m_observer->ReceivedError(retCode);
+        return;
     }
 
-    for (auto &e: rawBufferVector) {
+    for (auto &e : rawBufferVector) {
         CertificateShPtr cert(new CertificateImpl(e, DataFormat::FORM_DER));
+
         if (cert->empty()) {
             m_observer->ReceivedError(CKM_API_ERROR_BAD_RESPONSE);
             return;
         }
+
         certificateChainVector.push_back(cert);
     }
+
     m_observer->ReceivedGetCertificateChain(std::move(certificateChainVector));
 }
 
@@ -246,8 +265,8 @@ void StorageReceiver::parseCreateSignatureCommand()
 
     // check error code
     if (retCode != CKM_API_SUCCESS) {
-         m_observer->ReceivedError(retCode);
-         return;
+        m_observer->ReceivedError(retCode);
+        return;
     }
 
     m_observer->ReceivedCreateSignature(std::move(signature));
@@ -260,8 +279,8 @@ void StorageReceiver::parseSetPermission()
 
     // check error code
     if (retCode != CKM_API_SUCCESS) {
-         m_observer->ReceivedError(retCode);
-         return;
+        m_observer->ReceivedError(retCode);
+        return;
     }
 
     m_observer->ReceivedSetPermission();
@@ -274,8 +293,8 @@ void StorageReceiver::parseRetCode(ObserverCb callback)
 
     // check error code
     if (retCode != CKM_API_SUCCESS) {
-         m_observer->ReceivedError(retCode);
-         return;
+        m_observer->ReceivedError(retCode);
+        return;
     }
 
     (m_observer.get()->*callback)();

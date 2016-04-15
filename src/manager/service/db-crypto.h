@@ -53,82 +53,82 @@ public:
     Crypto(const Crypto &other) = delete;
     Crypto(Crypto &&other);
 
-    Crypto& operator=(const Crypto& ) = delete;
-    Crypto& operator=(Crypto&& other);
+    Crypto &operator=(const Crypto &) = delete;
+    Crypto &operator=(Crypto &&other);
 
     virtual ~Crypto();
 
     void saveRow(
-            const Row &row);
+        const Row &row);
 
     void saveRows(
-            const Name &name,
-            const Label &owner,
-            const RowVector &rows);
+        const Name &name,
+        const Label &owner,
+        const RowVector &rows);
 
     void updateRow(
-            const Row &row);
+        const Row &row);
 
     bool isNameLabelPresent(
-            const Name &name,
-            const Label &owner) const;
+        const Name &name,
+        const Label &owner) const;
 
     RowOptional getRow(
-            const Name &name,
-            const Label &ownerLabel,
-            DataType type);
+        const Name &name,
+        const Label &ownerLabel,
+        DataType type);
 
     RowOptional getRow(
-            const Name &name,
-            const Label &ownerLabel,
-            DataType typeRangeStart,
-            DataType typeRangeStop);
+        const Name &name,
+        const Label &ownerLabel,
+        DataType typeRangeStart,
+        DataType typeRangeStop);
 
     void getRows(
-            const Name &name,
-            const Label &ownerLabel,
-            DataType type,
-            RowVector &output);
+        const Name &name,
+        const Label &ownerLabel,
+        DataType type,
+        RowVector &output);
 
     void getRows(
-            const Name &name,
-            const Label &ownerLabel,
-            DataType typeRangeStart,
-            DataType typeRangeStop,
-            RowVector &output);
+        const Name &name,
+        const Label &ownerLabel,
+        DataType typeRangeStart,
+        DataType typeRangeStop,
+        RowVector &output);
 
     void listNames(
-            const Label &smackLabel,
-            LabelNameVector& labelNameVector,
-            DataType type);
+        const Label &smackLabel,
+        LabelNameVector &labelNameVector,
+        DataType type);
 
     void listNames(
-            const Label &smackLabel,
-            LabelNameVector& labelNameVector,
-            DataType typeRangeStart,
-            DataType typeRangeStop);
+        const Label &smackLabel,
+        LabelNameVector &labelNameVector,
+        DataType typeRangeStart,
+        DataType typeRangeStop);
 
     bool deleteRow(
-            const Name &name,
-            const Label &ownerLabel);
+        const Name &name,
+        const Label &ownerLabel);
 
     // keys
-    void saveKey(const Label& label, const RawBuffer &key);
-    RawBufferOptional getKey(const Label& label);
-    void deleteKey(const Label& label);
+    void saveKey(const Label &label, const RawBuffer &key);
+    RawBufferOptional getKey(const Label &label);
+    void deleteKey(const Label &label);
 
 
     // permissions
     void setPermission(
-            const Name &name,
-            const Label &ownerLabel,
-            const Label &accessorLabel,
-            const PermissionMask permissionMask);
+        const Name &name,
+        const Label &ownerLabel,
+        const Label &accessorLabel,
+        const PermissionMask permissionMask);
 
     PermissionMaskOptional getPermissionRow(
-            const Name &name,
-            const Label &ownerLabel,
-            const Label &accessorLabel) const;
+        const Name &name,
+        const Label &ownerLabel,
+        const Label &accessorLabel) const;
 
 
     // transactions
@@ -149,7 +149,8 @@ public:
                     m_inTransaction = true;
                 } Catch(SqlConnection::Exception::InternalError) {
                     ThrowErr(Exc::TransactionFailed, "sqlite got into infinite busy state");
-                } Catch(SqlConnection::Exception::Base) {
+                }
+                Catch(SqlConnection::Exception::Base) {
                     ThrowErr(Exc::TransactionFailed, "Couldn't begin transaction");
                 }
             }
@@ -163,7 +164,8 @@ public:
                     m_inTransaction = false;
                 } Catch(SqlConnection::Exception::InternalError) {
                     ThrowErr(Exc::TransactionFailed, "sqlite got into infinite busy state");
-                } Catch(SqlConnection::Exception::Base) {
+                }
+                Catch(SqlConnection::Exception::Base) {
                     ThrowErr(Exc::TransactionFailed, "Couldn't commit transaction");
                 }
             }
@@ -177,7 +179,8 @@ public:
                     m_inTransaction = false;
                 } Catch(SqlConnection::Exception::InternalError) {
                     ThrowErr(Exc::TransactionFailed, "sqlite got into infinite busy state");
-                } Catch(SqlConnection::Exception::Base) {
+                }
+                Catch(SqlConnection::Exception::Base) {
                     ThrowErr(Exc::TransactionFailed, "Couldn't rollback transaction");
                 }
             }
@@ -185,13 +188,15 @@ public:
         ~Transaction()
         {
             Try {
-                if (m_inTransaction) {
+                if (m_inTransaction)
+                {
                     m_db->m_inUserTransaction = false;
                     m_db->m_connection->RollbackTransaction();
                 }
             } Catch(SqlConnection::Exception::InternalError) {
                 ThrowErr(Exc::TransactionFailed, "sqlite got into infinite busy state");
-            } Catch(SqlConnection::Exception::Base) {
+            }
+            Catch(SqlConnection::Exception::Base) {
                 LogError("Transaction rollback failed!");
             }
         }
@@ -202,7 +207,7 @@ public:
     };
 
 protected:
-    SqlConnection* m_connection;
+    SqlConnection *m_connection;
 
 private:
     bool m_inUserTransaction;
@@ -217,27 +222,27 @@ private:
      *
      * @return false on DB empty or corrupted, true if information read
      */
-    bool getDBVersion(int & schemaVersion);
+    bool getDBVersion(int &schemaVersion);
     typedef boost::optional<std::string> ScriptOptional;
     ScriptOptional getScript(const std::string &scriptName) const;
     ScriptOptional getMigrationScript(int db_version) const;
 
     Row getRow(
-            const SqlConnection::DataCommandUniquePtr &selectCommand) const;
+        const SqlConnection::DataCommandUniquePtr &selectCommand) const;
 
     void createTable(
-            const char *create_cmd,
-            const char *table_name);
+        const char *create_cmd,
+        const char *table_name);
 
     void createView(
-            const char* create_cmd);
+        const char *create_cmd);
 
     class SchemaInfo {
     public:
         explicit SchemaInfo(const Crypto *db) : m_db(db) {}
 
         void        setVersionInfo();
-        bool        getVersionInfo(int & version) const;
+        bool        getVersionInfo(int &version) const;
 
     private:
         const Crypto *m_db;
@@ -246,57 +251,58 @@ private:
 public:
     class NameTable {
     public:
-        explicit NameTable(SqlConnection* connection) : m_connection(connection) {}
+        explicit NameTable(SqlConnection *connection) : m_connection(connection) {}
 
         void addRow(
-                const Name &name,
-                const Label &ownerLabel);
+            const Name &name,
+            const Label &ownerLabel);
 
         void deleteRow(
-                const Name &name,
-                const Label &ownerLabel);
+            const Name &name,
+            const Label &ownerLabel);
 
         void deleteAllRows(
-                const Label &ownerLabel);
+            const Label &ownerLabel);
 
         bool isPresent(
-                const Name &name,
-                const Label &ownerLabel) const;
+            const Name &name,
+            const Label &ownerLabel) const;
 
     private:
-        SqlConnection* m_connection;
+        SqlConnection *m_connection;
     };
 
     class ObjectTable {
     public:
-        explicit ObjectTable(SqlConnection* connection) : m_connection(connection) {}
+        explicit ObjectTable(SqlConnection *connection) : m_connection(connection) {}
 
         void addRow(
-                const Row &row);
+            const Row &row);
         void updateRow(
-                const Row &row);
+            const Row &row);
 
     private:
-        SqlConnection* m_connection;
+        SqlConnection *m_connection;
     };
 
     class PermissionTable {
     public:
-        explicit PermissionTable(SqlConnection* connection) : m_connection(connection) {}
+        explicit PermissionTable(SqlConnection *connection) : m_connection(
+                connection) {}
 
         void setPermission(
-                const Name &name,
-                const Label &ownerLabel,
-                const Label &accessorLabel,
-                const PermissionMask permissionMask);
+            const Name &name,
+            const Label &ownerLabel,
+            const Label &accessorLabel,
+            const PermissionMask permissionMask);
 
         PermissionMaskOptional getPermissionRow(
-                const Name &name,
-                const Label &ownerLabel,
-                const Label &accessorLabel) const;
+            const Name &name,
+            const Label &ownerLabel,
+            const Label &accessorLabel) const;
 
     private:
-        SqlConnection* m_connection;
+        SqlConnection *m_connection;
     };
 };
 } // namespace DB

@@ -39,13 +39,13 @@
 namespace CKM {
 namespace {
 
-const char* DEV_HW_RANDOM_FILE = "/dev/hwrng";
-const char* DEV_URANDOM_FILE = "/dev/urandom";
+const char *DEV_HW_RANDOM_FILE = "/dev/hwrng";
+const char *DEV_URANDOM_FILE = "/dev/urandom";
 const size_t RANDOM_BUFFER_LEN = 32;
 
-std::mutex* g_mutexes = NULL;
+std::mutex *g_mutexes = NULL;
 
-void lockingCallback(int mode, int type, const char*, int)
+void lockingCallback(int mode, int type, const char *, int)
 {
     if (!g_mutexes) {
         LogError("Openssl mutexes do not exist");
@@ -116,6 +116,7 @@ void initOpenSsl()
     int ret = 0;
 
     std::ifstream ifile(DEV_HW_RANDOM_FILE);
+
     if (ifile.is_open())
         ret = RAND_load_file(DEV_HW_RANDOM_FILE, RANDOM_BUFFER_LEN);
 
@@ -162,6 +163,7 @@ void initOpenSslAndDetach()
 {
     // DCLP
     std::lock_guard<std::mutex> lock(cryptoInitMutex);
+
     /*
      * We don't care about memory ordering here. Current thread will order it correctly and for
      * other threads only store matters. Also only one thread can be here at once because of lock.

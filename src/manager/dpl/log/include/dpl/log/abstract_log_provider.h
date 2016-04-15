@@ -25,7 +25,7 @@
 namespace CKM {
 namespace Log {
 class AbstractLogProvider {
-  public:
+public:
     enum class LogLevel {
         None,
         Error,
@@ -45,7 +45,7 @@ class AbstractLogProvider {
                      int line,
                      const char *function) const = 0;
 
-  protected:
+protected:
     static const char *LocateSourceFileName(const char *filename);
 };
 }

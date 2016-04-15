@@ -38,7 +38,8 @@ public:
     int verify(const CertificateImplVector &certificateChain);
 
 private:
-    int ocsp_verify(X509 *cert, X509 *issuer, STACK_OF(X509) *trustedCerts, const std::string &url);
+    int ocsp_verify(X509 *cert, X509 *issuer, STACK_OF(X509) *trustedCerts,
+                    const std::string &url);
 };
 
 } // namespace CKM

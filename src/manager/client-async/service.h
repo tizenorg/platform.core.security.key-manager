@@ -32,12 +32,12 @@ namespace CKM {
 
 class Service {
 public:
-    Service(IDescriptorSet& descriptors, const std::string& interface);
+    Service(IDescriptorSet &descriptors, const std::string &interface);
 
-    Service(Service&&) = default;
-    Service& operator=(Service&&) = default;
+    Service(Service &&) = default;
+    Service &operator=(Service &&) = default;
 
-    void addRequest(AsyncRequest&& req);
+    void addRequest(AsyncRequest &&req);
 
     void serviceError(int error);
 
@@ -51,7 +51,7 @@ private:
 
     std::string m_interface;
     std::unique_ptr<SockRAII> m_socket;
-    IDescriptorSet& m_descriptors;
+    IDescriptorSet &m_descriptors;
     AsyncRequest::Queue m_sendQueue;
     AsyncRequest::Map m_responseMap;
     std::unique_ptr<MessageBuffer> m_responseBuffer;

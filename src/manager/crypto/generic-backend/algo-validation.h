@@ -38,6 +38,7 @@ T unpack(
     ParamName paramName)
 {
     T result;
+
     if (!alg.getParam(paramName, result))
         ThrowErr(Exc::Crypto::InputParam, "Wrong input param");
 
@@ -50,8 +51,14 @@ T unpack(
 // Always validates as true. Useful for checking parameter existence only
 template <typename T>
 struct DefaultValidator {
-    static bool Check(const T&) { return true; }
-    static void Why(std::ostringstream& os) { os << "is ok"; }
+    static bool Check(const T &)
+    {
+        return true;
+    }
+    static void Why(std::ostringstream &os)
+    {
+        os << "is ok";
+    }
 };
 
 // Validates as true if parameter value is equal to one of Args
@@ -63,12 +70,12 @@ struct Type {
     template <T First>
     struct Equals<First> {
     public:
-        static bool Check(const T& value)
+        static bool Check(const T &value)
         {
             return First == value;
         }
 
-        static void Why(std::ostringstream& os)
+        static void Why(std::ostringstream &os)
         {
             os << "doesn't match " << static_cast<int>(First);
         }
@@ -77,12 +84,12 @@ struct Type {
     template <T First, T ...Args>
     struct Equals<First, Args...> : public Equals<First>, public Equals<Args...> {
     public:
-        static bool Check(const T& value)
+        static bool Check(const T &value)
         {
             return Equals<First>::Check(value) || Equals<Args...>::Check(value);
         }
 
-        static void Why(std::ostringstream& os)
+        static void Why(std::ostringstream &os)
         {
             Equals<First>::Why(os);
             os << ", ";
@@ -93,8 +100,14 @@ struct Type {
 
 template <typename T>
 struct Unsupported {
-    static bool Check(const T&) { return false; }
-    static void Why(std::ostringstream& os) { os << "is not supported"; }
+    static bool Check(const T &)
+    {
+        return false;
+    }
+    static void Why(std::ostringstream &os)
+    {
+        os << "is not supported";
+    }
 };
 
 
@@ -103,21 +116,41 @@ struct Unsupported {
 // simply returns parameter value
 template <typename T>
 struct DefaultGetter {
-    static T Get(const T& value) { return value; }
-    static void What(std::ostringstream& os) { os << "value"; }
-    static void Print(std::ostringstream& os, const T& value) { os << static_cast<int>(value); }
+    static T Get(const T &value)
+    {
+        return value;
+    }
+    static void What(std::ostringstream &os)
+    {
+        os << "value";
+    }
+    static void Print(std::ostringstream &os, const T &value)
+    {
+        os << static_cast<int>(value);
+    }
 };
 
 template <>
-void DefaultGetter<RawBuffer>::Print(std::ostringstream& os, const RawBuffer& buffer) {
+void DefaultGetter<RawBuffer>::Print(std::ostringstream &os,
+                                     const RawBuffer &buffer)
+{
     os << "[" << buffer.size() << "B buffer]";
 }
 
 // returns buffer param size
 struct BufferSizeGetter {
-    static size_t Get(const RawBuffer& buffer) { return buffer.size(); }
-    static void What(std::ostringstream& os) { os << "buffer size"; }
-    static void Print(std::ostringstream& os, const RawBuffer& buffer) { os << buffer.size(); }
+    static size_t Get(const RawBuffer &buffer)
+    {
+        return buffer.size();
+    }
+    static void What(std::ostringstream &os)
+    {
+        os << "buffer size";
+    }
+    static void Print(std::ostringstream &os, const RawBuffer &buffer)
+    {
+        os << buffer.size();
+    }
 };
 
 
@@ -134,7 +167,7 @@ struct ThrowingHandler {
 // base class for parameter check
 struct ParamCheckBase {
     virtual ~ParamCheckBase() {}
-    virtual void Check(const CryptoAlgorithm& ca) const = 0;
+    virtual void Check(const CryptoAlgorithm &ca) const = 0;
 };
 
 typedef std::unique_ptr<const ParamCheckBase> ParamCheckBasePtr;
@@ -163,14 +196,15 @@ struct VBuilder<First> {
         return validators;
     }
 protected:
-    static void Add(ValidatorVector& validators)
+    static void Add(ValidatorVector &validators)
     {
         validators.emplace_back(new First);
     }
 };
 
 template <typename First, typename ...Args>
-struct VBuilder<First, Args...> : public VBuilder<First>, public VBuilder<Args...> {
+struct VBuilder<First, Args...> : public VBuilder<First>,
+    public VBuilder<Args...> {
     static ValidatorVector Build()
     {
         ValidatorVector validators;
@@ -179,7 +213,7 @@ struct VBuilder<First, Args...> : public VBuilder<First>, public VBuilder<Args..
     }
 
 protected:
-    static void Add(ValidatorVector& validators)
+    static void Add(ValidatorVector &validators)
     {
         VBuilder<First>::Add(validators);
         VBuilder<Args...>::Add(validators);
@@ -204,7 +238,7 @@ template <ParamName Name,
           typename Getter = DefaultGetter<Type>,
           typename ErrorHandler = ThrowingHandler>
 struct ParamCheck : public ParamCheckBase {
-    void Check(const CryptoAlgorithm& ca) const
+    void Check(const CryptoAlgorithm &ca) const
     {
         Type value;
         std::ostringstream os;
@@ -215,8 +249,10 @@ struct ParamCheck : public ParamCheckBase {
                 os << "Mandatory parameter " << static_cast<int>(Name) << " doesn't exist";
                 ErrorHandler::Handle(os.str());
             }
+
             return;
         }
+
         // validate
         if (!Validator::Check(Getter::Get(value))) {
             os << "The ";

@@ -42,17 +42,18 @@ public:
 
     Manager();
     Manager(const Manager &) = delete;
-    Manager& operator=(const Manager&) = delete;
+    Manager &operator=(const Manager &) = delete;
 
     virtual ~Manager();
 
     int saveKey(const Alias &alias, const KeyShPtr &key, const Policy &policy);
-    int saveCertificate(const Alias &alias, const CertificateShPtr &cert, const Policy &policy);
+    int saveCertificate(const Alias &alias, const CertificateShPtr &cert,
+                        const Policy &policy);
     int savePKCS12(
-            const Alias &alias,
-            const PKCS12ShPtr &pkcs,
-            const Policy &keyPolicy,
-            const Policy &certPolicy);
+        const Alias &alias,
+        const PKCS12ShPtr &pkcs,
+        const Policy &keyPolicy,
+        const Policy &certPolicy);
 
     /*
      * Data must be extractable. If you set extractable bit to false function will
@@ -139,21 +140,23 @@ public:
     // This function will check all certificates in chain except Root CA.
     // This function will delegate task to service. You may use this even
     // if application does not have permission to use network.
-    int ocspCheck(const CertificateShPtrVector &certificateChainVector, int &ocspStatus);
+    int ocspCheck(const CertificateShPtrVector &certificateChainVector,
+                  int &ocspStatus);
 
-    int setPermission(const Alias &alias, const Label &accessor, PermissionMask permissionMask);
+    int setPermission(const Alias &alias, const Label &accessor,
+                      PermissionMask permissionMask);
 
     int encrypt(const CryptoAlgorithm &algo,
-                        const Alias &keyAlias,
-                        const Password &password,
-                        const RawBuffer& plain,
-                        RawBuffer& encrypted);
+                const Alias &keyAlias,
+                const Password &password,
+                const RawBuffer &plain,
+                RawBuffer &encrypted);
 
     int decrypt(const CryptoAlgorithm &algo,
-                        const Alias &keyAlias,
-                        const Password &password,
-                        const RawBuffer& encrypted,
-                        RawBuffer& decrypted);
+                const Alias &keyAlias,
+                const Password &password,
+                const RawBuffer &encrypted,
+                RawBuffer &decrypted);
 
     static ManagerShPtr create();
 

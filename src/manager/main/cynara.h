@@ -54,7 +54,8 @@ public:
 
 protected:
     void ChangeStatus(int oldFd, int newFd, cynara_async_status status);
-    void ProcessResponse(cynara_check_id checkId, cynara_async_call_cause cause, int response);
+    void ProcessResponse(cynara_check_id checkId, cynara_async_call_cause cause,
+                         int response);
     void SendRequest(
         const std::string &user,
         const std::string &client,

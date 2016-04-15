@@ -43,8 +43,14 @@ public:
     EnvFileParser();
     virtual ~EnvFileParser() {}
 
-    std::string getProvider() const { return m_provider; }
-    std::string getLevel() const { return m_level; }
+    std::string getProvider() const
+    {
+        return m_provider;
+    }
+    std::string getLevel() const
+    {
+        return m_level;
+    }
 
 private:
     std::string m_provider;
@@ -70,6 +76,7 @@ EnvFileParser::EnvFileParser()
             LogDebug("Log level: " << m_level);
         }
     }
+
 #else
     LogWarning("Log configuration file is undefined");
 #endif
@@ -92,16 +99,19 @@ void SetupClientLogSystem()
 
     CKM::EnvFileParser parser;
     const std::string provider = parser.getProvider();
+
     if (!provider.empty()) {
         try {
             CKM::Singleton<CKM::Log::LogSystem>::Instance().SelectProvider(provider);
             // reset tag after changing log provider
             CKM::Singleton<CKM::Log::LogSystem>::Instance().SetTag("CKM_CLIENT");
-        } catch(const std::out_of_range&) {
+        } catch (const std::out_of_range &) {
             LogError("Unsupported log provider: " << provider);
         }
     }
+
     const std::string level = parser.getLevel();
+
     if (!level.empty())
         CKM::Singleton<CKM::Log::LogSystem>::Instance().SetLogLevel(level.c_str());
 

@@ -47,8 +47,8 @@ public:
     {
     }
 
-    MessageBuffer(MessageBuffer&&) = default;
-    MessageBuffer& operator=(MessageBuffer&&) = default;
+    MessageBuffer(MessageBuffer &&) = default;
+    MessageBuffer &operator=(MessageBuffer &&) = default;
 
     void Push(const RawBuffer &data);
 
@@ -62,7 +62,7 @@ public:
 
     // generic serialization
     template <typename... Args>
-    static MessageBuffer Serialize(const Args&... args)
+    static MessageBuffer Serialize(const Args &... args)
     {
         MessageBuffer buffer;
         Serializer<Args...>::Serialize(buffer, args...);
@@ -71,7 +71,7 @@ public:
 
     // generic deserialization
     template <typename... Args>
-    void Deserialize(Args&... args)
+    void Deserialize(Args &... args)
     {
         Deserializer<Args...>::Deserialize(*this, args...);
     }
