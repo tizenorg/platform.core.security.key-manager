@@ -141,7 +141,7 @@ typedef enum __ckmc_rsa_padding_algo {
 } ckmc_rsa_padding_algo_e;
 
 /**
- * @deprecated Deprecated since 2.4. [Use ckmc_permission_e() instead]
+ * @deprecated Deprecated since @if MOBILE 2.4. @elseif WEARABLE 3.0. @endif [Use ckmc_permission_e() instead]
  * @brief Enumeration for database access rights.
  * @since_tizen 2.3
  */
@@ -502,7 +502,7 @@ int ckmc_pkcs12_new(ckmc_key_s *private_key,
 					ckmc_pkcs12_s **pkcs12_bundle);
 
 /**
- * @deprecated Deprecated since 2.4. [Use ckmc_pkcs12_load() instead]
+ * @deprecated Deprecated since @if MOBILE 2.4. @elseif WEARABLE 3.0. @endif [Use ckmc_pkcs12_load() instead]
  * @brief Creates a new @a ckmc_key_s(private key), @a ckmc_cert_s(certificate), and
  *        @a ckmc_cert_list_s(CA certificates) handle from a given PKCS#12 file and returns them.
  *
