@@ -85,7 +85,7 @@ int ckmc_save_key(const char *alias, const ckmc_key_s key,
 				  const ckmc_policy_s policy);
 
 /**
- * @deprecated Deprecated since 2.4. [Use ckmc_remove_alias() instead]
+ * @deprecated Deprecated since @if MOBILE 2.4. @elseif WEARABLE 3.0. @endif [Use ckmc_remove_alias() instead]
  * @brief Removes a key from key manager.
  *
  * @since_tizen 2.3
@@ -228,7 +228,7 @@ int ckmc_save_cert(const char *alias, const ckmc_cert_s cert,
 				   const ckmc_policy_s policy);
 
 /**
- * @deprecated Deprecated since 2.4. [Use ckmc_remove_alias() instead]
+ * @deprecated Deprecated @if MOBILE 2.4. @elseif WEARABLE 3.0. @endif [Use ckmc_remove_alias() instead]
  * @brief Removes a certificate from key manager.
  *
  * @since_tizen 2.3
@@ -446,7 +446,7 @@ int ckmc_save_data(const char *alias, ckmc_raw_buffer_s data,
 				   const ckmc_policy_s policy);
 
 /**
- * @deprecated Deprecated since 2.4. [Use ckmc_remove_alias() instead]
+ * @deprecated Deprecated since @if MOBILE 2.4. @elseif WEARABLE 3.0. @endif [Use ckmc_remove_alias() instead]
  * @brief Removes a data from key manager.
  *
  * @since_tizen 2.3
@@ -852,7 +852,7 @@ int ckmc_get_cert_chain(const ckmc_cert_s *cert,
 						ckmc_cert_list_s **ppcert_chain_list);
 
 /**
- * @deprecated Deprecated since 2.4. [Use ckmc_get_cert_chain() instead]
+ * @deprecated Deprecated since @if MOBILE 2.4. @elseif WEARABLE 3.0. @endif [Use ckmc_get_cert_chain() instead]
  * @brief Verifies a certificate chain using an alias list of untrusted certificates and return that
  *        chain.
  *
@@ -974,7 +974,7 @@ int ckmc_ocsp_check(const ckmc_cert_list_s *pcert_chain_list,
 					ckmc_ocsp_status_e *ocsp_status);
 
 /**
- * @deprecated Deprecated since 2.4. [Use ckmc_set_permission() instead]
+ * @deprecated Deprecated since @if MOBILE 2.4. @elseif WEARABLE 3.0. @endif [Use ckmc_set_permission() instead]
  * @brief Allows another application to access client's application data.
  *
  * @since_tizen 2.3
@@ -1035,7 +1035,7 @@ int ckmc_set_permission(const char *alias, const char *accessor,
 						int permissions);
 
 /**
- * @deprecated Deprecated since 2.4. [Use ckmc_set_permission() instead]
+ * @deprecated Deprecated since @if MOBILE 2.4. @elseif WEARABLE 3.0. @endif [Use ckmc_set_permission() instead]
  * @brief Revokes another application's access to client's application data.
  *
  * @since_tizen 2.3
