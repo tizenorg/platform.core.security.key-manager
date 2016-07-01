@@ -445,7 +445,7 @@ int ckmc_get_pkcs12(const char *alias, const char *key_password,
 	if (ret != CKMC_ERROR_NONE) {
 		ckmc_key_free(private_key);
 		ckmc_cert_free(cert);
-		ckmc_cert_list_free(ca_cert_list);
+		ckmc_cert_list_all_free(ca_cert_list);
 	}
 
 	return ret;

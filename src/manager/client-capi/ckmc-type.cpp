@@ -230,8 +230,7 @@ int ckmc_load_cert_from_file(const char *file_path, ckmc_cert_s **cert)
 
 	int ret = _ckmc_load_cert_from_x509(pcert, cert);
 
-	if (ret != CKMC_ERROR_NONE)
-		X509_free(pcert);
+	X509_free(pcert);
 
 	return ret;
 }
@@ -417,8 +416,9 @@ int ckmc_load_from_pkcs12_file(const char *file_path, const char *passphrase,
 			ckmc_cert_list_s *tmpCertList = NULL;
 
 			while ((popedCert = sk_X509_pop(ca)) != NULL) {
-				if ((tmpRet = _ckmc_load_cert_from_x509(popedCert,
-														&popedCkmCert)) != CKMC_ERROR_NONE)
+				tmpRet = _ckmc_load_cert_from_x509(popedCert, &popedCkmCert);
+				X509_free(popedCert);
+				if (tmpRet != CKMC_ERROR_NONE)
 					return CKMC_ERROR_OUT_OF_MEMORY;
 
 				if (tmpCertList == NULL) { // first
@@ -502,7 +502,7 @@ void ckmc_pkcs12_free(ckmc_pkcs12_s *pkcs12)
 
 	ckmc_key_free(pkcs12->priv_key);
 	ckmc_cert_free(pkcs12->cert);
-	ckmc_cert_list_free(pkcs12->ca_chain);
+	ckmc_cert_list_all_free(pkcs12->ca_chain);
 	free(pkcs12);
 }
 
