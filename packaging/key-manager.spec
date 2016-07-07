@@ -25,6 +25,7 @@ BuildRequires: pkgconfig(cynara-creds-socket)
 BuildRequires: pkgconfig(libtzplatform-config)
 BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: pkgconfig(pkgmgr)
+BuildRequires: pkgconfig(sqlcipher)
 BuildRequires: boost-devel
 BuildRequires: ca-certificates-devel
 #Requires(pre): tizen-platform-config-tools

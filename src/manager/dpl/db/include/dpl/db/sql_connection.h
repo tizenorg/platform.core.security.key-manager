@@ -27,7 +27,7 @@
 #include <memory>
 #include <boost/optional.hpp>
 #include <dpl/log/log.h>
-#include <sqlcipher.h>
+#include <sqlcipher/sqlite3.h>
 #include <dpl/assert.h>
 #include <stdint.h>
 #include <dpl/raw-buffer.h>
@@ -86,7 +86,7 @@ public:
 	class DataCommand {
 	private:
 		SqlConnection *m_masterConnection;
-		sqlcipher3_stmt *m_stmt;
+		sqlite3_stmt *m_stmt;
 
 		void CheckBindResult(int result);
 		void CheckColumnIndex(SqlConnection::ColumnIndex column);
@@ -398,14 +398,14 @@ public:
 	class Flag {
 	public:
 		enum Option {
-			RO = SQLCIPHER_OPEN_NOMUTEX | SQLCIPHER_OPEN_READONLY,
-			RW = SQLCIPHER_OPEN_NOMUTEX | SQLCIPHER_OPEN_READWRITE,
-			CRW = RW | SQLCIPHER_OPEN_CREATE
+			RO = SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_READONLY,
+			RW = SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_READWRITE,
+			CRW = RW | SQLITE_OPEN_CREATE
 		};
 	};
 
 	// RowID
-	typedef sqlcipher3_int64 RowID;
+	typedef sqlite3_int64 RowID;
 
 	/**
 	 * Synchronization object used to synchronize SQL connection
@@ -427,7 +427,7 @@ public:
 	};
 
 protected:
-	sqlcipher3 *m_connection;
+	sqlite3 *m_connection;
 
 	// Options
 

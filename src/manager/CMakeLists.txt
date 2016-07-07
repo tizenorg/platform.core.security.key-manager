@@ -47,8 +47,6 @@ INCLUDE_DIRECTORIES(
     ${COMMON_PATH}/common
     ${COMMON_PATH}/dpl/core/include
     ${COMMON_PATH}/dpl/log/include
-    ${COMMON_PATH}/dpl/db/include
-    ${COMMON_PATH}/sqlcipher
     ${COMMON_PATH}/service
     )
 

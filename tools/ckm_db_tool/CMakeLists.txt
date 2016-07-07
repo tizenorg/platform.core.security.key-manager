@@ -11,6 +11,7 @@ PKG_CHECK_MODULES(CKM_DB_TOOL_DEP
     libxml-2.0
     cynara-client-async
     cynara-creds-socket
+    sqlcipher
     )
 
 FIND_PACKAGE(Threads REQUIRED)
@@ -22,7 +23,6 @@ INCLUDE_DIRECTORIES(
     ${KEY_MANAGER_PATH}/common
     ${KEY_MANAGER_PATH}/service
     ${KEY_MANAGER_PATH}/initial-values
-    ${KEY_MANAGER_PATH}/sqlcipher
     ${KEY_MANAGER_PATH}/dpl/core/include
     ${KEY_MANAGER_PATH}/dpl/log/include
     ${KEY_MANAGER_PATH}/dpl/db/include
@@ -69,7 +69,6 @@ SET(CKM_DB_TOOL_SOURCES
     ${KEY_MANAGER_PATH}/service/file-system.cpp
     ${KEY_MANAGER_PATH}/service/for-each-file.cpp
     ${KEY_MANAGER_PATH}/service/key-provider.cpp
-    ${KEY_MANAGER_PATH}/sqlcipher/sqlcipher.c
     )
 
 ADD_EXECUTABLE( ${CKM_DB_TOOL} ${CKM_DB_TOOL_SOURCES} )

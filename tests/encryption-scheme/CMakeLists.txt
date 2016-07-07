@@ -24,7 +24,9 @@ PKG_CHECK_MODULES(ENCRYPTION_SCHEME_DEP
     REQUIRED
     openssl
     libcrypto
-    libsmack)
+    libsmack
+    sqlcipher
+)
 
 FIND_PACKAGE(Threads REQUIRED)
 
@@ -40,7 +42,6 @@ SET(ENCRYPTION_SCHEME_SOURCES
     ${KEY_MANAGER_PATH}/service/file-system.cpp
     ${KEY_MANAGER_PATH}/service/for-each-file.cpp
     ${KEY_MANAGER_PATH}/service/key-provider.cpp
-    ${KEY_MANAGER_PATH}/sqlcipher/sqlcipher.c
 )
 
 INCLUDE_DIRECTORIES(SYSTEM ${ENCRYPTION_SCHEME_DEP_INCLUDE_DIRS})
@@ -51,7 +52,6 @@ INCLUDE_DIRECTORIES(
     ${KEY_MANAGER_PATH}/dpl/core/include
     ${KEY_MANAGER_PATH}/dpl/log/include
     ${KEY_MANAGER_PATH}/dpl/db/include
-    ${KEY_MANAGER_PATH}/sqlcipher
     ${KEY_MANAGER_PATH}/service
     ${KEY_MANAGER_PATH}/crypto
 )

@@ -28,7 +28,6 @@
 #include <string>
 #include <sstream>
 #include <assert.h>
-#include <sqlcipher.h>
 #include <ckm/ckm-type.h>
 #include <errno.h>
 

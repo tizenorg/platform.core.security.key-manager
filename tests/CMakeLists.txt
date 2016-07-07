@@ -1,6 +1,7 @@
 PKG_CHECK_MODULES(KEY_MANAGER_TEST_DEP
     REQUIRED
     libxml-2.0
+    sqlcipher
     )
 
 FIND_PACKAGE(Threads REQUIRED)
@@ -22,7 +23,6 @@ INCLUDE_DIRECTORIES(
     ${KEY_MANAGER_PATH}/dpl/db/include
     ${KEY_MANAGER_PATH}/dpl/core/include
     ${KEY_MANAGER_PATH}/dpl/log/include
-    ${KEY_MANAGER_PATH}/sqlcipher
     ${KEY_MANAGER_PATH}/service
     ${KEY_MANAGER_PATH}/initial-values
     ${KEY_MANAGER_PATH}/main
@@ -63,7 +63,6 @@ SET(TEST_MERGED_SOURCES
     ${KEY_MANAGER_PATH}/service/db-crypto.cpp
     ${KEY_MANAGER_PATH}/service/for-each-file.cpp
     ${KEY_MANAGER_PATH}/service/key-provider.cpp
-    ${KEY_MANAGER_PATH}/sqlcipher/sqlcipher.c
     )
 
 ADD_EXECUTABLE(${TARGET_TEST_MERGED} ${TEST_MERGED_SOURCES})
