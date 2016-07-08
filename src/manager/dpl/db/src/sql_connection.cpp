@@ -147,6 +147,7 @@ void SqlConnection::DataCommand::CheckBindResult(int result)
 	}
 }
 
+//LCOV_EXCL_START
 void SqlConnection::DataCommand::BindNull(
 	SqlConnection::ArgumentIndex position)
 {
@@ -154,6 +155,7 @@ void SqlConnection::DataCommand::BindNull(
 	LogPedantic("SQL data command bind null: ["
 				<< position << "]");
 }
+//LCOV_EXCL_STOP
 
 void SqlConnection::DataCommand::BindInteger(
 	SqlConnection::ArgumentIndex position,
@@ -164,6 +166,7 @@ void SqlConnection::DataCommand::BindInteger(
 				<< position << "] -> " << value);
 }
 
+//LCOV_EXCL_START
 void SqlConnection::DataCommand::BindInt8(
 	SqlConnection::ArgumentIndex position,
 	int8_t value)
@@ -222,6 +225,7 @@ void SqlConnection::DataCommand::BindDouble(
 	LogPedantic("SQL data command bind double: ["
 				<< position << "] -> " << value);
 }
+//LCOV_EXCL_STOP
 
 void SqlConnection::DataCommand::BindString(
 	SqlConnection::ArgumentIndex position,
@@ -258,6 +262,7 @@ void SqlConnection::DataCommand::BindBlob(
 				<< position << "] -> " << raw.size());
 }
 
+//LCOV_EXCL_START
 void SqlConnection::DataCommand::BindInteger(
 	SqlConnection::ArgumentIndex position,
 	const boost::optional<int> &value)
@@ -337,6 +342,7 @@ void SqlConnection::DataCommand::BindBlob(
 	else
 		BindNull(position);
 }
+//LCOV_EXCL_STOP
 
 bool SqlConnection::DataCommand::Step()
 {
@@ -404,6 +410,7 @@ void SqlConnection::DataCommand::CheckColumnIndex(
 		ThrowMsg(Exception::InvalidColumn, "Column index is out of bounds");
 }
 
+//LCOV_EXCL_START
 bool SqlConnection::DataCommand::IsColumnNull(
 	SqlConnection::ColumnIndex column)
 {
@@ -411,6 +418,7 @@ bool SqlConnection::DataCommand::IsColumnNull(
 	CheckColumnIndex(column);
 	return sqlcipher3_column_type(m_stmt, column) == SQLCIPHER_NULL;
 }
+//LCOV_EXCL_STOP
 
 int SqlConnection::DataCommand::GetColumnInteger(
 	SqlConnection::ColumnIndex column)
@@ -422,6 +430,7 @@ int SqlConnection::DataCommand::GetColumnInteger(
 	return value;
 }
 
+//LCOV_EXCL_START
 int8_t SqlConnection::DataCommand::GetColumnInt8(
 	SqlConnection::ColumnIndex column)
 {
@@ -481,6 +490,7 @@ double SqlConnection::DataCommand::GetColumnDouble(
 	LogPedantic("    Value: " << value);
 	return value;
 }
+//LCOV_EXCL_STOP
 
 std::string SqlConnection::DataCommand::GetColumnString(
 	SqlConnection::ColumnIndex column)
@@ -517,6 +527,7 @@ RawBuffer SqlConnection::DataCommand::GetColumnBlob(
 	return RawBuffer(value, value + length);
 }
 
+//LCOV_EXCL_START
 boost::optional<int> SqlConnection::DataCommand::GetColumnOptionalInteger(
 	SqlConnection::ColumnIndex column)
 {
@@ -640,6 +651,7 @@ boost::optional<RawBuffer> SqlConnection::DataCommand::GetColumnOptionalBlob(
 	RawBuffer temp(value, value + length);
 	return boost::optional<RawBuffer>(temp);
 }
+//LCOV_EXCL_STOP
 
 void SqlConnection::Connect(const std::string &address,
 							Flag::Option flag)
@@ -733,6 +745,7 @@ void SqlConnection::SetKey(const RawBuffer &rawPass)
 	m_isKeySet = true;
 };
 
+//LCOV_EXCL_START
 void SqlConnection::ResetKey(const RawBuffer &rawPassOld,
 							 const RawBuffer &rawPassNew)
 {
@@ -761,6 +774,7 @@ void SqlConnection::ResetKey(const RawBuffer &rawPassOld,
 		ThrowMsg(Exception::InvalidArguments, result);
 	}
 }
+//LCOV_EXCL_STOP
 
 void SqlConnection::Disconnect()
 {
@@ -841,6 +855,7 @@ SqlConnection::~SqlConnection()
 	}
 }
 
+//LCOV_EXCL_START
 int SqlConnection::Output::Callback(void *param, int columns, char **values,
 									char **names)
 {
@@ -864,6 +879,7 @@ void SqlConnection::Output::SetResults(int columns, char **values, char **names)
 
 	m_values.push_back(std::move(row));
 }
+//LCOV_EXCL_STOP
 
 void SqlConnection::ExecCommandHelper(Output *out, const char *format,
 									  va_list args)
@@ -933,12 +949,14 @@ void SqlConnection::ExecCommandHelper(Output *out, const char *format,
 	ThrowMsg(Exception::InternalError, "sqlite permanently busy");
 }
 
+//LCOV_EXCL_START
 void SqlConnection::ExecCommand(Output *out, const char *format, ...)
 {
 	scoped_va_start(svl, format);
 
 	ExecCommandHelper(out, format, svl.args);
 }
+//LCOV_EXCL_STOP
 
 void SqlConnection::ExecCommand(const char *format, ...)
 {
@@ -978,10 +996,12 @@ SqlConnection::DataCommandUniquePtr SqlConnection::PrepareDataCommand(
 	return DataCommandUniquePtr(new DataCommand(this, buffer.get()));
 }
 
+//LCOV_EXCL_START
 SqlConnection::RowID SqlConnection::GetLastInsertRowID() const
 {
 	return static_cast<RowID>(sqlcipher3_last_insert_rowid(m_connection));
 }
+//LCOV_EXCL_STOP
 
 void SqlConnection::TurnOnForeignKeys()
 {

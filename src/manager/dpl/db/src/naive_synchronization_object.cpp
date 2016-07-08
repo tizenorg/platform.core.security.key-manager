@@ -39,6 +39,7 @@ static const size_t NANOSECONDS_PER_SECOND =
 static const size_t NANOSECONDS_PER_MILISECOND =
 	static_cast<uint64_t>(1000 * 1000);
 
+//LCOV_EXCL_START
 void NanoSleep(uint64_t nanoseconds)
 {
 	timespec requestedTime = {
@@ -66,15 +67,18 @@ void MiliSleep(uint64_t miliseconds)
 {
 	NanoSleep(miliseconds * NANOSECONDS_PER_MILISECOND);
 }
+//LCOV_EXCL_STOP
 }
 
 namespace CKM {
+//LCOV_EXCL_START
 namespace DB {
 void NaiveSynchronizationObject::Synchronize()
 {
 	// Sleep for about 10ms - 30ms
 	Thread::MiliSleep(10 + rand_r(&seed) % 20);
 }
+//LCOV_EXCL_STOP
 
 void NaiveSynchronizationObject::NotifyAll()
 {
