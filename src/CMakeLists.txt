@@ -56,6 +56,7 @@ SET(KEY_MANAGER_SOURCES
     ${KEY_MANAGER_PATH}/service/ocsp.cpp
     ${KEY_MANAGER_PATH}/service/ocsp-logic.cpp
     ${KEY_MANAGER_PATH}/service/ocsp-service.cpp
+    ${KEY_MANAGER_PATH}/service/ss-migrate.cpp
     ${KEY_MANAGER_PATH}/initial-values/parser.cpp
     ${KEY_MANAGER_PATH}/initial-values/BufferHandler.cpp
     ${KEY_MANAGER_PATH}/initial-values/CertHandler.cpp
