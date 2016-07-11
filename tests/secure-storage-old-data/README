@@ -1,0 +1,26 @@
+Resources for testing secure-storage data migration to key-manager.
+
+How to use:
+1) [Host]   Push resources to target by running script:
+            # sh ./push-data.sh
+2) [Target] Move from secure-storage directory to key-manager data directory
+            by running upgrade script in target:
+            # sh /etc/opt/upgrade/233.key-manager-move-ss-migratable-data.patch.sh
+3) [Target] Restart key-manager service and run any operation which unlocks system db
+
+Description:
+secure-storage module is removed since Tizen platform version 3.0.
+secure-storage data is migrated like the form below.
+Exception: ""optional password used data cannot be migrated.""
+
+Key factors of secure-storage data are <data name> and <storage name>
+<storage name> is group id if given else smack label of client.
+
+examples) Client with...
+Case1:: <smack label> = "client.service.label", <data name> = "data", <group id> = "secure-storage::client"
+-> key factors: <data name> = "data", <storage name> = "client"
+Case2:: <smack label> = "client.service.label", <data name> = "data", <group id> = null
+-> key factors: <data name> = "data", <storage name> = "client.service.label"
+
+Secure-storage data with <data name> and <storage name> will be migrated to key-manager system db
+with name = "<storage name>-<data name>"
