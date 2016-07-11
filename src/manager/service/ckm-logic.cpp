@@ -33,6 +33,7 @@
 #include <algorithm>
 #include <sw-backend/store.h>
 #include <generic-backend/exception.h>
+#include <ss-migrate.h>
 
 namespace {
 const char *const CERT_SYSTEM_DIR          = CA_CERTS_DIR;
@@ -128,6 +129,23 @@ int CKMLogic::unlockDatabase(uid_t user, const Password &password)
 				handle.crypto.removeKey(appSmackLabel);
 				handle.database.deleteKey(appSmackLabel);
 			}
+		}
+
+		if (user == SYSTEM_DB_UID && hasMigratableData()) {
+			migrateData([this](const std::string &owner,
+							   const std::string &name,
+							   const Crypto::Data &data) {
+				LogInfo("Saver called with owner: " << owner << " name: " << name);
+
+				Credentials cred(0, OWNER_ID_SYSTEM);
+
+				int ret = this->verifyAndSaveDataHelper(
+						Credentials(0, OWNER_ID_SYSTEM), (owner + "-" + name),
+						OWNER_ID_SYSTEM, data, PolicySerializable());
+				if (ret != CKM_API_SUCCESS)
+					LogError("Failed to migrate secure-storage data. owner: " << owner <<
+							 " name: " << name << " ret: " << ret);
+			});
 		}
 	} catch (const Exc::Exception &e) {
 		retCode = e.error();
