@@ -248,6 +248,7 @@ fi
 %{ro_etc_dir}/opt/upgrade/230.key-manager-change-data-dir.patch.sh
 %{ro_etc_dir}/opt/upgrade/231.key-manager-migrate-dkek.patch.sh
 %{ro_etc_dir}/opt/upgrade/232.key-manager-change-user.patch.sh
+%{ro_etc_dir}/opt/upgrade/233.key-manager-move-ss-migratable-data.patch.sh
 %{ro_etc_dir}/gumd/userdel.d/10_key-manager.post
 %{bin_dir}/ckm_tool
 

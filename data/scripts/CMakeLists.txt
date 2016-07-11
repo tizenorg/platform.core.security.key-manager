@@ -29,10 +29,15 @@ CONFIGURE_FILE(232.key-manager-change-user.patch.sh.in
                232.key-manager-change-user.patch.sh
                @ONLY)
 
+CONFIGURE_FILE(233.key-manager-move-ss-migratable-data.patch.sh.in
+               233.key-manager-move-ss-migratable-data.patch.sh
+               @ONLY)
+
 INSTALL(FILES
         230.key-manager-change-data-dir.patch.sh
         231.key-manager-migrate-dkek.patch.sh
         232.key-manager-change-user.patch.sh
+        233.key-manager-move-ss-migratable-data.patch.sh
     DESTINATION ${RO_ETC_DIR}/opt/upgrade
     PERMISSIONS
         OWNER_READ
