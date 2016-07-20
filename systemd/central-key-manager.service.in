@@ -5,7 +5,7 @@ DefaultDependencies=no
 [Service]
 User=@USER_NAME@
 Group=@GROUP_NAME@
-SmackProcessLabel=@SMACK_DOMAIN_NAME@
+SmackProcessLabel=System
 Type=notify
 ExecStart=@BIN_DIR@/key-manager
 Sockets=central-key-manager-api-storage.socket
