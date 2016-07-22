@@ -76,6 +76,7 @@ enum class EncryptionCommand : int {
 // (client side) Alias = (service side) Label::Name
 COMMON_API extern char const *const LABEL_NAME_SEPARATOR;
 COMMON_API extern char const *const OWNER_ID_SYSTEM;
+COMMON_API extern char const *const OWNER_ID_ADMIN_USER;
 
 typedef std::string Name;
 typedef std::vector<std::pair<Label, Name>> LabelNameVector;

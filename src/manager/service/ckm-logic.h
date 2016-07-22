@@ -50,6 +50,7 @@ struct UserData {
 class CKMLogic {
 public:
 	static const uid_t SYSTEM_DB_UID;
+	static const uid_t ADMIN_USER_DB_UID;
 
 	CKMLogic();
 	CKMLogic(const CKMLogic &) = delete;
@@ -211,7 +212,6 @@ public:
 		const Crypto::DataEncryption &enc,
 		const Policy &policy);
 
-protected:
 	int unlockSystemDB();
 
 private:
@@ -220,7 +220,7 @@ private:
 	UserData &selectDatabase(const Credentials &incoming_cred,
 							 const Label       &incoming_label);
 
-	int unlockDatabase(uid_t            user,
+	int unlockDatabase(uid_t user,
 					   const Password &password);
 
 	void loadDKEKFile(
@@ -393,6 +393,8 @@ private:
 	int resetUserPasswordHelper(uid_t user, const Password &newPassword);
 
 	int loadAppKey(UserData &handle, const Label &appLabel);
+
+	void migrateSecureStorageData(bool isAdminUser);
 
 	AccessControl m_accessControl;
 	Crypto::Decider m_decider;
