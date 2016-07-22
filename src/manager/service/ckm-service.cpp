@@ -49,6 +49,11 @@ CKMService::~CKMService()
 
 void CKMService::Start()
 {
+	// unlock system db at first to migrate old ss data earlier than user db unlocked.
+	// Because data should be migrated to both of system db and user(default owner) db
+	// and old data resource will be removed after migrated to user db
+	m_logic->unlockSystemDB();
+
 	Create();
 }
 

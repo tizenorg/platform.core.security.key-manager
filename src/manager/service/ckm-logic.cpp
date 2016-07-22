@@ -61,6 +61,7 @@ bool isNameValid(const CKM::Name &name)
 namespace CKM {
 
 const uid_t CKMLogic::SYSTEM_DB_UID = 0;
+const uid_t CKMLogic::ADMIN_USER_DB_UID = 5001;
 
 CKMLogic::CKMLogic()
 {
@@ -93,6 +94,26 @@ void CKMLogic::saveDKEKFile(uid_t user, const Password &password)
 
 	FileSystem fs(user);
 	fs.saveDKEK(handle.keyProvider.getWrappedDomainKEK(password));
+}
+
+void CKMLogic::migrateSecureStorageData(bool isAdminUser)
+{
+	SsMigration::migrate(isAdminUser, [this](const std::string &name,
+											 const Crypto::Data &data,
+											 bool adminUserFlag) {
+		LogInfo("Migrate data called with  name: " << name);
+		auto ownerId = adminUserFlag ? OWNER_ID_ADMIN_USER : OWNER_ID_SYSTEM;
+		auto uid = adminUserFlag ? ADMIN_USER_DB_UID : SYSTEM_DB_UID;
+
+		int ret = verifyAndSaveDataHelper(Credentials(uid, ownerId), name, ownerId, data,
+										  PolicySerializable());
+
+		if (ret == CKM_API_ERROR_DB_ALIAS_EXISTS)
+			LogWarning("Alias already exist for migrated name: " << name);
+		else if (ret != CKM_API_SUCCESS)
+			LogError("Failed to migrate secure-storage data. name: " << name <<
+					 " ret: " << ret);
+	});
 }
 
 int CKMLogic::unlockDatabase(uid_t user, const Password &password)
@@ -131,22 +152,10 @@ int CKMLogic::unlockDatabase(uid_t user, const Password &password)
 			}
 		}
 
-		if (user == SYSTEM_DB_UID && hasMigratableData()) {
-			migrateData([this](const std::string &owner,
-							   const std::string &name,
-							   const Crypto::Data &data) {
-				LogInfo("Saver called with owner: " << owner << " name: " << name);
-
-				Credentials cred(0, OWNER_ID_SYSTEM);
-
-				int ret = this->verifyAndSaveDataHelper(
-						Credentials(0, OWNER_ID_SYSTEM), (owner + "-" + name),
-						OWNER_ID_SYSTEM, data, PolicySerializable());
-				if (ret != CKM_API_SUCCESS)
-					LogError("Failed to migrate secure-storage data. owner: " << owner <<
-							 " name: " << name << " ret: " << ret);
-			});
-		}
+		if (user == SYSTEM_DB_UID && SsMigration::hasData())
+			migrateSecureStorageData(false);
+		else if (user == ADMIN_USER_DB_UID && SsMigration::hasData())
+			migrateSecureStorageData(true);
 	} catch (const Exc::Exception &e) {
 		retCode = e.error();
 	} catch (const CKM::Exception &e) {

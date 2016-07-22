@@ -23,43 +23,21 @@
 
 #include <fstream>
 #include <memory>
-#include <cstring>
 #include <cerrno>
 #include <cstddef>
 #include <unistd.h>
 #include <dirent.h>
 #include <sys/stat.h>
 
-#include <openssl/sha.h>
-#include <openssl/evp.h>
-#include <openssl/hmac.h>
-
 #include <dpl/log/log.h>
+#include <ss-crypto.h>
 
 namespace CKM {
+namespace SsMigration {
 
 namespace {
 
 const std::string OLD_SS_DIR = RW_DATA_DIR "/secure-storage";
-const std::string OLD_SS_GROUP_PREFIX = "secure-storage::";
-const int SALT_SIZE = 32;
-const int KEY_SIZE = 16;
-
-std::unique_ptr<char[]> get_key(const std::string &id, size_t len)
-{
-	unsigned char salt[SALT_SIZE];
-
-	::memset(salt, 0xFF, SALT_SIZE);
-
-	std::unique_ptr<char[]> duk(new char[len + 1]);
-
-	::PKCS5_PBKDF2_HMAC_SHA1(id.c_str(), id.length(), salt, SALT_SIZE, 1,
-			len, reinterpret_cast<unsigned char *>(duk.get()));
-
-	duk[len] = '\0';
-
-	return duk;
-}
 
 RawBuffer read_data(const std::string &filepath, const std::string &seed)
 {
@@ -87,73 +65,24 @@ RawBuffer read_data(const std::string &filepath, const std::string &seed)
 		return RawBuffer();
 	}
 
-	auto key = get_key(seed, KEY_SIZE);
-	std::unique_ptr<char[]> iv(new char[KEY_SIZE]);
-	size_t ivlen = 0;
-	if (::EVP_Digest(key.get(), KEY_SIZE, reinterpret_cast<unsigned char *>(iv.get()),
-				&ivlen, ::EVP_sha1(), nullptr) != 1) {
-		LogError("Failed to get iv");
-		return RawBuffer();
-	}
-
-	// start decrypt data with key and iv
-	auto algo = ::EVP_aes_128_cbc();
-	int tmp_len = (ciphertext.size() / algo->block_size + 1) * algo->block_size;
-	RawBuffer plaintext(tmp_len, 0);
-
-	std::unique_ptr<EVP_CIPHER_CTX, void(*)(EVP_CIPHER_CTX *)> ctxptr(
-			::EVP_CIPHER_CTX_new(), ::EVP_CIPHER_CTX_free);
-
-	if (ctxptr == nullptr)
-		throw std::bad_alloc();
-
-	auto ctx = ctxptr.get();
-
-	int ec = ::EVP_CIPHER_CTX_set_padding(ctx, 1);
-	if (ec != 1) {
-		LogError("Failed to evp ctx set padding. ec: " << ec);
-		return RawBuffer();
-	}
-
-	ec = ::EVP_CipherInit(ctx, algo, reinterpret_cast<unsigned char *>(key.get()),
-			reinterpret_cast<unsigned char *>(iv.get()), 0 /* decrypt flag */);
-	if (ec != 1) {
-		LogError("Failed to evp cipher init. ec: " << ec);
-		return RawBuffer();
-	}
-
-	int plaintext_len = 0;
-	ec = ::EVP_CipherUpdate(ctx, plaintext.data(), &plaintext_len,
-			ciphertext.data(), ciphertext.size());
-	if (ec != 1) {
-		LogError("Failed to evp cipher update. ec: " << ec);
-		return RawBuffer();
-	}
-
-	int final_len = 0;
-	ec = EVP_CipherFinal(ctx, plaintext.data() + plaintext_len, &final_len);
-	if (ec != 1) {
-		LogError("Failed to evp cipher final. ec: " << ec);
-		return RawBuffer();
-	}
-
-	plaintext_len += final_len;
-
-	plaintext.resize(plaintext_len);
-
-	return plaintext;
+	return SsMigration::decrypt(seed, ciphertext);
 }
 
-inline void remove_path(const std::string &path)
+inline void remove_path(const std::string &path, bool isAdminUser)
 {
+	if (!isAdminUser)
+		return;
+
 	if (::remove(path.c_str()) == -1)
 		LogError("Failed to remove path: " << path << " with errno: " << errno);
+
+	LogInfo("File removed: " << path);
 }
 
 // depth 0 -> OLD_SS_DIR
 //       1 -> group dir in OLD_SS_DIR
 void visit_dir(const std::string &dirpath, struct dirent *buf, size_t depth,
-			  const Saver &saver)
+			   const Saver &saver, bool isAdminUser)
 {
 	if (depth > 1) {
 		LogError("Invalid depth in secure-storage subdir... dirpath: " << dirpath);
@@ -174,7 +103,7 @@ void visit_dir(const std::string &dirpath, struct dirent *buf, size_t depth,
 					 " with errno: " << errno);
 			break;
 		} else if (result == nullptr) {
-			remove_path(dirpath);
+			remove_path(dirpath, isAdminUser);
 			break;
 		}
 
@@ -190,16 +119,15 @@ void visit_dir(const std::string &dirpath, struct dirent *buf, size_t depth,
 				LogError("Invalid hierarchy of secure-storage dir... "
 						 "Directory(" << name << ") cannot be in "
 						 "group storage: " << dirpath);
-				remove_path(path);
 			} else {
 				std::string subdir = dirpath + "/" + name;
-				visit_dir(subdir, buf, depth + 1, saver);
+				visit_dir(subdir, buf, depth + 1, saver, isAdminUser);
+				continue;
 			}
 		} else if (result->d_type == DT_REG) {
 			if (depth == 0) {
 				LogError("Invalid hierarchy of secure-storage dir... "
 						 "File(" << name << ") cannot be in secure-storage top dir");
-				remove_path(path);
 			} else {
 				LogInfo("Meet file(" << path << ") in secure-storage! "
 						"Let's save it into key-manager.");
@@ -210,32 +138,24 @@ void visit_dir(const std::string &dirpath, struct dirent *buf, size_t depth,
 				data.type = DataType::BINARY_DATA;
 				data.data = read_data(path, storage_name);
 
-				if (data.data.empty()) {
+				if (data.data.empty())
 					LogError("Failed to read data from file: " << path);
-				} else if (storage_name == "secure-storage") {
+				else if (storage_name == "secure-storage")
 					LogInfo("Meet secure-storage storage which contains SALT! skip it!");
-				} else if (storage_name.rfind(OLD_SS_GROUP_PREFIX) == std::string::npos) {
-					LogInfo("data file(" << path << ") is not in group! "
-							"smack-label is used as storage name");
-					saver(storage_name, name, data);
-				} else {
-					LogInfo("data file(" << path << ") is in group! "
-							"group id is extracted from dir path");
-					saver(storage_name.substr(OLD_SS_GROUP_PREFIX.length()), name, data);
-				}
-
-				remove_path(path);
+				else
+					saver(name, data, isAdminUser);
 			}
 		} else {
 			LogError("Invalid type(" << result->d_type << ") of file(" << path << ") ");
-			remove_path(path);
 		}
+
+		remove_path(path, isAdminUser);
 	}
 }
 
 } // namespace anonymous
 
-bool hasMigratableData(void)
+bool hasData(void)
 {
 	if (::access(OLD_SS_DIR.c_str(), R_OK | X_OK) == -1) {
 		const int err = errno;
@@ -249,7 +169,7 @@ bool hasMigratableData(void)
 	}
 }
 
-void migrateData(const Saver &saver)
+void migrate(bool isAdminUser, const Saver &saver)
 {
 	if (saver == nullptr) {
 		LogError("saver cannot be null");
@@ -263,7 +183,8 @@ void migrateData(const Saver &saver)
 	if (bufptr == nullptr)
 		throw std::bad_alloc();
 
-	visit_dir(OLD_SS_DIR, bufptr.get(), 0, saver);
+	visit_dir(OLD_SS_DIR, bufptr.get(), 0, saver, isAdminUser);
 }
 
-}
+} // namespace SsMigration
+} // namespace CKM

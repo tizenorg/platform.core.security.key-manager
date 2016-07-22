@@ -40,6 +40,7 @@ char const *const SERVICE_SOCKET_ENCRYPTION =
 	"/tmp/.central-key-manager-api-encryption.sock";
 char const *const LABEL_NAME_SEPARATOR = " ";
 char const *const OWNER_ID_SYSTEM = "/System";
+char const *const OWNER_ID_ADMIN_USER = "/User";
 
 PKCS12Serializable::PKCS12Serializable()
 {

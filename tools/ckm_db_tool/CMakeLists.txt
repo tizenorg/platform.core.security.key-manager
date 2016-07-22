@@ -70,6 +70,7 @@ SET(CKM_DB_TOOL_SOURCES
     ${KEY_MANAGER_PATH}/service/for-each-file.cpp
     ${KEY_MANAGER_PATH}/service/key-provider.cpp
     ${KEY_MANAGER_PATH}/service/ss-migrate.cpp
+    ${KEY_MANAGER_PATH}/service/ss-crypto.cpp
     ${KEY_MANAGER_PATH}/sqlcipher/sqlcipher.c
     )
 

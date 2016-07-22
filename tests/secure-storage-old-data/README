@@ -1,12 +1,17 @@
 Resources for testing secure-storage data migration to key-manager.
 
+Secure storage data is migrated to system db and admin user db.
+Data migrated to admin user db also because there's some services which was system service
+but user service from 3.0. (e.g., email-service). They should handle migrated data from newly
+added data differently because user service cannot save data to system db.
+
 How to use:
 1) [Host]   Push resources to target by running script:
             # sh ./push-data.sh
 2) [Target] Move from secure-storage directory to key-manager data directory
             by running upgrade script in target:
             # sh /etc/opt/upgrade/233.key-manager-move-ss-migratable-data.patch.sh
-3) [Target] Restart key-manager service and run any operation which unlocks system db
+3) [Target] Restart key-manager service
 
 Description:
 secure-storage module is removed since Tizen platform version 3.0.
@@ -15,12 +20,18 @@ Exception: ""optional password used data cannot be migrated.""
 
 Key factors of secure-storage data are <data name> and <storage name>
 <storage name> is group id if given else smack label of client.
+Data has been grouped by <storage name> in secure-storage but no more grouping in key-manager.
+All data is saved in both of
+1) system db              with "/System" owner which is smack label(=owner name) of system services
+2) admin user db("owner") with "/User" owner which is smack label(=owner name) of user services.
 
-examples) Client with...
+<storage name> is only used for migratable data re-encryption.
+
+system db with owner label = "/System" and name = "<data name>"
+admin user(owner) db with owner label = "/User" and name = "<data name>"
+
+storage name extraction examples) Client with...
 Case1:: <smack label> = "client.service.label", <data name> = "data", <group id> = "secure-storage::client"
 -> key factors: <data name> = "data", <storage name> = "client"
 Case2:: <smack label> = "client.service.label", <data name> = "data", <group id> = null
 -> key factors: <data name> = "data", <storage name> = "client.service.label"
-
-Secure-storage data with <data name> and <storage name> will be migrated to key-manager system db
-with name = "<storage name>-<data name>"

@@ -14,27 +14,20 @@
  *  limitations under the License
  *
  *
- * @file        ss-migrate.h
+ * @file        ss-crypto.h
  * @author      Kyungwook Tak (k.tak@samsung.com)
  * @version     1.0
- * @brief       Deprecated secure-storage data migration
+ * @brief       Decrypt old secure-storage data for migration
  */
 #pragma once
 
 #include <string>
-#include <vector>
-#include <functional>
-
-#include <generic-backend/gstore.h>
+#include <ckm/ckm-raw-buffer.h>
 
 namespace CKM {
 namespace SsMigration {
 
-using Saver = std::function<void(const std::string &name, const Crypto::Data &data,
-								 bool isAdminUser)>;
-
-bool hasData(void);
-void migrate(bool isAdminUser, const Saver &);
+RawBuffer decrypt(const std::string &seed, const RawBuffer &ciphertext);
 
 }
 }
