@@ -43,15 +43,15 @@ extern "C" {
  *       Preinstalled system(uid < 5000) and user (uid >= 5000) applications
  *       does not have any pkgId. Thats why ckm uses special "virtual"
  *       pkgid for them. The virtual strings are defined under:
- *          ckmc_ownerid_system
- *          ckmc_ownerid_user
- *
+ *          ckmc_owner_id_system
  */
 
 /**
  * @deprecated Deprecated since 3.0. [Use ckmc_owner_id_separator instead]
  * @brief Separator between alias and label.
+ *
  * @since_tizen 2.3
+ *
  * @remarks Alias can be provided as an alias alone, or together with label - in this
  *          case, separator " " (space bar) is used to separate label and alias.
  *
@@ -62,21 +62,29 @@ KEY_MANAGER_CAPI extern char const *const ckmc_label_name_separator;
 
 /**
  * @brief Separator between alias and owner id.
+ *
  * @since_tizen 3.0
+ *
  * @remarks Alias can be provided as an alias alone, or together with owner id.
  *          In this case, separator " " (space bar) is used to separate id and alias.
+ *
+ * @see ckmc_alias_new()
  * @see key-manager_doc.h
  */
 KEY_MANAGER_CAPI extern char const *const ckmc_owner_id_separator;
 
 /**
  * @brief The owner of system database.
+ *
  * @since_tizen 3.0
- * @remarks ckmc_owner_id_system constains id connected with all SYSTEM applications that run
- *          with uid less than 5000.
- *          Client should use ckmc_owner_id_system to access data owned by system application
- *          and stored in system database.
- *          Note: Client must have permission to access proper row.
+ *
+ * @remarks @a ckmc_owner_id_system constains id connected with all system applications
+ *          that run with uid less than 5000.
+ * @remarks Client should use @a ckmc_owner_id_system to access data owned by system
+ *          application and stored in system database.
+ * @remarks Client must have permission to access proper row.
+ *
+ * @see ckmc_alias_new()
  */
 KEY_MANAGER_CAPI extern char const *const ckmc_owner_id_system;
 
@@ -322,6 +330,35 @@ typedef enum __ckmc_algo_type {
                                   - CKMC_PARAM_ED_LABEL = label to be associated with the message
                                     (optional, not supported at the moment) */
 } ckmc_algo_type_e;
+
+/**
+ * @brief Creates new full alias with owner id concatenated alias
+ *
+ * @since_tizen 3.0
+ *
+ * @remarks Alias can be provided as an alias alone, or together with owner id.
+ * @remarks Pointer pointed by @a pfull_alias should be destroyed by free() after use.
+ * @remarks Returns error(#CKMC_ERROR_INVALID_PARAMETER) if any of parameter is null.
+ *
+ * @param[in] owner_id     Data owner's id. This should be package id if data owner is
+ *                         application. If you want to access data stored by system
+ *                         services, it should be @a ckmc_owner_id_system
+ * @param[in] alias        Data alias
+ * @param[out] pfull_alias Pointer to newly created alias which is fully concatenated
+ *                         of @a owner_id, @a ckmc_owner_id_separator and @a alias.
+ *                         Destroy by free() after use
+ *
+ * @return #CKMC_ERROR_NONE on success, otherwise a negative error value
+ *
+ * @retval #CKMC_ERROR_NONE              Successful
+ * @retval #CKMC_ERROR_INVALID_PARAMETER Input parameter is invalid
+ * @retval #CKMC_ERROR_OUT_OF_MEMORY     Not enough memory
+ *
+ * @see #ckmc_owner_id_separator
+ * @see #ckmc_owner_id_system
+ * @see key-manager_doc.h
+ */
+int ckmc_alias_new(const char *owner_id, const char *alias, char **pfull_alias);
 
 /**
  * @brief Creates a new @a ckmc_key_s handle and returns it.
