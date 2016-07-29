@@ -71,6 +71,27 @@ const char *const ckmc_owner_id_separator      = CKM::LABEL_NAME_SEPARATOR;
 const char *const ckmc_owner_id_system         = CKM::OWNER_ID_SYSTEM;
 
 KEY_MANAGER_CAPI
+int ckmc_alias_new(const char *owner_id, const char *alias, char **pfull_alias)
+{
+	if (owner_id == NULL || alias == NULL || pfull_alias == NULL)
+		return CKMC_ERROR_INVALID_PARAMETER;
+
+	size_t len = strlen(owner_id) + strlen(alias) + strlen(ckmc_owner_id_separator);
+	char *full_alias = static_cast<char *>(malloc(len + 1));
+
+	if (full_alias == NULL)
+		return CKMC_ERROR_OUT_OF_MEMORY;
+
+	strcpy(full_alias, owner_id);
+	strcat(full_alias, ckmc_owner_id_separator);
+	strcat(full_alias, alias);
+
+	*pfull_alias = full_alias;
+
+	return CKMC_ERROR_NONE;
+}
+
+KEY_MANAGER_CAPI
 int ckmc_key_new(unsigned char *raw_key, size_t key_size,
 				 ckmc_key_type_e key_type, char *password, ckmc_key_s **ppkey)
 {
