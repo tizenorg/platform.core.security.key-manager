@@ -35,6 +35,7 @@
 #include <openssl/pem.h>
 #include <fstream>
 #include <crypto-init.h>
+#include <dpl/log/log.h>
 
 namespace {
 
@@ -459,6 +460,9 @@ int ckmc_load_from_pkcs12_file(const char *file_path, const char *passphrase,
 			return CKMC_ERROR_NONE;
 		}
 	};
+
+	LogWarning("DEPRECATION WARNING: " << __func__ << "() is deprecated and will be "
+			   "removed from next release. Use ckmc_pkcs12_load() instead.");
 
 	CKM::initOpenSslOnce();
 

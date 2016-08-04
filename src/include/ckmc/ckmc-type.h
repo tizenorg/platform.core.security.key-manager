@@ -58,7 +58,7 @@ extern "C" {
  * @see #ckmc_owner_id_separator
  * @see key-manager_doc.h
  */
-KEY_MANAGER_CAPI extern char const *const ckmc_label_name_separator;
+KEY_MANAGER_CAPI extern char const *const ckmc_label_name_separator DEPRECATED_TYPE;
 
 /**
  * @brief Separator between alias and owner id.
@@ -156,7 +156,7 @@ typedef enum __ckmc_rsa_padding_algo {
 typedef enum __ckmc_access_right {
 	CKMC_AR_READ = 0,       /**< Access right for read*/
 	CKMC_AR_READ_REMOVE     /**< Access right for read and remove*/
-} ckmc_access_right_e;
+} ckmc_access_right_e DEPRECATED_TYPE;
 
 /**
  * @brief Enumeration for permissions to access/modify alias.
@@ -579,7 +579,8 @@ int ckmc_pkcs12_new(ckmc_key_s *private_key,
 int ckmc_load_from_pkcs12_file(const char *file_path,
 							   const char *passphrase,
 							   ckmc_key_s **private_key, ckmc_cert_s **cert,
-							   ckmc_cert_list_s **ca_cert_list);
+							   ckmc_cert_list_s **ca_cert_list)
+DEPRECATED_API;
 
 /**
  * @brief Creates a new @a ckmc_pkcs12_s handle from a given PKCS#12 file and returns it.

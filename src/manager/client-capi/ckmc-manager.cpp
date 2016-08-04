@@ -202,6 +202,8 @@ int ckmc_save_key(const char *alias, const ckmc_key_s key,
 KEY_MANAGER_CAPI
 int ckmc_remove_key(const char *alias)
 {
+	LogWarning("DEPRECATION WARNING: " << __func__ << "() is deprecated and will be "
+			   "removed from next release. Use ckmc_remove_alias() instead.");
 	return ckmc_remove_alias(alias);
 }
 
@@ -299,6 +301,8 @@ int ckmc_save_cert(const char *alias, const ckmc_cert_s cert,
 KEY_MANAGER_CAPI
 int ckmc_remove_cert(const char *alias)
 {
+	LogWarning("DEPRECATION WARNING: " << __func__ << "() is deprecated and will be "
+			   "removed from next release. Use ckmc_remove_alias() instead.");
 	return ckmc_remove_alias(alias);
 }
 
@@ -475,6 +479,8 @@ int ckmc_save_data(const char *alias, ckmc_raw_buffer_s data,
 KEY_MANAGER_CAPI
 int ckmc_remove_data(const char *alias)
 {
+	LogWarning("DEPRECATION WARNING: " << __func__ << "() is deprecated and will be "
+			   "removed from next release. Use ckmc_get_cert_chain() instead.");
 	return ckmc_remove_alias(alias);
 }
 
@@ -824,6 +830,9 @@ int ckmc_allow_access(const char *alias, const char *accessor,
 {
 	EXCEPTION_GUARD_START_CAPI
 
+	LogWarning("DEPRECATION WARNING: " << __func__ << "() is deprecated and will be "
+			   "removed from next release. Use ckmc_set_permission() instead.");
+
 	int permissionMask;
 	int ret = access_to_permission_mask(granted, permissionMask);
 
@@ -854,6 +863,9 @@ KEY_MANAGER_CAPI
 int ckmc_deny_access(const char *alias, const char *accessor)
 {
 	EXCEPTION_GUARD_START_CAPI
+
+	LogWarning("DEPRECATION WARNING: " << __func__ << "() is deprecated and will be "
+			   "removed from next release. Use ckmc_set_permission() instead.");
 
 	if (!alias || !accessor)
 		return CKMC_ERROR_INVALID_PARAMETER;

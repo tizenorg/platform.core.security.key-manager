@@ -114,7 +114,8 @@ int ckmc_save_key(const char *alias, const ckmc_key_s key,
  * @see ckmc_get_key()
  * @see ckmc_get_key_alias_list()
  */
-int ckmc_remove_key(const char *alias);
+int ckmc_remove_key(const char *alias)
+DEPRECATED_API;
 
 /**
  * @brief Gets a key from key manager.
@@ -257,7 +258,8 @@ int ckmc_save_cert(const char *alias, const ckmc_cert_s cert,
  * @see ckmc_get_cert()
  * @see ckmc_get_cert_alias_list()
  */
-int ckmc_remove_cert(const char *alias);
+int ckmc_remove_cert(const char *alias)
+DEPRECATED_API;
 
 /**
  * @brief Gets a certificate from key manager.
@@ -475,7 +477,8 @@ int ckmc_save_data(const char *alias, ckmc_raw_buffer_s data,
  * @see ckmc_get_data()
  * @see ckmc_get_data_alias_list()
  */
-int ckmc_remove_data(const char *alias);
+int ckmc_remove_data(const char *alias)
+DEPRECATED_API;
 
 /**
  * @brief Gets a data from key manager.
@@ -895,7 +898,8 @@ int ckmc_get_cert_chain(const ckmc_cert_s *cert,
  */
 int ckmc_get_cert_chain_with_alias(const ckmc_cert_s *cert,
 								   const ckmc_alias_list_s *untrustedcerts,
-								   ckmc_cert_list_s **ppcert_chain_list);
+								   ckmc_cert_list_s **ppcert_chain_list)
+DEPRECATED_API;
 
 /**
  * @brief Verifies a certificate chain and returns that chain using user entered trusted and
@@ -1002,7 +1006,8 @@ int ckmc_ocsp_check(const ckmc_cert_list_s *pcert_chain_list,
  * @see ckmc_deny_access()
  */
 int ckmc_allow_access(const char *alias, const char *accessor,
-					  ckmc_access_right_e granted);
+					  ckmc_access_right_e granted)
+DEPRECATED_API;
 
 /**
  * @brief Allows another application to access client's application data.
@@ -1064,7 +1069,8 @@ int ckmc_set_permission(const char *alias, const char *accessor,
  * @see ckmc_allow_access()
  * @see ckmc_set_permission()
  */
-int ckmc_deny_access(const char *alias, const char *accessor);
+int ckmc_deny_access(const char *alias, const char *accessor)
+DEPRECATED_API;
 
 /**
  * @brief Removes a an entry (no matter of type) from the key manager.
